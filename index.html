@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SentinelTrade — Tu ne vois pas quand tu dérailles. Lui si.</title>
+<meta name="description" content="SentinelTrade détecte tes comportements dangereux en temps réel — avant que le tilt, le revenge trading ou une décision émotionnelle ne détruise ta session." />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: #0a0a0f; color: #e8e6e0; min-height: 100vh; overflow-x: hidden; }
+  .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; }
+  .glow { position: fixed; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(220,80,60,0.08) 0%, transparent 70%); top: -200px; left: 50%; transform: translateX(-50%); pointer-events: none; }
+  nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 3rem; border-bottom: 0.5px solid rgba(255,255,255,0.08); }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; color: #fff; }
+  .logo span { color: #dc503c; }
+  .nav-badge { font-size: 11px; padding: 4px 12px; border: 0.5px solid rgba(220,80,60,0.4); border-radius: 100px; color: #dc503c; letter-spacing: 1px; text-transform: uppercase; }
+  .hero { position: relative; text-align: center; padding: 8rem 2rem 5rem; max-width: 820px; margin: 0 auto; }
+  .hero-tag { display: inline-block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(220,80,60,0.8); margin-bottom: 2rem; padding: 6px 16px; border: 0.5px solid rgba(220,80,60,0.2); border-radius: 100px; background: rgba(220,80,60,0.05); }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(2.6rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.05; letter-spacing: -2px; color: #fff; margin-bottom: 1.5rem; }
+  h1 em { font-style: normal; color: #dc503c; }
+  .hero-sub { font-size: 17px; color: rgba(232,230,224,0.55); line-height: 1.7; max-width: 580px; margin: 0 auto 2.5rem; font-weight: 300; }
+  .waitlist-form { display: flex; gap: 8px; max-width: 460px; margin: 0 auto 1rem; }
+  .waitlist-form input { flex: 1; padding: 14px 20px; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+  .waitlist-form input::placeholder { color: rgba(255,255,255,0.25); }
+  .waitlist-form input:focus { border-color: rgba(220,80,60,0.5); }
+  .btn-primary { padding: 14px 24px; background: #dc503c; border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; white-space: nowrap; transition: opacity 0.2s, transform 0.1s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.98); }
+  .form-note { font-size: 12px; color: rgba(255,255,255,0.2); margin-top: 0.5rem; }
+  .success-msg { display: none; padding: 14px 24px; background: rgba(30,180,100,0.1); border: 0.5px solid rgba(30,180,100,0.3); border-radius: 8px; color: rgba(30,180,100,0.9); font-size: 14px; max-width: 460px; margin: 0 auto; text-align: center; }
+  .stats-row { display: flex; justify-content: center; gap: 3rem; padding: 3rem 2rem; border-top: 0.5px solid rgba(255,255,255,0.06); border-bottom: 0.5px solid rgba(255,255,255,0.06); max-width: 700px; margin: 0 auto; }
+  .stat { text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -1px; }
+  .stat-label { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 4px; }
+  .section { position: relative; max-width: 900px; margin: 0 auto; padding: 5rem 2rem; }
+  .section-tag { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(220,80,60,0.6); margin-bottom: 1rem; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; letter-spacing: -1px; color: #fff; margin-bottom: 1rem; line-height: 1.1; }
+  .section-desc { font-size: 15px; color: rgba(232,230,224,0.45); line-height: 1.7; max-width: 520px; margin-bottom: 3rem; }
+  .behaviors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: rgba(255,255,255,0.06); border: 0.5px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
+  .behavior-card { background: #0e0e14; padding: 1.5rem; transition: background 0.2s; }
+  .behavior-card:hover { background: #121218; }
+  .behavior-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(220,80,60,0.1); border: 0.5px solid rgba(220,80,60,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+  .behavior-icon svg { width: 16px; height: 16px; stroke: #dc503c; fill: none; stroke-width: 1.5; }
+  .behavior-name { font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 0.4rem; }
+  .behavior-desc { font-size: 12px; color: rgba(255,255,255,0.3); line-height: 1.5; }
+  .how-it-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 2rem; }
+  .step { padding-top: 1rem; }
+  .step-num { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: rgba(220,80,60,0.12); line-height: 1; margin-bottom: 1rem; letter-spacing: -2px; }
+  .step-title { font-size: 15px; font-weight: 500; color: #fff; margin-bottom: 0.5rem; }
+  .step-desc { font-size: 13px; color: rgba(255,255,255,0.3); line-height: 1.6; }
+  .alert-demo { background: #0e0e14; border: 0.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 2rem; margin-top: 3rem; }
+  .alert-demo-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 1.5rem; }
+  .alert-item { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 1rem; border-radius: 8px; margin-bottom: 0.5rem; border: 0.5px solid transparent; }
+  .alert-l1 { background: rgba(255,200,0,0.05); border-color: rgba(255,200,0,0.1); }
+  .alert-l2 { background: rgba(220,130,0,0.06); border-color: rgba(220,130,0,0.15); }
+  .alert-l3 { background: rgba(220,50,30,0.08); border-color: rgba(220,50,30,0.2); }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-l1 { background: #ffc800; }
+  .dot-l2 { background: #dc8200; }
+  .dot-l3 { background: #dc3218; }
+  .alert-text { flex: 1; font-size: 13px; }
+  .alert-text strong { color: #fff; font-weight: 500; display: block; margin-bottom: 2px; }
+  .alert-text span { color: rgba(255,255,255,0.3); font-size: 12px; }
+  .alert-badge { font-size: 10px; padding: 3px 8px; border-radius: 100px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .badge-l1 { background: rgba(255,200,0,0.1); color: #ffc800; }
+  .badge-l2 { background: rgba(220,130,0,0.1); color: #dc8200; }
+  .badge-l3 { background: rgba(220,50,30,0.12); color: #dc3218; }
+  .pricing { background: #0e0e14; border: 0.5px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 3rem; text-align: center; max-width: 420px; margin: 0 auto; }
+  .early-badge { display: inline-block; padding: 4px 12px; background: rgba(220,80,60,0.1); border: 0.5px solid rgba(220,80,60,0.2); border-radius: 100px; font-size: 11px; color: #dc503c; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2rem; }
+  .pricing-price { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: #fff; letter-spacing: -2px; line-height: 1; margin-bottom: 0.25rem; }
+  .pricing-price sup { font-size: 24px; vertical-align: super; }
+  .pricing-price sub { font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.3); letter-spacing: 0; }
+  .pricing-note { font-size: 13px; color: rgba(255,255,255,0.2); margin-bottom: 2rem; }
+  .pricing-features { list-style: none; text-align: left; margin-bottom: 2rem; }
+  .pricing-features li { font-size: 14px; color: rgba(255,255,255,0.5); padding: 0.5rem 0; border-bottom: 0.5px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 0.75rem; }
+  .pricing-features li:last-child { border-bottom: none; }
+  .check { color: #dc503c; }
+  .tagline { text-align: center; margin-top: 1.5rem; font-size: 13px; color: rgba(255,255,255,0.2); font-style: italic; }
+  footer { border-top: 0.5px solid rgba(255,255,255,0.06); padding: 2rem 3rem; text-align: center; color: rgba(255,255,255,0.12); font-size: 12px; }
+  @media (max-width: 600px) {
+    nav { padding: 1.5rem; }
+    .how-it-works { grid-template-columns: 1fr; }
+    .stats-row { gap: 1.5rem; }
+    .waitlist-form { flex-direction: column; }
+    .pricing { padding: 2rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="glow"></div>
+
+<nav>
+  <div class="logo">Sentinel<span>Trade</span></div>
+  <div class="nav-badge">Accès anticipé</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Intelligence comportementale pour traders</div>
+  <h1>Tu ne vois pas<br>quand tu dérailles.<br><em>Lui si.</em></h1>
+  <p class="hero-sub">SentinelTrade détecte tes comportements dangereux en temps réel — avant que le tilt, le revenge trading ou une décision émotionnelle ne détruise ta session. Futures, CFD, forex, crypto — peu importe l'instrument.</p>
+  <div class="waitlist-form" id="form-container">
+    <input type="email" id="email-input" placeholder="ton@email.com" />
+    <button class="btn-primary" onclick="handleSubmit()">Rejoindre la liste</button>
+  </div>
+  <div class="success-msg" id="success-msg">Tu es sur la liste. On te contacte dès que l'accès anticipé ouvre.</div>
+  <p class="form-note">Pas de spam. Prix accès anticipé garanti à l'inscription.</p>
+</div>
+
+<div class="stats-row">
+  <div class="stat"><div class="stat-num">8</div><div class="stat-label">Comportements détectés</div></div>
+  <div class="stat"><div class="stat-num">3</div><div class="stat-label">Niveaux d'alerte</div></div>
+  <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Automatique</div></div>
+</div>
+
+<div class="section">
+  <div class="section-tag">Ce qu'on détecte</div>
+  <div class="section-title">Tes patterns,<br>avant qu'ils te coûtent</div>
+  <p class="section-desc">Chaque trader a une empreinte comportementale quand il commence à dérailler. SentinelTrade lit la tienne en temps réel — quelle que soit ta plateforme.</p>
+  <div class="behaviors-grid">
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <div class="behavior-name">Revenge sizing</div>
+      <div class="behavior-desc">Taille de position qui augmente après une perte — le chemin le plus court pour exploser une journée.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+      <div class="behavior-name">Règle de risque dépassée</div>
+      <div class="behavior-desc">Dépasser ton propre risk par trade — tes règles existent pour une raison.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/></svg></div>
+      <div class="behavior-name">Re-entrée immédiate</div>
+      <div class="behavior-desc">Reprendre un trade moins de 2 minutes après la sortie — impulsion, pas analyse.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg></div>
+      <div class="behavior-name">Série de pertes</div>
+      <div class="behavior-desc">3 pertes consécutives — le seuil où l'émotion commence à prendre le dessus sur le jugement.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="behavior-name">Alerte drawdown</div>
+      <div class="behavior-desc">Perte journalière qui approche ta limite — configurable selon ton capital et tes règles.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
+      <div class="behavior-name">Trade pendant les news</div>
+      <div class="behavior-desc">Entrée dans les 5 minutes d'un événement macro majeur — news + position = casino.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="behavior-name">Hors fenêtre de session</div>
+      <div class="behavior-desc">Prendre des trades en dehors de tes horaires définis — trades de fatigue ou d'ennui.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
+      <div class="behavior-name">Stop non respecté</div>
+      <div class="behavior-desc">Position tenue au-delà de ton stop habituel — l'espoir n'est pas une stratégie.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-tag">Comment ça marche</div>
+  <div class="section-title">Configure une fois.<br>Il veille toujours.</div>
+  <p class="section-desc">Aucune saisie manuelle. Aucune discipline supplémentaire requise. SentinelTrade se connecte à ta plateforme de trading et fait le reste.</p>
+  <div class="how-it-works">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Connecte ta plateforme</div>
+      <div class="step-desc">Lien direct avec ta plateforme de trading. Tes trades remontent automatiquement — rien à saisir manuellement.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Définis tes règles</div>
+      <div class="step-desc">Tes horaires de session, ton risk par trade, tes limites de drawdown. Tes règles, tes standards.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Trade. Reçois l'alerte.</div>
+      <div class="step-desc">Dès qu'un pattern dangereux est détecté, tu reçois une notification immédiate — avant que les dégâts soient faits.</div>
+    </div>
+  </div>
+  <div class="alert-demo">
+    <div class="alert-demo-label">Aperçu des alertes en direct</div>
+    <div class="alert-item alert-l1">
+      <div class="alert-dot dot-l1"></div>
+      <div class="alert-text"><strong>Attention — re-entrée détectée</strong><span>Trade ouvert 90 secondes après la dernière sortie. Prends une pause.</span></div>
+      <div class="alert-badge badge-l1">Niveau 1</div>
+    </div>
+    <div class="alert-item alert-l2">
+      <div class="alert-dot dot-l2"></div>
+      <div class="alert-text"><strong>3 pertes consécutives</strong><span>Tu es à ton seuil de série. Pause recommandée.</span></div>
+      <div class="alert-badge badge-l2">Niveau 2</div>
+    </div>
+    <div class="alert-item alert-l3">
+      <div class="alert-dot dot-l3"></div>
+      <div class="alert-text"><strong>Stop maintenant. Ferme la plateforme.</strong><span>Drawdown critique + série de pertes + revenge sizing détectés simultanément.</span></div>
+      <div class="alert-badge badge-l3">Niveau 3</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-tag">Tarif</div>
+  <div class="section-title">Simple.<br>Rentabilisé au premier trade évité.</div>
+  <div class="pricing">
+    <div class="early-badge">Accès anticipé</div>
+    <div class="pricing-price"><sup>€</sup>19<sub>/mois</sub></div>
+    <div class="pricing-note">Prix accès anticipé garanti à vie</div>
+    <ul class="pricing-features">
+      <li><span class="check">+</span> Les 8 détections comportementales</li>
+      <li><span class="check">+</span> Alertes temps réel (push + desktop)</li>
+      <li><span class="check">+</span> Compatible toutes plateformes</li>
+      <li><span class="check">+</span> Seuils configurables selon tes règles</li>
+      <li><span class="check">+</span> Support multi-comptes</li>
+      <li><span class="check">+</span> Dashboard de performance de session</li>
+    </ul>
+    <button class="btn-primary" style="width: 100%; padding: 16px;" onclick="document.getElementById('email-input').focus(); window.scrollTo({top:0, behavior:'smooth'})">Rejoindre la liste d'attente</button>
+  </div>
+  <p class="tagline">SentinelTrade ne remplace pas l'expérience. Il te protège pendant que tu la construis.</p>
+</div>
+
+<footer>© 2026 SentinelTrade — Tous droits réservés</footer>
+
+<script>
+function handleSubmit() {
+  const email = document.getElementById('email-input').value;
+  if (!email || !email.includes('@')) {
+    document.getElementById('email-input').style.borderColor = 'rgba(220,50,30,0.5)';
+    return;
+  }
+  document.getElementById('form-container').style.display = 'none';
+  document.getElementById('success-msg').style.display = 'block';
+}
+</script>
+</body>
+</html>
