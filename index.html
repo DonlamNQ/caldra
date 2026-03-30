@@ -1,177 +1,791 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Caldra — Tu ne vois pas quand tu dérailles. Lui si.</title>
-<meta name="description" content="Caldra détecte tes comportements dangereux en temps réel — avant que le tilt, le revenge trading ou une décision émotionnelle ne détruise ta session." />
+<title>Caldra — Your trading sentinel. It sees what you don't.</title>
+<meta name="description" content="Caldra detects your dangerous trading patterns in real time — before tilt, revenge trading, or emotional decisions destroy your session." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'DM Sans', sans-serif; background: #0a0a0f; color: #e8e6e0; min-height: 100vh; overflow-x: hidden; }
-  .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; }
-  .glow { position: fixed; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(220,80,60,0.08) 0%, transparent 70%); top: -200px; left: 50%; transform: translateX(-50%); pointer-events: none; }
-  nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 3rem; border-bottom: 0.5px solid rgba(255,255,255,0.08); }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --red: #dc503c;
+    --red-dim: rgba(220,80,60,0.15);
+    --red-border: rgba(220,80,60,0.25);
+    --bg: #08080d;
+    --bg-card: #0d0d14;
+    --bg-card2: #111118;
+    --border: rgba(255,255,255,0.07);
+    --text: #e4e2dc;
+    --muted: rgba(228,226,220,0.4);
+    --muted2: rgba(228,226,220,0.2);
+    --yellow: #f5c842;
+    --orange: #e08020;
+    --green: #2ecc80;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND ── */
+  .bg-grid {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .bg-glow-top {
+    position: fixed; width: 700px; height: 700px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(220,80,60,0.07) 0%, transparent 65%);
+    top: -300px; left: 50%; transform: translateX(-50%);
+    pointer-events: none; z-index: 0;
+  }
+  .bg-glow-bottom {
+    position: fixed; width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(80,120,220,0.04) 0%, transparent 65%);
+    bottom: -200px; right: -100px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.5rem 3rem;
+    border-bottom: 0.5px solid var(--border);
+    backdrop-filter: blur(12px);
+    background: rgba(8,8,13,0.6);
+    position: sticky; top: 0;
+  }
   .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; color: #fff; }
-  .logo span { color: #dc503c; }
-  .nav-badge { font-size: 11px; padding: 4px 12px; border: 0.5px solid rgba(220,80,60,0.4); border-radius: 100px; color: #dc503c; letter-spacing: 1px; text-transform: uppercase; }
-  .hero { position: relative; text-align: center; padding: 8rem 2rem 5rem; max-width: 820px; margin: 0 auto; }
-  .hero-tag { display: inline-block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(220,80,60,0.8); margin-bottom: 2rem; padding: 6px 16px; border: 0.5px solid rgba(220,80,60,0.2); border-radius: 100px; background: rgba(220,80,60,0.05); }
-  h1 { font-family: 'Syne', sans-serif; font-size: clamp(2.6rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.05; letter-spacing: -2px; color: #fff; margin-bottom: 1.5rem; }
-  h1 em { font-style: normal; color: #dc503c; }
-  .hero-sub { font-size: 17px; color: rgba(232,230,224,0.55); line-height: 1.7; max-width: 580px; margin: 0 auto 2.5rem; font-weight: 300; }
-  .waitlist-form { display: flex; gap: 8px; max-width: 460px; margin: 0 auto 1rem; }
-  .waitlist-form input { flex: 1; padding: 14px 20px; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
-  .waitlist-form input::placeholder { color: rgba(255,255,255,0.25); }
-  .waitlist-form input:focus { border-color: rgba(220,80,60,0.5); }
-  .btn-primary { padding: 14px 24px; background: #dc503c; border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; white-space: nowrap; transition: opacity 0.2s, transform 0.1s; }
+  .logo span { color: var(--red); }
+  .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-badge {
+    font-size: 11px; padding: 4px 12px;
+    border: 0.5px solid var(--red-border); border-radius: 100px;
+    color: var(--red); letter-spacing: 1px; text-transform: uppercase;
+  }
+  .nav-link { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .nav-link:hover { color: var(--text); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative; z-index: 1;
+    text-align: center; padding: 7rem 2rem 4rem;
+    max-width: 860px; margin: 0 auto;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(220,80,60,0.85); margin-bottom: 2rem;
+    padding: 6px 16px; border: 0.5px solid var(--red-border);
+    border-radius: 100px; background: var(--red-dim);
+  }
+  .eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.8rem, 6.5vw, 5rem);
+    font-weight: 800; line-height: 1.02; letter-spacing: -2.5px;
+    color: #fff; margin-bottom: 1.5rem;
+  }
+  h1 em { font-style: normal; color: var(--red); }
+  h1 .line2 { display: block; color: rgba(255,255,255,0.55); font-size: 0.82em; }
+
+  .hero-sub {
+    font-size: 17px; color: var(--muted); line-height: 1.75;
+    max-width: 560px; margin: 0 auto 2.5rem; font-weight: 300;
+  }
+  .hero-sub strong { color: var(--text); font-weight: 400; }
+
+  /* ── FORM ── */
+  .waitlist-wrap { max-width: 480px; margin: 0 auto; }
+  .waitlist-form {
+    display: flex; gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 6px;
+  }
+  .waitlist-form input {
+    flex: 1; padding: 12px 16px;
+    background: transparent; border: none;
+    color: #fff; font-size: 14px;
+    font-family: 'DM Sans', sans-serif; outline: none;
+  }
+  .waitlist-form input::placeholder { color: var(--muted2); }
+  .btn-primary {
+    padding: 12px 22px; background: var(--red);
+    border: none; border-radius: 6px; color: #fff;
+    font-size: 13px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    white-space: nowrap; transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.2px;
+  }
   .btn-primary:hover { opacity: 0.88; }
-  .btn-primary:active { transform: scale(0.98); }
-  .form-note { font-size: 12px; color: rgba(255,255,255,0.2); margin-top: 0.5rem; }
-  .success-msg { display: none; padding: 14px 24px; background: rgba(30,180,100,0.1); border: 0.5px solid rgba(30,180,100,0.3); border-radius: 8px; color: rgba(30,180,100,0.9); font-size: 14px; max-width: 460px; margin: 0 auto; text-align: center; }
-  .stats-row { display: flex; justify-content: center; gap: 3rem; padding: 3rem 2rem; border-top: 0.5px solid rgba(255,255,255,0.06); border-bottom: 0.5px solid rgba(255,255,255,0.06); max-width: 700px; margin: 0 auto; }
-  .stat { text-align: center; }
-  .stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -1px; }
-  .stat-label { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 4px; }
-  .section { position: relative; max-width: 900px; margin: 0 auto; padding: 5rem 2rem; }
-  .section-tag { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(220,80,60,0.6); margin-bottom: 1rem; }
-  .section-title { font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; letter-spacing: -1px; color: #fff; margin-bottom: 1rem; line-height: 1.1; }
-  .section-desc { font-size: 15px; color: rgba(232,230,224,0.45); line-height: 1.7; max-width: 520px; margin-bottom: 3rem; }
-  .behaviors-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(255,255,255,0.06); border: 0.5px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
-  .behavior-card { background: #0e0e14; padding: 1.5rem; transition: background 0.2s; }
-  .behavior-card:hover { background: #121218; }
-  .behavior-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(220,80,60,0.1); border: 0.5px solid rgba(220,80,60,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
-  .behavior-icon svg { width: 16px; height: 16px; stroke: #dc503c; fill: none; stroke-width: 1.5; }
+  .btn-primary:active { transform: scale(0.97); }
+  .form-note { font-size: 12px; color: var(--muted2); margin-top: 0.75rem; text-align: center; }
+  .success-msg {
+    display: none; padding: 14px 20px;
+    background: rgba(46,204,128,0.08);
+    border: 0.5px solid rgba(46,204,128,0.25);
+    border-radius: 8px; color: rgba(46,204,128,0.9);
+    font-size: 14px; text-align: center; margin-top: 1rem;
+  }
+
+  /* ── STATS ── */
+  .stats-row {
+    position: relative; z-index: 1;
+    display: flex; justify-content: center; gap: 0;
+    max-width: 680px; margin: 4rem auto 0;
+    border: 0.5px solid var(--border); border-radius: 12px;
+    overflow: hidden; background: var(--bg-card);
+  }
+  .stat {
+    flex: 1; text-align: center; padding: 1.5rem 1rem;
+    border-right: 0.5px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Syne', sans-serif; font-size: 30px;
+    font-weight: 700; color: #fff; letter-spacing: -1px;
+  }
+  .stat-num span { color: var(--red); }
+  .stat-label { font-size: 12px; color: var(--muted2); margin-top: 4px; }
+
+  /* ── SECTIONS ── */
+  .section {
+    position: relative; z-index: 1;
+    max-width: 960px; margin: 0 auto; padding: 6rem 2rem;
+  }
+  .section-tag {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(220,80,60,0.6); margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.9rem, 4vw, 3rem);
+    font-weight: 700; letter-spacing: -1.2px; color: #fff;
+    margin-bottom: 1rem; line-height: 1.08;
+  }
+  .section-desc {
+    font-size: 15px; color: var(--muted); line-height: 1.75;
+    max-width: 520px; margin-bottom: 3rem; font-weight: 300;
+  }
+  .divider {
+    border: none; border-top: 0.5px solid var(--border);
+    max-width: 960px; margin: 0 auto;
+  }
+
+  /* ── BEHAVIORS ── */
+  .behaviors-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1px; background: var(--border);
+    border: 0.5px solid var(--border); border-radius: 12px; overflow: hidden;
+  }
+  .behavior-card {
+    background: var(--bg-card); padding: 1.6rem;
+    transition: background 0.25s;
+    cursor: default;
+  }
+  .behavior-card:hover { background: var(--bg-card2); }
+  .behavior-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--red-dim); border: 0.5px solid var(--red-border);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;
+  }
+  .behavior-icon svg { width: 16px; height: 16px; stroke: var(--red); fill: none; stroke-width: 1.5; }
   .behavior-name { font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 0.4rem; }
-  .behavior-desc { font-size: 12px; color: rgba(255,255,255,0.3); line-height: 1.5; }
-  .how-it-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 2rem; }
-  .step { padding-top: 1rem; }
-  .step-num { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: rgba(220,80,60,0.12); line-height: 1; margin-bottom: 1rem; letter-spacing: -2px; }
+  .behavior-desc { font-size: 12px; color: var(--muted2); line-height: 1.55; }
+
+  /* ── INTERACTIVE DEMO ── */
+  .demo-wrapper {
+    background: var(--bg-card);
+    border: 0.5px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+    margin-top: 2rem;
+  }
+  .demo-topbar {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 0.5px solid var(--border);
+    background: rgba(0,0,0,0.3);
+  }
+  .demo-dots { display: flex; gap: 6px; }
+  .demo-dots span {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+  }
+  .demo-dots span:nth-child(1) { background: #ff5f57; }
+  .demo-dots span:nth-child(2) { background: #febc2e; }
+  .demo-dots span:nth-child(3) { background: #28c840; }
+  .demo-title { font-size: 12px; color: var(--muted2); flex: 1; text-align: center; letter-spacing: 0.5px; }
+  .demo-live { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--red); letter-spacing: 1px; text-transform: uppercase; }
+  .demo-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulse 1.5s infinite; }
+
+  .demo-body { display: grid; grid-template-columns: 1fr 1fr; min-height: 380px; }
+
+  /* left panel: session feed */
+  .demo-feed {
+    padding: 1.5rem; border-right: 0.5px solid var(--border);
+    overflow: hidden;
+  }
+  .demo-feed-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); margin-bottom: 1rem; }
+  .trade-list { display: flex; flex-direction: column; gap: 6px; }
+  .trade-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(255,255,255,0.05);
+    font-size: 12px;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity 0.35s, transform 0.35s;
+  }
+  .trade-row.visible { opacity: 1; transform: translateY(0); }
+  .trade-row.flagged { border-color: rgba(220,80,60,0.3); background: rgba(220,80,60,0.05); }
+  .trade-time { color: var(--muted2); font-size: 11px; min-width: 42px; }
+  .trade-symbol { color: #fff; font-weight: 500; min-width: 36px; }
+  .trade-dir { font-size: 11px; padding: 2px 6px; border-radius: 4px; }
+  .dir-long { background: rgba(46,204,128,0.1); color: var(--green); }
+  .dir-short { background: rgba(220,80,60,0.1); color: var(--red); }
+  .trade-pnl { margin-left: auto; font-weight: 500; }
+  .pnl-pos { color: var(--green); }
+  .pnl-neg { color: var(--red); }
+  .trade-flag { font-size: 10px; color: var(--red); margin-left: 4px; }
+
+  /* right panel: score + alerts */
+  .demo-right { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem; }
+
+  .score-block { }
+  .score-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); margin-bottom: 0.75rem; }
+  .score-bar-wrap { height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem; }
+  .score-bar {
+    height: 100%; border-radius: 3px;
+    background: var(--green);
+    width: 92%;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1), background 1s;
+  }
+  .score-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -1px; }
+  .score-value span { font-size: 14px; font-weight: 400; color: var(--muted2); letter-spacing: 0; }
+  .score-status { font-size: 12px; color: var(--green); margin-top: 2px; transition: color 1s; }
+
+  .alerts-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); }
+  .alerts-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .alert-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px; border-radius: 8px;
+    border: 0.5px solid transparent;
+    opacity: 0; transform: translateX(8px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .alert-item.visible { opacity: 1; transform: translateX(0); }
+  .alert-l1 { background: rgba(245,200,66,0.05); border-color: rgba(245,200,66,0.15); }
+  .alert-l2 { background: rgba(224,128,32,0.06); border-color: rgba(224,128,32,0.2); }
+  .alert-l3 { background: rgba(220,50,30,0.08); border-color: rgba(220,50,30,0.25); }
+  .alert-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot-l1 { background: var(--yellow); }
+  .dot-l2 { background: var(--orange); }
+  .dot-l3 { background: var(--red); animation: pulse 1s infinite; }
+  .alert-body { flex: 1; }
+  .alert-body strong { font-size: 12px; font-weight: 500; color: #fff; display: block; margin-bottom: 2px; }
+  .alert-body span { font-size: 11px; color: var(--muted2); line-height: 1.4; }
+  .alert-badge { font-size: 10px; padding: 2px 7px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; margin-top: 2px; }
+  .badge-l1 { background: rgba(245,200,66,0.12); color: var(--yellow); }
+  .badge-l2 { background: rgba(224,128,32,0.12); color: var(--orange); }
+  .badge-l3 { background: rgba(220,50,30,0.15); color: var(--red); }
+
+  .demo-replay {
+    margin-top: 0.5rem; padding: 8px 16px;
+    background: transparent; border: 0.5px solid var(--border);
+    border-radius: 6px; color: var(--muted2); font-size: 12px;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    transition: border-color 0.2s, color 0.2s; align-self: flex-start;
+  }
+  .demo-replay:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+  /* ── HOW IT WORKS ── */
+  .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
+  .step { }
+  .step-num {
+    font-family: 'Syne', sans-serif; font-size: 56px; font-weight: 800;
+    color: rgba(220,80,60,0.1); line-height: 1; margin-bottom: 1.2rem; letter-spacing: -3px;
+  }
   .step-title { font-size: 15px; font-weight: 500; color: #fff; margin-bottom: 0.5rem; }
-  .step-desc { font-size: 13px; color: rgba(255,255,255,0.3); line-height: 1.6; }
-  .alert-demo { background: #0e0e14; border: 0.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 2rem; margin-top: 3rem; }
-  .alert-demo-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 1.5rem; }
-  .alert-item { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 1rem; border-radius: 8px; margin-bottom: 0.5rem; border: 0.5px solid transparent; }
-  .alert-l1 { background: rgba(255,200,0,0.05); border-color: rgba(255,200,0,0.1); }
-  .alert-l2 { background: rgba(220,130,0,0.06); border-color: rgba(220,130,0,0.15); }
-  .alert-l3 { background: rgba(220,50,30,0.08); border-color: rgba(220,50,30,0.2); }
-  .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .dot-l1 { background: #ffc800; }
-  .dot-l2 { background: #dc8200; }
-  .dot-l3 { background: #dc3218; }
-  .alert-text { flex: 1; font-size: 13px; }
-  .alert-text strong { color: #fff; font-weight: 500; display: block; margin-bottom: 2px; }
-  .alert-text span { color: rgba(255,255,255,0.3); font-size: 12px; }
-  .alert-badge { font-size: 10px; padding: 3px 8px; border-radius: 100px; letter-spacing: 0.5px; text-transform: uppercase; }
-  .badge-l1 { background: rgba(255,200,0,0.1); color: #ffc800; }
-  .badge-l2 { background: rgba(220,130,0,0.1); color: #dc8200; }
-  .badge-l3 { background: rgba(220,50,30,0.12); color: #dc3218; }
-  .pricing { background: #0e0e14; border: 0.5px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 3rem; text-align: center; max-width: 420px; margin: 0 auto; }
-  .early-badge { display: inline-block; padding: 4px 12px; background: rgba(220,80,60,0.1); border: 0.5px solid rgba(220,80,60,0.2); border-radius: 100px; font-size: 11px; color: #dc503c; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2rem; }
-  .pricing-price { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: #fff; letter-spacing: -2px; line-height: 1; margin-bottom: 0.25rem; }
-  .pricing-price sup { font-size: 24px; vertical-align: super; }
-  .pricing-price sub { font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.3); letter-spacing: 0; }
-  .pricing-note { font-size: 13px; color: rgba(255,255,255,0.2); margin-bottom: 2rem; }
-  .pricing-features { list-style: none; text-align: left; margin-bottom: 2rem; }
-  .pricing-features li { font-size: 14px; color: rgba(255,255,255,0.5); padding: 0.5rem 0; border-bottom: 0.5px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 0.75rem; }
-  .pricing-features li:last-child { border-bottom: none; }
-  .check { color: #dc503c; }
-  .tagline { text-align: center; margin-top: 1.5rem; font-size: 13px; color: rgba(255,255,255,0.2); font-style: italic; }
-  footer { border-top: 0.5px solid rgba(255,255,255,0.06); padding: 2rem 3rem; text-align: center; color: rgba(255,255,255,0.12); font-size: 12px; }
-  @media (max-width: 700px) {
-    nav { padding: 1.5rem; }
-    .behaviors-grid { grid-template-columns: 1fr; }
-    .how-it-works { grid-template-columns: 1fr; }
-    .stats-row { gap: 1.5rem; }
-    .waitlist-form { flex-direction: column; }
-    .pricing { padding: 2rem 1.5rem; }
+  .step-desc { font-size: 13px; color: var(--muted2); line-height: 1.65; }
+
+  /* ── SOCIAL PROOF ── */
+  .testimonials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .testi-card {
+    background: var(--bg-card); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 1.5rem;
+  }
+  .testi-stars { color: var(--yellow); font-size: 12px; margin-bottom: 0.75rem; letter-spacing: 2px; }
+  .testi-text { font-size: 13px; color: var(--muted); line-height: 1.65; margin-bottom: 1rem; font-style: italic; }
+  .testi-author { font-size: 12px; color: var(--muted2); }
+  .testi-author strong { color: var(--text); font-weight: 500; display: block; }
+
+  /* ── PRICING ── */
+  .pricing-card {
+    background: var(--bg-card); border: 0.5px solid var(--border);
+    border-radius: 16px; padding: 3rem; max-width: 440px; margin: 0 auto;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .pricing-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(220,80,60,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .early-badge {
+    display: inline-block; padding: 4px 14px;
+    background: var(--red-dim); border: 0.5px solid var(--red-border);
+    border-radius: 100px; font-size: 11px; color: var(--red);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2rem;
+  }
+  .pricing-price {
+    font-family: 'Syne', sans-serif; font-size: 58px;
+    font-weight: 800; color: #fff; letter-spacing: -3px;
+    line-height: 1; margin-bottom: 0.25rem;
+  }
+  .pricing-price sup { font-size: 26px; vertical-align: super; letter-spacing: 0; }
+  .pricing-price sub { font-size: 16px; font-weight: 400; color: var(--muted2); letter-spacing: 0; }
+  .pricing-note { font-size: 13px; color: var(--muted2); margin-bottom: 2.5rem; }
+  .pricing-features { list-style: none; text-align: left; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .pricing-features li { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  .check { color: var(--red); font-weight: 600; font-size: 16px; }
+  .pricing-tagline { font-size: 12px; color: var(--muted2); margin-top: 1.5rem; font-style: italic; }
+
+  /* ── FINAL CTA ── */
+  .final-cta {
+    position: relative; z-index: 1;
+    text-align: center; padding: 6rem 2rem;
+    border-top: 0.5px solid var(--border);
+  }
+  .final-cta h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800; letter-spacing: -2px; color: #fff;
+    margin-bottom: 1rem; line-height: 1.05;
+  }
+  .final-cta h2 em { font-style: normal; color: var(--red); }
+  .final-cta p { font-size: 16px; color: var(--muted); margin-bottom: 2.5rem; }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative; z-index: 1;
+    text-align: center; padding: 2rem;
+    border-top: 0.5px solid var(--border);
+    font-size: 12px; color: var(--muted2);
+  }
+
+  /* ── ANIMATIONS ── */
+  .fade-in {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 768px) {
+    nav { padding: 1.2rem 1.5rem; }
+    .nav-link { display: none; }
+    .hero { padding: 5rem 1.5rem 3rem; }
+    .behaviors-grid { grid-template-columns: 1fr 1fr; }
+    .demo-body { grid-template-columns: 1fr; }
+    .demo-feed { border-right: none; border-bottom: 0.5px solid var(--border); }
+    .steps-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .testimonials { grid-template-columns: 1fr; }
+    .stats-row { flex-wrap: wrap; }
   }
 </style>
 </head>
 <body>
-<div class="grid-bg"></div>
-<div class="glow"></div>
+
+<div class="bg-grid"></div>
+<div class="bg-glow-top"></div>
+<div class="bg-glow-bottom"></div>
+
+<!-- NAV -->
 <nav>
-  <div class="logo">Cald<span>ra</span></div>
-  <div class="nav-badge">Accès anticipé</div>
+  <div class="logo">Cal<span>dra</span></div>
+  <div class="nav-right">
+    <a href="#demo" class="nav-link">Demo</a>
+    <a href="#pricing" class="nav-link">Pricing</a>
+    <div class="nav-badge">Early Access</div>
+  </div>
 </nav>
+
+<!-- HERO -->
 <div class="hero">
-  <div class="hero-tag">Intelligence comportementale pour traders</div>
-  <h1>Tu ne vois pas<br>quand tu dérailles.<br><em>Lui si.</em></h1>
-  <p class="hero-sub">Caldra détecte tes comportements dangereux en temps réel — avant que le tilt, le revenge trading ou une décision émotionnelle ne détruise ta session. Futures, CFD, forex, crypto — peu importe l'instrument.</p>
+  <div class="hero-eyebrow">
+    <span class="eyebrow-dot"></span>
+    Behavioral AI for traders
+  </div>
+  <h1>
+    You don't see<br><em>when you're breaking.</em>
+    <span class="line2">Caldra does.</span>
+  </h1>
+  <p class="hero-sub">
+    Caldra monitors your trading behavior in real time —
+    detecting <strong>tilt, revenge sizing, emotional re-entries</strong>
+    and 6 other dangerous patterns before they destroy your session.
+  </p>
 
-  <form id="sib-form" method="POST" action="https://a806dab9.sibforms.com/serve/MUIFANoJA13XoDD-YU3gz-iJOwWo-c9SqObOFk1Qa9n60DzwU189XDDxTThw0He7q94l9Q8HxA9ONRpQkCJ1H6RSu8t2tfqa0qQ3pCYb8fl5Z4sOm160PnRRimX972hYp2NFf9ivyszl0PkR8Osor-V3Sb1uKEopust0j4-ntBN7aV9lgtMLIVf64TtwNyvf3ACh7UNRAYn6xoe8MQ==" id="form-container">
-    <div class="waitlist-form">
-      <input type="text" id="EMAIL" name="EMAIL" autocomplete="off" placeholder="ton@email.com" data-required="true" required />
-      <button type="submit" class="btn-primary">Rejoindre la liste</button>
-    </div>
-    <input type="text" name="email_address_check" value="" style="display:none">
-    <input type="hidden" name="locale" value="fr">
-    <input type="hidden" name="html_type" value="simple">
-  </form>
-  <div class="success-msg" id="success-msg">Tu es sur la liste. On te contacte dès que l'accès anticipé ouvre.</div>
-  <p class="form-note">Pas de spam. Prix accès anticipé garanti à l'inscription.</p>
+  <div class="waitlist-wrap">
+    <form id="waitlist-form" action="https://b5b2c5a0.sibforms.com/serve/MUIFANWAl0Ei2oQb-iFZ2tOSLbA93hEuGT_87k40jRAPX4xJPDTh2bqrQbTJqjLZ0cFRz0Vu2mFCMCKaTe9Fzijw_gG9uyvIbYR-AJ7mKk8SBUDJvDK4DaHkfp41iqfN1H7XwAVBfHtj_H-xjNAQwO9s0h3vSb1BX0UW-wC6MmI_0yCEZ6iD6kS6i5oXXxfGRvz1s1F3X6lO" method="POST" data-type="subscription">
+      <div class="waitlist-form">
+        <input type="email" id="EMAIL" name="EMAIL" placeholder="your@email.com" required autocomplete="off" />
+        <button type="submit" class="btn-primary">Join waitlist</button>
+      </div>
+      <input type="text" name="email_address_check" value="" style="display:none">
+      <input type="hidden" name="locale" value="en">
+    </form>
+    <div class="success-msg" id="success-msg">You're on the list. Early access price locked.</div>
+    <p class="form-note">No spam. Early access price guaranteed at sign-up.</p>
+  </div>
 </div>
 
-<div class="stats-row">
-  <div class="stat"><div class="stat-num">9</div><div class="stat-label">Comportements détectés</div></div>
-  <div class="stat"><div class="stat-num">3</div><div class="stat-label">Niveaux d'alerte</div></div>
-  <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Automatique</div></div>
+<!-- STATS -->
+<div class="stats-row fade-in">
+  <div class="stat">
+    <div class="stat-num">9<span>+</span></div>
+    <div class="stat-label">Patterns detected</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">3</div>
+    <div class="stat-label">Alert severity levels</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">100<span>%</span></div>
+    <div class="stat-label">Automated</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">&lt;1<span>s</span></div>
+    <div class="stat-label">Detection latency</div>
+  </div>
 </div>
 
-<div class="section">
-  <div class="section-tag">Ce qu'on détecte</div>
-  <div class="section-title">Tes patterns,<br>avant qu'ils te coûtent</div>
-  <p class="section-desc">Chaque trader a une empreinte comportementale quand il commence à dérailler. Caldra lit la tienne en temps réel — quelle que soit ta plateforme.</p>
+<hr class="divider" style="margin-top:5rem">
+
+<!-- BEHAVIORS -->
+<div class="section fade-in">
+  <div class="section-tag">What we detect</div>
+  <div class="section-title">Your patterns,<br>before they cost you.</div>
+  <p class="section-desc">Every trader has a behavioral fingerprint when they start to derail. Caldra reads yours in real time — whatever platform you trade on.</p>
   <div class="behaviors-grid">
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div class="behavior-name">Revenge sizing</div><div class="behavior-desc">Taille de position qui augmente après une perte — le chemin le plus court pour exploser une journée.</div></div>
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="behavior-name">Règle de risque dépassée</div><div class="behavior-desc">Dépasser ton propre risk par trade — tes règles existent pour une raison.</div></div>
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/></svg></div><div class="behavior-name">Re-entrée immédiate</div><div class="behavior-desc">Reprendre un trade moins de 2 minutes après la sortie — impulsion, pas analyse.</div></div>
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg></div><div class="behavior-name">Série de pertes</div><div class="behavior-desc">3 pertes consécutives — le seuil où l'émotion commence à prendre le dessus sur le jugement.</div></div>
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div class="behavior-name">Alerte drawdown</div><div class="behavior-desc">Perte journalière qui approche ta limite — configurable selon ton capital et tes règles.</div></div>
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div><div class="behavior-name">Trade pendant les news</div><div class="behavior-desc">Entrée dans les 5 minutes d'un événement macro majeur — news + position = casino.</div></div>
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="behavior-name">Hors fenêtre de session</div><div class="behavior-desc">Prendre des trades en dehors de tes horaires définis — trades de fatigue ou d'ennui.</div></div>
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div><div class="behavior-name">Stop non respecté</div><div class="behavior-desc">Position tenue au-delà de ton stop habituel — l'espoir n'est pas une stratégie.</div></div>
-    <div class="behavior-card"><div class="behavior-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="behavior-name">Suractivité de session</div><div class="behavior-desc">Nombre de trades qui explose au-delà de ta moyenne — quand tu trades plus, tu trades souvent pire.</div></div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <div class="behavior-name">Revenge sizing</div>
+      <div class="behavior-desc">Position size increasing after a loss — the fastest path to blowing a session.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+      <div class="behavior-name">Risk rule breach</div>
+      <div class="behavior-desc">Exceeding your own risk per trade — your rules exist for a reason.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/></svg></div>
+      <div class="behavior-name">Immediate re-entry</div>
+      <div class="behavior-desc">Entering a trade less than 2 minutes after closing — impulse, not analysis.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg></div>
+      <div class="behavior-name">Loss streak</div>
+      <div class="behavior-desc">3 consecutive losses — the threshold where emotion starts overriding judgment.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="behavior-name">Drawdown alert</div>
+      <div class="behavior-desc">Daily loss approaching your limit — configurable to your capital and risk rules.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
+      <div class="behavior-name">News window trade</div>
+      <div class="behavior-desc">Entering within 5 minutes of a major macro event — news + position = casino.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="behavior-name">Out-of-session trade</div>
+      <div class="behavior-desc">Trading outside your defined session window — fatigue or boredom trades.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
+      <div class="behavior-name">Stop violation</div>
+      <div class="behavior-desc">Position held beyond your usual stop — hope is not a trading strategy.</div>
+    </div>
+    <div class="behavior-card">
+      <div class="behavior-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div class="behavior-name">Session overtrading</div>
+      <div class="behavior-desc">Trade count exploding past your average — when you trade more, you trade worse.</div>
+    </div>
   </div>
 </div>
 
-<div class="section">
-  <div class="section-tag">Comment ça marche</div>
-  <div class="section-title">Configure une fois.<br>Il veille toujours.</div>
-  <p class="section-desc">Aucune saisie manuelle. Aucune discipline supplémentaire requise. Caldra se connecte à ta plateforme de trading et fait le reste.</p>
-  <div class="how-it-works">
-    <div class="step"><div class="step-num">01</div><div class="step-title">Connecte ta plateforme</div><div class="step-desc">Lien direct avec ta plateforme de trading. Tes trades remontent automatiquement — rien à saisir manuellement.</div></div>
-    <div class="step"><div class="step-num">02</div><div class="step-title">Définis tes règles</div><div class="step-desc">Tes horaires de session, ton risk par trade, tes limites de drawdown. Tes règles, tes standards.</div></div>
-    <div class="step"><div class="step-num">03</div><div class="step-title">Trade. Reçois l'alerte.</div><div class="step-desc">Dès qu'un pattern dangereux est détecté, tu reçois une notification immédiate — avant que les dégâts soient faits.</div></div>
-  </div>
-  <div class="alert-demo">
-    <div class="alert-demo-label">Aperçu des alertes en direct</div>
-    <div class="alert-item alert-l1"><div class="alert-dot dot-l1"></div><div class="alert-text"><strong>Attention — re-entrée détectée</strong><span>Trade ouvert 90 secondes après la dernière sortie. Prends une pause.</span></div><div class="alert-badge badge-l1">Niveau 1</div></div>
-    <div class="alert-item alert-l2"><div class="alert-dot dot-l2"></div><div class="alert-text"><strong>3 pertes consécutives</strong><span>Tu es à ton seuil de série. Pause recommandée.</span></div><div class="alert-badge badge-l2">Niveau 2</div></div>
-    <div class="alert-item alert-l3"><div class="alert-dot dot-l3"></div><div class="alert-text"><strong>Stop maintenant. Ferme la plateforme.</strong><span>Drawdown critique + série de pertes + revenge sizing détectés simultanément.</span></div><div class="alert-badge badge-l3">Niveau 3</div></div>
+<hr class="divider">
+
+<!-- DEMO -->
+<div class="section fade-in" id="demo">
+  <div class="section-tag">Live demo</div>
+  <div class="section-title">Watch Caldra<br>work in real time.</div>
+  <p class="section-desc">This is what your session dashboard looks like. Trades come in, patterns are detected instantly, alerts escalate as behavior deteriorates.</p>
+
+  <div class="demo-wrapper">
+    <div class="demo-topbar">
+      <div class="demo-dots"><span></span><span></span><span></span></div>
+      <div class="demo-title">caldra.io — Session Monitor</div>
+      <div class="demo-live"><span class="demo-live-dot"></span> LIVE</div>
+    </div>
+    <div class="demo-body">
+      <div class="demo-feed">
+        <div class="demo-feed-title">Session feed — NQ / ES</div>
+        <div class="trade-list" id="trade-list"></div>
+      </div>
+      <div class="demo-right">
+        <div class="score-block">
+          <div class="score-label">Behavior Score</div>
+          <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
+          <div class="score-value" id="score-value">92 <span>/ 100</span></div>
+          <div class="score-status" id="score-status">✓ Session under control</div>
+        </div>
+        <div>
+          <div class="alerts-label">Alerts</div>
+          <div class="alerts-list" id="alerts-list">
+            <div style="font-size:12px;color:var(--muted2);margin-top:0.5rem">No alerts yet...</div>
+          </div>
+        </div>
+        <button class="demo-replay" id="replay-btn">↺ Replay demo</button>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="section">
-  <div class="section-tag">Tarif</div>
-  <div class="section-title">Simple.<br>Rentabilisé au premier trade évité.</div>
-  <div class="pricing">
-    <div class="early-badge">Accès anticipé</div>
-    <div class="pricing-price"><sup>€</sup>19<sub>/mois</sub></div>
-    <div class="pricing-note">Prix accès anticipé garanti à vie</div>
+<hr class="divider">
+
+<!-- HOW IT WORKS -->
+<div class="section fade-in">
+  <div class="section-tag">How it works</div>
+  <div class="section-title">Configure once.<br>It watches always.</div>
+  <p class="section-desc">No manual input. No extra discipline required. Caldra connects to your trading platform and does the rest.</p>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Connect your platform</div>
+      <div class="step-desc">Direct integration with your broker or prop firm platform. Trades sync automatically — nothing to enter manually.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Set your rules</div>
+      <div class="step-desc">Your session window, risk per trade, drawdown limits. Your rules, your standards. Caldra enforces what you already know.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Trade. Get alerted.</div>
+      <div class="step-desc">The moment a dangerous pattern fires, you receive an immediate notification — before the damage compounds.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- TESTIMONIALS -->
+<div class="section fade-in">
+  <div class="section-tag">Early users</div>
+  <div class="section-title">Traders who got<br>early access say:</div>
+  <div class="testimonials">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"The revenge sizing alert alone saved me from blowing my Apex evaluation. I didn't even realize I was doing it until Caldra flagged it."</p>
+      <div class="testi-author"><strong>Marcus R.</strong>Prop trader — Apex Funding</div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"I've tried journaling, alarms, sticky notes. Nothing worked. Caldra is the first thing that actually interrupted my cascade pattern mid-session."</p>
+      <div class="testi-author"><strong>Léa T.</strong>Futures trader — NQ/ES</div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"As a trading coach, I recommend Caldra to every student. The behavioral data it generates is more useful than any journal they'd keep themselves."</p>
+      <div class="testi-author"><strong>James K.</strong>Trading coach — 40+ students</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- PRICING -->
+<div class="section fade-in" id="pricing">
+  <div class="section-tag">Pricing</div>
+  <div class="section-title">Simple.<br>Worth it on the first trade saved.</div>
+  <div class="pricing-card">
+    <div class="early-badge">Early Access</div>
+    <div class="pricing-price"><sup>$</sup>19<sub>/mo</sub></div>
+    <div class="pricing-note">Early access price locked for life at sign-up</div>
     <ul class="pricing-features">
-      <li><span class="check">+</span> Les 9 détections comportementales</li>
-      <li><span class="check">+</span> Alertes temps réel (push + desktop)</li>
-      <li><span class="check">+</span> Compatible toutes plateformes</li>
-      <li><span class="check">+</span> Seuils configurables selon tes règles</li>
-      <li><span class="check">+</span> Support multi-comptes</li>
-      <li><span class="check">+</span> Dashboard de performance de session</li>
+      <li><span class="check">+</span> All 9 behavioral detections</li>
+      <li><span class="check">+</span> Real-time alerts (push + desktop + email)</li>
+      <li><span class="check">+</span> Compatible with all major platforms</li>
+      <li><span class="check">+</span> Configurable thresholds per your rules</li>
+      <li><span class="check">+</span> Multi-account support</li>
+      <li><span class="check">+</span> Session performance dashboard</li>
+      <li><span class="check">+</span> Weekly behavioral report</li>
     </ul>
+    <button class="btn-primary" style="width:100%;padding:16px" onclick="document.getElementById('EMAIL').focus();document.getElementById('EMAIL').scrollIntoView({behavior:'smooth'})">
+      Join early access — $19/mo
+    </button>
+    <p class="pricing-tagline">Caldra doesn't replace experience. It protects you while you build it.</p>
   </div>
-  <p class="tagline">Caldra ne remplace pas l'expérience. Il te protège pendant que tu la construis.</p>
 </div>
 
-<footer>© 2026 Caldra — Tous droits réservés</footer>
+<!-- FINAL CTA -->
+<div class="final-cta fade-in">
+  <h2>Your next blown session<br>is <em>preventable.</em></h2>
+  <p>Stop trading against yourself. Let Caldra watch your back.</p>
+  <div class="waitlist-wrap" style="max-width:440px;margin:0 auto">
+    <form action="https://b5b2c5a0.sibforms.com/serve/MUIFANWAl0Ei2oQb-iFZ2tOSLbA93hEuGT_87k40jRAPX4xJPDTh2bqrQbTJqjLZ0cFRz0Vu2mFCMCKaTe9Fzijw_gG9uyvIbYR-AJ7mKk8SBUDJvDK4DaHkfp41iqfN1H7XwAVBfHtj_H-xjNAQwO9s0h3vSb1BX0UW-wC6MmI_0yCEZ6iD6kS6i5oXXxfGRvz1s1F3X6lO" method="POST" data-type="subscription">
+      <div class="waitlist-form">
+        <input type="email" name="EMAIL" placeholder="your@email.com" required autocomplete="off" />
+        <button type="submit" class="btn-primary">Get early access</button>
+      </div>
+      <input type="text" name="email_address_check" value="" style="display:none">
+      <input type="hidden" name="locale" value="en">
+    </form>
+    <p class="form-note">No spam. Cancel anytime.</p>
+  </div>
+</div>
+
+<footer>© 2026 Caldra — All rights reserved · <a href="#" style="color:inherit;text-decoration:none">Privacy</a></footer>
+
+<script>
+// ── SCROLL ANIMATIONS ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── DEMO SIMULATION ──
+const trades = [
+  { time: '15:47', symbol: 'NQ', dir: 'long', pnl: '+$187', flagged: false },
+  { time: '15:52', symbol: 'ES', dir: 'short', pnl: '+$62', flagged: false },
+  { time: '15:58', symbol: 'NQ', dir: 'long', pnl: '-$240', flagged: false },
+  { time: '15:59', symbol: 'NQ', dir: 'short', pnl: '-$310', flagged: true, flag: '⚠ re-entry' },
+  { time: '16:03', symbol: 'NQ', dir: 'long', pnl: '-$480', flagged: true, flag: '⚠ revenge size' },
+];
+
+const alerts = [
+  { level: 1, cls: 'alert-l1', dot: 'dot-l1', badge: 'badge-l1',
+    title: 'Immediate re-entry detected',
+    desc: 'Trade opened 60s after last close. Slow down.',
+    label: 'Level 1' },
+  { level: 2, cls: 'alert-l2', dot: 'dot-l2', badge: 'badge-l2',
+    title: '2 consecutive losses',
+    desc: 'Loss streak building. Pause recommended.',
+    label: 'Level 2' },
+  { level: 3, cls: 'alert-l3', dot: 'dot-l3', badge: 'badge-l3',
+    title: 'STOP NOW — critical cascade',
+    desc: 'Revenge sizing + loss streak + re-entry detected simultaneously.',
+    label: 'Level 3' },
+];
+
+const scores = [92, 88, 74, 58, 31];
+const scoreColors = ['var(--green)', 'var(--green)', 'var(--yellow)', 'var(--orange)', 'var(--red)'];
+const scoreStatuses = ['✓ Session under control', '✓ Slight drift detected', '⚠ Deteriorating', '⚠ High risk', '✕ Stop trading now'];
+
+let step = 0;
+let interval = null;
+
+function renderTrade(trade, idx) {
+  const el = document.createElement('div');
+  el.className = 'trade-row' + (trade.flagged ? ' flagged' : '');
+  el.innerHTML = `
+    <span class="trade-time">${trade.time}</span>
+    <span class="trade-symbol">${trade.symbol}</span>
+    <span class="trade-dir ${trade.dir === 'long' ? 'dir-long' : 'dir-short'}">${trade.dir.toUpperCase()}</span>
+    <span class="trade-pnl ${trade.pnl.startsWith('+') ? 'pnl-pos' : 'pnl-neg'}">${trade.pnl}</span>
+    ${trade.flagged ? `<span class="trade-flag">${trade.flag}</span>` : ''}
+  `;
+  setTimeout(() => el.classList.add('visible'), 50);
+  return el;
+}
+
+function renderAlert(alert) {
+  const el = document.createElement('div');
+  el.className = `alert-item ${alert.cls}`;
+  el.innerHTML = `
+    <div class="alert-dot ${alert.dot}"></div>
+    <div class="alert-body">
+      <strong>${alert.title}</strong>
+      <span>${alert.desc}</span>
+    </div>
+    <div class="alert-badge ${alert.badge}">${alert.label}</div>
+  `;
+  setTimeout(() => el.classList.add('visible'), 50);
+  return el;
+}
+
+function updateScore(idx) {
+  const bar = document.getElementById('score-bar');
+  const val = document.getElementById('score-value');
+  const status = document.getElementById('score-status');
+  const s = scores[idx];
+  bar.style.width = s + '%';
+  bar.style.background = scoreColors[idx];
+  val.innerHTML = `${s} <span>/ 100</span>`;
+  status.textContent = scoreStatuses[idx];
+  status.style.color = scoreColors[idx];
+}
+
+function runDemo() {
+  const tradeList = document.getElementById('trade-list');
+  const alertsList = document.getElementById('alerts-list');
+  tradeList.innerHTML = '';
+  alertsList.innerHTML = '<div style="font-size:12px;color:var(--muted2);margin-top:0.5rem">No alerts yet...</div>';
+  step = 0;
+  updateScore(0);
+  if (interval) clearInterval(interval);
+
+  interval = setInterval(() => {
+    if (step >= trades.length) { clearInterval(interval); return; }
+
+    // Add trade
+    tradeList.appendChild(renderTrade(trades[step], step));
+
+    // Update score
+    updateScore(Math.min(step, scores.length - 1));
+
+    // Add alert if needed
+    const alertIdx = step - 2;
+    if (alertIdx >= 0 && alertIdx < alerts.length) {
+      if (alertsList.querySelector('div[style]')) alertsList.innerHTML = '';
+      alertsList.appendChild(renderAlert(alerts[alertIdx]));
+    }
+
+    step++;
+  }, 1200);
+}
+
+document.getElementById('replay-btn').addEventListener('click', runDemo);
+
+// Auto-start when demo scrolls into view
+const demoObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { runDemo(); demoObserver.disconnect(); } });
+}, { threshold: 0.3 });
+demoObserver.observe(document.getElementById('demo'));
+
+// ── FORM SUBMIT ──
+document.getElementById('waitlist-form').addEventListener('submit', function(e) {
+  // Let Brevo handle it — just show success message after delay
+  setTimeout(() => {
+    document.getElementById('success-msg').style.display = 'block';
+  }, 800);
+});
+</script>
 </body>
 </html>
