@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
-
-const PRICE_TO_PLAN: Record<string, 'pro' | 'team'> = {
-  [process.env.STRIPE_PRO_PRICE_ID!]:  'pro',
-  [process.env.STRIPE_TEAM_PRICE_ID!]: 'team',
-}
-
-const service = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
+
+  const PRICE_TO_PLAN: Record<string, 'pro' | 'team'> = {
+    [process.env.STRIPE_PRO_PRICE_ID!]:  'pro',
+    [process.env.STRIPE_TEAM_PRICE_ID!]: 'team',
+  }
+
+  const service = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')!
 
