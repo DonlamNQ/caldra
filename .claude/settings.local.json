@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find C:UsersHabyDocumentscaldranode_modulesstripe -name *.d.ts)",
+      "Bash(grep -r 2026-03-25 C:UsersHabyDocumentscaldranode_modulesstripe --include=*.d.ts -l)",
+      "Bash(node -e \"const p = require\\(''./node_modules/@supabase/ssr/package.json''\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const p = require\\(''./node_modules/@supabase/supabase-js/package.json''\\); console.log\\(p.version\\)\")",
+      "Bash(grep -r \"auth-token\\\\|storage-key\\\\|cookieName\\\\|cookieOptions\" C:UsersHabyDocumentscaldranode_modules@supabasessrdist --include=*.js -l)",
+      "Bash(node -e \"const p = require\\(''./node_modules/@supabase/ssr/node_modules/@supabase/supabase-js/package.json''\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(find /c/Users/Haby/Documents/caldra/node_modules/@supabase/gotrue-js -name *.js)",
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

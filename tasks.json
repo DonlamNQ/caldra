@@ -1,0 +1,54 @@
+{
+  "project": "caldra",
+  "tasks": [
+    {
+      "id": "CALDRA-001",
+      "title": "Fix /api/ingest auth — per-user API keys",
+      "status": "done",
+      "created": "2026-03-31",
+      "completed": "2026-03-31"
+    },
+    {
+      "id": "CALDRA-002",
+      "title": "Create app/billing/page.tsx",
+      "status": "done",
+      "created": "2026-03-31",
+      "completed": "2026-03-31"
+    },
+    {
+      "id": "CALDRA-003",
+      "title": "Add /billing to middleware PROTECTED_PREFIXES",
+      "status": "done",
+      "created": "2026-03-31",
+      "completed": "2026-03-31"
+    },
+    {
+      "id": "CALDRA-004",
+      "title": "Add Stripe routes (checkout, portal, webhook)",
+      "status": "done",
+      "created": "2026-03-31",
+      "completed": "2026-03-31"
+    },
+    {
+      "id": "CALDRA-005",
+      "title": "Add user_profiles table + plan tracking",
+      "status": "done",
+      "created": "2026-03-31",
+      "completed": "2026-03-31"
+    },
+    {
+      "id": "CALDRA-006",
+      "title": "Update lib/schema.sql to match real DB",
+      "status": "done",
+      "created": "2026-03-31",
+      "completed": "2026-03-31"
+    },
+    {
+      "id": "CALDRA-007",
+      "title": "Update .env.local.example with all vars",
+      "status": "done",
+      "created": "2026-03-31",
+      "completed": "2026-03-31"
+    }
+  ]
+}
