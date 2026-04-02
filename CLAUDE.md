@@ -235,10 +235,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ### Authentication → URL Configuration
 ```
-Site URL:      http://localhost:3000
-Redirect URLs: http://localhost:3000/**
+Site URL:      https://getcaldra.com          (prod)
+               http://localhost:3000          (dev)
+Redirect URLs: https://getcaldra.com/**
+               http://localhost:3000/**
 ```
-En production, remplacer par l'URL Vercel.
 
 ### SQL Editor
 Exécuter `lib/schema.sql` en entier pour créer les tables, triggers, RLS et realtime.
@@ -282,7 +283,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 
 ---
 
-## État du projet (2026-03-31)
+## État du projet (2026-04-01)
 
 ### ✅ Terminé
 - Auth complète (login/signup Server Actions, middleware, callback, onboarding)
@@ -296,10 +297,21 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Billing (Stripe checkout + portal + webhook)
 - Toutes les pages — TypeScript 0 erreur
 
+### ✅ Déploiement prod (01/04/2026)
+- Fix Stripe lazy init dans `app/api/billing/webhook/route.ts`, `checkout/route.ts`, `portal/route.ts` — évite le crash au build quand `STRIPE_SECRET_KEY` est absent
+- Contrainte UNIQUE ajoutée sur `trading_rules.user_id` dans Supabase (`ALTER TABLE trading_rules ADD CONSTRAINT trading_rules_user_id_key UNIQUE (user_id)`)
+- Variables d'env configurées sur Vercel (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`)
+- Domaine `getcaldra.com` acheté sur Namecheap et connecté à Vercel (A record `216.198.79.1` + CNAME `e18fb8e584972c72.vercel-dns-017.com`)
+- Supabase URL Configuration mis à jour : Site URL = `https://getcaldra.com`, Redirect URLs = `https://getcaldra.com/**`
+- Landing page mise à jour : nouveau design, pricing 2 plans (Pro/Sentinel), carousel patterns comportementaux, témoignages mis à jour
+
+### 🌍 Prod
+- URL : https://getcaldra.com
+- Waitlist Brevo opérationnelle
+- Auth magic link fonctionnelle end-to-end
+
 ### ⏳ À configurer (une seule fois, hors code)
-- Exécuter `lib/schema.sql` dans Supabase SQL Editor
-- Configurer Supabase URL Configuration (Site URL + Redirect URLs)
-- Créer produits Stripe + webhook → remplir `.env.local`
+- Créer produits Stripe + webhook → remplir `.env.local` et Vercel env vars
 
 ### 🔜 Prochaines features possibles
 - Alertes Slack / Webhook sortant
