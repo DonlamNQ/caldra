@@ -523,20 +523,27 @@ const HTML = `
 
 export default function Home() {
   useEffect(() => {
-    const chartScript = document.createElement('script')
-    chartScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
-    chartScript.onload = () => {
+    function loadInit() {
       const initScript = document.createElement('script')
+      initScript.id = 'caldra-landing-init'
       initScript.src = '/landing-init.js?' + Date.now()
       document.body.appendChild(initScript)
     }
-    document.head.appendChild(chartScript)
+
+    // Si Chart.js est déjà chargé (ex: remontage Strict Mode), on charge directement l'init
+    if ((window as any).Chart) {
+      loadInit()
+    } else {
+      const chartScript = document.createElement('script')
+      chartScript.id = 'caldra-chartjs'
+      chartScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
+      chartScript.onload = loadInit
+      document.head.appendChild(chartScript)
+    }
 
     return () => {
-      const c = document.querySelector('script[src*="chart.umd.min"]')
-      if (c) c.remove()
-      const i = document.querySelector('script[src^="/landing-init.js"]')
-      if (i) i.remove()
+      document.getElementById('caldra-chartjs')?.remove()
+      document.getElementById('caldra-landing-init')?.remove()
     }
   }, [])
 

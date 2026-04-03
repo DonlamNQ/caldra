@@ -1,4 +1,4 @@
-const SX={
+var SX={
   good:{sc:85,cl:'#3cc87a',s:90,r:88,e:75,d:95,t:82,bg:'rgba(60,200,122,.08)',bc:'rgba(60,200,122,.2)',c:'#3cc87a',tx:'Session saine — continue'},
   tilting:{sc:42,cl:'#dc8200',s:35,r:48,e:20,d:65,t:70,bg:'rgba(220,130,0,.08)',bc:'rgba(220,130,0,.2)',c:'#dc8200',tx:'Attention — signaux de tilt détectés'},
   critical:{sc:12,cl:'#dc3218',s:5,r:10,e:8,d:15,t:30,bg:'rgba(220,50,30,.1)',bc:'rgba(220,50,30,.25)',c:'#dc3218',tx:'STOP — Ferme la plateforme maintenant'}
@@ -34,6 +34,8 @@ var SCN=[
 var pcCanvas=document.getElementById('pc');
 if(pcCanvas){
   var cx=pcCanvas.getContext('2d');
+  var existingChart=Chart.getChart(cx);
+  if(existingChart)existingChart.destroy();
   ch=new Chart(cx,{type:'line',data:{labels:['Ouv.','09:32','09:51'],datasets:[{data:pd,borderColor:'#3cc87a',borderWidth:2,pointRadius:3,pointBackgroundColor:'#3cc87a',fill:true,backgroundColor:'rgba(60,200,122,.06)',tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'rgba(255,255,255,.2)',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'rgba(255,255,255,.2)',font:{size:10},callback:function(v){return '€'+v}}}}}});
 }
 
@@ -132,4 +134,7 @@ if(car){
   car.addEventListener('mouseleave',function(){isDown=false;car.classList.remove('dragging')});
   car.addEventListener('mouseup',function(){isDown=false;car.classList.remove('dragging')});
   car.addEventListener('mousemove',function(e){if(!isDown)return;e.preventDefault();var x=e.pageX-car.offsetLeft;car.scrollLeft=scrollLeft-(x-startX)*1.2});
+  var txStart=0,tyStart=0,tsl=0;
+  car.addEventListener('touchstart',function(e){txStart=e.touches[0].pageX;tyStart=e.touches[0].pageY;tsl=car.scrollLeft},{passive:true});
+  car.addEventListener('touchmove',function(e){var dx=e.touches[0].pageX-txStart,dy=e.touches[0].pageY-tyStart;if(Math.abs(dx)>Math.abs(dy)){e.preventDefault();car.scrollLeft=tsl-dx;}},{passive:false});
 }
