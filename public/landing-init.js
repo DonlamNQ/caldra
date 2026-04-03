@@ -93,6 +93,38 @@ if(form){
   });
 }
 
+async function sendContact(){
+  var name=document.getElementById('c-name').value;
+  var email=document.getElementById('c-email').value;
+  var subject=document.getElementById('c-subject').value;
+  var msg=document.getElementById('c-msg').value;
+  if(!email||!msg){return;}
+  var btn=document.getElementById('c-btn');
+  btn.textContent='Envoi...';btn.style.opacity='.6';btn.disabled=true;
+  try{
+    var res=await fetch('https://formspree.io/f/mdapwkjw',{
+      method:'POST',
+      headers:{'Accept':'application/json','Content-Type':'application/json'},
+      body:JSON.stringify({name:name,email:email,subject:subject,message:msg})
+    });
+    if(res.ok){
+      document.getElementById('c-success').style.display='block';
+      document.getElementById('c-error').style.display='none';
+      document.getElementById('c-name').value='';
+      document.getElementById('c-email').value='';
+      document.getElementById('c-subject').value='';
+      document.getElementById('c-msg').value='';
+      btn.textContent='Envoy\u00e9 \u2713';
+    } else {
+      throw new Error();
+    }
+  } catch(e){
+    document.getElementById('c-error').style.display='block';
+    btn.textContent='Envoyer \u2192';btn.style.opacity='1';btn.disabled=false;
+  }
+}
+window.sendContact = sendContact;
+
 var car=document.getElementById('pcarousel');
 if(car){
   var isDown=false,startX,scrollLeft;
