@@ -10,9 +10,9 @@ interface BillingClientProps {
 }
 
 const PLANS = {
-  free: { name: 'Free', color: '#64748b', limit: '50 trades / jour', price: 'Gratuit' },
-  pro:  { name: 'Pro',  color: '#e2e8f0', limit: 'Illimité',          price: '29€ / mois' },
-  team: { name: 'Team', color: '#f59e0b', limit: '5 traders, illimité', price: '99€ / mois' },
+  free: { name: 'Free',  color: 'rgba(232,230,224,.5)', price: 'Gratuit',    limit: '50 trades / jour' },
+  pro:  { name: 'Pro',   color: '#e8e6e0',               price: '29€ / mois', limit: 'Illimité + IA coaching' },
+  team: { name: 'Team',  color: '#f59e0b',               price: '99€ / mois', limit: '5 traders, illimité' },
 }
 
 const UPGRADES = [
@@ -23,14 +23,20 @@ const UPGRADES = [
     period: '/ mois',
     features: ['Trades illimités', 'IA coaching (Claude)', 'Alertes Slack / Webhook', 'Export CSV', 'Clé API dédiée'],
     cta: 'Passer à Pro',
+    accent: 'rgba(220,80,60,.08)',
+    border: 'rgba(220,80,60,.2)',
+    btnColor: '#dc503c',
   },
   {
     id: 'team',
     name: 'Team',
     price: '99€',
     period: '/ mois',
-    features: ['Tout Pro, jusqu\'à 5 traders', 'Dashboard consolidé', 'Rapport hebdo PDF', 'SSO'],
-    cta: 'Contacter l\'équipe',
+    features: ["Tout Pro, jusqu'à 5 traders", 'Dashboard consolidé', 'Rapport hebdo PDF', 'SSO'],
+    cta: "Contacter l'équipe",
+    accent: 'rgba(245,158,11,.06)',
+    border: 'rgba(245,158,11,.18)',
+    btnColor: '#f59e0b',
   },
 ]
 
@@ -57,90 +63,124 @@ export default function BillingClient({ userEmail, plan, tradeCount, alertCount 
     if (data.url) window.location.href = data.url
   }
 
+  const CARD: React.CSSProperties = {
+    background: '#0d0d18',
+    border: '0.5px solid rgba(255,255,255,.08)',
+    borderRadius: 12,
+    position: 'relative',
+    overflow: 'hidden',
+  }
+
   return (
-    <div style={{ minHeight: '100vh', background: '#08080d', color: '#e2e8f0', fontFamily: 'system-ui, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      <AppHeader current="billing" userEmail={userEmail} />
+    <>
+      <style>{`
+        *{box-sizing:border-box}body{margin:0;background:#07070e}
+        ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+        @keyframes blFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .bl-manage{font-size:9px;padding:7px 14px;background:transparent;border:0.5px solid rgba(255,255,255,.13);border-radius:4px;color:rgba(232,230,224,.45);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif;transition:all .2s}
+        .bl-manage:hover{background:rgba(255,255,255,.05);color:rgba(232,230,224,.8)}
+      `}</style>
+      <div style={{ minHeight: '100vh', background: '#07070e', color: '#e8e6e0', fontFamily: "'DM Sans', system-ui, sans-serif", display: 'flex', flexDirection: 'column' }}>
+        <AppHeader current="billing" userEmail={userEmail} />
 
-      <main style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px', width: '100%' }}>
-        <div style={{ marginBottom: 32 }}>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Abonnement</h1>
-        </div>
+        <main style={{ maxWidth: 760, margin: '0 auto', padding: '5rem 3rem 4rem', width: '100%', animation: 'blFadeIn .4s ease both' }}>
 
-        {/* Plan actuel */}
-        <div style={{ background: '#0d0d1a', border: '1px solid #1e1e35', borderRadius: 12, padding: '24px', marginBottom: 24 }}>
-          <p style={{ margin: '0 0 16px', fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Plan actuel
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: 22, fontWeight: 800, color: current.color }}>{current.name}</span>
-              <p style={{ margin: '4px 0 0', color: '#475569', fontSize: 13 }}>{current.limit} · {current.price}</p>
-            </div>
-            {plan !== 'free' && (
-              <button
-                onClick={handleManageBilling}
-                style={{ background: 'none', border: '1px solid #1e1e35', borderRadius: 8, color: '#475569', fontSize: 13, padding: '8px 16px', cursor: 'pointer' }}
-              >
-                Gérer la facturation
-              </button>
-            )}
+          {/* Title */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(220,80,60,.55)', marginBottom: '.5rem' }}>Compte</div>
+            <h1 style={{ margin: 0, fontWeight: 200, fontSize: 'clamp(1.4rem,2.5vw,1.9rem)', letterSpacing: -1, color: '#fff', lineHeight: 1.1 }}>
+              Abonnement
+            </h1>
           </div>
 
-          {/* Usage */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 20, paddingTop: 20, borderTop: '1px solid #13132a' }}>
-            <div>
-              <p style={{ margin: '0 0 4px', color: '#374151', fontSize: 12 }}>Trades ce mois</p>
-              <p style={{ margin: 0, color: '#e2e8f0', fontSize: 20, fontWeight: 700, fontFamily: 'monospace' }}>{tradeCount}</p>
-              {plan === 'free' && (
-                <div style={{ marginTop: 6, height: 4, background: '#1e1e35', borderRadius: 2 }}>
-                  <div style={{ height: '100%', width: `${Math.min(100, (tradeCount / 1500) * 100)}%`, background: tradeCount > 1200 ? '#ef4444' : '#22c55e', borderRadius: 2 }} />
+          {/* Plan actuel */}
+          <div style={{ ...CARD, padding: '1.75rem 2rem', marginBottom: '1.5rem' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)' }} />
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '1.25rem' }}>Plan actuel</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 'clamp(1.5rem,2.5vw,1.9rem)', fontWeight: 200, color: current.color, letterSpacing: -1, lineHeight: 1, marginBottom: '.4rem' }}>
+                  {current.name}
                 </div>
+                <div style={{ fontSize: 12, color: 'rgba(232,230,224,.35)', letterSpacing: .5 }}>
+                  {current.limit} · {current.price}
+                </div>
+              </div>
+              {plan !== 'free' && (
+                <button className="bl-manage" onClick={handleManageBilling}>
+                  Gérer la facturation
+                </button>
               )}
             </div>
-            <div>
-              <p style={{ margin: '0 0 4px', color: '#374151', fontSize: 12 }}>Alertes ce mois</p>
-              <p style={{ margin: 0, color: '#e2e8f0', fontSize: 20, fontWeight: 700, fontFamily: 'monospace' }}>{alertCount}</p>
+
+            {/* Usage */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '0.5px solid rgba(255,255,255,.07)' }}>
+              <div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '.5rem' }}>Trades ce mois</div>
+                <div style={{ fontSize: 'clamp(1.2rem,2vw,1.5rem)', fontWeight: 200, color: 'rgba(232,230,224,.8)', fontVariantNumeric: 'tabular-nums', letterSpacing: -.5 }}>
+                  {tradeCount}
+                </div>
+                {plan === 'free' && (
+                  <div style={{ marginTop: 8, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2 }}>
+                    <div style={{ height: '100%', width: `${Math.min(100, (tradeCount / 1500) * 100)}%`, background: tradeCount > 1200 ? '#ef4444' : '#22c55e', borderRadius: 2, transition: 'width .5s' }} />
+                  </div>
+                )}
+              </div>
+              <div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '.5rem' }}>Alertes ce mois</div>
+                <div style={{ fontSize: 'clamp(1.2rem,2vw,1.5rem)', fontWeight: 200, color: 'rgba(232,230,224,.8)', fontVariantNumeric: 'tabular-nums', letterSpacing: -.5 }}>
+                  {alertCount}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Upgrade options — masquées si déjà sur Team */}
-        {plan !== 'team' && (
-          <>
-            <p style={{ margin: '0 0 16px', fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Évoluer
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {UPGRADES.filter(u => u.id !== plan).map(upgrade => (
-                <div key={upgrade.id} style={{ background: '#0d0d1a', border: '1px solid #1e1e35', borderRadius: 12, padding: '20px 20px' }}>
-                  <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{upgrade.name}</p>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 14 }}>
-                    <span style={{ fontSize: 22, fontWeight: 800, fontFamily: 'monospace' }}>{upgrade.price}</span>
-                    <span style={{ color: '#475569', fontSize: 12 }}>{upgrade.period}</span>
+          {/* Upgrade options */}
+          {plan !== 'team' && (
+            <>
+              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '1rem' }}>Évoluer</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {UPGRADES.filter(u => u.id !== plan).map(upgrade => (
+                  <div key={upgrade.id} style={{
+                    ...CARD,
+                    padding: '1.75rem',
+                    background: upgrade.accent,
+                    border: `0.5px solid ${upgrade.border}`,
+                  }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent)' }} />
+                    <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.35)', marginBottom: '.75rem' }}>{upgrade.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: '1.25rem' }}>
+                      <span style={{ fontSize: 'clamp(1.6rem,2.5vw,2rem)', fontWeight: 200, color: '#fff', letterSpacing: -1, fontVariantNumeric: 'tabular-nums' }}>{upgrade.price}</span>
+                      <span style={{ color: 'rgba(232,230,224,.35)', fontSize: 11 }}>{upgrade.period}</span>
+                    </div>
+                    <ul style={{ margin: '0 0 1.5rem', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {upgrade.features.map(f => (
+                        <li key={f} style={{ display: 'flex', gap: 8, color: 'rgba(232,230,224,.55)', fontSize: 12, lineHeight: 1.4 }}>
+                          <span style={{ color: upgrade.btnColor, flexShrink: 0 }}>✓</span>{f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => handleUpgrade(upgrade.id)}
+                      style={{
+                        width: '100%', background: upgrade.btnColor, color: '#fff',
+                        border: 'none', borderRadius: 6, padding: '10px',
+                        fontSize: 10, fontWeight: 500, cursor: 'pointer',
+                        letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans',sans-serif",
+                        transition: 'opacity .2s',
+                      }}
+                      onMouseOver={e => (e.currentTarget.style.opacity = '.85')}
+                      onMouseOut={e => (e.currentTarget.style.opacity = '1')}
+                    >
+                      {upgrade.cta}
+                    </button>
                   </div>
-                  <ul style={{ margin: '0 0 18px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
-                    {upgrade.features.map(f => (
-                      <li key={f} style={{ display: 'flex', gap: 7, color: '#64748b', fontSize: 13 }}>
-                        <span style={{ color: '#22c55e' }}>✓</span>{f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => handleUpgrade(upgrade.id)}
-                    style={{
-                      width: '100%', background: '#e2e8f0', color: '#08080d',
-                      border: 'none', borderRadius: 8, padding: '10px',
-                      fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    }}
-                  >
-                    {upgrade.cta}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </main>
-    </div>
+                ))}
+              </div>
+            </>
+          )}
+        </main>
+      </div>
+    </>
   )
 }

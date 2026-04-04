@@ -9,7 +9,7 @@ interface ApiKeyClientProps {
   existingCreatedAt: string | null
 }
 
-const CODE_SNIPPET = (key: string) => `curl -X POST https://your-app.vercel.app/api/ingest \\
+const CODE_SNIPPET = (key: string) => `curl -X POST https://getcaldra.com/api/ingest \\
   -H "x-caldra-key: ${key}" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -32,140 +32,154 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
   const [confirming, setConfirming] = useState(false)
 
   async function generateKey() {
-    setLoading(true)
-    setNewKey(null)
+    setLoading(true); setNewKey(null)
     const res = await fetch('/api/api-key', { method: 'POST' })
     const data = await res.json()
-    setNewKey(data.key)
-    setPrefix(data.key_prefix)
-    setCreatedAt(new Date().toISOString())
-    setLoading(false)
-    setConfirming(false)
+    setNewKey(data.key); setPrefix(data.key_prefix); setCreatedAt(new Date().toISOString())
+    setLoading(false); setConfirming(false)
   }
 
   async function revokeKey() {
     setLoading(true)
     await fetch('/api/api-key', { method: 'DELETE' })
-    setPrefix(null)
-    setCreatedAt(null)
-    setNewKey(null)
-    setLoading(false)
+    setPrefix(null); setCreatedAt(null); setNewKey(null); setLoading(false)
   }
 
   async function copyKey() {
     if (!newKey) return
     await navigator.clipboard.writeText(newKey)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
+  }
+
+  const CARD: React.CSSProperties = {
+    background: '#0d0d18',
+    border: '0.5px solid rgba(255,255,255,.08)',
+    borderRadius: 12,
+    padding: '1.5rem 1.75rem',
+    marginBottom: '1rem',
+    position: 'relative',
+    overflow: 'hidden',
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#08080d', color: '#e2e8f0', fontFamily: 'system-ui, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      <AppHeader current="api" userEmail={userEmail} />
+    <>
+      <style>{`
+        *{box-sizing:border-box}body{margin:0;background:#07070e}
+        ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+        @keyframes apFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .ak-btn{font-size:9px;padding:7px 13px;background:transparent;border:0.5px solid rgba(255,255,255,.13);border-radius:4px;color:rgba(232,230,224,.45);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif;transition:all .2s}
+        .ak-btn:hover{background:rgba(255,255,255,.05);color:rgba(232,230,224,.8)}
+        .ak-btn:disabled{opacity:.4;cursor:not-allowed}
+        .ak-btn-danger{border-color:rgba(220,80,60,.25)!important;color:rgba(220,80,60,.7)!important}
+        .ak-btn-danger:hover{background:rgba(220,80,60,.08)!important;color:rgba(220,80,60,.9)!important}
+        .ak-btn-primary{background:rgba(220,80,60,.85)!important;border-color:transparent!important;color:#fff!important}
+        .ak-btn-primary:hover{background:rgba(220,80,60,.7)!important}
+        .ak-copy{font-size:9px;padding:7px 13px;background:rgba(34,197,94,.1);border:0.5px solid rgba(34,197,94,.25);border-radius:4px;color:rgba(34,197,94,.85);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif;transition:all .2s;flex-shrink:0}
+        .ak-copy:hover{background:rgba(34,197,94,.15)}
+      `}</style>
+      <div style={{ minHeight: '100vh', background: '#07070e', color: '#e8e6e0', fontFamily: "'DM Sans', system-ui, sans-serif", display: 'flex', flexDirection: 'column' }}>
+        <AppHeader current="api" userEmail={userEmail} />
 
-      <main style={{ maxWidth: 680, margin: '0 auto', padding: '32px 24px', width: '100%' }}>
-        <div style={{ marginBottom: 32 }}>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Clé API</h1>
-          <p style={{ margin: '6px 0 0', color: '#475569', fontSize: 14 }}>
-            Authentifie les appels vers <code style={{ background: '#13132a', padding: '1px 6px', borderRadius: 4, fontSize: 12 }}>/api/ingest</code> depuis ta plateforme de trading.
-          </p>
-        </div>
+        <main style={{ maxWidth: 720, margin: '0 auto', padding: '5rem 3rem 4rem', width: '100%', animation: 'apFadeIn .4s ease both' }}>
 
-        {/* Clé courante */}
-        <div style={{ background: '#0d0d1a', border: '1px solid #1e1e35', borderRadius: 12, padding: '20px 24px', marginBottom: 16 }}>
-          <p style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Clé active
-          </p>
+          {/* Title */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(220,80,60,.55)', marginBottom: '.5rem' }}>Intégration</div>
+            <h1 style={{ margin: 0, fontWeight: 200, fontSize: 'clamp(1.4rem,2.5vw,1.9rem)', letterSpacing: -1, color: '#fff', lineHeight: 1.1 }}>
+              Clé API
+            </h1>
+            <p style={{ margin: '.5rem 0 0', color: 'rgba(232,230,224,.3)', fontSize: 13, fontWeight: 300 }}>
+              Authentifie les appels vers{' '}
+              <code style={{ background: 'rgba(255,255,255,.06)', padding: '1px 7px', borderRadius: 4, fontSize: 11, color: 'rgba(232,230,224,.6)', border: '0.5px solid rgba(255,255,255,.1)' }}>/api/ingest</code>
+              {' '}depuis ta plateforme.
+            </p>
+          </div>
 
-          {prefix ? (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-              <div>
-                <code style={{ color: '#94a3b8', fontSize: 14, fontFamily: 'monospace', letterSpacing: '0.03em' }}>
-                  {prefix}••••••••••••••••••••••
+          {/* Clé active */}
+          <div style={CARD}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)' }} />
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '1.1rem' }}>Clé active</div>
+
+            {prefix ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                <div>
+                  <code style={{ color: 'rgba(232,230,224,.6)', fontSize: 13, fontFamily: 'monospace', letterSpacing: '.04em' }}>
+                    {prefix}<span style={{ opacity: .4 }}>{'•'.repeat(22)}</span>
+                  </code>
+                  <div style={{ marginTop: 5, color: 'rgba(232,230,224,.25)', fontSize: 11 }}>
+                    Créée le {new Date(createdAt!).toLocaleDateString('fr-FR')}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {confirming ? (
+                    <>
+                      <button className="ak-btn" onClick={() => setConfirming(false)}>Annuler</button>
+                      <button className="ak-btn ak-btn-danger" onClick={generateKey} disabled={loading}>
+                        Confirmer la regénération
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="ak-btn" onClick={revokeKey} disabled={loading}>Révoquer</button>
+                      <button className="ak-btn" onClick={() => setConfirming(true)}>Regénérer</button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'rgba(232,230,224,.3)', fontSize: 13 }}>Aucune clé active</span>
+                <button className="ak-btn ak-btn-primary" onClick={generateKey} disabled={loading}>
+                  {loading ? 'Génération…' : 'Générer une clé'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Nouvelle clé — affichage unique */}
+          {newKey && (
+            <div style={{
+              background: 'rgba(34,197,94,.05)',
+              border: '0.5px solid rgba(34,197,94,.2)',
+              borderRadius: 12, padding: '1.25rem 1.5rem', marginBottom: '1rem',
+            }}>
+              <div style={{ color: 'rgba(34,197,94,.8)', fontSize: 11, letterSpacing: .5, marginBottom: '.75rem' }}>
+                ⚠ Copiez cette clé maintenant — elle ne sera plus visible.
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <code style={{ flex: 1, color: 'rgba(134,239,172,.85)', fontSize: 12, fontFamily: 'monospace', wordBreak: 'break-all', background: 'rgba(34,197,94,.04)', padding: '8px 12px', borderRadius: 6, border: '0.5px solid rgba(34,197,94,.15)' }}>
+                  {newKey}
                 </code>
-                <p style={{ margin: '4px 0 0', color: '#374151', fontSize: 12 }}>
-                  Créée le {new Date(createdAt!).toLocaleDateString('fr-FR')}
-                </p>
+                <button className="ak-copy" onClick={copyKey}>
+                  {copied ? '✓ Copié' : 'Copier'}
+                </button>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {confirming ? (
-                  <>
-                    <button onClick={() => setConfirming(false)} style={{ background: 'none', border: '1px solid #1e1e35', borderRadius: 6, color: '#64748b', fontSize: 12, padding: '6px 12px', cursor: 'pointer' }}>
-                      Annuler
-                    </button>
-                    <button onClick={generateKey} disabled={loading} style={{ background: '#1a0505', border: '1px solid #4d1010', borderRadius: 6, color: '#ef4444', fontSize: 12, padding: '6px 12px', cursor: 'pointer', fontWeight: 600 }}>
-                      Confirmer la regénération
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={revokeKey} disabled={loading} style={{ background: 'none', border: '1px solid #1e1e35', borderRadius: 6, color: '#475569', fontSize: 12, padding: '6px 12px', cursor: 'pointer' }}>
-                      Révoquer
-                    </button>
-                    <button onClick={() => setConfirming(true)} style={{ background: '#0d0d1a', border: '1px solid #1e1e35', borderRadius: 6, color: '#94a3b8', fontSize: 12, padding: '6px 12px', cursor: 'pointer' }}>
-                      Regénérer
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <p style={{ margin: 0, color: '#374151', fontSize: 14 }}>Aucune clé active</p>
-              <button
-                onClick={generateKey}
-                disabled={loading}
-                style={{ background: '#e2e8f0', color: '#08080d', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-              >
-                {loading ? 'Génération…' : 'Générer une clé'}
-              </button>
             </div>
           )}
-        </div>
 
-        {/* Clé générée — affichage une seule fois */}
-        {newKey && (
-          <div style={{ background: '#052e16', border: '1px solid #166534', borderRadius: 12, padding: '16px 20px', marginBottom: 16 }}>
-            <p style={{ margin: '0 0 8px', color: '#4ade80', fontSize: 12, fontWeight: 600 }}>
-              ⚠ Copiez cette clé maintenant — elle ne sera plus visible.
-            </p>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <code style={{ flex: 1, color: '#86efac', fontSize: 13, fontFamily: 'monospace', wordBreak: 'break-all', background: '#041f0e', padding: '8px 12px', borderRadius: 6, border: '1px solid #166534' }}>
-                {newKey}
-              </code>
-              <button
-                onClick={copyKey}
-                style={{ background: '#166534', border: 'none', borderRadius: 6, color: '#4ade80', fontSize: 12, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', flexShrink: 0 }}
-              >
-                {copied ? '✓ Copié' : 'Copier'}
-              </button>
+          {/* Auth header */}
+          <div style={CARD}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)' }} />
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '.9rem' }}>Header d'authentification</div>
+            <code style={{ color: 'rgba(232,230,224,.5)', fontSize: 12, fontFamily: 'monospace' }}>
+              x-caldra-key: <span style={{ color: 'rgba(147,197,253,.75)' }}>{prefix ? `${prefix}••••` : 'cal_votre_clé'}</span>
+            </code>
+          </div>
+
+          {/* Code example */}
+          <div style={CARD}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)' }} />
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '.9rem' }}>Exemple d'intégration</div>
+            <pre style={{ margin: 0, color: 'rgba(232,230,224,.4)', fontSize: 11, fontFamily: 'monospace', lineHeight: 1.75, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              <code>{CODE_SNIPPET(prefix ? `${prefix}••••` : 'cal_votre_clé')}</code>
+            </pre>
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(255,255,255,.06)', color: 'rgba(232,230,224,.28)', fontSize: 11 }}>
+              Champs requis :{' '}
+              <code style={{ color: 'rgba(232,230,224,.4)', fontSize: 11 }}>symbol, direction, size, entry_price, entry_time</code>
             </div>
           </div>
-        )}
-
-        {/* Header requis */}
-        <div style={{ background: '#0d0d1a', border: '1px solid #1e1e35', borderRadius: 12, padding: '20px 24px', marginBottom: 16 }}>
-          <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Header d'authentification
-          </p>
-          <code style={{ color: '#94a3b8', fontSize: 13, fontFamily: 'monospace' }}>
-            x-caldra-key: <span style={{ color: '#60a5fa' }}>{prefix ? `${prefix}••••` : 'cal_votre_clé'}</span>
-          </code>
-        </div>
-
-        {/* Code example */}
-        <div style={{ background: '#0d0d1a', border: '1px solid #1e1e35', borderRadius: 12, padding: '20px 24px' }}>
-          <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Exemple d'intégration
-          </p>
-          <pre style={{ margin: 0, color: '#64748b', fontSize: 12, fontFamily: 'monospace', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-            <code>{CODE_SNIPPET(prefix ? `${prefix}••••` : 'cal_votre_clé')}</code>
-          </pre>
-          <p style={{ margin: '14px 0 0', color: '#374151', fontSize: 12 }}>
-            Champs requis : <code style={{ color: '#475569' }}>symbol, direction, size, entry_price, entry_time</code>
-          </p>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   )
 }
