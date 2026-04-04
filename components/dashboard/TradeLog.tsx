@@ -16,21 +16,26 @@ interface TradeLogProps {
   trades: TradeRow[]
 }
 
-function formatPnl(pnl?: number): string {
+function formatPnl(pnl?: number) {
   if (pnl == null) return '—'
   const sign = pnl >= 0 ? '+' : ''
   return `${sign}${pnl.toFixed(2)}`
 }
 
-function formatTime(iso: string): string {
+function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
+
+const HEADERS = ['Symbole', 'Dir.', 'Taille', 'Entrée', 'Sortie', 'PnL', 'Heure']
 
 export default function TradeLog({ trades }: TradeLogProps) {
   if (trades.length === 0) {
     return (
-      <div style={{ textAlign: 'center', color: '#374151', padding: '32px 0', fontSize: 13 }}>
-        Aucun trade aujourd'hui
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 0', gap: 10 }}>
+        <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.04)', border: '0.5px solid rgba(255,255,255,.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 12, height: 5, borderRadius: 2, background: 'rgba(255,255,255,.18)' }} />
+        </div>
+        <span style={{ color: 'rgba(232,230,224,.25)', fontSize: 12 }}>Aucun trade aujourd'hui</span>
       </div>
     )
   }
@@ -40,18 +45,18 @@ export default function TradeLog({ trades }: TradeLogProps) {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
         <thead>
           <tr>
-            {['Symbole', 'Dir.', 'Taille', 'Entrée', 'Sortie', 'PnL', 'Heure'].map(h => (
-              <th
-                key={h}
-                style={{
-                  textAlign: 'left',
-                  color: '#475569',
-                  fontWeight: 500,
-                  padding: '6px 8px',
-                  borderBottom: '1px solid #1e1e35',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+            {HEADERS.map(h => (
+              <th key={h} style={{
+                textAlign: 'left',
+                color: 'rgba(232,230,224,.28)',
+                fontWeight: 400,
+                fontSize: 9,
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                padding: '0 10px 10px',
+                borderBottom: '0.5px solid rgba(255,255,255,.07)',
+                whiteSpace: 'nowrap',
+              }}>
                 {h}
               </th>
             ))}
@@ -60,52 +65,46 @@ export default function TradeLog({ trades }: TradeLogProps) {
         <tbody>
           {trades.map((t, i) => {
             const pnl = t.pnl ?? 0
-            const pnlColor = pnl > 0 ? '#22c55e' : pnl < 0 ? '#ef4444' : '#64748b'
+            const pnlColor = pnl > 0 ? '#22c55e' : pnl < 0 ? '#ef4444' : 'rgba(232,230,224,.38)'
             const isOpen = !t.exit_price
 
             return (
-              <tr
-                key={t.id ?? i}
-                style={{
-                  background: i % 2 === 0 ? 'transparent' : '#0a0a14',
-                  transition: 'background 0.15s',
-                }}
-              >
-                <td style={{ padding: '7px 8px', color: '#e2e8f0', fontWeight: 600, fontFamily: 'monospace' }}>
+              <tr key={t.id ?? i} className="dsh-row" style={{ background: 'transparent', transition: 'background .15s' }}>
+                <td style={{ padding: '9px 10px', color: '#e8e6e0', fontWeight: 500, letterSpacing: .3, fontVariantNumeric: 'tabular-nums', borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>
                   {t.symbol}
                 </td>
-                <td style={{ padding: '7px 8px' }}>
-                  <span
-                    style={{
-                      background: t.direction === 'long' ? '#052e16' : '#1a0505',
+                <td style={{ padding: '9px 10px', borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>
+                  {t.direction ? (
+                    <span style={{
+                      background: t.direction === 'long' ? 'rgba(34,197,94,.1)' : 'rgba(239,68,68,.1)',
                       color: t.direction === 'long' ? '#4ade80' : '#f87171',
-                      borderRadius: 4,
-                      padding: '1px 6px',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {t.direction ?? '—'}
-                  </span>
+                      border: `0.5px solid ${t.direction === 'long' ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)'}`,
+                      borderRadius: 4, padding: '2px 7px',
+                      fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1,
+                    }}>
+                      {t.direction}
+                    </span>
+                  ) : <span style={{ color: 'rgba(232,230,224,.25)' }}>—</span>}
                 </td>
-                <td style={{ padding: '7px 8px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                <td style={{ padding: '9px 10px', color: 'rgba(232,230,224,.5)', fontVariantNumeric: 'tabular-nums', borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>
                   {t.size}
                 </td>
-                <td style={{ padding: '7px 8px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                <td style={{ padding: '9px 10px', color: 'rgba(232,230,224,.5)', fontVariantNumeric: 'tabular-nums', borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>
                   {t.entry_price}
                 </td>
-                <td style={{ padding: '7px 8px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                <td style={{ padding: '9px 10px', borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>
                   {isOpen ? (
-                    <span style={{ color: '#3b82f6', fontSize: 10, fontWeight: 600 }}>OUVERT</span>
+                    <span style={{ color: 'rgba(96,165,250,.8)', fontSize: 9, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', background: 'rgba(59,130,246,.08)', border: '0.5px solid rgba(59,130,246,.2)', borderRadius: 4, padding: '2px 7px' }}>
+                      ouvert
+                    </span>
                   ) : (
-                    t.exit_price
+                    <span style={{ color: 'rgba(232,230,224,.5)', fontVariantNumeric: 'tabular-nums' }}>{t.exit_price}</span>
                   )}
                 </td>
-                <td style={{ padding: '7px 8px', color: pnlColor, fontFamily: 'monospace', fontWeight: 600 }}>
+                <td style={{ padding: '9px 10px', color: pnlColor, fontWeight: 600, fontVariantNumeric: 'tabular-nums', borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>
                   {isOpen ? '—' : formatPnl(t.pnl)}
                 </td>
-                <td style={{ padding: '7px 8px', color: '#475569', fontFamily: 'monospace' }}>
+                <td style={{ padding: '9px 10px', color: 'rgba(232,230,224,.28)', fontVariantNumeric: 'tabular-nums', borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>
                   {formatTime(t.entry_time)}
                 </td>
               </tr>
