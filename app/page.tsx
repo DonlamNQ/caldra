@@ -6,7 +6,7 @@ const CSS = `
 *{margin:0;padding:0;box-sizing:border-box;scroll-behavior:smooth}
 :root{--red:#dc503c;--rd:rgba(220,80,60,.1);--rb:rgba(220,80,60,.25);--bg:#08080d;--sf:#0f0f16;--sf2:#141420;--b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);--tx:#e8e6e0;--tm:rgba(232,230,224,.45);--td:rgba(232,230,224,.2)}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:64px 64px;pointer-events:none;z-index:0}
+#net{position:fixed;inset:0;z-index:0;pointer-events:none}
 .g1{position:fixed;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(220,80,60,.07) 0%,transparent 65%);top:-250px;left:50%;transform:translateX(-50%);pointer-events:none;z-index:0}
 .g2{position:fixed;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(180,50,220,.04) 0%,transparent 65%);bottom:20%;right:-100px;pointer-events:none;z-index:0}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.25rem 3rem;border-bottom:.5px solid var(--b);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(8,8,13,.88)}
@@ -144,12 +144,17 @@ section{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:5rem 2
 .bl1{background:rgba(255,200,0,.1);color:#ffc800}.bl2{background:rgba(220,130,0,.1);color:#dc8200}.bl3{background:rgba(220,50,30,.12);color:#dc3218}
 .dsb{margin-top:1rem;width:100%;padding:10px;background:transparent;border:.5px solid var(--rb);border-radius:8px;color:var(--red);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:.5px;transition:background .2s}
 .dsb:hover{background:var(--rd)}
-.hg{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem}
-.step{padding:1.5rem;background:var(--sf);border:.5px solid var(--b);border-radius:12px;transition:border-color .2s}
-.step:hover{border-color:var(--b2)}
-.stn{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--red);letter-spacing:1px;margin-bottom:1.25rem;opacity:.7;text-transform:uppercase}
-.stt{font-size:15px;font-weight:500;color:#fff;margin-bottom:.5rem}
-.std{font-size:13px;color:rgba(255,255,255,.28);line-height:1.65}
+.steps-timeline{display:flex;flex-direction:column;gap:0;margin-top:3rem;max-width:680px}
+.step-tl{display:grid;grid-template-columns:56px 1fr;gap:0 2rem;position:relative;padding-bottom:3.5rem}
+.step-tl:last-child{padding-bottom:0}
+.step-tl-left{display:flex;flex-direction:column;align-items:center;gap:0}
+.step-tl-num{width:40px;height:40px;border-radius:50%;border:.5px solid rgba(220,80,60,.3);background:rgba(220,80,60,.06);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--red);flex-shrink:0;position:relative;z-index:1}
+.step-tl-line{width:.5px;flex:1;background:linear-gradient(to bottom,rgba(220,80,60,.2),rgba(220,80,60,.04));margin-top:8px}
+.step-tl:last-child .step-tl-line{display:none}
+.step-tl-right{padding-top:8px}
+.step-tl-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(220,80,60,.5);margin-bottom:.5rem}
+.step-tl-title{font-size:17px;font-weight:500;color:#fff;margin-bottom:.5rem;line-height:1.3}
+.step-tl-desc{font-size:14px;color:rgba(255,255,255,.32);line-height:1.7}
 .ip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(255,255,255,.03);border:.5px solid var(--b2);border-radius:100px;font-size:11px;color:var(--tm);margin-top:.75rem;margin-right:6px}
 .idot{width:5px;height:5px;border-radius:50%;background:#3cc87a}
 .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem}
@@ -170,7 +175,7 @@ section{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:5rem 2
 footer{border-top:.5px solid var(--b);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;color:var(--td);font-size:12px}
 .fl{font-family:'DM Sans',sans-serif;font-weight:300;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.15)}
 .fl span{color:rgba(220,80,60,.3)}
-@media(max-width:768px){nav{padding:1.25rem 1.5rem}.nc{display:none}.sr{gap:1.5rem}.hg{grid-template-columns:1fr}.tg{grid-template-columns:1fr}.dc{grid-template-columns:1fr}.dca{border-right:none;border-bottom:.5px solid var(--b)}.wf{flex-direction:column}footer{flex-direction:column;gap:1rem;text-align:center}.scm{flex-direction:column}.pricing-grid{grid-template-columns:1fr!important}.nav-links{display:none}.story-grid{grid-template-columns:1fr}}
+@media(max-width:768px){nav{padding:1.25rem 1.5rem}.nc{display:none}.sr{gap:1.5rem}.tg{grid-template-columns:1fr}.dc{grid-template-columns:1fr}.dca{border-right:none;border-bottom:.5px solid var(--b)}.wf{flex-direction:column}footer{flex-direction:column;gap:1rem;text-align:center}.scm{flex-direction:column}.pricing-grid{grid-template-columns:1fr!important}.nav-links{display:none}.story-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.ssel{display:none}}
 .pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:780px;margin:0 auto}
 .plan-card{border-radius:16px;padding:2rem;position:relative;overflow:hidden}
@@ -208,6 +213,7 @@ footer{border-top:.5px solid var(--b);padding:2rem 3rem;display:flex;justify-con
 `
 
 const HTML = `
+<canvas id="net"></canvas>
 <div class="g1"></div><div class="g2"></div>
 <nav>
   <div style="display:flex;align-items:center;flex:1">
@@ -223,12 +229,12 @@ const HTML = `
       <a class="nav-link" href="#avis">Avis</a>
       <a class="nav-link" href="#tarifs">Tarifs</a>
       <a class="nav-link" href="#histoire">Histoire</a>
-      <a class="nav-link" href="#contact">Support</a>
+      <a class="nav-link" href="/support">Support</a>
     </div>
   </div>
   <div class="nr">
     <div class="nb">Acc&egrave;s anticip&eacute;</div>
-    <button class="nc" onclick="document.getElementById('EM').focus()">Rejoindre la liste</button>
+    <button class="nc" onclick="document.querySelector('.fc2').scrollIntoView({behavior:'smooth'})">Rejoindre la liste</button>
   </div>
 </nav>
 <div class="hero">
@@ -362,10 +368,32 @@ const HTML = `
   <div class="stag">Comment &ccedil;a marche</div>
   <div class="stit">Configure une fois.<br>Il veille toujours.</div>
   <p class="sdesc">Aucune saisie manuelle. Aucune discipline suppl&eacute;mentaire. Caldra se connecte &agrave; ta plateforme et fait le reste.</p>
-  <div class="hg">
-    <div class="step"><div class="stn">01 &mdash; Connecte</div><div class="stt">Ta plateforme de trading</div><div class="std">Connexion directe via WebSocket. Tes trades remontent automatiquement &mdash; rien &agrave; saisir manuellement.</div><div><span class="ip"><span class="idot"></span>MT5</span><span class="ip"><span class="idot"></span>Tradovate</span><span class="ip" style="opacity:.35">+ &agrave; venir</span></div></div>
-    <div class="step"><div class="stn">02 &mdash; Configure</div><div class="stt">Tes r&egrave;gles et limites</div><div class="std">Horaires de session, risk par trade, drawdown max. Tes r&egrave;gles, tes standards &mdash; pas des valeurs g&eacute;n&eacute;riques.</div></div>
-    <div class="step"><div class="stn">03 &mdash; Trade</div><div class="stt">Alerte imm&eacute;diate si &ccedil;a d&eacute;raille</div><div class="std">D&egrave;s qu&rsquo;un pattern dangereux est d&eacute;tect&eacute;, tu re&ccedil;ois une notification push + desktop &mdash; en moins d&rsquo;une seconde.</div></div>
+  <div class="steps-timeline">
+    <div class="step-tl">
+      <div class="step-tl-left"><div class="step-tl-num">01</div><div class="step-tl-line"></div></div>
+      <div class="step-tl-right">
+        <div class="step-tl-label">Connecte</div>
+        <div class="step-tl-title">Ta plateforme de trading</div>
+        <div class="step-tl-desc">Connexion directe via WebSocket. Tes trades remontent automatiquement &mdash; rien &agrave; saisir manuellement.</div>
+        <div style="margin-top:.875rem"><span class="ip"><span class="idot"></span>MT5</span><span class="ip"><span class="idot"></span>Tradovate</span><span class="ip" style="opacity:.35">+ &agrave; venir</span></div>
+      </div>
+    </div>
+    <div class="step-tl">
+      <div class="step-tl-left"><div class="step-tl-num">02</div><div class="step-tl-line"></div></div>
+      <div class="step-tl-right">
+        <div class="step-tl-label">Configure</div>
+        <div class="step-tl-title">Tes r&egrave;gles et limites</div>
+        <div class="step-tl-desc">Horaires de session, risk par trade, drawdown max. Tes r&egrave;gles, tes standards &mdash; pas des valeurs g&eacute;n&eacute;riques.</div>
+      </div>
+    </div>
+    <div class="step-tl">
+      <div class="step-tl-left"><div class="step-tl-num">03</div><div class="step-tl-line"></div></div>
+      <div class="step-tl-right">
+        <div class="step-tl-label">Trade</div>
+        <div class="step-tl-title">Alerte imm&eacute;diate si &ccedil;a d&eacute;raille</div>
+        <div class="step-tl-desc">D&egrave;s qu&rsquo;un pattern dangereux est d&eacute;tect&eacute;, tu re&ccedil;ois une notification push + desktop &mdash; en moins d&rsquo;une seconde.</div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -435,7 +463,7 @@ const HTML = `
 
 <section id="histoire" class="story-section">
   <div class="stag">L&rsquo;histoire de Caldra Session</div>
-  <div class="stit">Une conviction.<br>Un produit.</div>
+  <div class="stit">Une conviction.<br>Un outil.</div>
 
   <div style="max-width:620px;margin-top:2.5rem;display:flex;flex-direction:column;gap:1.5rem">
     <p style="font-size:16px;color:rgba(232,230,224,.75);line-height:1.9;font-weight:300">
@@ -473,46 +501,6 @@ const HTML = `
   </div>
 </div>
 
-<div class="sdiv"></div>
-
-<section id="contact" style="position:relative;z-index:1;max-width:680px;margin:0 auto;padding:5rem 2rem">
-  <div class="stag">Support</div>
-  <div class="stit">Une question&nbsp;?<br>On r&eacute;pond.</div>
-  <p class="sdesc">Un bug, une suggestion, une question sur Caldra. &Eacute;cris-nous directement.</p>
-  <div style="background:var(--sf);border:.5px solid var(--b2);border-radius:16px;padding:2rem;position:relative;overflow:hidden">
-    <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)"></div>
-    <div style="display:flex;flex-direction:column;gap:1rem">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-        <div>
-          <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--td);display:block;margin-bottom:.5rem">Pr&eacute;nom</label>
-          <input id="c-name" name="name" type="text" placeholder="Pr&eacute;nom" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(220,80,60,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
-        </div>
-        <div>
-          <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--td);display:block;margin-bottom:.5rem">Email</label>
-          <input id="c-email" name="email" type="email" placeholder="Email" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(220,80,60,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--td);display:block;margin-bottom:.5rem">Sujet</label>
-        <input id="c-subject" name="subject" type="text" placeholder="Sujet" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(220,80,60,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
-      </div>
-      <div>
-        <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--td);display:block;margin-bottom:.5rem">Message</label>
-        <textarea id="c-msg" name="message" rows="5" placeholder="Message" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor='rgba(220,80,60,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"></textarea>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
-        <span style="font-size:12px;color:var(--td)">R&eacute;ponse sous 24h</span>
-        <button id="c-btn" onclick="sendContact()" style="padding:11px 24px;background:var(--red);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity .2s;white-space:nowrap" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Envoyer &rarr;</button>
-      </div>
-      <div id="c-success" style="display:none;padding:12px 16px;background:rgba(30,180,100,.08);border:.5px solid rgba(30,180,100,.25);border-radius:8px;color:rgba(80,220,140,.9);font-size:13px;text-align:center">
-        &#10003; Message envoy&eacute;. On revient vers toi sous 24h.
-      </div>
-      <div id="c-error" style="display:none;padding:12px 16px;background:rgba(220,80,60,.08);border:.5px solid rgba(220,80,60,.25);border-radius:8px;color:rgba(220,80,60,.9);font-size:13px;text-align:center">
-        Une erreur s&rsquo;est produite. R&eacute;essaie ou &eacute;cris &agrave; contact@getcaldra.com
-      </div>
-    </div>
-  </div>
-</section>
 
 <footer>
   <div class="fl">Cald<span>ra</span></div>
@@ -657,8 +645,30 @@ if(car){
 </script>
 `
 
+const NET_JS = `(function(){
+  var cv=document.getElementById('net');
+  if(!cv)return;
+  var ctx=cv.getContext('2d');
+  var RED='rgba(220,80,60,',WHT='rgba(255,255,255,';
+  var W,H,pts,N_BASE=55,MAX_DIST=160,SPEED=0.28;
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
+  function mkPts(){var n=Math.round(N_BASE*(W/1440));pts=Array.from({length:Math.max(30,n)},function(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*SPEED,vy:(Math.random()-.5)*SPEED,r:Math.random()<.06?2.2:1.1,red:Math.random()<.06};});}
+  function draw(){ctx.clearRect(0,0,W,H);for(var i=0;i<pts.length;i++){for(var j=i+1;j<pts.length;j++){var dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<MAX_DIST){var a=(1-d/MAX_DIST)*.18;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=(pts[i].red||pts[j].red)?RED+a*.7+')':WHT+a+')';ctx.lineWidth=.6;ctx.stroke();}}}for(var k=0;k<pts.length;k++){ctx.beginPath();ctx.arc(pts[k].x,pts[k].y,pts[k].r,0,Math.PI*2);ctx.fillStyle=pts[k].red?RED+'.55)':WHT+'.25)';ctx.fill();}}
+  function move(){for(var k=0;k<pts.length;k++){pts[k].x+=pts[k].vx;pts[k].y+=pts[k].vy;if(pts[k].x<0||pts[k].x>W)pts[k].vx*=-1;if(pts[k].y<0||pts[k].y>H)pts[k].vy*=-1;}}
+  function loop(){move();draw();requestAnimationFrame(loop);}
+  resize();mkPts();loop();
+  window.addEventListener('resize',function(){resize();mkPts();});
+})();`
+
 export default function Home() {
   useEffect(() => {
+    // Réseau de points — démarre immédiatement, sans attendre Chart.js
+    document.getElementById('caldra-net')?.remove()
+    const netScript = document.createElement('script')
+    netScript.id = 'caldra-net'
+    netScript.textContent = NET_JS
+    document.body.appendChild(netScript)
+
     function runInit() {
       const src = document.getElementById('caldra-landing-js')?.textContent
       if (!src) return
@@ -680,6 +690,7 @@ export default function Home() {
     }
 
     return () => {
+      document.getElementById('caldra-net')?.remove()
       document.getElementById('caldra-chartjs')?.remove()
       document.getElementById('caldra-landing-init')?.remove()
     }
