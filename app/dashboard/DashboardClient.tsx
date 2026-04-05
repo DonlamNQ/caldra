@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import ScoreRing from '@/components/dashboard/ScoreRing'
 import AlertFeed, { AlertRow } from '@/components/dashboard/AlertFeed'
 import TradeLog, { TradeRow } from '@/components/dashboard/TradeLog'
-import AppHeader from '@/components/AppHeader'
+import AppShell from '@/components/AppShell'
 
 interface SessionStats {
   total_trades: number
@@ -37,6 +37,27 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
+// ── Mock data (shown when no real trades exist) ───────────────────────────────
+const TODAY = typeof window !== 'undefined' ? new Date().toISOString().split('T')[0] : '2026-04-05'
+
+const MOCK_TRADES: TradeRow[] = [
+  { id: 'm1', symbol: 'ES',  direction: 'long',  size: 2, entry_price: 5210.50, exit_price: 5221.75, pnl: 280.00, entry_time: `${TODAY}T09:32:00Z` },
+  { id: 'm2', symbol: 'NQ',  direction: 'long',  size: 1, entry_price: 18340.00, exit_price: 18356.00, pnl: 160.00, entry_time: `${TODAY}T09:51:00Z` },
+  { id: 'm3', symbol: 'NQ',  direction: 'short', size: 2, entry_price: 18350.00, exit_price: 18358.50, pnl: -85.00, entry_time: `${TODAY}T10:08:00Z` },
+  { id: 'm4', symbol: 'ES',  direction: 'short', size: 3, entry_price: 5219.25, exit_price: 5206.50,  pnl: 320.00, entry_time: `${TODAY}T10:22:00Z` },
+  { id: 'm5', symbol: 'ES',  direction: 'long',  size: 6, entry_price: 5208.75, exit_price: 5198.00,  pnl: -450.00, entry_time: `${TODAY}T10:31:00Z` },
+  { id: 'm6', symbol: 'ES',  direction: 'long',  size: 6, entry_price: 5197.50, exit_price: 5194.00,  pnl: -125.00, entry_time: `${TODAY}T10:34:00Z` },
+  { id: 'm7', symbol: 'NQ',  direction: 'short', size: 2, entry_price: 18298.50, exit_price: 18289.75, pnl: 180.00, entry_time: `${TODAY}T10:52:00Z` },
+]
+
+const MOCK_ALERTS: AlertRow[] = [
+  { id: 'a1', type: 'revenge_sizing',     level: 2, message: 'Taille ×3 après deux pertes — pattern de revenge sizing détecté.', created_at: `${TODAY}T10:31:05Z` },
+  { id: 'a2', type: 'immediate_reentry',  level: 1, message: 'Re-entrée 3 min après la sortie — respecte ton délai minimum.', created_at: `${TODAY}T10:34:08Z` },
+  { id: 'a3', type: 'consecutive_losses', level: 2, message: '2 pertes consécutives — biais émotionnel probable en cours de session.', created_at: `${TODAY}T10:34:10Z` },
+  { id: 'a4', type: 'drawdown_alert',     level: 2, message: 'Drawdown session −50 % depuis le pic — seuil critique approché.', created_at: `${TODAY}T10:35:00Z` },
+]
+
+// ── Session PnL sparkline ─────────────────────────────────────────────────────
 function SessionChart({ trades }: { trades: TradeRow[] }) {
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
@@ -44,282 +65,222 @@ function SessionChart({ trades }: { trades: TradeRow[] }) {
 
   if (sorted.length < 2) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 90, color: 'rgba(232,230,224,.2)', fontSize: 12, letterSpacing: .5 }}>
-        {sorted.length === 0 ? 'Aucun trade — la session démarre ici' : 'Données insuffisantes (min. 2 trades)'}
+      <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', color: 'rgba(226,224,218,.2)', fontSize: 12, letterSpacing: .3 }}>
+        {sorted.length === 0 ? 'La session démarre ici' : 'Trades insuffisants'}
       </div>
     )
   }
 
-  const points: { time: string; cum: number }[] = [{ time: 'Ouv.', cum: 0 }]
+  const pts: { t: string; v: number }[] = [{ t: 'Ouv.', v: 0 }]
   let cum = 0
-  for (const t of sorted) {
-    cum += t.pnl ?? 0
-    points.push({ time: formatTime(t.entry_time), cum })
-  }
+  for (const t of sorted) { cum += t.pnl ?? 0; pts.push({ t: formatTime(t.entry_time), v: cum }) }
 
-  const W = 560, H = 90, PX = 6, PY = 12
-  const values = points.map(p => p.cum)
-  const minV = Math.min(0, ...values)
-  const maxV = Math.max(0, ...values)
+  const W = 600, H = 100, PX = 4, PY = 10
+  const vals = pts.map(p => p.v)
+  const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals)
   const range = maxV - minV || 1
-  const n = points.length
-
+  const n = pts.length
   const xOf = (i: number) => PX + (i / (n - 1)) * (W - 2 * PX)
   const yOf = (v: number) => PY + (H - 2 * PY) - ((v - minV) / range) * (H - 2 * PY)
   const y0 = yOf(0)
-
-  const linePts = points.map((p, i) => `${xOf(i)},${yOf(p.cum)}`).join(' ')
-  const lastCum = values[values.length - 1]
-  const isPos = lastCum >= 0
-  const lineColor = isPos ? '#22c55e' : '#ef4444'
-  const fillColor = isPos ? 'rgba(34,197,94,.06)' : 'rgba(239,68,68,.06)'
-  const fillPath = `M${xOf(0)},${y0} ${points.map((p, i) => `L${xOf(i)},${yOf(p.cum)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
+  const linePts = pts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
+  const last = vals[vals.length - 1]
+  const isPos = last >= 0
+  const lc = isPos ? '#10b981' : '#f43f5e'
+  const fillPath = `M${xOf(0)},${y0} ${pts.map((p, i) => `L${xOf(i)},${yOf(p.v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
 
   return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 90 }}>
-        <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke="rgba(255,255,255,.05)" strokeWidth={1} strokeDasharray="3 4" />
-        <path d={fillPath} fill={fillColor} />
-        <polyline points={linePts} fill="none" stroke={lineColor} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-        <circle cx={xOf(n - 1)} cy={yOf(lastCum)} r={2.5} fill={lineColor} />
-        <circle cx={xOf(n - 1)} cy={yOf(lastCum)} r={5} fill={lineColor} opacity={0.2} />
+    <div style={{ flex: 1, minHeight: 0 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }}>
+        <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke="rgba(255,255,255,.06)" strokeWidth={1} strokeDasharray="3 5" />
+        <path d={fillPath} fill={isPos ? 'rgba(16,185,129,.07)' : 'rgba(244,63,94,.07)'} />
+        <polyline points={linePts} fill="none" stroke={lc} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={xOf(n - 1)} cy={yOf(last)} r={2.5} fill={lc} />
+        <circle cx={xOf(n - 1)} cy={yOf(last)} r={6} fill={lc} opacity={0.15} />
       </svg>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(232,230,224,.22)', fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>
-        <span>{points[0].time}</span>
-        <span>{points[points.length - 1].time}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(226,224,218,.2)', fontVariantNumeric: 'tabular-nums', fontFamily: "'JetBrains Mono',monospace" }}>
+        <span>{pts[0].t}</span><span>{pts[pts.length - 1].t}</span>
       </div>
     </div>
   )
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function DashboardClient({
-  userId,
-  userEmail,
-  initialScore,
-  initialAlerts,
-  initialTrades,
-  initialStats,
+  userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
 }: DashboardClientProps) {
-  const [alerts, setAlerts] = useState<AlertRow[]>(initialAlerts)
-  const [trades] = useState<TradeRow[]>(initialTrades)
-  const [stats] = useState<SessionStats>(initialStats)
+  const isEmpty = initialTrades.length === 0 && initialAlerts.length === 0
+  const isMock = isEmpty
+
+  const [alerts, setAlerts] = useState<AlertRow[]>(isMock ? MOCK_ALERTS : initialAlerts)
+  const [trades]  = useState<TradeRow[]>(isMock ? MOCK_TRADES : initialTrades)
+  const [stats]   = useState<SessionStats>(isMock
+    ? { total_trades: 7, total_pnl: 280.00, wins: 4, losses: 3 }
+    : initialStats
+  )
   const [connected, setConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const channelRef = useRef<any>(null)
-
-  const score = computeScore(alerts)
   const today = new Date().toISOString().split('T')[0]
 
+  const score = computeScore(alerts)
+
   useEffect(() => {
+    if (isMock) return
     const supabase = createClient()
     channelRef.current = supabase
       .channel('caldra-alerts-live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, (payload) => {
-        const newAlert = payload.new as AlertRow & { session_date?: string }
-        const isToday = newAlert.session_date === today || !newAlert.session_date
-        const isCurrentUser = (newAlert as any).user_id === userId || !(newAlert as any).user_id
-        if (isToday && isCurrentUser) {
-          setAlerts(prev => [newAlert, ...prev])
-          setLastUpdate(new Date())
-        }
+        const a = payload.new as AlertRow & { session_date?: string }
+        const isToday = a.session_date === today || !a.session_date
+        const isMe = (a as any).user_id === userId || !(a as any).user_id
+        if (isToday && isMe) { setAlerts(prev => [a, ...prev]); setLastUpdate(new Date()) }
       })
-      .subscribe((status) => { setConnected(status === 'SUBSCRIBED') })
+      .subscribe(s => setConnected(s === 'SUBSCRIBED'))
     return () => { channelRef.current?.unsubscribe() }
-  }, [userId, today])
+  }, [userId, today, isMock])
 
-  const pnlColor = stats.total_pnl > 0 ? '#22c55e' : stats.total_pnl < 0 ? '#ef4444' : 'rgba(232,230,224,.4)'
+  const pnlPos = stats.total_pnl >= 0
+  const pnlColor = stats.total_pnl > 0 ? '#10b981' : stats.total_pnl < 0 ? '#f43f5e' : 'rgba(226,224,218,.4)'
   const pnlSign = stats.total_pnl >= 0 ? '+' : ''
   const winRate = stats.total_trades > 0 ? Math.round((stats.wins / stats.total_trades) * 100) : null
   const hasCritical = alerts.some(a => (a.level ?? a.severity ?? 1) === 3)
 
   const CARD: React.CSSProperties = {
-    background: '#0d0d18',
-    border: '0.5px solid rgba(255,255,255,.08)',
-    borderRadius: 12,
+    background: '#0f0f17',
+    border: '0.5px solid rgba(255,255,255,.065)',
+    borderRadius: 10,
     position: 'relative',
     overflow: 'hidden',
   }
 
-  const statCards = [
-    { label: 'PnL session',  value: `${pnlSign}${stats.total_pnl.toFixed(2)}`, sub: 'USD', color: pnlColor },
-    { label: 'Trades',       value: stats.total_trades, sub: "aujourd'hui", color: 'rgba(232,230,224,.85)' },
-    { label: 'Gagnants',     value: stats.wins,  sub: 'positifs', color: '#22c55e' },
-    { label: 'Perdants',     value: stats.losses, sub: 'négatifs', color: '#ef4444' },
-    {
-      label: 'Win rate',
-      value: winRate !== null ? `${winRate}%` : '—',
-      sub: 'réussite',
-      color: winRate !== null ? (winRate >= 50 ? '#22c55e' : '#f59e0b') : 'rgba(232,230,224,.35)',
-    },
-    {
-      label: 'Alertes',
-      value: alerts.length,
-      sub: 'déclenchées',
-      color: alerts.length === 0 ? '#22c55e' : hasCritical ? '#ef4444' : '#f59e0b',
-    },
-  ]
+  const topBar = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+        <span style={{ fontSize: 11, color: 'rgba(226,224,218,.35)', fontVariantNumeric: 'tabular-nums', fontFamily: "'JetBrains Mono',monospace" }}>
+          {today}
+        </span>
+        {isMock && (
+          <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(220,80,60,.75)', background: 'rgba(220,80,60,.1)', border: '0.5px solid rgba(220,80,60,.2)', borderRadius: 4, padding: '2px 8px' }}>
+            Données de démo
+          </span>
+        )}
+      </div>
+      {!isMock && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{
+            width: 6, height: 6, borderRadius: '50%',
+            background: connected ? '#10b981' : 'rgba(255,255,255,.2)',
+            boxShadow: connected ? '0 0 6px rgba(16,185,129,.5)' : 'none',
+            transition: 'all .3s',
+          }} />
+          <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: connected ? 'rgba(16,185,129,.65)' : 'rgba(255,255,255,.22)', fontFamily: "'DM Sans',sans-serif" }}>
+            {connected ? 'live' : 'sync…'}
+          </span>
+          {lastUpdate && (
+            <span style={{ fontSize: 10, color: 'rgba(226,224,218,.2)', fontFamily: "'JetBrains Mono',monospace" }}>
+              {lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <>
       <style>{`
-        *{box-sizing:border-box}
-        body{margin:0;background:#07070e}
-        ::-webkit-scrollbar{width:3px;height:3px}
-        ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
-        @keyframes dFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes dPulse{0%,100%{opacity:1}50%{opacity:.3}}
-        .dsh-stat:hover{border-color:rgba(255,255,255,.14)!important}
-        .dsh-row:hover{background:rgba(255,255,255,.025)!important}
-        .dsh-live-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase}
+        @keyframes dshFadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+        .dsh-stat:hover{border-color:rgba(255,255,255,.12)!important}
+        .dsh-row:hover{background:rgba(255,255,255,.02)!important}
       `}</style>
+      <AppShell current="dashboard" userEmail={userEmail} topBar={topBar}>
+        <main style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', animation: 'dshFadeIn .4s ease both' }}>
 
-      <div style={{ minHeight: '100vh', background: '#07070e', color: '#e8e6e0', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+          {/* ── Row 1: Score + PnL Chart ──────────────────────────── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '230px 1fr', gap: '1.25rem', alignItems: 'stretch' }}>
 
-        {/* Header — own version with live dot */}
-        <header style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 3rem', height: 52,
-          borderBottom: '0.5px solid rgba(255,255,255,.07)',
-          backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-          background: 'rgba(7,7,14,.92)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <a href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 3, marginRight: '2rem' }}>
-              <span style={{ fontWeight: 300, fontSize: 13, letterSpacing: 5, textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>
-                Cald<span style={{ color: '#dc503c' }}>ra</span>
-              </span>
-              <span style={{ fontSize: 7, letterSpacing: 7, textTransform: 'uppercase', color: 'rgba(255,255,255,.3)', lineHeight: 1 }}>Session</span>
-            </a>
-            <div style={{ width: 0.5, height: 22, background: 'rgba(255,255,255,.08)', marginRight: '2rem' }} />
-            <nav style={{ display: 'flex', gap: '1.75rem' }}>
-              {[
-                { href: '/dashboard', label: 'Dashboard', active: true },
-                { href: '/alerts',    label: 'Alertes',   active: false },
-                { href: '/analytics', label: 'Analytics', active: false },
-                { href: '/settings/rules', label: 'Règles', active: false },
-                { href: '/settings/api',   label: 'API',   active: false },
-                { href: '/billing',   label: 'Billing',   active: false },
-              ].map(n => (
-                <a key={n.href} href={n.href} style={{
-                  fontSize: 9, fontWeight: 400, letterSpacing: 2, textTransform: 'uppercase',
-                  color: n.active ? '#fff' : 'rgba(232,230,224,.35)',
-                  textDecoration: 'none', transition: 'color .2s',
-                }}>
-                  {n.label}
-                </a>
-              ))}
-            </nav>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
-            <span style={{ fontSize: 10, color: 'rgba(232,230,224,.22)', fontVariantNumeric: 'tabular-nums', letterSpacing: .5 }}>{today}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{
-                width: 6, height: 6, borderRadius: '50%',
-                background: connected ? '#22c55e' : 'rgba(255,255,255,.18)',
-                boxShadow: connected ? '0 0 7px rgba(34,197,94,.55)' : 'none',
-                animation: connected ? 'none' : 'dPulse 2s infinite',
-                transition: 'all .3s',
-              }} />
-              <span className="dsh-live-label" style={{ color: connected ? 'rgba(34,197,94,.65)' : 'rgba(255,255,255,.2)' }}>
-                {connected ? 'live' : 'sync…'}
-              </span>
-            </div>
-            <span style={{ fontSize: 11, color: 'rgba(232,230,224,.25)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</span>
-            <button
-              onClick={async () => { const s = createClient(); await s.auth.signOut(); window.location.href = '/login' }}
-              style={{ fontSize: 9, padding: '6px 13px', background: 'transparent', border: '0.5px solid rgba(255,255,255,.13)', borderRadius: 4, color: 'rgba(232,230,224,.4)', cursor: 'pointer', letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans',sans-serif", transition: 'all .2s' }}
-            >
-              Déconnexion
-            </button>
-          </div>
-        </header>
-
-        {/* Main */}
-        <main style={{ padding: '5.5rem 3rem 4rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-
-          {/* ── Row 1: Score ring | PnL Chart ──────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '1.25rem', animation: 'dFadeIn .5s ease both' }}>
-
-            {/* Score card */}
-            <div style={{ ...CARD, padding: '1.75rem 1.25rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)' }} />
-              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', alignSelf: 'flex-start' }}>Score comportemental</div>
-              <ScoreRing score={score} size={166} />
-              {lastUpdate && (
-                <div style={{ fontSize: 9, color: 'rgba(232,230,224,.2)', letterSpacing: .5, fontVariantNumeric: 'tabular-nums' }}>
-                  màj {lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                </div>
-              )}
+            {/* Score */}
+            <div style={{ ...CARD, padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(226,224,218,.28)', alignSelf: 'stretch' }}>Score comportemental</div>
+              <ScoreRing score={score} size={162} />
             </div>
 
-            {/* PnL Chart card */}
-            <div style={{ ...CARD, padding: '1.5rem 1.75rem' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+            {/* PnL Chart */}
+            <div style={{ ...CARD, padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: 220 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexShrink: 0 }}>
                 <div>
-                  <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '.5rem' }}>P&L de session</div>
-                  <div style={{ fontSize: 'clamp(1.6rem,3vw,2.4rem)', fontWeight: 200, color: pnlColor, lineHeight: 1, letterSpacing: -1, fontVariantNumeric: 'tabular-nums' }}>
-                    {pnlSign}{stats.total_pnl.toFixed(2)}
-                    <span style={{ fontSize: '0.35em', fontWeight: 400, color: 'rgba(232,230,224,.35)', marginLeft: 6, letterSpacing: 1 }}>USD</span>
+                  <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(226,224,218,.28)', marginBottom: '.4rem' }}>P&L de session</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontSize: 'clamp(1.6rem,3vw,2.4rem)', fontWeight: 400, color: pnlColor, letterSpacing: -1, fontVariantNumeric: 'tabular-nums', fontFamily: "'JetBrains Mono',monospace", lineHeight: 1 }}>
+                      {pnlSign}{stats.total_pnl.toFixed(2)}
+                    </span>
+                    <span style={{ fontSize: 11, color: 'rgba(226,224,218,.3)' }}>USD</span>
                   </div>
                 </div>
-                <div style={{ fontSize: 9, color: 'rgba(232,230,224,.2)', letterSpacing: .5, textAlign: 'right' }}>
-                  <div>{stats.total_trades} trade{stats.total_trades !== 1 ? 's' : ''}</div>
-                  <div style={{ marginTop: 3 }}>{today}</div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, color: 'rgba(226,224,218,.2)', fontVariantNumeric: 'tabular-nums', fontFamily: "'JetBrains Mono',monospace" }}>{stats.total_trades} trades</div>
+                  {winRate !== null && (
+                    <div style={{ fontSize: 10, color: winRate >= 50 ? 'rgba(16,185,129,.6)' : 'rgba(245,158,11,.6)', marginTop: 3 }}>{winRate}% réussite</div>
+                  )}
                 </div>
               </div>
+              {/* Colored left border based on PnL */}
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2.5, background: pnlColor, opacity: .4, borderRadius: '10px 0 0 10px' }} />
               <SessionChart trades={trades} />
             </div>
           </div>
 
-          {/* ── Row 2: Stat cards ──────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: '1rem', animation: 'dFadeIn .5s ease .1s both' }}>
-            {statCards.map((s, i) => (
-              <div key={i} className="dsh-stat" style={{ ...CARD, padding: '1.1rem 1.25rem', transition: 'border-color .2s', animation: `dFadeIn .4s ease ${.1 + i * .05}s both` }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent)' }} />
-                <div style={{ fontSize: 8.5, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '.6rem' }}>{s.label}</div>
-                <div style={{ fontSize: 'clamp(1.2rem,2vw,1.55rem)', fontWeight: 200, color: s.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: -.5 }}>
+          {/* ── Row 2: Stats grid ─────────────────────────────────── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: '.875rem' }}>
+            {[
+              { label: 'PnL total',  value: `${pnlSign}${stats.total_pnl.toFixed(2)}`, unit: '$', color: pnlColor },
+              { label: 'Trades',     value: String(stats.total_trades),  unit: '',  color: 'rgba(226,224,218,.8)' },
+              { label: 'Gagnants',   value: String(stats.wins),    unit: '',  color: '#10b981' },
+              { label: 'Perdants',   value: String(stats.losses),  unit: '',  color: '#f43f5e' },
+              { label: 'Win rate',   value: winRate !== null ? `${winRate}%` : '—', unit: '', color: winRate !== null ? (winRate >= 50 ? '#10b981' : '#f59e0b') : 'rgba(226,224,218,.35)' },
+              { label: 'Alertes',    value: String(alerts.length), unit: '',  color: alerts.length === 0 ? '#10b981' : hasCritical ? '#f43f5e' : '#f59e0b' },
+            ].map((s, i) => (
+              <div key={i} className="dsh-stat" style={{ ...CARD, padding: '1rem 1.1rem', transition: 'border-color .15s', cursor: 'default' }}>
+                <div style={{ fontSize: 8.5, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(226,224,218,.25)', marginBottom: '.5rem', fontFamily: "'DM Sans',sans-serif" }}>{s.label}</div>
+                <div style={{ fontSize: 'clamp(1.1rem,1.8vw,1.4rem)', fontWeight: 500, color: s.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', fontFamily: "'JetBrains Mono',monospace", letterSpacing: -.5 }}>
                   {s.value}
+                  {s.unit && <span style={{ fontSize: '0.55em', opacity: .5, marginLeft: 3 }}>{s.unit}</span>}
                 </div>
-                <div style={{ fontSize: 9.5, color: 'rgba(232,230,224,.25)', marginTop: '.3rem' }}>{s.sub}</div>
               </div>
             ))}
           </div>
 
-          {/* ── Row 3: Alerts | Trades ─────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '1.25rem', animation: 'dFadeIn .5s ease .2s both' }}>
+          {/* ── Row 3: Alerts + Trades ────────────────────────────── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.65fr', gap: '1.25rem', alignItems: 'start' }}>
 
-            {/* Alert feed */}
-            <div style={{ ...CARD, padding: '1.4rem', maxHeight: 460, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.9rem' }}>
-                <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)' }}>Alertes du jour</div>
+            {/* Alerts */}
+            <div style={{ ...CARD, display: 'flex', flexDirection: 'column', maxHeight: 420 }}>
+              <div style={{ padding: '1.1rem 1.25rem .75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '0.5px solid rgba(255,255,255,.05)', flexShrink: 0 }}>
+                <span style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(226,224,218,.28)' }}>Alertes du jour</span>
                 {alerts.length > 0 && (
-                  <div style={{
-                    fontSize: 9, padding: '2px 9px',
-                    background: hasCritical ? 'rgba(220,80,60,.1)' : 'rgba(245,158,11,.08)',
-                    border: `0.5px solid ${hasCritical ? 'rgba(220,80,60,.28)' : 'rgba(245,158,11,.22)'}`,
-                    borderRadius: 100, color: hasCritical ? 'rgba(220,80,60,.85)' : 'rgba(245,158,11,.8)',
-                    letterSpacing: 1,
-                  }}>
+                  <span style={{ fontSize: 9, padding: '2px 8px', background: hasCritical ? 'rgba(244,63,94,.1)' : 'rgba(245,158,11,.08)', border: `0.5px solid ${hasCritical ? 'rgba(244,63,94,.28)' : 'rgba(245,158,11,.22)'}`, borderRadius: 100, color: hasCritical ? 'rgba(244,63,94,.85)' : 'rgba(245,158,11,.8)', letterSpacing: 1 }}>
                     {alerts.length}
-                  </div>
+                  </span>
                 )}
               </div>
-              <div style={{ flex: 1, overflow: 'hidden' }}><AlertFeed alerts={alerts} /></div>
+              <div style={{ flex: 1, overflow: 'hidden', padding: '0 .75rem .75rem' }}>
+                <AlertFeed alerts={alerts} />
+              </div>
             </div>
 
-            {/* Trade log */}
-            <div style={{ ...CARD, padding: '1.4rem', maxHeight: 460, overflowY: 'auto' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)' }} />
-              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(232,230,224,.28)', marginBottom: '.9rem' }}>Trades du jour</div>
-              <TradeLog trades={trades} />
+            {/* Trades */}
+            <div style={{ ...CARD, maxHeight: 420, overflowY: 'auto' }}>
+              <div style={{ padding: '1.1rem 1.25rem .75rem', borderBottom: '0.5px solid rgba(255,255,255,.05)', position: 'sticky', top: 0, background: '#0f0f17', zIndex: 1 }}>
+                <span style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(226,224,218,.28)' }}>Trades du jour</span>
+              </div>
+              <div style={{ padding: '0 .25rem .5rem' }}>
+                <TradeLog trades={trades} />
+              </div>
             </div>
           </div>
         </main>
-      </div>
+      </AppShell>
     </>
   )
 }

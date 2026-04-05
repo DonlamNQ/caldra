@@ -1,22 +1,12 @@
 'use client'
 
-interface ScoreRingProps {
-  score: number
-  size?: number
-}
+interface ScoreRingProps { score: number; size?: number }
 
 function scoreColor(s: number) {
-  if (s >= 75) return '#22c55e'
-  if (s >= 45) return '#eab308'
+  if (s >= 75) return '#10b981'
+  if (s >= 45) return '#f59e0b'
   if (s >= 20) return '#f97316'
-  return '#ef4444'
-}
-
-function scoreGlow(s: number) {
-  if (s >= 75) return 'rgba(34,197,94,.45)'
-  if (s >= 45) return 'rgba(234,179,8,.45)'
-  if (s >= 20) return 'rgba(249,115,22,.45)'
-  return 'rgba(239,68,68,.45)'
+  return '#f43f5e'
 }
 
 function scoreLabel(s: number) {
@@ -26,88 +16,49 @@ function scoreLabel(s: number) {
   return 'STOP'
 }
 
-export default function ScoreRing({ score, size = 180 }: ScoreRingProps) {
+export default function ScoreRing({ score, size = 162 }: ScoreRingProps) {
   const cx = size / 2
-  const r1 = size * 0.415   // outer ring
-  const r2 = size * 0.305   // inner ring
-
-  const c1 = 2 * Math.PI * r1
-  const c2 = 2 * Math.PI * r2
-  const pct = Math.max(0, Math.min(100, score)) / 100
-  const o1 = c1 * (1 - pct)
-  const o2 = c2 * (1 - pct)
-
+  const r = size * 0.39
+  const circ = 2 * Math.PI * r
+  const offset = circ * (1 - Math.max(0, Math.min(100, score)) / 100)
   const color = scoreColor(score)
-  const glow  = scoreGlow(score)
   const label = scoreLabel(score)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
       <div style={{ position: 'relative', width: size, height: size }}>
-
-        {/* SVG rings */}
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', position: 'absolute', top: 0, left: 0 }}>
-          {/* Outer track */}
-          <circle cx={cx} cy={cx} r={r1} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth={8} />
-          {/* Outer progress */}
+          <defs>
+            <filter id="ring-blur">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+          {/* Track */}
+          <circle cx={cx} cy={cx} r={r} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth={9} />
+          {/* Progress */}
           <circle
-            cx={cx} cy={cx} r={r1}
-            fill="none" stroke={color} strokeWidth={8}
+            cx={cx} cy={cx} r={r}
+            fill="none" stroke={color} strokeWidth={9}
             strokeLinecap="round"
-            strokeDasharray={c1} strokeDashoffset={o1}
-            style={{
-              transition: 'stroke-dashoffset .9s cubic-bezier(.4,0,.2,1), stroke .4s ease',
-              filter: `drop-shadow(0 0 5px ${glow})`,
-            }}
-          />
-          {/* Inner track */}
-          <circle cx={cx} cy={cx} r={r2} fill="none" stroke="rgba(255,255,255,.03)" strokeWidth={3.5} />
-          {/* Inner progress (ghost) */}
-          <circle
-            cx={cx} cy={cx} r={r2}
-            fill="none" stroke={color} strokeWidth={3.5}
-            strokeLinecap="round" opacity={0.3}
-            strokeDasharray={c2} strokeDashoffset={o2}
-            style={{ transition: 'stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)' }}
+            strokeDasharray={circ} strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset .9s cubic-bezier(.4,0,.2,1), stroke .4s', filter: `drop-shadow(0 0 4px ${color}88)` }}
           />
         </svg>
-
-        {/* Center text */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: 2,
-        }}>
-          <span style={{
-            fontSize: Math.round(size * 0.215),
-            fontWeight: 200,
-            color,
-            lineHeight: 1,
-            letterSpacing: -2,
-            fontVariantNumeric: 'tabular-nums',
-            textShadow: `0 0 22px ${glow}`,
-          }}>
+        {/* Center */}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+          <span style={{ fontSize: size * 0.205, fontWeight: 500, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', fontFamily: "'JetBrains Mono',monospace", letterSpacing: -2 }}>
             {score}
           </span>
-          <span style={{ fontSize: Math.round(size * 0.063), color: 'rgba(232,230,224,.28)', letterSpacing: 1 }}>
-            / 100
-          </span>
+          <span style={{ fontSize: size * 0.065, color: 'rgba(226,224,218,.25)', letterSpacing: 1, fontFamily: "'DM Sans',sans-serif" }}>/ 100</span>
         </div>
       </div>
-
       {/* Label */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-        <span style={{
-          color,
-          fontSize: 10,
-          fontWeight: 500,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          textShadow: `0 0 14px ${glow}`,
-        }}>
+        <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: '.1em', textTransform: 'uppercase', color, fontFamily: "'DM Sans',sans-serif" }}>
           {label}
         </span>
-        <div style={{ width: 20, height: 1.5, background: color, borderRadius: 2, opacity: 0.45 }} />
+        <div style={{ width: 18, height: 2, background: color, borderRadius: 2, opacity: .4 }} />
       </div>
     </div>
   )
