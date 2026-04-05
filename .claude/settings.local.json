@@ -14,7 +14,24 @@
       "Bash(rm:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(gh run:*)",
+      "Skill(update-config)",
+      "Bash(node:*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$(git status --porcelain)\" ]; then git add -u && git commit -m \"auto: sync via Claude Code $(date +%H:%M:%S)\" && git push origin main; fi",
+            "timeout": 30,
+            "statusMessage": "Auto-sync vers GitHub..."
+          }
+        ]
+      }
     ]
   }
 }
