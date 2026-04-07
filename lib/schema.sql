@@ -123,5 +123,30 @@ create policy "users read own trades"       on trades         for select using (
 create policy "users read own alerts"       on alerts         for select using (auth.uid() = user_id);
 create policy "users read own api keys"     on api_keys       for select using (auth.uid() = user_id);
 
+-- ─── tradovate_connections ───────────────────────────────────────────────────
+
+create table if not exists tradovate_connections (
+  id                    uuid        primary key default gen_random_uuid(),
+  user_id               uuid        not null references auth.users (id) on delete cascade,
+  tradovate_username    text        not null,
+  tradovate_password_hash text      not null,   -- AES-256-GCM chiffré (réversible pour re-auth)
+  tradovate_api_key     text        not null,
+  caldra_api_key_enc    text        not null,   -- AES-256-GCM chiffré
+  account_id            bigint,
+  access_token          text,
+  token_expires_at      timestamptz,
+  is_demo               boolean     not null default true,
+  is_active             boolean     not null default true,
+  last_sync_at          timestamptz,
+  created_at            timestamptz not null default now(),
+  unique (user_id)
+);
+
+alter table tradovate_connections enable row level security;
+
+drop policy if exists "service role full access" on tradovate_connections;
+create policy "service role full access" on tradovate_connections
+  for all using (true) with check (true);
+
 -- Realtime : activer sur la table alerts pour le dashboard live
 alter publication supabase_realtime add table alerts;

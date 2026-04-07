@@ -795,12 +795,185 @@ function RapportsPanel() {
   )
 }
 
+// ── TradovateCard ──────────────────────────────────────────────────────────────
+interface TradovateStatus {
+  isConnected: boolean
+  wsAlive: boolean
+  accountId: number | null
+  isDemo: boolean
+  username: string | null
+  lastSyncAt: string | null
+  dbActive: boolean
+}
+
+function TradovateCard({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
+  const [status, setStatus]     = useState<TradovateStatus | null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError]       = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+
+  const [form, setForm] = useState({
+    username: '',
+    password: '',
+    apiKey: '',
+    caldraApiKey: '',
+    isDemo: true,
+  })
+
+  // Poll status toutes les 10s
+  useEffect(() => {
+    let mounted = true
+    async function fetchStatus() {
+      try {
+        const res  = await fetch('/api/tradovate/status')
+        const data = await res.json() as TradovateStatus
+        if (mounted) { setStatus(data); setLoading(false) }
+      } catch {
+        if (mounted) setLoading(false)
+      }
+    }
+    fetchStatus()
+    const id = setInterval(fetchStatus, 10000)
+    return () => { mounted = false; clearInterval(id) }
+  }, [])
+
+  async function handleConnect(e: React.FormEvent) {
+    e.preventDefault()
+    setSubmitting(true); setError(null)
+    try {
+      const res  = await fetch('/api/tradovate/connect', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json() as { success?: boolean; error?: string; accountId?: number; isDemo?: boolean }
+      if (!res.ok || data.error) { setError(data.error ?? 'Erreur inconnue'); return }
+      setStatus({ isConnected: true, wsAlive: true, accountId: data.accountId ?? null, isDemo: data.isDemo ?? true, username: form.username, lastSyncAt: null, dbActive: true })
+      setShowForm(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur réseau')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleDisconnect() {
+    setSubmitting(true)
+    await fetch('/api/tradovate/disconnect', { method: 'POST' })
+    setStatus(prev => prev ? { ...prev, isConnected: false, wsAlive: false, dbActive: false } : null)
+    setSubmitting(false)
+  }
+
+  const connected = status?.isConnected ?? false
+  const inputSt: React.CSSProperties = {
+    width: '100%', background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b2}`,
+    borderRadius: 5, padding: '8px 11px', color: C.tx, fontSize: 12, fontFamily: MONO,
+    outline: 'none', boxSizing: 'border-box',
+  }
+
+  return (
+    <div style={{ background: C.sf, border: `.5px solid ${connected ? 'rgba(60,200,122,.2)' : C.b}`, borderRadius: 12, padding: 24, position: 'relative', overflow: 'hidden', transition: 'border-color .3s' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(220,80,60,.2),transparent)' }} />
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+        <div style={{ width: 42, height: 42, borderRadius: 9, background: connected ? 'rgba(60,200,122,.08)' : C.sf2, border: `.5px solid ${connected ? 'rgba(60,200,122,.25)' : C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: connected ? C.g : C.tm, transition: 'all .3s' }}>TV</div>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: C.tx }}>Tradovate</div>
+          <div style={{ fontSize: 11, color: C.td, fontFamily: MONO }}>Futures CME · WebSocket temps réel</div>
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: MONO }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: connected ? C.g : 'rgba(255,255,255,.2)', animation: connected ? 'pulse 1.8s infinite' : 'none' }} />
+          <span style={{ color: connected ? C.g : C.td }}>{loading ? '…' : connected ? 'Connecté' : 'Non connecté'}</span>
+        </div>
+      </div>
+
+      {/* État connecté */}
+      {connected && status && (
+        <div style={{ marginBottom: 16 }}>
+          {[
+            { k: 'Compte', v: status.username ?? '—' },
+            { k: 'Account ID', v: status.accountId ? String(status.accountId) : '—' },
+            { k: 'Environnement', v: status.isDemo ? 'Demo' : 'Live' },
+            { k: 'Dernière synchro', v: status.lastSyncAt ? new Date(status.lastSyncAt).toLocaleTimeString('fr-FR') : 'En attente du premier trade' },
+          ].map(({ k, v }) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
+              <span style={{ fontSize: 11, color: C.td, fontFamily: MONO }}>{k}</span>
+              <span style={{ fontSize: 11, fontFamily: MONO, color: C.tm }}>{v}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Formulaire de connexion */}
+      {!connected && showForm && (
+        <form onSubmit={handleConnect} style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginBottom: 4 }}>Username Tradovate</div>
+              <input style={inputSt} value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} placeholder="john.doe" required />
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginBottom: 4 }}>Mot de passe</div>
+              <input style={inputSt} type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="••••••••" required />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginBottom: 4 }}>API Key Tradovate</div>
+            <input style={inputSt} value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} placeholder="Tradovate API key (app secret)" required />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginBottom: 4 }}>Clé API Caldra <span style={{ color: C.red }}>*</span></div>
+            <input style={inputSt} value={form.caldraApiKey} onChange={e => setForm(p => ({ ...p, caldraApiKey: e.target.value }))} placeholder="cal_xxxxxxxxxxxxxxxxxxxx" required />
+            <div style={{ fontSize: 9, color: C.te, fontFamily: MONO, marginTop: 3 }}>Depuis Settings → API Key</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button type="button" onClick={() => setForm(p => ({ ...p, isDemo: !p.isDemo }))} style={{
+              padding: '6px 14px', borderRadius: 5, fontSize: 10, fontFamily: MONO, cursor: 'pointer',
+              background: form.isDemo ? 'rgba(245,166,35,.1)' : C.rd,
+              border: `.5px solid ${form.isDemo ? 'rgba(245,166,35,.3)' : C.rb}`,
+              color: form.isDemo ? C.o : C.red,
+              letterSpacing: 1, textTransform: 'uppercase' as const,
+            }}>
+              {form.isDemo ? '▶ Demo' : '▶ Live'}
+            </button>
+            <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>Cliquer pour basculer</span>
+          </div>
+          {error && <div style={{ fontSize: 11, color: C.red, fontFamily: MONO, padding: '6px 10px', background: C.rd, borderRadius: 4 }}>{error}</div>}
+          <div style={{ display: 'flex', gap: 9 }}>
+            <button type="submit" disabled={submitting} style={{ flex: 1, padding: 10, borderRadius: 6, fontSize: 11, fontFamily: MONO, cursor: submitting ? 'not-allowed' : 'pointer', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, opacity: submitting ? .6 : 1 }}>
+              {submitting ? 'Connexion…' : 'Se connecter'}
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} style={{ padding: 10, borderRadius: 6, fontSize: 11, fontFamily: MONO, cursor: 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td }}>
+              Annuler
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 9 }}>
+        {connected ? (
+          <button onClick={handleDisconnect} disabled={submitting} style={{ flex: 1, padding: 10, borderRadius: 6, fontSize: 11, fontFamily: MONO, cursor: submitting ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td }}>
+            {submitting ? 'Déconnexion…' : 'Déconnecter'}
+          </button>
+        ) : !showForm ? (
+          <button onClick={() => setShowForm(true)} style={{ flex: 1, padding: 10, borderRadius: 6, fontSize: 11, fontFamily: MONO, cursor: 'pointer', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red }}>
+            + Connecter Tradovate
+          </button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
 function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
   const hasKey = !!apiKeyPrefix
 
   return (
     <div style={{ padding: 28, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignContent: 'start', overflowY: 'auto', height: '100%' }}>
+
       {/* MetaTrader 5 */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 24, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(220,80,60,.2),transparent)' }} />
@@ -816,9 +989,8 @@ function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
           </div>
         </div>
         {hasKey && (
-          <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '9px 13px', fontSize: 11, fontFamily: MONO, color: C.td, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Clé API</span>
-            <span style={{ color: C.tm }}>{apiKeyPrefix}…</span>
+          <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '9px 13px', fontSize: 11, fontFamily: MONO, color: C.td, marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+            <span>Clé API</span><span style={{ color: C.tm }}>{apiKeyPrefix}…</span>
           </div>
         )}
         <div style={{ fontSize: 12, color: C.td, fontFamily: MONO, marginBottom: 16, lineHeight: 1.6 }}>
@@ -828,11 +1000,14 @@ function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
           <a href="/settings/api" style={{ flex: 1, padding: 10, borderRadius: 6, fontSize: 11, fontFamily: MONO, cursor: 'pointer', textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red }}>
             {hasKey ? 'Gérer la clé' : 'Générer une clé'}
           </a>
-          <a href="/connectors/mt5/README.md" target="_blank" style={{ flex: 1, padding: 10, borderRadius: 6, fontSize: 11, fontFamily: MONO, cursor: 'pointer', textAlign: 'center' as const, textDecoration: 'none', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td }}>
+          <a href="https://github.com/DonlamNQ/caldra/tree/main/connectors/mt5" target="_blank" rel="noopener" style={{ flex: 1, padding: 10, borderRadius: 6, fontSize: 11, fontFamily: MONO, cursor: 'pointer', textAlign: 'center' as const, textDecoration: 'none', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td }}>
             Documentation
           </a>
         </div>
       </div>
+
+      {/* Tradovate */}
+      <TradovateCard apiKeyPrefix={apiKeyPrefix} />
 
       {/* API directe */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 24, position: 'relative', overflow: 'hidden' }}>
@@ -860,12 +1035,12 @@ function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
         </a>
       </div>
 
-      {/* TradingView (bientôt) */}
+      {/* À venir */}
       {[
         { logo: 'TVW', name: 'TradingView', type: 'Alerts webhook', desc: 'Reçoit les alertes TradingView via webhook.' },
         { logo: 'SLK', name: 'Slack', type: 'Notifications sortantes', desc: 'Reçois les alertes Caldra dans ton channel Slack.' },
       ].map(({ logo, name, type, desc }) => (
-        <div key={name} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 24, opacity: .5 }}>
+        <div key={name} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 24, opacity: .45 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
             <div style={{ width: 42, height: 42, borderRadius: 9, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 500, color: C.tm }}>{logo}</div>
             <div>
