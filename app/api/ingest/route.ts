@@ -36,6 +36,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
+  // Ignorer les positions encore ouvertes (pas d'exit_price = trade non clôturé)
+  if (!exit_price || pnl == null) {
+    return NextResponse.json({ ignored: true, reason: 'Position still open — no exit_price or pnl' }, { status: 200 })
+  }
+
   // Sauvegarde le trade
   const { data: trade, error } = await supabase
     .from('trades')
