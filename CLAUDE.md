@@ -283,7 +283,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 
 ---
 
-## État du projet (2026-04-01)
+## État du projet (2026-04-08)
 
 ### ✅ Terminé
 - Auth complète (login/signup Server Actions, middleware, callback, onboarding)
@@ -304,6 +304,21 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Domaine `getcaldra.com` acheté sur Namecheap et connecté à Vercel (A record `216.198.79.1` + CNAME `e18fb8e584972c72.vercel-dns-017.com`)
 - Supabase URL Configuration mis à jour : Site URL = `https://getcaldra.com`, Redirect URLs = `https://getcaldra.com/**`
 - Landing page mise à jour : nouveau design, pricing 2 plans (Pro/Sentinel), carousel patterns comportementaux, témoignages mis à jour
+
+### ✅ Polissage UI (08/04/2026)
+- Logo "CALDRA SESSION" : `letterSpacing` de "CALDRA" augmenté à 8, `letterSpacing` de "SESSION" réduit à 3 → hiérarchie visuelle claire. Appliqué dans `AppHeader.tsx` ET `DashboardClient.tsx`.
+- Inputs number dans `RulesForm.tsx` : flèches webkit/moz supprimées via `<style>` global injecté dans le composant.
+- Calendrier (`CalendrierPanel` dans `DashboardClient.tsx`) : jours avec trades → `#1a1a2e` / border `rgba(220,80,60,.45)` / texte `#e2e8f0`. Jours sans trades → `#0d0d1a` / border `#1e1e35` / texte `#475569`. Jour sélectionné → fond `rgba(220,80,60,.12)` / border `#dc503c`. Numéros de jours 13px.
+- Graphique PnL (`PnlChart`) dans l'onglet "Session live" : toujours visible. 0 trade → axes + "// en attente de trades". 1 trade → point unique. 2+ → ligne continue. Couleur neutre `#e2e8f0`, grille `#1e1e35`.
+- PnL affiché en `#e2e8f0` (neutre) **partout dans le dashboard** — jamais rouge ou vert. Règle anti-biais cognitif appliquée dans : SessionPanel, J-1 bar, trade feed, footer stats, AnalyticsPanel, graphique cumulé analytics, SentinelPanel.
+- Page de connexion (`app/login/page.tsx`) : redesign complet cohérent avec la landing — fond `#08080d`, card `#0d0d1a`, logo CALDRA style header, bouton `#dc503c`, DM Sans, lien inscription en bas.
+
+### 🎨 Conventions visuelles à respecter
+- **PnL = toujours `#e2e8f0`** dans le dashboard (jamais C.g/C.red) — anti-biais cognitif
+- **Logo** : CALDRA `letterSpacing: 8`, SESSION `letterSpacing: 3`, fontSize 7
+- **Calendrier** : jours avec trades = `#1a1a2e` bg + border rouge ; sans trades = `#0d0d1a` bg + border `#1e1e35`
+- **PnlChart** : toujours rendu (même à 0 trade), couleur ligne `#e2e8f0`, grille `#1e1e35`
+- **Inputs number** : pas de flèches (webkit-appearance: none + moz-appearance: textfield)
 
 ### 🌍 Prod
 - URL : https://getcaldra.com

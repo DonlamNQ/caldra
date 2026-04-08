@@ -126,10 +126,20 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
     .filter(t => t.pnl != null && t.entry_time)
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
 
-  if (sorted.length < 2) {
+  const W = 600, H = 100, PX = 8, PY = 10
+  const LC = '#e2e8f0'
+  const GRID = '#1e1e35'
+
+  if (sorted.length === 0) {
+    const yMid = H / 2
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.te, fontSize: 11, fontFamily: MONO }}>
-        {sorted.length === 0 ? '// aucun trade — session en attente' : '// données insuffisantes'}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', flex: 1 }} preserveAspectRatio="none">
+          <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+          <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+          <line x1={PX} y1={yMid} x2={W - PX} y2={yMid} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
+          <text x={W / 2} y={yMid + 4} textAnchor="middle" fill="rgba(226,232,240,.3)" fontSize="10" fontFamily="'Geist Mono',monospace">// en attente de trades</text>
+        </svg>
       </div>
     )
   }
@@ -138,27 +148,39 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
   let cum = 0
   for (const t of sorted) { cum += t.pnl ?? 0; pts.push({ t: fmtTime(t.entry_time), v: cum }) }
 
-  const W = 600, H = 100, PX = 4, PY = 8
   const vals = pts.map(p => p.v)
   const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals)
   const range = maxV - minV || 1
   const n = pts.length
-  const xOf = (i: number) => PX + (i / (n - 1)) * (W - 2 * PX)
+  const xOf = (i: number) => PX + (i / Math.max(n - 1, 1)) * (W - 2 * PX)
   const yOf = (v: number) => PY + (H - 2 * PY) - ((v - minV) / range) * (H - 2 * PY)
   const y0 = yOf(0)
-  const last = vals[vals.length - 1]
-  const lc = last >= 0 ? C.g : C.red
+
+  if (n <= 2) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', flex: 1 }} preserveAspectRatio="none">
+          <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+          <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+          <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
+          {pts.map((p, i) => <circle key={i} cx={xOf(i)} cy={yOf(p.v)} r={3} fill={LC} />)}
+        </svg>
+      </div>
+    )
+  }
+
   const linePts = pts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
-  const fillPath = `M${xOf(0)},${y0} ${pts.map((p, i) => `L${xOf(i)},${yOf(p.v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
+  const last = vals[vals.length - 1]
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', flex: 1 }} preserveAspectRatio="none">
-        <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke="rgba(255,255,255,.06)" strokeWidth={1} strokeDasharray="4 6" />
-        <path d={fillPath} fill={last >= 0 ? 'rgba(60,200,122,.06)' : 'rgba(220,80,60,.06)'} />
-        <polyline points={linePts} fill="none" stroke={lc} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-        {pts.slice(1).map((p, i) => <circle key={i} cx={xOf(i + 1)} cy={yOf(p.v)} r={2} fill={C.bg} stroke={lc} strokeWidth={1} />)}
-        <circle cx={xOf(n - 1)} cy={yOf(last)} r={3.5} fill={lc} />
+        <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+        <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+        <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
+        <polyline points={linePts} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+        {pts.slice(1).map((p, i) => <circle key={i} cx={xOf(i + 1)} cy={yOf(p.v)} r={2} fill={C.bg} stroke={LC} strokeWidth={1} />)}
+        <circle cx={xOf(n - 1)} cy={yOf(last)} r={3.5} fill={LC} />
       </svg>
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px' }}>
         {[pts[0], pts[Math.floor(n / 2)], pts[n - 1]].map((p, i) => (
@@ -326,7 +348,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
   rules: TradingRules | null
 }) {
   const [note, setNote] = useState('')
-  const pnlColor = stats.total_pnl > 0 ? C.g : stats.total_pnl < 0 ? C.red : C.td
+  const pnlColor = '#e2e8f0'
   const winRate = stats.total_trades > 0 ? Math.round((stats.wins / stats.total_trades) * 100) : null
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
 
@@ -336,7 +358,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
       {yesterdayStats && (
         <div style={{ padding: '11px 24px', borderBottom: `.5px solid ${C.b}`, display: 'flex', gap: 24, alignItems: 'center', background: C.sf2, flexShrink: 0 }}>
           {[
-            { val: `${fmtPnl(yesterdayStats.pnl)} USD`, lbl: 'J-1 P&L', color: yesterdayStats.pnl >= 0 ? C.g : C.red },
+            { val: `${fmtPnl(yesterdayStats.pnl)} USD`, lbl: 'J-1 P&L', color: '#e2e8f0' },
             { val: String(yesterdayStats.score), lbl: 'J-1 Score', color: scoreColor(yesterdayStats.score) },
             { val: String(yesterdayStats.alerts), lbl: 'J-1 Alertes', color: yesterdayStats.alerts > 0 ? C.o : C.td },
           ].map((item, i) => (
@@ -400,7 +422,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
                     }}>{(flaggedAlert.type ?? '').replace(/_/g, ' ')}</span>
                   )}
                 </span>
-                <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: (t.pnl ?? 0) >= 0 ? C.g : C.red }}>
+                <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: '#e2e8f0' }}>
                   {fmtPnl(t.pnl ?? 0)}
                 </span>
               </div>
@@ -515,24 +537,24 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
             const isSelected = selectedDate === dateStr
             if (isWeekend || !s) {
               return (
-                <div key={d} style={{ minHeight: 78, borderRadius: 6, border: `.5px solid ${C.b}`, background: C.sf, opacity: isWeekend || !s ? .15 : 1, display: 'flex', flexDirection: 'column', padding: 10, pointerEvents: 'none' }}>
-                  <div style={{ fontSize: 11, color: C.tm }}>{d}</div>
+                <div key={d} style={{ minHeight: 78, borderRadius: 6, border: '.5px solid #1e1e35', background: '#0d0d1a', display: 'flex', flexDirection: 'column', padding: 10, pointerEvents: 'none' }}>
+                  <div style={{ fontSize: 13, color: '#475569' }}>{d}</div>
                 </div>
               )
             }
-            const bg = s.score >= 70 ? 'rgba(60,200,122,.05)' : s.score >= 40 ? 'rgba(245,166,35,.05)' : 'rgba(220,80,60,.07)'
-            const bdr = s.score >= 70 ? 'rgba(60,200,122,.16)' : s.score >= 40 ? 'rgba(245,166,35,.13)' : 'rgba(220,80,60,.18)'
             const col = scoreColor(s.score)
             return (
               <div key={d} onClick={() => setSelectedDate(dateStr)} style={{
-                minHeight: 78, borderRadius: 6, border: `.5px solid ${isSelected ? 'rgba(220,80,60,.55)' : bdr}`,
-                background: bg, cursor: 'pointer', display: 'flex', flexDirection: 'column', padding: 10,
-                position: 'relative', transition: 'all .2s', outline: isSelected ? '1.5px solid rgba(220,80,60,.55)' : 'none', outlineOffset: 1,
+                minHeight: 78, borderRadius: 6,
+                border: isSelected ? '1px solid #dc503c' : '.5px solid rgba(220,80,60,.45)',
+                background: isSelected ? 'rgba(220,80,60,.12)' : '#1a1a2e',
+                cursor: 'pointer', display: 'flex', flexDirection: 'column', padding: 10,
+                position: 'relative', transition: 'all .2s',
               }}>
                 {s.alertCount > 0 && <div style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: '50%', background: C.red }} />}
-                <div style={{ fontSize: 11, fontWeight: 400, color: C.tm, marginBottom: 4 }}>{d}</div>
+                <div style={{ fontSize: 13, fontWeight: 400, color: '#e2e8f0', marginBottom: 4 }}>{d}</div>
                 <div style={{ fontSize: 24, fontWeight: 200, letterSpacing: -1, lineHeight: 1, color: col }}>{s.score}</div>
-                <div style={{ fontSize: 10, color: C.td, fontFamily: MONO, marginTop: 4 }}>{fmtPnl(s.pnl)} USD</div>
+                <div style={{ fontSize: 10, color: '#e2e8f0', fontFamily: MONO, marginTop: 4 }}>{fmtPnl(s.pnl)} USD</div>
               </div>
             )
           })}
@@ -575,7 +597,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                   { val: String(avgScore), lbl: 'Score moy.', color: scoreColor(avgScore) },
                   { val: String(sessions.length), lbl: 'Sessions', color: C.tm },
                   { val: String(critical), lbl: 'Critiques', color: critical > 0 ? C.red : C.te },
-                  { val: `${fmtPnl(totalPnl)}`, lbl: 'P&L total', color: totalPnl >= 0 ? C.g : C.red },
+                  { val: `${fmtPnl(totalPnl)}`, lbl: 'P&L total', color: '#e2e8f0' },
                 ].map((item, i) => (
                   <div key={i} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 8, padding: '14px 16px' }}>
                     <div style={{ fontSize: 22, fontWeight: 200, letterSpacing: -.5, color: item.color }}>{item.val}</div>
@@ -660,7 +682,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
       {/* P&L cumulé */}
       <div style={{ background: C.bg, padding: 28, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: C.td, fontFamily: MONO, marginBottom: 18 }}>P&L cumulé — {sessions.length} dernières sessions</span>
-        <div style={{ fontSize: 44, fontWeight: 200, letterSpacing: -2, lineHeight: 1, marginBottom: 6, color: totalPnl >= 0 ? C.g : C.red }}>{fmtPnl(totalPnl)} <span style={{ fontSize: 16, color: C.te }}>USD</span></div>
+        <div style={{ fontSize: 44, fontWeight: 200, letterSpacing: -2, lineHeight: 1, marginBottom: 6, color: '#e2e8f0' }}>{fmtPnl(totalPnl)} <span style={{ fontSize: 16, color: C.te }}>USD</span></div>
         <div style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>Sur {sessions.length} sessions tradées</div>
         {cumulPts.length >= 2 && (
           <div style={{ marginTop: 16, height: 90, flex: 1 }}>
@@ -673,15 +695,14 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
               const xOf = (i: number) => PX + (i / (n - 1)) * (W - 2 * PX)
               const yOf = (v: number) => PY + (H - 2 * PY) - ((v - minV) / range) * (H - 2 * PY)
               const last = vals[vals.length - 1]
-              const lc = last >= 0 ? C.g : C.red
               const pts = cumulPts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
               const y0 = yOf(0)
               const fill = `M${xOf(0)},${y0} ${cumulPts.map((p, i) => `L${xOf(i)},${yOf(p.v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
               return (
                 <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-                  <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke="rgba(255,255,255,.06)" strokeWidth={1} strokeDasharray="4 6" />
-                  <path d={fill} fill={last >= 0 ? 'rgba(60,200,122,.06)' : 'rgba(220,80,60,.06)'} />
-                  <polyline points={pts} fill="none" stroke={lc} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+                  <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke="#1e1e35" strokeWidth={1} strokeDasharray="4 6" />
+                  <path d={fill} fill="rgba(226,232,240,.05)" />
+                  <polyline points={pts} fill="none" stroke="#e2e8f0" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
                 </svg>
               )
             })()}
@@ -1287,7 +1308,7 @@ function SentinelPanel({ stats, alerts, score, rules }: {
           <div style={{ fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: C.te, fontFamily: MONO, marginBottom: 11 }}>Session actuelle</div>
           {[
             { k: 'Score', v: `${score} / 100`, c: scoreColor(score) },
-            { k: 'P&L', v: `${fmtPnl(stats.total_pnl)} USD`, c: stats.total_pnl >= 0 ? C.g : C.red },
+            { k: 'P&L', v: `${fmtPnl(stats.total_pnl)} USD`, c: '#e2e8f0' },
             { k: 'Trades', v: String(stats.total_trades), c: C.tm },
             { k: 'Alertes', v: String(alerts.length), c: alerts.length > 0 ? C.red : C.td },
           ].map(({ k, v, c }) => (
@@ -1397,8 +1418,8 @@ export default function DashboardClient({
         {/* ── Header ── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px', borderBottom: `.5px solid ${C.b}`, background: 'rgba(8,8,13,.97)', flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: 5, textTransform: 'uppercase', color: '#fff' }}>Cald<span style={{ color: C.red }}>ra</span></div>
-            <div style={{ fontSize: 7, letterSpacing: 5.7, textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', display: 'block', marginTop: 3 }}>Session</div>
+            <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: 8, textTransform: 'uppercase', color: '#fff' }}>Cald<span style={{ color: C.red }}>ra</span></div>
+            <div style={{ fontSize: 7, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', display: 'block', marginTop: 3 }}>Session</div>
           </div>
           <div style={{ fontSize: 10, color: C.td, letterSpacing: 1, fontFamily: MONO }}>{displayDate}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

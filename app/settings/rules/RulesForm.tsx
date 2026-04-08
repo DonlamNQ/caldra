@@ -51,7 +51,8 @@ export default function RulesForm({ initial, userEmail }: RulesFormProps) {
       <style>{`
         @keyframes rlFadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
         .rl-in:focus{border-color:rgba(56,189,248,.3)!important}
-        .rl-in::-webkit-inner-spin-button{opacity:.25}
+        input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+        input[type=number]{-moz-appearance:textfield}
         input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.3)}
       `}</style>
       <AppShell current="règles" userEmail={userEmail}>
