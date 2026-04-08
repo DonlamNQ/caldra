@@ -9,12 +9,13 @@ interface AppHeaderProps {
 }
 
 const NAV = [
-  { href: '/dashboard',      label: 'dashboard',  display: 'Dashboard' },
-  { href: '/alerts',         label: 'alertes',    display: 'Alertes' },
-  { href: '/analytics',      label: 'analytics',  display: 'Analytics' },
-  { href: '/settings/rules', label: 'règles',     display: 'Règles' },
-  { href: '/settings/api',   label: 'api',        display: 'API' },
-  { href: '/billing',        label: 'billing',    display: 'Billing' },
+  { href: '/dashboard',             label: 'dashboard',      display: 'Dashboard' },
+  { href: '/alerts',                label: 'alertes',        display: 'Alertes' },
+  { href: '/analytics',             label: 'analytics',      display: 'Analytics' },
+  { href: '/settings/rules',        label: 'règles',         display: 'Règles' },
+  { href: '/settings/api',          label: 'api',            display: 'API' },
+  { href: '/settings/integrations', label: 'intégrations',   display: 'Intégrations' },
+  { href: '/billing',               label: 'billing',        display: 'Billing' },
 ]
 
 export default function AppHeader({ current, userEmail, liveStatus }: AppHeaderProps) {

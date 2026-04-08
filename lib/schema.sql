@@ -148,5 +148,30 @@ drop policy if exists "service role full access" on tradovate_connections;
 create policy "service role full access" on tradovate_connections
   for all using (true) with check (true);
 
+-- ─── ctrader_connections ─────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS ctrader_connections (
+  id            uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id       uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  account_id    text        NOT NULL,
+  account_name  text,
+  access_token  text        NOT NULL,
+  refresh_token text        NOT NULL,
+  expires_at    timestamptz NOT NULL,
+  caldra_api_key text       NOT NULL DEFAULT '',
+  is_active     boolean     DEFAULT false,
+  created_at    timestamptz DEFAULT now(),
+  UNIQUE(user_id, account_id)
+);
+
+ALTER TABLE ctrader_connections ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "service role full access" ON ctrader_connections;
+CREATE POLICY "service role full access" ON ctrader_connections
+  FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Users own their ctrader connections" ON ctrader_connections
+  FOR ALL USING (auth.uid() = user_id);
+
 -- Realtime : activer sur la table alerts pour le dashboard live
 alter publication supabase_realtime add table alerts;
