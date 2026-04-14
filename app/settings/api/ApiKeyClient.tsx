@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import AppShell from '@/components/AppShell'
+import AppHeader from '@/components/AppHeader'
 
 interface ApiKeyClientProps { userEmail: string; existingPrefix: string|null; existingCreatedAt: string|null }
 
@@ -58,7 +58,8 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
         .ak-copy{font-size:9px;padding:6px 12px;background:rgba(16,185,129,.09);border:0.5px solid rgba(16,185,129,.22);border-radius:5px;color:rgba(16,185,129,.8);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif;transition:all .15s;flex-shrink:0}
         .ak-copy:hover{background:rgba(16,185,129,.14)}
       `}</style>
-      <AppShell current="api" userEmail={userEmail}>
+      <AppHeader current="api" userEmail={userEmail} />
+      <div style={{ background: '#08080d', minHeight: '100vh', paddingTop: 52, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
         <main style={{ padding: '2rem', maxWidth: 740, animation: 'apFadeIn .4s ease both' }}>
 
           <div style={{ marginBottom: '1.75rem' }}>
@@ -136,7 +137,7 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
             </div>
           </div>
         </main>
-      </AppShell>
+      </div>
     </>
   )
 }

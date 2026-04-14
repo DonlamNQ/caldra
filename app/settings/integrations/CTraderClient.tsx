@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import AppShell from '@/components/AppShell'
+import AppHeader from '@/components/AppHeader'
 
 interface Status {
   connected: boolean
@@ -61,7 +61,8 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
         .ig-danger:hover{background:rgba(244,63,94,.06)!important;color:rgba(244,63,94,.8)!important}
       `}</style>
 
-      <AppShell current="intégrations" userEmail={userEmail}>
+      <AppHeader current="intégrations" userEmail={userEmail} />
+      <div style={{ background: '#08080d', minHeight: '100vh', paddingTop: 52, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
         <main style={{ padding: '2rem', animation: 'igFadeIn .4s ease both' }}>
 
           {/* Page header */}
@@ -186,7 +187,7 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
 
           </div>
         </main>
-      </AppShell>
+      </div>
     </>
   )
 }

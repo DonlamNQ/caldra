@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import AppShell from '@/components/AppShell'
+import AppHeader from '@/components/AppHeader'
 
 interface Rules { max_daily_drawdown_pct: number; max_consecutive_losses: number; min_time_between_entries_sec: number; session_start: string; session_end: string; max_trades_per_session: number; max_risk_per_trade_pct: number }
 interface RulesFormProps { initial: Rules; userEmail: string }
@@ -55,7 +55,8 @@ export default function RulesForm({ initial, userEmail }: RulesFormProps) {
         input[type=number]{-moz-appearance:textfield}
         input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.3)}
       `}</style>
-      <AppShell current="règles" userEmail={userEmail}>
+      <AppHeader current="règles" userEmail={userEmail} />
+      <div style={{ background: '#08080d', minHeight: '100vh', paddingTop: 52, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
         <main style={{ padding: '2rem', maxWidth: 700, animation: 'rlFadeIn .4s ease both' }}>
 
           <div style={{ marginBottom: '1.75rem' }}>
@@ -117,7 +118,7 @@ export default function RulesForm({ initial, userEmail }: RulesFormProps) {
             </div>
           </form>
         </main>
-      </AppShell>
+      </div>
     </>
   )
 }
