@@ -19,23 +19,21 @@ export default async function IntegrationsPage({
 
   const { data: conn } = await service
     .from('ctrader_connections')
-    .select('account_id, account_name, is_active, caldra_api_key')
+    .select('account_id, account_name, is_active')
     .eq('user_id', user.id)
     .single()
 
-  const status = {
-    connected:       !!(conn?.is_active),
-    polling:         false, // will be updated client-side via /api/ctrader/status
-    accountId:       conn?.account_id ?? null,
-    accountName:     conn?.account_name ?? null,
-    needsActivation: !!(conn && !conn.is_active),
-    hasApiKey:       !!(conn?.caldra_api_key?.startsWith('cal_')),
+  const initialStatus = {
+    connected:   !!(conn?.is_active),
+    polling:     false,
+    accountId:   conn?.account_id ?? null,
+    accountName: conn?.account_name ?? null,
   }
 
   return (
     <CTraderClient
       userEmail={user.email ?? ''}
-      status={status}
+      initialStatus={initialStatus}
       searchParams={searchParams}
     />
   )
