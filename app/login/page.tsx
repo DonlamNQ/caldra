@@ -34,17 +34,22 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap');
-        *{box-sizing:border-box}
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        .lg-input{background:rgba(255,255,255,.04);border:0.5px solid #1e1e35;border-radius:8px;padding:14px 16px;color:#e2e8f0;font-size:14px;font-family:'DM Sans',sans-serif;width:100%;outline:none;transition:border-color .2s}
         .lg-input::placeholder{color:rgba(226,232,240,.2)}
-        .lg-input:focus{border-color:rgba(220,80,60,.4)!important;outline:none}
-        .lg-btn:hover{background:#c94535!important}
+        .lg-input:focus{border-color:rgba(220,80,60,.5)!important}
+        .lg-btn{background:#dc503c;color:#fff;border:none;border-radius:8px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;transition:background .2s;letter-spacing:.2px}
+        .lg-btn:hover{background:#c94535}
         .lg-btn:disabled{opacity:.55;cursor:not-allowed}
+        .lg-signup-link{color:rgba(226,232,240,.4);text-decoration:none;transition:color .2s}
+        .lg-signup-link:hover{color:rgba(226,232,240,.75)}
       `}</style>
       <div style={{
         minHeight: '100vh',
         background: '#08080d',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
@@ -52,125 +57,120 @@ export default function LoginPage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Subtle radial glow */}
+        {/* Background glow */}
         <div style={{
-          position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)',
-          width: 600, height: 600, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(220,80,60,.06) 0%, transparent 70%)',
+          position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%,-50%)',
+          width: 700, height: 700, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(220,80,60,.05) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
+        {/* Form container */}
         <div style={{
           width: '100%',
           maxWidth: 400,
-          background: '#0d0d1a',
-          border: '0.5px solid #1e1e35',
-          borderRadius: 12,
-          padding: '40px 36px',
           display: 'flex',
           flexDirection: 'column',
           gap: 0,
           position: 'relative',
           zIndex: 1,
         }}>
-          {/* Top accent line */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, borderRadius: '12px 12px 0 0', background: 'linear-gradient(90deg,transparent,rgba(220,80,60,.4),transparent)' }} />
-
           {/* Logo */}
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 14, fontWeight: 300, letterSpacing: 8, textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{
+              fontSize: 20, fontWeight: 800, letterSpacing: 4,
+              textTransform: 'uppercase', color: '#e2e8f0', lineHeight: 1,
+              marginBottom: 10,
+            }}>
               Cald<span style={{ color: '#dc503c' }}>ra</span>
             </div>
-            <div style={{ fontSize: 7, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,.3)', lineHeight: 1, marginTop: 5 }}>Session</div>
+            <div style={{
+              fontSize: 13, fontStyle: 'italic', color: '#475569', fontWeight: 300, lineHeight: 1.5,
+            }}>
+              La discipline ne se force pas. Elle se protège.
+            </div>
           </div>
 
-          {sent ? (
-            <>
-              <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.5, color: '#e2e8f0', marginBottom: 10 }}>
-                Vérifiez votre email
-              </div>
-              <p style={{ margin: 0, color: '#475569', fontSize: 14, lineHeight: 1.65, fontWeight: 300 }}>
-                Un lien de connexion a été envoyé à{' '}
-                <span style={{ color: '#e2e8f0' }}>{email}</span>.
-                Cliquez sur le lien pour accéder à votre espace.
-              </p>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.5, color: '#e2e8f0', marginBottom: 6 }}>
-                Connexion
-              </div>
-              <p style={{ margin: '0 0 24px', color: '#475569', fontSize: 13, fontWeight: 300 }}>
-                Lien magique — aucun mot de passe
-              </p>
+          {/* Card */}
+          <div style={{
+            background: '#0d0d1a',
+            border: '0.5px solid #1e1e35',
+            borderRadius: 12,
+            padding: '36px 32px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            {/* Top accent */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(220,80,60,.4),transparent)' }} />
 
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  <label style={{ color: 'rgba(226,232,240,.5)', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>
-                    Email
-                  </label>
-                  <input
-                    className="lg-input"
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    autoComplete="email"
-                    style={{
-                      background: '#08080d',
-                      border: '0.5px solid #1e1e35',
-                      borderRadius: 6,
-                      padding: '12px 16px',
-                      color: '#e2e8f0',
-                      fontSize: 14,
-                      fontFamily: "'DM Sans', sans-serif",
-                      transition: 'border-color .2s',
-                    }}
-                  />
+            {sent ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.5, color: '#e2e8f0' }}>
+                  Vérifiez votre email
+                </div>
+                <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.65, fontWeight: 300 }}>
+                  Un lien de connexion a été envoyé à{' '}
+                  <span style={{ color: '#e2e8f0' }}>{email}</span>.{' '}
+                  Cliquez sur le lien pour accéder à votre espace.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.5, color: '#e2e8f0', marginBottom: 5 }}>
+                    Connexion
+                  </div>
+                  <div style={{ fontSize: 13, color: '#475569', fontWeight: 300 }}>
+                    Lien magique — aucun mot de passe requis
+                  </div>
                 </div>
 
-                {error && (
-                  <div style={{
-                    color: '#dc503c', fontSize: 12, background: 'rgba(220,80,60,.07)',
-                    border: '0.5px solid rgba(220,80,60,.2)', borderRadius: 6, padding: '9px 12px',
-                  }}>
-                    {error}
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                    <label style={{ color: 'rgba(226,232,240,.45)', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: "'DM Sans', sans-serif" }}>
+                      Email
+                    </label>
+                    <input
+                      className="lg-input"
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                      autoComplete="email"
+                    />
                   </div>
-                )}
 
-                <button
-                  className="lg-btn"
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    background: '#dc503c',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 6,
-                    padding: '12px',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    letterSpacing: .5,
-                    fontFamily: "'DM Sans', sans-serif",
-                    transition: 'background .2s',
-                    marginTop: 4,
-                    width: '100%',
-                  }}
-                >
-                  {loading ? 'Envoi en cours…' : 'Envoyer le lien'}
-                </button>
-              </form>
+                  {error && (
+                    <div style={{
+                      color: '#dc503c', fontSize: 12,
+                      background: 'rgba(220,80,60,.07)',
+                      border: '0.5px solid rgba(220,80,60,.2)',
+                      borderRadius: 6, padding: '9px 12px',
+                    }}>
+                      {error}
+                    </div>
+                  )}
 
-              <div style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: '#475569', fontWeight: 300 }}>
-                Pas de compte ?{' '}
-                <a href="/signup" style={{ color: 'rgba(226,232,240,.4)', textDecoration: 'none', transition: 'color .2s' }}>
-                  S'inscrire
-                </a>
-              </div>
-            </>
-          )}
+                  <button
+                    className="lg-btn"
+                    type="submit"
+                    disabled={loading}
+                    style={{ marginTop: 4 }}
+                  >
+                    {loading ? 'Envoi en cours…' : 'Envoyer le lien'}
+                  </button>
+                </form>
+
+                <div style={{ marginTop: 22, textAlign: 'center' as const, fontSize: 13, color: '#475569', fontWeight: 300 }}>
+                  Pas de compte ?{' '}
+                  <a href="/signup" className="lg-signup-link">
+                    S'inscrire
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </>

@@ -24,24 +24,56 @@ function computeFreq(alerts: AlertRecord[]) {
 }
 
 function PnlChart({ series }: { series: DayStats[] }) {
-  if (series.length < 2) return <div style={{ height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(226,224,218,.2)', fontSize: 12 }}>Pas assez de données</div>
   const W = 600, H = 140, PX = 4, PY = 12
+  const LC = '#e2e8f0'
+  const GRID = '#1e1e35'
+
+  if (series.length === 0) {
+    const yMid = H / 2
+    return (
+      <div>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 150 }}>
+          <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+          <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+          <line x1={PX} y1={yMid} x2={W - PX} y2={yMid} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
+          <text x={W / 2} y={yMid + 4} textAnchor="middle" fill="rgba(226,232,240,.3)" fontSize="10" fontFamily="'JetBrains Mono',monospace">// aucune donnée</text>
+        </svg>
+      </div>
+    )
+  }
+
+  if (series.length === 1) {
+    const vals = [0, series[0].cumPnl]
+    const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals), range = maxV - minV || 1
+    const yOf = (v: number) => PY + (H - 2 * PY) - ((v - minV) / range) * (H - 2 * PY)
+    const y0 = yOf(0)
+    return (
+      <div>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 150 }}>
+          <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+          <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
+          <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
+          <circle cx={W / 2} cy={yOf(series[0].cumPnl)} r={3} fill={LC} />
+        </svg>
+      </div>
+    )
+  }
+
   const vals = series.map(s => s.cumPnl)
   const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals), range = maxV - minV || 1, n = series.length
   const xOf = (i: number) => PX + (i / (n - 1)) * (W - 2 * PX)
   const yOf = (v: number) => PY + (H - 2 * PY) - ((v - minV) / range) * (H - 2 * PY)
-  const y0 = yOf(0); const last = vals[vals.length - 1]; const isPos = last >= 0
-  const lc = isPos ? '#10b981' : '#f43f5e'
+  const y0 = yOf(0)
   const pts = series.map((s, i) => `${xOf(i)},${yOf(s.cumPnl)}`).join(' ')
   const fp = `M${xOf(0)},${y0} ${series.map((s, i) => `L${xOf(i)},${yOf(s.cumPnl)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 150 }}>
-        <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke="rgba(255,255,255,.06)" strokeWidth={1} strokeDasharray="3 5"/>
-        <path d={fp} fill={isPos ? 'rgba(16,185,129,.07)' : 'rgba(244,63,94,.07)'}/>
-        <polyline points={pts} fill="none" stroke={lc} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round"/>
-        <circle cx={xOf(n-1)} cy={yOf(last)} r={2.5} fill={lc}/>
-        <circle cx={xOf(n-1)} cy={yOf(last)} r={6} fill={lc} opacity={0.15}/>
+        <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke={GRID} strokeWidth={1} strokeDasharray="3 5"/>
+        <path d={fp} fill="rgba(226,232,240,0.05)"/>
+        <polyline points={pts} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round"/>
+        <circle cx={xOf(n-1)} cy={yOf(vals[n-1])} r={2.5} fill={LC}/>
+        <circle cx={xOf(n-1)} cy={yOf(vals[n-1])} r={6} fill={LC} opacity={0.15}/>
       </svg>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(226,224,218,.2)', fontFamily: "'JetBrains Mono',monospace", marginTop: 4 }}>
         <span>{series[0].date}</span><span>{series[series.length-1].date}</span>
@@ -59,7 +91,7 @@ export default function AnalyticsClient({ trades, alerts, userEmail }: Analytics
   const totalPnl = trades.reduce((s, t) => s + (t.pnl ?? 0), 0)
   const wins = trades.filter(t => (t.pnl ?? 0) > 0).length
   const winRate = trades.length ? Math.round((wins / trades.length) * 100) : 0
-  const pnlColor = totalPnl >= 0 ? '#10b981' : '#f43f5e'
+  const pnlColor = '#e2e8f0'
   const best = series.reduce((b, s) => s.pnl > (b?.pnl ?? -Infinity) ? s : b, null as DayStats|null)
   const worst = series.reduce((w, s) => s.pnl < (w?.pnl ?? Infinity) ? s : w, null as DayStats|null)
 
@@ -144,7 +176,7 @@ export default function AnalyticsClient({ trades, alerts, userEmail }: Analytics
                         <td style={{ padding: '7px 8px', color: 'rgba(226,224,218,.4)', fontFamily: "'JetBrains Mono',monospace", borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>{s.date}</td>
                         <td style={{ padding: '7px 8px', color: 'rgba(226,224,218,.4)', borderBottom: '0.5px solid rgba(255,255,255,.04)', fontVariantNumeric: 'tabular-nums' }}>{s.trades}</td>
                         <td style={{ padding: '7px 8px', color: 'rgba(226,224,218,.4)', borderBottom: '0.5px solid rgba(255,255,255,.04)', fontVariantNumeric: 'tabular-nums' }}>{s.wins}</td>
-                        <td style={{ padding: '7px 8px', color: s.pnl >= 0 ? '#10b981' : '#f43f5e', fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, borderBottom: '0.5px solid rgba(255,255,255,.04)', fontVariantNumeric: 'tabular-nums' }}>
+                        <td style={{ padding: '7px 8px', color: '#e2e8f0', fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, borderBottom: '0.5px solid rgba(255,255,255,.04)', fontVariantNumeric: 'tabular-nums' }}>
                           {s.pnl >= 0 ? '+' : ''}{s.pnl.toFixed(2)}
                         </td>
                       </tr>

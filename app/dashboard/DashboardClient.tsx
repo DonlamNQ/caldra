@@ -505,7 +505,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', flex: 1, height: '100%' }}>
       <div style={{ padding: '24px 28px', borderRight: `.5px solid ${C.b}`, overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <div style={{ fontSize: 19, fontWeight: 300, letterSpacing: -.3, color: C.tx, textTransform: 'capitalize' as const }}>{monthName}</div>
+          <div style={{ fontSize: 19, fontWeight: 300, letterSpacing: -.3, color: '#e2e8f0', textTransform: 'capitalize' as const }}>{monthName}</div>
           <div style={{ display: 'flex', gap: 5 }}>
             <button onClick={() => setCalOffset(o => o - 1)} style={{ background: 'transparent', border: `.5px solid ${C.b}`, borderRadius: 5, color: C.td, cursor: 'pointer', width: 32, height: 32, fontSize: 16, fontFamily: MONO }}>‹</button>
             <button onClick={() => setCalOffset(o => o + 1)} style={{ background: 'transparent', border: `.5px solid ${C.b}`, borderRadius: 5, color: C.td, cursor: 'pointer', width: 32, height: 32, fontSize: 16, fontFamily: MONO }}>›</button>
@@ -522,7 +522,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 6 }}>
           {['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => (
-            <div key={d} style={{ textAlign: 'center' as const, fontSize: 11, color: C.td, fontFamily: MONO, padding: 4, opacity: ['Sam','Dim'].includes(d) ? .35 : 1 }}>{d}</div>
+            <div key={d} style={{ textAlign: 'center' as const, fontSize: 9, color: '#64748b', fontFamily: MONO, padding: 4, opacity: ['Sam','Dim'].includes(d) ? .5 : 1 }}>{d}</div>
           ))}
         </div>
 
@@ -542,19 +542,20 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                 </div>
               )
             }
-            const col = scoreColor(s.score)
+            const col = isSelected ? '#fff' : scoreColor(s.score)
+            const textCol = isSelected ? '#fff' : '#e2e8f0'
             return (
               <div key={d} onClick={() => setSelectedDate(dateStr)} style={{
                 minHeight: 78, borderRadius: 6,
-                border: isSelected ? '1px solid #dc503c' : '.5px solid rgba(220,80,60,.45)',
-                background: isSelected ? 'rgba(220,80,60,.12)' : '#1a1a2e',
+                border: isSelected ? '1px solid #dc503c' : '0.5px solid rgba(220,80,60,0.3)',
+                background: isSelected ? '#dc503c' : 'rgba(220,80,60,0.15)',
                 cursor: 'pointer', display: 'flex', flexDirection: 'column', padding: 10,
                 position: 'relative', transition: 'all .2s',
               }}>
-                {s.alertCount > 0 && <div style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: '50%', background: C.red }} />}
-                <div style={{ fontSize: 13, fontWeight: 400, color: '#e2e8f0', marginBottom: 4 }}>{d}</div>
+                {s.alertCount > 0 && !isSelected && <div style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: '50%', background: C.red }} />}
+                <div style={{ fontSize: 13, fontWeight: 400, color: textCol, marginBottom: 4 }}>{d}</div>
                 <div style={{ fontSize: 24, fontWeight: 200, letterSpacing: -1, lineHeight: 1, color: col }}>{s.score}</div>
-                <div style={{ fontSize: 10, color: '#e2e8f0', fontFamily: MONO, marginTop: 4 }}>{fmtPnl(s.pnl)} USD</div>
+                <div style={{ fontSize: 10, color: textCol, fontFamily: MONO, marginTop: 4 }}>{fmtPnl(s.pnl)} USD</div>
               </div>
             )
           })}

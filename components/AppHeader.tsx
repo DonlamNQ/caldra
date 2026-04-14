@@ -46,10 +46,10 @@ export default function AppHeader({ current, userEmail, liveStatus }: AppHeaderP
         {/* Left: logo + nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
           <a href="/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 3, marginRight: '2rem' }}>
-            <span style={{ fontWeight: 300, fontSize: 13, letterSpacing: 8, textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>
+            <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: 3, textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>
               Cald<span style={{ color: '#dc503c' }}>ra</span>
             </span>
-            <span style={{ fontSize: 7, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,.3)', lineHeight: 1 }}>Session</span>
+            <span style={{ fontSize: 8, fontWeight: 400, letterSpacing: 2, textTransform: 'uppercase', color: '#475569', lineHeight: 1 }}>Session</span>
           </a>
           <div style={{ width: 0.5, height: 22, background: 'rgba(255,255,255,.08)', marginRight: '2rem' }} />
           <nav style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>

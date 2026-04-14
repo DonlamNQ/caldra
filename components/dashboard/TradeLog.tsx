@@ -61,7 +61,7 @@ export default function TradeLog({ trades }: TradeLogProps) {
           {trades.map((t, i) => {
             const pnl = t.pnl ?? 0
             const isOpen = !t.exit_price
-            const pnlColor = pnl > 0 ? '#7acc3a' : pnl < 0 ? '#dc3218' : textMuted
+            const pnlColor = '#e2e8f0'
 
             return (
               <tr key={t.id ?? i} className="tl-row">
