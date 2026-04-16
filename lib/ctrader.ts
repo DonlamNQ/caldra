@@ -1,8 +1,8 @@
 // lib/ctrader.ts — cTrader Open API client (OAuth2 + polling REST)
 
-const CTRADER_AUTH_URL = 'https://connect.spotware.com/apps/auth'
+const CTRADER_AUTH_URL  = 'https://connect.spotware.com/apps/auth'
 const CTRADER_TOKEN_URL = 'https://connect.spotware.com/apps/token'
-const CTRADER_API_BASE  = 'https://connect.spotware.com/apps'
+const CTRADER_API_BASE  = 'https://api.spotware.com/connect'
 
 export interface CTraderTokens {
   accessToken: string
@@ -115,7 +115,7 @@ export class CTraderClient {
 
   /** Liste les comptes cTrader liés à ce token */
   async getAccounts(accessToken: string): Promise<CTraderAccount[]> {
-    const res = await fetch(`${CTRADER_API_BASE}/trading/listAccounts?access_token=${accessToken}`, {
+    const res = await fetch(`${CTRADER_API_BASE}/tradingaccounts?oauth_token=${accessToken}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
