@@ -44,7 +44,8 @@ export class CTraderClient {
   constructor() {
     this.clientId     = process.env.CTRADER_CLIENT_ID!
     this.clientSecret = process.env.CTRADER_CLIENT_SECRET!
-    this.redirectUri  = process.env.CTRADER_REDIRECT_URI!
+    this.redirectUri  = process.env.CTRADER_REDIRECT_URI
+      ?? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://getcaldra.com'}/api/ctrader/callback`
   }
 
   /** Génère l'URL OAuth2 cTrader — state = userId pour retrouver l'user au callback */
