@@ -172,7 +172,7 @@ export class CTraderClient {
 
         // from = il y a 30 secondes pour capturer les deals récents
         const fromTimestamp = Date.now() - 30_000
-        const url = `${CTRADER_API_BASE}/trading/listDeals?access_token=${currentAccessToken}&accountId=${accountId}&from=${fromTimestamp}`
+        const url = `${CTRADER_API_BASE}/tradingaccounts/${accountId}/deals?oauth_token=${currentAccessToken}&from=${fromTimestamp}`
 
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${currentAccessToken}` },
