@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { ctraderClient } from '@/lib/ctrader'
+import { ctraderManager } from '@/lib/ctrader-manager'
 
 export async function GET(req: NextRequest) {
   console.log('[cTrader callback] URL reçue:', req.url)
@@ -57,7 +58,17 @@ export async function GET(req: NextRequest) {
     const account   = accounts[0]
     const expiresAt = new Date(Date.now() + tokens.expiresIn * 1000).toISOString()
 
-    // 3. Upsert dans ctrader_connections (caldra_api_key vide — configurée dans les settings)
+    // 3. Vérifie si une connexion existe déjà (pour préserver caldra_api_key)
+    const { data: existing } = await service
+      .from('ctrader_connections')
+      .select('caldra_api_key')
+      .eq('user_id', userId)
+      .eq('account_id', account.accountId)
+      .single()
+
+    const caldraApiKey = existing?.caldra_api_key ?? ''
+
+    // 4. Upsert tokens + is_active:true — préserve caldra_api_key si déjà configurée
     const { error: upsertErr } = await service
       .from('ctrader_connections')
       .upsert({
@@ -67,8 +78,8 @@ export async function GET(req: NextRequest) {
         access_token:   tokens.accessToken,
         refresh_token:  tokens.refreshToken,
         expires_at:     expiresAt,
-        caldra_api_key: '', // sera configurée dans /settings/integrations
-        is_active:      false, // activé seulement quand caldra_api_key est fournie
+        caldra_api_key: caldraApiKey,
+        is_active:      true,
       }, { onConflict: 'user_id,account_id' })
 
     if (upsertErr) {
@@ -76,7 +87,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${base}/settings/integrations?ctrader=db_error`)
     }
 
-    console.log(`[cTrader][callback] user=${userId} tokens stockés — account=${account.accountId} (${account.accountName})`)
+    console.log(`[cTrader][callback] user=${userId} tokens stockés — account=${account.accountId} (${account.accountName}) is_active=true`)
+
+    // 5. Démarre le polling immédiatement si caldra_api_key disponible
+    if (caldraApiKey?.startsWith('cal_') && !ctraderManager.isPolling(userId)) {
+      const ingestBase = process.env.NEXT_PUBLIC_APP_URL ?? 'https://getcaldra.com'
+      const intervalId = ctraderClient.streamDeals(
+        tokens.accessToken,
+        tokens.refreshToken,
+        account.accountId,
+        userId,
+        caldraApiKey,
+        ingestBase,
+      )
+      ctraderManager.start(userId, account.accountId, intervalId)
+      console.log(`[cTrader][callback] Polling démarré — user=${userId} account=${account.accountId}`)
+    }
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
@@ -84,6 +110,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${base}/settings/integrations?ctrader=error`)
   }
 
-  // Redirige vers les settings pour que l'user configure sa clé Caldra
-  return NextResponse.redirect(`${base}/settings/integrations?ctrader=configure`)
+  return NextResponse.redirect(`${base}/settings/integrations?ctrader=connected`)
 }
