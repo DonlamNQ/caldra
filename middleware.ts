@@ -4,6 +4,17 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_ROUTES = ['/', '/login', '/pricing', '/auth/callback', '/api/ctrader/callback', '/api/ctrader/connect']
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  // Court-circuit complet pour les routes API publiques — avant tout appel Supabase
+  if (
+    pathname.startsWith('/api/ctrader/poll') ||
+    pathname.startsWith('/api/ingest') ||
+    pathname.startsWith('/api/billing/webhook')
+  ) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
