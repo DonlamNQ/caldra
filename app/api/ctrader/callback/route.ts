@@ -3,6 +3,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { ctraderClient } from '@/lib/ctrader'
 
 export async function GET(req: NextRequest) {
+  console.log('[cTrader callback] URL reçue:', req.url)
   const { searchParams } = new URL(req.url)
   const code   = searchParams.get('code')
   const userId = searchParams.get('state')
