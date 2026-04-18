@@ -116,30 +116,16 @@ export default function LoginPage() {
               </div>
             ) : (
               <>
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.5, color: '#e2e8f0', marginBottom: 5 }}>
-                    Connexion
-                  </div>
-                  <div style={{ fontSize: 13, color: '#475569', fontWeight: 300 }}>
-                    Lien magique — aucun mot de passe requis
-                  </div>
-                </div>
-
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                    <label style={{ color: 'rgba(226,232,240,.45)', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: "'DM Sans', sans-serif" }}>
-                      Email
-                    </label>
-                    <input
-                      className="lg-input"
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                      autoComplete="email"
-                    />
-                  </div>
+                  <input
+                    className="lg-input"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="votre@email.com"
+                    required
+                    autoComplete="email"
+                  />
 
                   {error && (
                     <div style={{
@@ -156,9 +142,8 @@ export default function LoginPage() {
                     className="lg-btn"
                     type="submit"
                     disabled={loading}
-                    style={{ marginTop: 4 }}
                   >
-                    {loading ? 'Envoi en cours…' : 'Envoyer le lien'}
+                    {loading ? 'Envoi en cours…' : 'Accéder'}
                   </button>
                 </form>
 

@@ -49,7 +49,7 @@ export default function AppHeader({ current, userEmail, liveStatus }: AppHeaderP
             <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: 3, textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>
               Cald<span style={{ color: '#dc503c' }}>ra</span>
             </span>
-            <span style={{ fontSize: 8, fontWeight: 400, letterSpacing: 2, textTransform: 'uppercase', color: '#475569', lineHeight: 1 }}>Session</span>
+            <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: 2, textTransform: 'uppercase', color: '#475569', lineHeight: 1 }}>Session</span>
           </a>
           <div style={{ width: 0.5, height: 22, background: 'rgba(255,255,255,.08)', marginRight: '2rem' }} />
           <nav style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>

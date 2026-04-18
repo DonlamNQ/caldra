@@ -4,6 +4,7 @@ import { ctraderClient } from '@/lib/ctrader'
 
 // Route appelée par le Vercel Cron Job — sécurisée par CRON_SECRET
 export async function GET(req: NextRequest) {
+  try {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -134,4 +135,8 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, processed: totalDeals, users: connections.length })
+  } catch (err) {
+    console.error('[cTrader][poll] Exception non gérée:', err)
+    return NextResponse.json({ success: false, error: err instanceof Error ? err.message : String(err) }, { status: 500 })
+  }
 }

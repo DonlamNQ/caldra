@@ -355,20 +355,24 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* J-1 bar */}
-      {yesterdayStats && (
-        <div style={{ padding: '11px 24px', borderBottom: `.5px solid ${C.b}`, display: 'flex', gap: 24, alignItems: 'center', background: C.sf2, flexShrink: 0 }}>
-          {[
-            { val: `${fmtPnl(yesterdayStats.pnl)} USD`, lbl: 'J-1 P&L', color: '#e2e8f0' },
-            { val: String(yesterdayStats.score), lbl: 'J-1 Score', color: scoreColor(yesterdayStats.score) },
-            { val: String(yesterdayStats.alerts), lbl: 'J-1 Alertes', color: yesterdayStats.alerts > 0 ? C.o : C.td },
-          ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <div style={{ fontSize: 14, fontWeight: 300, letterSpacing: -.5, color: item.color }}>{item.val}</div>
-              <div style={{ fontSize: 9, color: C.td, fontFamily: MONO, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{item.lbl}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div style={{ padding: '11px 24px', borderBottom: `.5px solid ${C.b}`, background: C.sf2, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        {yesterdayStats ? (
+          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+            {[
+              { val: `${fmtPnl(yesterdayStats.pnl)} USD`, lbl: 'J-1 P&L', color: '#e2e8f0' },
+              { val: String(yesterdayStats.score), lbl: 'J-1 Score', color: scoreColor(yesterdayStats.score) },
+              { val: String(yesterdayStats.alerts), lbl: 'J-1 Alertes', color: yesterdayStats.alerts > 0 ? C.o : C.td },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <div style={{ fontSize: 14, fontWeight: 300, letterSpacing: -.5, color: item.color }}>{item.val}</div>
+                <div style={{ fontSize: 9, color: C.td, fontFamily: MONO, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{item.lbl}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ width: '100%', textAlign: 'center', fontSize: 13, color: '#4a5568', fontFamily: MONO }}>Aucune session hier</div>
+        )}
+      </div>
 
       {/* PnL block */}
       <div style={{ padding: '14px 24px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
@@ -537,7 +541,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
             const isSelected = selectedDate === dateStr
             if (isWeekend || !s) {
               return (
-                <div key={d} style={{ minHeight: 78, borderRadius: 6, border: '.5px solid #1e1e35', background: '#0d0d1a', display: 'flex', flexDirection: 'column', padding: 10, pointerEvents: 'none' }}>
+                <div key={d} style={{ minHeight: 78, borderRadius: 6, border: '.5px solid #1e1e35', background: '#0d0d1a', display: 'flex', flexDirection: 'column', padding: 10, pointerEvents: 'none', opacity: 0.3 }}>
                   <div style={{ fontSize: 13, color: '#475569' }}>{d}</div>
                 </div>
               )
@@ -1410,7 +1414,8 @@ export default function DashboardClient({
         .tab-sentinel{color:rgba(220,80,60,.6)!important}
         .tab-sentinel.active{color:${C.red}!important;border-bottom-color:${C.red}}
         textarea,input{box-sizing:border-box}
-        input[type=number]::-webkit-inner-spin-button{opacity:.25}
+        input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+        input[type=number]{-moz-appearance:textfield}
         input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.3)}
       `}</style>
 
