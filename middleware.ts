@@ -6,12 +6,8 @@ const PUBLIC_ROUTES = ['/', '/login', '/pricing', '/auth/callback', '/api/ctrade
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Court-circuit complet pour les routes API publiques — avant tout appel Supabase
-  if (
-    pathname.startsWith('/api/ctrader/poll') ||
-    pathname.startsWith('/api/ingest') ||
-    pathname.startsWith('/api/billing/webhook')
-  ) {
+  // Toutes les routes /api/ gèrent leur propre auth — jamais de redirection middleware
+  if (pathname.startsWith('/api/')) {
     return NextResponse.next()
   }
 
@@ -61,6 +57,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/ingest|api/detect|api/billing/webhook|api/ctrader/callback|api/ctrader/poll).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
   ],
 }
