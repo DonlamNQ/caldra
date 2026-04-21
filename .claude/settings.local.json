@@ -18,7 +18,8 @@
       "Bash(gh run:*)",
       "Skill(update-config)",
       "Bash(node:*)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('ws' in d.get\\('dependencies',{}\\) or 'ws' in d.get\\('devDependencies',{}\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('ws' in d.get\\('dependencies',{}\\) or 'ws' in d.get\\('devDependencies',{}\\)\\)\")",
+      "Bash(git rm *)"
     ]
   },
   "hooks": {
