@@ -68,7 +68,7 @@ export async function GET(_req: NextRequest) {
 
       if (!dealsRes.ok) {
         const body = await dealsRes.text()
-        const msg = `cTrader API ${dealsRes.status} user=${conn.user_id}: ${body.slice(0, 200)}`
+        const msg = `cTrader API ${dealsRes.status} account=${conn.account_id} from=${fromTs}: ${body.slice(0, 150)}`
         errorDetails.push(msg)
         totalErrors++
         continue
