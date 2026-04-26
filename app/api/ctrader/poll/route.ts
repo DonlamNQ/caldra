@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ ok: true, deals: 0, connections: 0 })
   }
 
-  let totalDeals = 0
+  let totalDeals  = 0
   let totalErrors = 0
 
   for (const conn of connections) {
@@ -53,7 +53,6 @@ export async function GET(_req: NextRequest) {
         }
       }
 
-      // Récupère les deals récents — sans filtre de date (déduplication via ctrader_deal_id)
       const dealsRes = await fetch(
         `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -65,41 +64,9 @@ export async function GET(_req: NextRequest) {
       }
 
       if (!dealsRes.ok) {
-        // Si 404, le token est peut-être expiré — force refresh et retry
-        if (dealsRes.status === 404) {
-          try {
-            const refreshed = await ctraderClient.refreshAccessToken(refreshToken)
-            accessToken  = refreshed.accessToken
-            await service.from('ctrader_connections').update({
-              access_token:  accessToken,
-              refresh_token: refreshed.refreshToken,
-              expires_at:    new Date(Date.now() + refreshed.expiresIn * 1000).toISOString(),
-            }).eq('user_id', conn.user_id)
-
-            // Probe plusieurs variantes d'URL avec le nouveau token
-            const probes = [
-              `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}`,
-              `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/historicalDeals?oauth_token=${accessToken}`,
-              `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/closedpositions?oauth_token=${accessToken}`,
-              `https://api.spotware.com/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}`,
-            ]
-            const probeResults: Record<string, number> = {}
-            for (const url of probes) {
-              const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
-              const key = url.split('/').slice(-1)[0].split('?')[0]
-              probeResults[key] = r.status
-              if (r.ok) {
-                const body = await r.text()
-                return NextResponse.json({ ok: true, note: 'found_after_refresh', url: key, body: body.slice(0, 300) })
-              }
-            }
-            return NextResponse.json({ ok: false, note: 'all_probes_failed_after_refresh', probeResults })
-          } catch (retryErr) {
-            return NextResponse.json({ ok: false, note: 'refresh_failed', error: String(retryErr) })
-          }
-        }
-        const body = await dealsRes.text()
-        return NextResponse.json({ ok: false, status: dealsRes.status, body: body.slice(0, 200) })
+        console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}`)
+        totalErrors++
+        continue
       }
 
       const raw = await dealsRes.json()
