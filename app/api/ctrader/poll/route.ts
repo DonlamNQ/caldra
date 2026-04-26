@@ -56,7 +56,7 @@ export async function GET(_req: NextRequest) {
         }
       }
 
-      // Vérifie que le token est valide via /tradingaccounts
+      // Vérifie token + récupère le vrai account_id depuis l'API
       const accountsCheck = await fetch(
         `${CTRADER_API_BASE}/tradingaccounts?oauth_token=${accessToken}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -66,6 +66,8 @@ export async function GET(_req: NextRequest) {
         totalErrors++
         continue
       }
+      const accountsData = await accountsCheck.json()
+      errorDetails.push(`accounts raw: ${JSON.stringify(accountsData).slice(0, 300)}`)
 
       // Deals depuis last_polled_at - 60s (overlap), ou les 2 dernières minutes si premier poll
       const fromTs = conn.last_polled_at
