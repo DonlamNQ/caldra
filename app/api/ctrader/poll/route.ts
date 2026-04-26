@@ -61,12 +61,41 @@ export async function GET(_req: NextRequest) {
 
       if (dealsRes.status === 429) {
         console.warn(`[poll] Rate limited for user=${conn.user_id}, skip this tick`)
-        return NextResponse.json({ ok: true, connections: connections.length, deals: 0, errors: 0, note: 'rate_limited' })
+        continue
       }
 
       if (!dealsRes.ok) {
+        // Si 404, le token est peut-être expiré — force refresh et retry
+        if (dealsRes.status === 404) {
+          try {
+            const refreshed = await ctraderClient.refreshAccessToken(refreshToken)
+            accessToken  = refreshed.accessToken
+            await service.from('ctrader_connections').update({
+              access_token:  accessToken,
+              refresh_token: refreshed.refreshToken,
+              expires_at:    new Date(Date.now() + refreshed.expiresIn * 1000).toISOString(),
+            }).eq('user_id', conn.user_id)
+
+            // Retry avec le nouveau token
+            const retry = await fetch(
+              `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}`,
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            )
+            if (!retry.ok) {
+              const body = await retry.text()
+              return NextResponse.json({ ok: false, note: 'after_refresh', status: retry.status, body: body.slice(0, 300) })
+            }
+            // Remplace dealsRes par le retry réussi
+            const retryBody = await retry.text()
+            let retryRaw: any
+            try { retryRaw = JSON.parse(retryBody) } catch { retryRaw = {} }
+            const retryDeals: any[] = Array.isArray(retryRaw) ? retryRaw : (retryRaw.data ?? retryRaw.deal ?? retryRaw.deals ?? [])
+            return NextResponse.json({ ok: true, note: 'refreshed_ok', dealsCount: retryDeals.length, sample: retryDeals.slice(0,2) })
+          } catch (retryErr) {
+            return NextResponse.json({ ok: false, note: 'refresh_failed', error: String(retryErr) })
+          }
+        }
         const body = await dealsRes.text()
-        console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}: ${body.slice(0,100)}`)
         return NextResponse.json({ ok: false, status: dealsRes.status, body: body.slice(0, 200) })
       }
 
