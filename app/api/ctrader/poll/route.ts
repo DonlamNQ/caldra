@@ -30,6 +30,7 @@ export async function GET(_req: NextRequest) {
 
   let totalDeals = 0
   let totalErrors = 0
+  const errorDetails: string[] = []
 
   for (const conn of connections) {
     try {
@@ -48,7 +49,8 @@ export async function GET(_req: NextRequest) {
             expires_at:    new Date(Date.now() + refreshed.expiresIn * 1000).toISOString(),
           }).eq('user_id', conn.user_id)
         } catch (refreshErr) {
-          console.error(`[poll] Token refresh failed user=${conn.user_id}:`, refreshErr)
+          const msg = `Token refresh failed: ${refreshErr instanceof Error ? refreshErr.message : String(refreshErr)}`
+          errorDetails.push(msg)
           totalErrors++
           continue
         }
@@ -65,7 +67,9 @@ export async function GET(_req: NextRequest) {
       )
 
       if (!dealsRes.ok) {
-        console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}`)
+        const body = await dealsRes.text()
+        const msg = `cTrader API ${dealsRes.status} user=${conn.user_id}: ${body.slice(0, 200)}`
+        errorDetails.push(msg)
         totalErrors++
         continue
       }
@@ -129,7 +133,8 @@ export async function GET(_req: NextRequest) {
         .eq('user_id', conn.user_id)
 
     } catch (err) {
-      console.error(`[poll] Erreur user=${conn.user_id}:`, err)
+      const msg = `Unexpected error user=${conn.user_id}: ${err instanceof Error ? err.message : String(err)}`
+      errorDetails.push(msg)
       totalErrors++
     }
   }
@@ -139,6 +144,7 @@ export async function GET(_req: NextRequest) {
     connections: connections.length,
     deals:       totalDeals,
     errors:      totalErrors,
+    errorDetails,
     ts:          new Date().toISOString(),
   })
 }
