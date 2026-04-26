@@ -61,13 +61,13 @@ export async function GET(_req: NextRequest) {
 
       if (dealsRes.status === 429) {
         console.warn(`[poll] Rate limited for user=${conn.user_id}, skip this tick`)
-        continue
+        return NextResponse.json({ ok: true, connections: connections.length, deals: 0, errors: 0, note: 'rate_limited' })
       }
 
       if (!dealsRes.ok) {
-        console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}`)
-        totalErrors++
-        continue
+        const body = await dealsRes.text()
+        console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}: ${body.slice(0,100)}`)
+        return NextResponse.json({ ok: false, status: dealsRes.status, body: body.slice(0, 200) })
       }
 
       const raw = await dealsRes.json()
