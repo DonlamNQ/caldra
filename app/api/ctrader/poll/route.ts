@@ -76,21 +76,24 @@ export async function GET(_req: NextRequest) {
               expires_at:    new Date(Date.now() + refreshed.expiresIn * 1000).toISOString(),
             }).eq('user_id', conn.user_id)
 
-            // Retry avec le nouveau token
-            const retry = await fetch(
+            // Probe plusieurs variantes d'URL avec le nouveau token
+            const probes = [
               `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}`,
-              { headers: { Authorization: `Bearer ${accessToken}` } }
-            )
-            if (!retry.ok) {
-              const body = await retry.text()
-              return NextResponse.json({ ok: false, note: 'after_refresh', status: retry.status, body: body.slice(0, 300) })
+              `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/historicalDeals?oauth_token=${accessToken}`,
+              `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/closedpositions?oauth_token=${accessToken}`,
+              `https://api.spotware.com/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}`,
+            ]
+            const probeResults: Record<string, number> = {}
+            for (const url of probes) {
+              const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
+              const key = url.split('/').slice(-1)[0].split('?')[0]
+              probeResults[key] = r.status
+              if (r.ok) {
+                const body = await r.text()
+                return NextResponse.json({ ok: true, note: 'found_after_refresh', url: key, body: body.slice(0, 300) })
+              }
             }
-            // Remplace dealsRes par le retry réussi
-            const retryBody = await retry.text()
-            let retryRaw: any
-            try { retryRaw = JSON.parse(retryBody) } catch { retryRaw = {} }
-            const retryDeals: any[] = Array.isArray(retryRaw) ? retryRaw : (retryRaw.data ?? retryRaw.deal ?? retryRaw.deals ?? [])
-            return NextResponse.json({ ok: true, note: 'refreshed_ok', dealsCount: retryDeals.length, sample: retryDeals.slice(0,2) })
+            return NextResponse.json({ ok: false, note: 'all_probes_failed_after_refresh', probeResults })
           } catch (retryErr) {
             return NextResponse.json({ ok: false, note: 'refresh_failed', error: String(retryErr) })
           }
