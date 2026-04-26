@@ -67,7 +67,9 @@ export async function GET(_req: NextRequest) {
         continue
       }
       const accountsData = await accountsCheck.json()
-      errorDetails.push(`accounts raw: ${JSON.stringify(accountsData).slice(0, 300)}`)
+      const accounts: any[] = Array.isArray(accountsData) ? accountsData : (accountsData.data ?? [])
+      // Utilise le vrai accountId retourné par l'API (peut différer de ce qui est stocké)
+      const liveAccountId = accounts[0]?.accountId ?? conn.account_id
 
       // Deals depuis last_polled_at - 60s (overlap), ou les 2 dernières minutes si premier poll
       const fromTs = conn.last_polled_at
@@ -75,16 +77,27 @@ export async function GET(_req: NextRequest) {
         : Date.now() - 2 * 60 * 1000
       const toTs = Date.now()
 
-      const dealsUrl = `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}&from=${fromTs}&to=${toTs}`
-      const dealsRes = await fetch(dealsUrl, { headers: { Authorization: `Bearer ${accessToken}` } })
+      // Teste plusieurs variantes d'URL pour trouver le bon endpoint
+      const urlCandidates = [
+        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}&from=${fromTs}&to=${toTs}`,
+        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}`,
+        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/orders?oauth_token=${accessToken}`,
+        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}?oauth_token=${accessToken}`,
+      ]
 
-      if (!dealsRes.ok) {
-        const body = await dealsRes.text()
-        const msg = `deals 404 account=${conn.account_id} — body: ${body.slice(0, 100)}`
-        errorDetails.push(msg)
+      let dealsRes: Response | null = null
+      let workingUrl = ''
+      for (const url of urlCandidates) {
+        const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
+        errorDetails.push(`${url.split('?')[0].split('/').slice(-2).join('/')}: ${r.status}`)
+        if (r.ok) { dealsRes = r; workingUrl = url; break }
+      }
+
+      if (!dealsRes) {
         totalErrors++
         continue
       }
+      errorDetails.push(`working: ${workingUrl.split('?')[0]}`)
 
       const raw = await dealsRes.json()
       const deals: any[] = Array.isArray(raw) ? raw : (raw.data ?? raw.deal ?? [])
