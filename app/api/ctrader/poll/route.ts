@@ -56,19 +56,29 @@ export async function GET(_req: NextRequest) {
         }
       }
 
+      // Vérifie que le token est valide via /tradingaccounts
+      const accountsCheck = await fetch(
+        `${CTRADER_API_BASE}/tradingaccounts?oauth_token=${accessToken}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      )
+      if (!accountsCheck.ok) {
+        errorDetails.push(`Token invalide (${accountsCheck.status}) — reconnecte cTrader depuis /settings/integrations`)
+        totalErrors++
+        continue
+      }
+
       // Deals depuis last_polled_at - 60s (overlap), ou les 2 dernières minutes si premier poll
       const fromTs = conn.last_polled_at
         ? new Date(conn.last_polled_at).getTime() - 60_000
         : Date.now() - 2 * 60 * 1000
+      const toTs = Date.now()
 
-      const dealsRes = await fetch(
-        `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}&from=${fromTs}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      )
+      const dealsUrl = `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}&from=${fromTs}&to=${toTs}`
+      const dealsRes = await fetch(dealsUrl, { headers: { Authorization: `Bearer ${accessToken}` } })
 
       if (!dealsRes.ok) {
         const body = await dealsRes.text()
-        const msg = `cTrader API ${dealsRes.status} account=${conn.account_id} from=${fromTs}: ${body.slice(0, 150)}`
+        const msg = `deals 404 account=${conn.account_id} — body: ${body.slice(0, 100)}`
         errorDetails.push(msg)
         totalErrors++
         continue
