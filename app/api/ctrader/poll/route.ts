@@ -77,29 +77,30 @@ export async function GET(_req: NextRequest) {
         : Date.now() - 2 * 60 * 1000
       const toTs = Date.now()
 
-      // Teste différents formats de timestamp pour le paramètre from/to
-      const fromSec  = Math.floor(fromTs / 1000)
-      const toSec    = Math.floor(toTs / 1000)
-      const fromDate = new Date(fromTs).toISOString()
-      const toDate   = new Date(toTs).toISOString()
+      // from = 24h ago en ms, pas de param to
+      const from24h = Date.now() - 24 * 60 * 60 * 1000
 
       const urlCandidates = [
-        // Secondes
-        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}&from=${fromSec}&to=${toSec}`,
-        // ISO string
-        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}`,
-        // Sans params (last resort)
+        // ms, no to param
+        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}&from=${from24h}`,
+        // sans aucun param
         `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}`,
       ]
 
       let dealsRes: Response | null = null
-      let workingUrl = ''
+      let dealsBody = ''
       for (const url of urlCandidates) {
         const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
-        const label = url.includes('from=') ? url.split('from=')[1].slice(0, 15) : 'no-params'
+        const label = url.includes('from=') ? 'from24h' : 'no-params'
+        if (r.ok) {
+          const text = await r.text()
+          errorDetails.push(`deals[${label}]: 200 — ${text.slice(0, 200)}`)
+          dealsBody = text
+          dealsRes = r
+          break
+        }
         errorDetails.push(`deals[${label}]: ${r.status}`)
-        if (r.ok) { dealsRes = r; workingUrl = url; break }
-        if (r.status === 429) break // rate limited, stop probing
+        if (r.status === 429) { await new Promise(r => setTimeout(r, 2000)); break }
       }
 
       if (!dealsRes) {
@@ -107,8 +108,9 @@ export async function GET(_req: NextRequest) {
         continue
       }
 
-      const raw = await dealsRes.json()
-      const deals: any[] = Array.isArray(raw) ? raw : (raw.data ?? raw.deal ?? [])
+      let raw: any
+      try { raw = JSON.parse(dealsBody) } catch { raw = {} }
+      const deals: any[] = Array.isArray(raw) ? raw : (raw.data ?? raw.deal ?? raw.deals ?? [])
 
       for (const deal of deals) {
         if (deal.dealStatus !== 'FULLY_FILLED') continue
