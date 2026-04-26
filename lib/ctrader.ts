@@ -53,7 +53,7 @@ export class CTraderClient {
     const params = new URLSearchParams({
       client_id:     this.clientId,
       redirect_uri:  this.redirectUri,
-      scope:         'trading openapi',
+      scope:         'trading',
       response_type: 'code',
       state:         userId,
     })
