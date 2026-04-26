@@ -20,7 +20,6 @@ export async function GET(_req: NextRequest) {
     .eq('is_active', true)
 
   if (connErr) {
-    console.error('[poll] DB error:', connErr)
     return NextResponse.json({ error: connErr.message }, { status: 500 })
   }
 
@@ -30,7 +29,6 @@ export async function GET(_req: NextRequest) {
 
   let totalDeals = 0
   let totalErrors = 0
-  const errorDetails: string[] = []
 
   for (const conn of connections) {
     try {
@@ -49,75 +47,42 @@ export async function GET(_req: NextRequest) {
             expires_at:    new Date(Date.now() + refreshed.expiresIn * 1000).toISOString(),
           }).eq('user_id', conn.user_id)
         } catch (refreshErr) {
-          const msg = `Token refresh failed: ${refreshErr instanceof Error ? refreshErr.message : String(refreshErr)}`
-          errorDetails.push(msg)
+          console.error(`[poll] Token refresh failed user=${conn.user_id}:`, refreshErr)
           totalErrors++
           continue
         }
       }
 
-      // Vérifie token + récupère le vrai account_id depuis l'API
-      const accountsCheck = await fetch(
-        `${CTRADER_API_BASE}/tradingaccounts?oauth_token=${accessToken}`,
+      // Récupère les deals récents — sans filtre de date (déduplication via ctrader_deal_id)
+      const dealsRes = await fetch(
+        `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
-      if (!accountsCheck.ok) {
-        errorDetails.push(`Token invalide (${accountsCheck.status}) — reconnecte cTrader depuis /settings/integrations`)
-        totalErrors++
+
+      if (dealsRes.status === 429) {
+        console.warn(`[poll] Rate limited for user=${conn.user_id}, skip this tick`)
         continue
       }
-      const accountsData = await accountsCheck.json()
-      const accounts: any[] = Array.isArray(accountsData) ? accountsData : (accountsData.data ?? [])
-      // Utilise le vrai accountId retourné par l'API (peut différer de ce qui est stocké)
-      const liveAccountId = accounts[0]?.accountId ?? conn.account_id
 
-      // Deals depuis last_polled_at - 60s (overlap), ou les 2 dernières minutes si premier poll
-      const fromTs = conn.last_polled_at
-        ? new Date(conn.last_polled_at).getTime() - 60_000
-        : Date.now() - 2 * 60 * 1000
-      const toTs = Date.now()
-
-      // from = 24h ago en ms, pas de param to
-      const from24h = Date.now() - 24 * 60 * 60 * 1000
-
-      const urlCandidates = [
-        // ms, no to param
-        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}&from=${from24h}`,
-        // sans aucun param
-        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}`,
-      ]
-
-      let dealsRes: Response | null = null
-      let dealsBody = ''
-      for (const url of urlCandidates) {
-        const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
-        const label = url.includes('from=') ? 'from24h' : 'no-params'
-        if (r.ok) {
-          const text = await r.text()
-          errorDetails.push(`deals[${label}]: 200 — ${text.slice(0, 200)}`)
-          dealsBody = text
-          dealsRes = r
-          break
-        }
-        errorDetails.push(`deals[${label}]: ${r.status}`)
-        if (r.status === 429) { await new Promise(r => setTimeout(r, 2000)); break }
-      }
-
-      if (!dealsRes) {
+      if (!dealsRes.ok) {
+        console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}`)
         totalErrors++
         continue
       }
 
-      let raw: any
-      try { raw = JSON.parse(dealsBody) } catch { raw = {} }
+      const raw = await dealsRes.json()
       const deals: any[] = Array.isArray(raw) ? raw : (raw.data ?? raw.deal ?? raw.deals ?? [])
+
+      // Ne traite que les deals des dernières 24h pour limiter le volume au premier poll
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000
 
       for (const deal of deals) {
         if (deal.dealStatus !== 'FULLY_FILLED') continue
+        if ((deal.executionTimestamp ?? deal.createTimestamp ?? 0) < cutoff) continue
 
         const dealId = String(deal.dealId)
 
-        // Déduplication
+        // Déduplication : skip si déjà ingéré
         const { data: existing } = await service
           .from('trades')
           .select('id')
@@ -168,8 +133,7 @@ export async function GET(_req: NextRequest) {
         .eq('user_id', conn.user_id)
 
     } catch (err) {
-      const msg = `Unexpected error user=${conn.user_id}: ${err instanceof Error ? err.message : String(err)}`
-      errorDetails.push(msg)
+      console.error(`[poll] Erreur user=${conn.user_id}:`, err)
       totalErrors++
     }
   }
@@ -179,7 +143,6 @@ export async function GET(_req: NextRequest) {
     connections: connections.length,
     deals:       totalDeals,
     errors:      totalErrors,
-    errorDetails,
     ts:          new Date().toISOString(),
   })
 }
