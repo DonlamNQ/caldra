@@ -35,7 +35,7 @@ namespace cAlgo.Robots
                 pos.TradeType == TradeType.Buy ? "long" : "short",
                 pos.Quantity,
                 pos.EntryPrice,
-                pos.ClosePrice,
+                pos.CurrentPrice,
                 pos.EntryTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 Server.Time.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 pos.NetProfit
