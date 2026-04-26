@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
-import { ctraderClient } from '@/lib/ctrader'
-import { ctraderManager } from '@/lib/ctrader-manager'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -33,10 +31,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Clé API Caldra invalide ou non trouvée' }, { status: 400 })
   }
 
-  // Récupère la connexion cTrader
+  // Vérifie qu'une connexion cTrader existe
   const { data: conn } = await service
     .from('ctrader_connections')
-    .select('account_id, account_name, access_token, refresh_token, expires_at')
+    .select('account_id, account_name')
     .eq('user_id', user.id)
     .single()
 
@@ -44,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Aucune connexion cTrader — connecte cTrader en premier' }, { status: 400 })
   }
 
-  // Stocke la caldra_api_key en clair et active la connexion
+  // Stocke la caldra_api_key et active la connexion
   const { error: updateErr } = await service
     .from('ctrader_connections')
     .update({ caldra_api_key: caldraApiKey, is_active: true })
@@ -54,18 +52,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: updateErr.message }, { status: 500 })
   }
 
-  // Démarre le polling en background
-  const ingestBase = process.env.NEXT_PUBLIC_APP_URL ?? 'https://getcaldra.com'
-  const intervalId = ctraderClient.streamDeals(
-    conn.access_token,
-    conn.refresh_token,
-    conn.account_id,
-    user.id,
-    caldraApiKey,
-    ingestBase,
-  )
-  ctraderManager.start(user.id, conn.account_id, intervalId)
-
-  console.log(`[cTrader][activate] Polling démarré — user=${user.id} account=${conn.account_id}`)
+  console.log(`[cTrader][activate] Connexion activée — user=${user.id} account=${conn.account_id}`)
   return NextResponse.json({ success: true, accountName: conn.account_name })
 }
