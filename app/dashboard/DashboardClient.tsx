@@ -996,9 +996,58 @@ function TradovateCard({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
 function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
   const hasKey = !!apiKeyPrefix
+  const [copied, setCopied] = useState(false)
+
+  function copyBot() {
+    fetch('/CaldraBot.algo').then(r => r.text()).then(code => {
+      navigator.clipboard.writeText(code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
+  }
 
   return (
     <div style={{ padding: 28, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignContent: 'start', overflowY: 'auto', height: '100%' }}>
+
+      {/* cTrader cBot */}
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 24, position: 'relative', overflow: 'hidden', gridColumn: '1 / -1' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(220,80,60,.35),transparent)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 9, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: C.red }}>CT</div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: C.tx }}>cTrader — CaldraBot</div>
+              <div style={{ fontSize: 11, color: C.td, fontFamily: MONO }}>Temps réel · Positions automatiques</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 9 }}>
+            <a href="/CaldraBot.algo" download="CaldraBot.algo" style={{ padding: '8px 16px', borderRadius: 6, fontSize: 10, fontFamily: MONO, cursor: 'pointer', textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, letterSpacing: 1 }}>
+              ↓ CaldraBot.algo
+            </a>
+            <button onClick={copyBot} style={{ padding: '8px 16px', borderRadius: 6, fontSize: 10, fontFamily: MONO, cursor: 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, letterSpacing: 1 }}>
+              {copied ? '✓ Copié' : 'Copier code'}
+            </button>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+          {[
+            ['1', 'Télécharge CaldraBot.algo'],
+            ['2', 'Dans cTrader → Algo → New cBot → colle le code → Build'],
+            ['3', 'Start le cBot sur un graphique'],
+            ['4', 'Entre ta clé API Caldra dans les paramètres du cBot'],
+          ].map(([n, t]) => (
+            <div key={n} style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 8, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, color: C.red, fontFamily: MONO, marginBottom: 6 }}>Étape {n}</div>
+              <div style={{ fontSize: 11, color: C.td, fontFamily: MONO, lineHeight: 1.6 }}>{t}</div>
+            </div>
+          ))}
+        </div>
+        {hasKey && (
+          <div style={{ marginTop: 14, background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '9px 13px', fontSize: 11, fontFamily: MONO, color: C.td, display: 'flex', justifyContent: 'space-between' }}>
+            <span>Ta clé API</span><span style={{ color: C.tm }}>{apiKeyPrefix}…</span>
+          </div>
+        )}
+      </div>
 
       {/* MetaTrader 5 */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 24, position: 'relative', overflow: 'hidden' }}>
