@@ -14,8 +14,8 @@ const C = {
   tx: '#f0ede8', tm: 'rgba(240,237,232,.95)', td: 'rgba(240,237,232,.7)', te: 'rgba(240,237,232,.45)',
   g: '#3cc87a', o: '#f5a623',
 }
-const SANS = "'Geist', sans-serif"
-const MONO = "'Geist Mono', monospace"
+const SANS = "'DM Sans', sans-serif"
+const MONO = "'DM Mono', monospace"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface TradingRules {
@@ -88,13 +88,13 @@ function ScoreRingSvg({ score }: { score: number }) {
   return (
     <div style={{ position: 'relative', width: 92, height: 92, flexShrink: 0, cursor: 'default' }}>
       <svg width="88" height="88" viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="44" cy="44" r="37" fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="6" />
-        <circle cx="44" cy="44" r="37" fill="none" stroke={col} strokeWidth="6"
+        <circle cx="44" cy="44" r="37" fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="5.5" />
+        <circle cx="44" cy="44" r="37" fill="none" stroke={col} strokeWidth="5.5"
           strokeDasharray="233" strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset .6s, stroke .5s' }} />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: 32, fontWeight: 200, letterSpacing: -2, lineHeight: 1, color: col, fontFamily: SANS, transition: 'color .5s' }}>{score}</span>
+        <span style={{ fontSize: 32, fontWeight: 300, letterSpacing: -2, lineHeight: 1, color: col, fontFamily: SANS, transition: 'color .5s' }}>{score}</span>
         <span style={{ fontSize: 10, color: C.td, fontFamily: MONO, marginTop: 2 }}>/ 100</span>
       </div>
     </div>
@@ -103,14 +103,13 @@ function ScoreRingSvg({ score }: { score: number }) {
 
 // ── MetricBar ──────────────────────────────────────────────────────────────────
 function MetricBar({ label, value }: { label: string; value: number }) {
-  const col = scoreColor(value)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <span style={{ fontSize: 12, color: C.td, fontFamily: MONO, width: 82, flexShrink: 0 }}>{label}</span>
-      <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${value}%`, background: col, borderRadius: 2, transition: 'width .6s, background .4s' }} />
+      <span style={{ fontSize: 11, color: C.td, fontFamily: MONO, width: 82, flexShrink: 0 }}>{label}</span>
+      <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,.06)', borderRadius: 1, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${value}%`, background: 'rgba(255,255,255,.22)', borderRadius: 1, transition: 'width .6s' }} />
       </div>
-      <span style={{ fontSize: 12, color: C.tm, fontFamily: MONO, width: 24, textAlign: 'right', fontWeight: 500 }}>{value}</span>
+      <span style={{ fontSize: 11, color: C.td, fontFamily: MONO, width: 24, textAlign: 'right' }}>{value}</span>
     </div>
   )
 }
@@ -138,7 +137,7 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
           <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
           <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
           <line x1={PX} y1={yMid} x2={W - PX} y2={yMid} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
-          <text x={W / 2} y={yMid + 4} textAnchor="middle" fill="rgba(226,232,240,.3)" fontSize="10" fontFamily="'Geist Mono',monospace">// en attente de trades</text>
+          <text x={W / 2} y={yMid + 4} textAnchor="middle" fill="rgba(226,232,240,.3)" fontSize="10" fontFamily="'DM Mono',monospace">// en attente de trades</text>
         </svg>
       </div>
     )
@@ -262,7 +261,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: SidebarProps) {
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i === 0 ? `.5px solid rgba(255,255,255,.04)` : 'none' }}>
               <span style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>{r.label}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 13, fontFamily: MONO, color: r.pct > 80 ? C.red : r.pct > 50 ? C.o : C.tm, fontWeight: 500, transition: 'color .3s' }}>{r.cur}</span>
+                <span style={{ fontSize: 13, fontFamily: MONO, color: C.tm, fontWeight: 400, transition: 'color .3s' }}>{r.cur}</span>
                 <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>/ {r.max}</span>
                 <div style={{ width: 44, height: 2, background: 'rgba(255,255,255,.06)', borderRadius: 1, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${r.pct}%`, background: scoreColor(100 - r.pct), borderRadius: 1, transition: 'width .4s' }} />
@@ -272,7 +271,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: SidebarProps) {
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0' }}>
             <span style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>Fenêtre</span>
-            <span style={{ fontSize: 10, color: C.g, fontFamily: MONO }}>{rules.session_start}–{rules.session_end}</span>
+            <span style={{ fontSize: 10, color: C.td, fontFamily: MONO }}>{rules.session_start}–{rules.session_end}</span>
           </div>
         </div>
       )}
@@ -285,7 +284,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: SidebarProps) {
         </div>
         <div style={{ display: 'flex', gap: 5 }}>
           {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} style={{ width: 9, height: 9, borderRadius: '50%', background: i < streak ? C.red : C.b2, opacity: i < streak ? .8 : 1, transition: 'background .3s' }} />
+            <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i < streak ? C.red : C.b2, opacity: i < streak ? .8 : 1, transition: 'background .3s' }} />
           ))}
         </div>
       </div>
@@ -354,51 +353,59 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+
+      {/* Stat cards row (3-col) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        {[
+          { val: `${fmtPnl(stats.total_pnl)}`, sub: 'USD', lbl: 'P&L Session' },
+          { val: winRate !== null ? `${winRate}%` : '—', sub: `${stats.wins}W ${stats.losses}L`, lbl: 'Win Rate' },
+          { val: String(stats.total_trades), sub: rules ? `/ ${rules.max_trades_per_session}` : '', lbl: 'Trades' },
+        ].map((item, i) => (
+          <div key={i} style={{ padding: '16px 20px', borderRight: i < 2 ? `.5px solid ${C.b}` : 'none' }}>
+            <div style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: C.te, fontFamily: MONO, marginBottom: 6 }}>{item.lbl}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+              <span style={{ fontSize: 28, fontWeight: 200, letterSpacing: -1.5, lineHeight: 1, color: pnlColor, fontFamily: SANS }}>{item.val}</span>
+              {item.sub && <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>{item.sub}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* J-1 bar */}
-      <div style={{ padding: '11px 24px', borderBottom: `.5px solid ${C.b}`, background: C.sf2, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+      <div style={{ padding: '9px 20px', borderBottom: `.5px solid ${C.b}`, background: C.sf2, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 28 }}>
         {yesterdayStats ? (
-          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+          <>
+            <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: C.te, fontFamily: MONO }}>J-1</span>
             {[
-              { val: `${fmtPnl(yesterdayStats.pnl)} USD`, lbl: 'J-1 P&L', color: '#e2e8f0' },
-              { val: String(yesterdayStats.score), lbl: 'J-1 Score', color: scoreColor(yesterdayStats.score) },
-              { val: String(yesterdayStats.alerts), lbl: 'J-1 Alertes', color: yesterdayStats.alerts > 0 ? C.o : C.td },
+              { val: `${fmtPnl(yesterdayStats.pnl)} USD`, lbl: 'P&L' },
+              { val: String(yesterdayStats.score), lbl: 'Score' },
+              { val: String(yesterdayStats.alerts), lbl: 'Alertes' },
             ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <div style={{ fontSize: 14, fontWeight: 300, letterSpacing: -.5, color: item.color }}>{item.val}</div>
-                <div style={{ fontSize: 9, color: C.td, fontFamily: MONO, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{item.lbl}</div>
+              <div key={i} style={{ display: 'flex', gap: 5, alignItems: 'baseline' }}>
+                <span style={{ fontSize: 12, fontWeight: 300, color: pnlColor }}>{item.val}</span>
+                <span style={{ fontSize: 9, color: C.te, fontFamily: MONO }}>{item.lbl}</span>
               </div>
             ))}
-          </div>
+          </>
         ) : (
-          <div style={{ width: '100%', textAlign: 'center', fontSize: 13, color: '#4a5568', fontFamily: MONO }}>Aucune session hier</div>
+          <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>Aucune session hier</span>
         )}
       </div>
 
-      {/* PnL block */}
-      <div style={{ padding: '14px 24px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <span style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.td, fontFamily: MONO, display: 'block', marginBottom: 6 }}>P&L de session</span>
-        <div style={{ fontSize: 36, fontWeight: 200, letterSpacing: -2.5, lineHeight: 1, color: pnlColor, transition: 'color .4s', fontFamily: SANS }}>
-          {fmtPnl(stats.total_pnl)} <span style={{ fontSize: 14, color: C.te }}>USD</span>
-        </div>
-        {winRate !== null && (
-          <div style={{ fontSize: 10, color: C.td, fontFamily: MONO, marginTop: 3 }}>
-            {stats.wins}W / {stats.losses}L · {winRate}% win rate
-          </div>
-        )}
-        <div style={{ marginTop: 12, height: 100, display: 'flex', flexDirection: 'column' }}>
-          <PnlChart trades={trades} />
-        </div>
+      {/* PnL chart (compact) */}
+      <div style={{ padding: '10px 20px 6px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, height: 88 }}>
+        <PnlChart trades={trades} />
       </div>
 
       {/* Trade feed */}
-      <div style={{ padding: '14px 24px', flex: 1, borderBottom: `.5px solid ${C.b}`, overflowY: 'auto', minHeight: 0 }}>
+      <div style={{ padding: '12px 20px', flex: 1, borderBottom: `.5px solid ${C.b}`, overflowY: 'auto', minHeight: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.td, fontFamily: MONO }}>Flux de trades</span>
-          <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>— surbrillance = alerte comportementale</span>
+          <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: C.te, fontFamily: MONO }}>Flux de trades</span>
+          <span style={{ fontSize: 10, color: C.te, fontFamily: MONO, opacity: .6 }}>surbrillance = alerte</span>
         </div>
         {sortedTrades.length === 0 ? (
-          <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic', fontWeight: 300, padding: '12px 0' }}>
-            Aucun trade aujourd'hui. Connectez MetaTrader 5 via l'EA Caldra ou utilisez l'API.
+          <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontWeight: 300, padding: '10px 0' }}>
+            Aucun trade aujourd'hui — connectez votre plateforme via l'onglet Intégrations.
           </div>
         ) : (
           sortedTrades.map((t, i) => {
@@ -407,28 +414,26 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
             const hasWarn = flaggedAlert && (flaggedAlert.level ?? 1) === 1
             return (
               <div key={t.id ?? i} style={{
-                display: 'grid', gridTemplateColumns: '52px 1fr auto', alignItems: 'center',
-                gap: 0, padding: hasCrit || hasWarn ? '0 24px' : '0',
-                margin: hasCrit || hasWarn ? '0 -24px' : '0',
-                minHeight: 40, borderBottom: `.5px solid rgba(255,255,255,.05)`,
-                background: hasCrit ? 'rgba(220,80,60,.05)' : hasWarn ? 'rgba(245,166,35,.04)' : 'transparent',
-                borderLeft: hasCrit ? `2px solid rgba(220,80,60,.5)` : hasWarn ? `2px solid rgba(245,166,35,.4)` : 'none',
+                display: 'grid', gridTemplateColumns: '48px 1fr auto', alignItems: 'center',
+                gap: 0, padding: hasCrit || hasWarn ? '0 20px' : '0',
+                margin: hasCrit || hasWarn ? '0 -20px' : '0',
+                minHeight: 38, borderBottom: `.5px solid rgba(255,255,255,.04)`,
+                background: hasCrit ? 'rgba(220,80,60,.04)' : hasWarn ? 'rgba(245,166,35,.03)' : 'transparent',
+                borderLeft: hasCrit ? `1.5px solid rgba(220,80,60,.45)` : hasWarn ? `1.5px solid rgba(245,166,35,.35)` : 'none',
               }}>
-                <span style={{ fontSize: 11, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
-                <span style={{ fontSize: 14, color: C.tm, textAlign: 'center' as const, fontWeight: 400 }}>
+                <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
+                <span style={{ fontSize: 13, color: C.tm, fontWeight: 400 }}>
                   {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
                   {flaggedAlert && (
                     <span style={{
-                      fontSize: 8, padding: '2px 7px', borderRadius: 100, fontFamily: MONO, marginLeft: 8,
-                      background: hasCrit ? C.rd : 'rgba(245,166,35,.09)',
+                      fontSize: 8, padding: '1px 6px', borderRadius: 100, fontFamily: MONO, marginLeft: 7,
+                      background: hasCrit ? C.rd : 'rgba(245,166,35,.08)',
                       border: `.5px solid ${hasCrit ? C.rb : 'rgba(245,166,35,.2)'}`,
                       color: hasCrit ? C.red : C.o,
                     }}>{(flaggedAlert.type ?? '').replace(/_/g, ' ')}</span>
                   )}
                 </span>
-                <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: '#e2e8f0' }}>
-                  {fmtPnl(t.pnl ?? 0)}
-                </span>
+                <span style={{ fontSize: 12, fontFamily: MONO, color: pnlColor }}>{fmtPnl(t.pnl ?? 0)}</span>
               </div>
             )
           })
@@ -436,33 +441,18 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
       </div>
 
       {/* Note */}
-      <div style={{ padding: '12px 24px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <span style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.td, fontFamily: MONO, display: 'block', marginBottom: 6 }}>Note de session</span>
+      <div style={{ padding: '10px 20px', flexShrink: 0 }}>
         <textarea
           value={note} onChange={e => setNote(e.target.value)} rows={2}
-          placeholder="Contexte, état du marché, comment tu te sens..."
+          placeholder="Note de session — contexte, état du marché, ressenti..."
           style={{
-            width: '100%', background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b}`, borderRadius: 5,
-            padding: '8px 12px', color: C.tm, fontSize: 11, fontFamily: MONO, resize: 'none' as const,
+            width: '100%', background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 5,
+            padding: '8px 11px', color: C.tm, fontSize: 11, fontFamily: MONO, resize: 'none' as const,
             outline: 'none', lineHeight: 1.6, boxSizing: 'border-box',
           }}
         />
       </div>
 
-      {/* Footer */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', flexShrink: 0, borderTop: `.5px solid ${C.b}` }}>
-        {[
-          { val: `${fmtPnl(stats.total_pnl)}`, lbl: 'P&L', color: pnlColor },
-          { val: String(stats.total_trades), lbl: 'Trades', color: C.tm },
-          { val: `${winRate ?? '—'}${winRate !== null ? '%' : ''}`, lbl: 'Win rate', color: winRate !== null ? scoreColor(winRate) : C.te },
-          { val: String(alerts.length), lbl: 'Alertes', color: alerts.length > 0 ? C.red : C.te },
-        ].map((item, i) => (
-          <div key={i} style={{ textAlign: 'center' as const, padding: '14px 8px', borderRight: i < 3 ? `.5px solid ${C.b}` : 'none' }}>
-            <div style={{ fontSize: 20, fontWeight: 200, letterSpacing: -1, color: item.color }}>{item.val}</div>
-            <div style={{ fontSize: 10, color: C.td, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 4 }}>{item.lbl}</div>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
@@ -506,31 +496,26 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
   if (weekDays.length > 0) weeks.push({ lbl: `Sem (${weekStart}–${daysInMonth})`, days: weekDays })
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', flex: 1, height: '100%' }}>
-      <div style={{ padding: '24px 28px', borderRight: `.5px solid ${C.b}`, overflowY: 'auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <div style={{ fontSize: 19, fontWeight: 300, letterSpacing: -.3, color: '#e2e8f0', textTransform: 'capitalize' as const }}>{monthName}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflowY: 'auto' }}>
+      <div style={{ padding: '22px 26px' }}>
+        {/* Header navigation */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.2, color: C.tx, textTransform: 'capitalize' as const }}>{monthName}</div>
           <div style={{ display: 'flex', gap: 5 }}>
-            <button onClick={() => setCalOffset(o => o - 1)} style={{ background: 'transparent', border: `.5px solid ${C.b}`, borderRadius: 5, color: C.td, cursor: 'pointer', width: 32, height: 32, fontSize: 16, fontFamily: MONO }}>‹</button>
-            <button onClick={() => setCalOffset(o => o + 1)} style={{ background: 'transparent', border: `.5px solid ${C.b}`, borderRadius: 5, color: C.td, cursor: 'pointer', width: 32, height: 32, fontSize: 16, fontFamily: MONO }}>›</button>
+            <button onClick={() => setCalOffset(o => o - 1)} style={{ background: 'transparent', border: `.5px solid ${C.b}`, borderRadius: 5, color: C.td, cursor: 'pointer', width: 30, height: 30, fontSize: 15, fontFamily: MONO }}>‹</button>
+            <button onClick={() => setCalOffset(o => o + 1)} style={{ background: 'transparent', border: `.5px solid ${C.b}`, borderRadius: 5, color: C.td, cursor: 'pointer', width: 30, height: 30, fontSize: 15, fontFamily: MONO }}>›</button>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 18, marginBottom: 16, flexWrap: 'wrap' as const }}>
-          {[['rgba(60,200,122,.7)', 'Score ≥ 70'], ['rgba(245,166,35,.7)', '40–69'], ['rgba(220,80,60,.7)', '< 40']].map(([bg, lbl]) => (
-            <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, color: C.td, fontFamily: MONO }}>
-              <div style={{ width: 9, height: 9, borderRadius: 2, background: bg }} />{lbl}
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 6 }}>
+        {/* Day headers */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 5 }}>
           {['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => (
-            <div key={d} style={{ textAlign: 'center' as const, fontSize: 9, color: '#64748b', fontFamily: MONO, padding: 4, opacity: ['Sam','Dim'].includes(d) ? .5 : 1 }}>{d}</div>
+            <div key={d} style={{ textAlign: 'center' as const, fontSize: 9, color: '#64748b', fontFamily: MONO, padding: '3px 0', opacity: ['Sam','Dim'].includes(d) ? .4 : 1 }}>{d}</div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 5 }}>
+        {/* Calendar grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
           {Array.from({ length: firstDOW }, (_, i) => <div key={`e${i}`} />)}
           {Array.from({ length: daysInMonth }, (_, i) => {
             const d = i + 1
@@ -541,109 +526,112 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
             const isSelected = selectedDate === dateStr
             if (isWeekend || !s) {
               return (
-                <div key={d} style={{ minHeight: 78, borderRadius: 6, border: '.5px solid #1e1e35', background: '#0d0d1a', display: 'flex', flexDirection: 'column', padding: 10, pointerEvents: 'none', opacity: 0.3 }}>
-                  <div style={{ fontSize: 13, color: '#475569' }}>{d}</div>
+                <div key={d} style={{ minHeight: 68, borderRadius: 6, border: '.5px solid rgba(30,30,53,.6)', background: '#0d0d1a', display: 'flex', flexDirection: 'column', padding: 9, pointerEvents: 'none', opacity: 0.25 }}>
+                  <div style={{ fontSize: 12, color: '#475569' }}>{d}</div>
                 </div>
               )
             }
-            const col = isSelected ? '#fff' : scoreColor(s.score)
-            const textCol = isSelected ? '#fff' : '#e2e8f0'
+            const scoreCol = isSelected ? '#fff' : scoreColor(s.score)
+            const cellBg = isSelected ? C.red
+              : s.score >= 70 ? 'rgba(60,200,122,.08)'
+              : s.score >= 40 ? 'rgba(245,166,35,.08)'
+              : 'rgba(220,80,60,.08)'
+            const cellBorder = isSelected ? C.red
+              : s.score >= 70 ? 'rgba(60,200,122,.25)'
+              : s.score >= 40 ? 'rgba(245,166,35,.22)'
+              : 'rgba(220,80,60,.22)'
             return (
-              <div key={d} onClick={() => setSelectedDate(dateStr)} style={{
-                minHeight: 78, borderRadius: 6,
-                border: isSelected ? '1px solid #dc503c' : '0.5px solid rgba(220,80,60,0.3)',
-                background: isSelected ? '#dc503c' : 'rgba(220,80,60,0.15)',
-                cursor: 'pointer', display: 'flex', flexDirection: 'column', padding: 10,
-                position: 'relative', transition: 'all .2s',
+              <div key={d} onClick={() => setSelectedDate(isSelected ? null : dateStr)} style={{
+                minHeight: 68, borderRadius: 6,
+                border: `0.5px solid ${cellBorder}`,
+                background: cellBg,
+                cursor: 'pointer', display: 'flex', flexDirection: 'column', padding: 9,
+                position: 'relative', transition: 'opacity .15s',
               }}>
-                {s.alertCount > 0 && !isSelected && <div style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: '50%', background: C.red }} />}
-                <div style={{ fontSize: 13, fontWeight: 400, color: textCol, marginBottom: 4 }}>{d}</div>
-                <div style={{ fontSize: 24, fontWeight: 200, letterSpacing: -1, lineHeight: 1, color: col }}>{s.score}</div>
-                <div style={{ fontSize: 10, color: textCol, fontFamily: MONO, marginTop: 4 }}>{fmtPnl(s.pnl)} USD</div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Sidebar droite calendrier */}
-      <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', background: C.sf }}>
-        <div>
-          <span style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.td, fontFamily: MONO, display: 'block', marginBottom: 10 }}>Scores par semaine</span>
-          {weeks.map(w => {
-            const wScores = w.days.map(d => sessionByDate[cellDate(d)]?.score).filter((s): s is number => s !== undefined)
-            if (wScores.length === 0) return null
-            const avg = Math.round(wScores.reduce((a, b) => a + b) / wScores.length)
-            const col = scoreColor(avg)
-            return (
-              <div key={w.lbl} style={{ marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' as const, color: C.td, fontFamily: MONO }}>{w.lbl}</span>
-                  <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: col }}>{avg}</span>
-                </div>
-                <div style={{ height: 3, background: 'rgba(255,255,255,.05)', borderRadius: 1, overflow: 'hidden', marginBottom: 10 }}>
-                  <div style={{ height: '100%', width: `${avg}%`, background: col, borderRadius: 1 }} />
-                </div>
+                {s.alertCount > 0 && !isSelected && <div style={{ position: 'absolute', top: 7, right: 7, width: 5, height: 5, borderRadius: '50%', background: C.red, opacity: .7 }} />}
+                <div style={{ fontSize: 12, color: isSelected ? '#fff' : C.td, marginBottom: 4 }}>{d}</div>
+                <div style={{ fontSize: 22, fontWeight: 200, letterSpacing: -1, lineHeight: 1, color: scoreCol }}>{s.score}</div>
+                <div style={{ fontSize: 9, color: isSelected ? 'rgba(255,255,255,.7)' : C.te, fontFamily: MONO, marginTop: 3 }}>{fmtPnl(s.pnl)}</div>
               </div>
             )
           })}
         </div>
 
-        {/* Stats mois */}
+        {/* Day detail (inline, visible when day selected) */}
+        {selectedSession && (
+          <div style={{ marginTop: 14, background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '16px 18px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(220,80,60,.3),transparent)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 10, color: C.td, fontFamily: MONO, letterSpacing: 1 }}>{selectedDate}</span>
+              <span style={{ fontSize: 28, fontWeight: 200, letterSpacing: -1, color: scoreColor(selectedSession.score) }}>{selectedSession.score}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
+              {[
+                { k: 'P&L', v: `${fmtPnl(selectedSession.pnl)} USD` },
+                { k: 'Trades', v: String(selectedSession.tradeCount) },
+                { k: 'Win rate', v: selectedSession.tradeCount > 0 ? `${Math.round(selectedSession.wins / selectedSession.tradeCount * 100)}%` : '—' },
+              ].map(({ k, v }) => (
+                <div key={k} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 6, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 9, color: C.te, fontFamily: MONO, marginBottom: 4 }}>{k}</div>
+                  <div style={{ fontSize: 16, fontWeight: 300, color: C.tm }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            {selectedSession.alerts.slice(0, 2).map((a, i) => (
+              <div key={i} style={{ padding: '8px 11px', borderRadius: 5, marginTop: 6, border: `.5px solid ${a.level >= 2 ? C.rb : 'rgba(245,166,35,.2)'}`, background: a.level >= 2 ? C.rd : 'rgba(245,166,35,.05)' }}>
+                <div style={{ fontSize: 9, fontFamily: MONO, marginBottom: 3, color: a.level >= 2 ? C.red : C.o }}>L{a.level} · {a.type.replace(/_/g, ' ')}</div>
+                <div style={{ fontSize: 11, color: C.td, lineHeight: 1.4 }}>{a.message}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Week stats below calendar */}
+        <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: C.te, fontFamily: MONO }}>Scores par semaine</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {weeks.map(w => {
+              const wScores = w.days.map(d => sessionByDate[cellDate(d)]?.score).filter((s): s is number => s !== undefined)
+              if (wScores.length === 0) return null
+              const avg = Math.round(wScores.reduce((a, b) => a + b) / wScores.length)
+              const col = scoreColor(avg)
+              return (
+                <div key={w.lbl} style={{ flex: 1, background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 7, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 20, fontWeight: 200, letterSpacing: -1, color: col }}>{avg}</div>
+                  <div style={{ height: 2, background: 'rgba(255,255,255,.06)', borderRadius: 1, margin: '6px 0 4px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${avg}%`, background: col, borderRadius: 1 }} />
+                  </div>
+                  <div style={{ fontSize: 9, color: C.te, fontFamily: MONO }}>{w.lbl}</div>
+                </div>
+              )
+            }).filter(Boolean)}
+          </div>
+        </div>
+
+        {/* Month stats */}
         {sessions.length > 0 && (() => {
           const avgScore = Math.round(sessions.reduce((s, d) => s + d.score, 0) / sessions.length)
           const totalPnl = sessions.reduce((s, d) => s + d.pnl, 0)
           const critical = sessions.filter(d => d.criticalAlerts > 0).length
           return (
-            <div>
-              <span style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.td, fontFamily: MONO, display: 'block', marginBottom: 10 }}>Stats 30 derniers jours</span>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+            <div style={{ marginTop: 18 }}>
+              <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: C.te, fontFamily: MONO, display: 'block', marginBottom: 8 }}>30 derniers jours</span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
                 {[
                   { val: String(avgScore), lbl: 'Score moy.', color: scoreColor(avgScore) },
                   { val: String(sessions.length), lbl: 'Sessions', color: C.tm },
                   { val: String(critical), lbl: 'Critiques', color: critical > 0 ? C.red : C.te },
-                  { val: `${fmtPnl(totalPnl)}`, lbl: 'P&L total', color: '#e2e8f0' },
+                  { val: fmtPnl(totalPnl), lbl: 'P&L', color: '#e2e8f0' },
                 ].map((item, i) => (
-                  <div key={i} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 8, padding: '14px 16px' }}>
-                    <div style={{ fontSize: 22, fontWeight: 200, letterSpacing: -.5, color: item.color }}>{item.val}</div>
-                    <div style={{ fontSize: 10, color: C.td, fontFamily: MONO, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 4 }}>{item.lbl}</div>
+                  <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 7, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 20, fontWeight: 200, letterSpacing: -.5, color: item.color }}>{item.val}</div>
+                    <div style={{ fontSize: 9, color: C.te, fontFamily: MONO, marginTop: 4 }}>{item.lbl}</div>
                   </div>
                 ))}
               </div>
             </div>
           )
         })()}
-
-        {/* Day detail */}
-        <div>
-          <span style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.td, fontFamily: MONO, display: 'block', marginBottom: 10 }}>Détail du jour</span>
-          {selectedSession ? (
-            <div style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 9, padding: 18, position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(220,80,60,.35),transparent)' }} />
-              <div style={{ fontSize: 11, color: C.td, fontFamily: MONO, letterSpacing: 1, textTransform: 'uppercase' as const, marginBottom: 11 }}>{selectedDate}</div>
-              <div style={{ fontSize: 40, fontWeight: 200, letterSpacing: -1.5, lineHeight: 1, color: scoreColor(selectedSession.score) }}>{selectedSession.score}</div>
-              <div style={{ fontSize: 14, color: C.tm, marginBottom: 14, marginTop: 4 }}>{fmtPnl(selectedSession.pnl)} USD</div>
-              {[
-                { k: 'Trades', v: String(selectedSession.tradeCount) },
-                { k: 'Win rate', v: selectedSession.tradeCount > 0 ? `${Math.round(selectedSession.wins / selectedSession.tradeCount * 100)}%` : '—' },
-                { k: 'Alertes', v: String(selectedSession.alertCount) },
-              ].map(({ k, v }) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
-                  <span style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>{k}</span>
-                  <span style={{ fontSize: 13, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
-                </div>
-              ))}
-              {selectedSession.alerts.slice(0, 3).map((a, i) => (
-                <div key={i} style={{ padding: '9px 11px', borderRadius: 6, marginTop: 9, border: `.5px solid ${a.level >= 2 ? C.rb : 'rgba(245,166,35,.2)'}`, background: a.level >= 2 ? C.rd : 'rgba(245,166,35,.06)' }}>
-                  <div style={{ fontSize: 10, fontFamily: MONO, marginBottom: 4, color: a.level >= 2 ? C.red : C.o }}>L{a.level} · {a.type.replace(/_/g, ' ')}</div>
-                  <div style={{ fontSize: 12, color: C.tm, lineHeight: 1.4, fontWeight: 300 }}>{a.message}</div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic', fontWeight: 300 }}>Clique sur un jour pour le détail.</div>
-          )}
-        </div>
       </div>
     </div>
   )
@@ -1183,52 +1171,59 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
   }
 
   return (
-    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 18, overflowY: 'auto', height: '100%' }}>
-      <div>
-        <div style={{ fontSize: 19, fontWeight: 300, letterSpacing: -.3, color: C.tx, marginBottom: 6 }}>Règles de session</div>
-        <div style={{ fontSize: 13, color: C.td, fontFamily: MONO }}>Ces seuils définissent quand Caldra déclenche une alerte. Modifiables à tout moment.</div>
+    <div style={{ padding: '24px 28px', overflowY: 'auto', height: '100%' }}>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.2, color: C.tx, marginBottom: 4 }}>Règles de session</div>
+        <div style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>Ces seuils définissent quand Caldra déclenche une alerte.</div>
       </div>
-      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <RuleGroup title="Risk management" desc="LEVEL_2 si seuil dépassé">
-          <RuleField label="Drawdown journalier max" unit="%">
-            <input style={inputStyle} type="number" min={0.1} max={20} step={0.1} value={rules.max_daily_drawdown_pct} onChange={e => set('max_daily_drawdown_pct', e.target.value)} />
-          </RuleField>
-          <RuleField label="Risque max par trade" unit="%">
-            <input style={inputStyle} type="number" min={0.1} max={10} step={0.1} value={rules.max_risk_per_trade_pct} onChange={e => set('max_risk_per_trade_pct', e.target.value)} />
-          </RuleField>
-        </RuleGroup>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* 2-column layout: Risk + Discipline */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <RuleGroup title="Risk" desc="LEVEL_2 si seuil dépassé">
+            <RuleField label="Drawdown max" unit="%">
+              <input style={inputStyle} type="number" min={0.1} max={20} step={0.1} value={rules.max_daily_drawdown_pct} onChange={e => set('max_daily_drawdown_pct', e.target.value)} />
+            </RuleField>
+            <RuleField label="Risque / trade" unit="%">
+              <input style={inputStyle} type="number" min={0.1} max={10} step={0.1} value={rules.max_risk_per_trade_pct} onChange={e => set('max_risk_per_trade_pct', e.target.value)} />
+            </RuleField>
+          </RuleGroup>
 
-        <RuleGroup title="Discipline comportementale" desc="LEVEL_1 à 80% · LEVEL_2 si dépassé">
-          <RuleField label="Max trades par session">
-            <input style={inputStyle} type="number" min={1} max={100} step={1} value={rules.max_trades_per_session} onChange={e => set('max_trades_per_session', e.target.value)} />
-          </RuleField>
-          <RuleField label="Pertes consécutives max">
-            <input style={inputStyle} type="number" min={1} max={20} step={1} value={rules.max_consecutive_losses} onChange={e => set('max_consecutive_losses', e.target.value)} />
-          </RuleField>
-          <RuleField label="Délai min entre trades" unit="sec">
-            <input style={inputStyle} type="number" min={0} max={3600} step={10} value={rules.min_time_between_entries_sec} onChange={e => set('min_time_between_entries_sec', e.target.value)} />
-          </RuleField>
-        </RuleGroup>
+          <RuleGroup title="Discipline" desc="LEVEL_1 à 80% · LEVEL_2 si dépassé">
+            <RuleField label="Max trades">
+              <input style={inputStyle} type="number" min={1} max={100} step={1} value={rules.max_trades_per_session} onChange={e => set('max_trades_per_session', e.target.value)} />
+            </RuleField>
+            <RuleField label="Pertes consécutives">
+              <input style={inputStyle} type="number" min={1} max={20} step={1} value={rules.max_consecutive_losses} onChange={e => set('max_consecutive_losses', e.target.value)} />
+            </RuleField>
+            <RuleField label="Délai min" unit="sec">
+              <input style={inputStyle} type="number" min={0} max={3600} step={10} value={rules.min_time_between_entries_sec} onChange={e => set('min_time_between_entries_sec', e.target.value)} />
+            </RuleField>
+          </RuleGroup>
+        </div>
 
+        {/* Session window — full width below */}
         <RuleGroup title="Fenêtre de session" desc="LEVEL_1 si trade hors fenêtre">
-          <RuleField label="Heure de début">
-            <input style={{ ...inputStyle, width: 88, textAlign: 'center' }} type="time" value={rules.session_start} onChange={e => set('session_start', e.target.value)} />
-          </RuleField>
-          <RuleField label="Heure de fin">
-            <input style={{ ...inputStyle, width: 88, textAlign: 'center' }} type="time" value={rules.session_end} onChange={e => set('session_end', e.target.value)} />
-          </RuleField>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <RuleField label="Début">
+              <input style={{ ...inputStyle, width: 88, textAlign: 'center' }} type="time" value={rules.session_start} onChange={e => set('session_start', e.target.value)} />
+            </RuleField>
+            <RuleField label="Fin">
+              <input style={{ ...inputStyle, width: 88, textAlign: 'center' }} type="time" value={rules.session_end} onChange={e => set('session_end', e.target.value)} />
+            </RuleField>
+          </div>
         </RuleGroup>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button type="submit" disabled={save === 'saving'} style={{
-            padding: '13px 30px', background: C.red, border: 'none', borderRadius: 7, color: '#fff',
-            fontSize: 13, fontFamily: SANS, cursor: save === 'saving' ? 'not-allowed' : 'pointer',
+            padding: '11px 26px', background: C.red, border: 'none', borderRadius: 6, color: '#fff',
+            fontSize: 12, fontFamily: SANS, cursor: save === 'saving' ? 'not-allowed' : 'pointer',
             fontWeight: 500, transition: 'opacity .2s', opacity: save === 'saving' ? .6 : 1,
+            letterSpacing: .5,
           }}>
-            {save === 'saving' ? 'Enregistrement…' : 'Sauvegarder les règles'}
+            {save === 'saving' ? 'Enregistrement…' : 'Sauvegarder'}
           </button>
-          {save === 'saved' && <span style={{ color: C.g, fontSize: 12, fontFamily: SANS }}>✓ Règles mises à jour</span>}
-          {save === 'error' && <span style={{ color: C.red, fontSize: 12, fontFamily: SANS }}>Erreur — réessayez</span>}
+          {save === 'saved' && <span style={{ color: C.g, fontSize: 11, fontFamily: MONO }}>✓ Mis à jour</span>}
+          {save === 'error' && <span style={{ color: C.red, fontSize: 11, fontFamily: MONO }}>Erreur — réessayez</span>}
         </div>
       </form>
     </div>
@@ -1449,18 +1444,15 @@ export default function DashboardClient({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500&family=Geist+Mono:wght@400;500&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         html,body{height:100%;background:${C.bg}}
-        ::-webkit-scrollbar{width:4px;height:4px}
-        ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+        ::-webkit-scrollbar{width:0;height:0}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.15}}
         @keyframes dshIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-        .tab-btn{padding:11px 0;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(240,237,232,.6);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:${MONO};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex:1;text-align:center}
-        .tab-btn:hover{color:rgba(240,237,232,.95)}
+        .tab-btn{padding:11px 0;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:rgba(240,237,232,.45);cursor:pointer;border-bottom:1.5px solid transparent;transition:all .2s;font-family:${MONO};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex:1;text-align:center}
+        .tab-btn:hover{color:rgba(240,237,232,.8)}
         .tab-btn.active{color:${C.tx};border-bottom-color:${C.red}}
-        .tab-sentinel{color:rgba(220,80,60,.6)!important}
+        .tab-sentinel{color:rgba(220,80,60,.55)!important}
         .tab-sentinel.active{color:${C.red}!important;border-bottom-color:${C.red}}
         textarea,input{box-sizing:border-box}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
@@ -1473,7 +1465,7 @@ export default function DashboardClient({
         {/* ── Header ── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px', borderBottom: `.5px solid ${C.b}`, background: 'rgba(8,8,13,.97)', flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: 8, textTransform: 'uppercase', color: '#fff' }}>Cald<span style={{ color: C.red }}>ra</span></div>
+            <div style={{ fontSize: 13, fontWeight: 300, letterSpacing: 5, textTransform: 'uppercase', color: '#fff' }}>Cald<span style={{ color: C.red }}>ra</span></div>
             <div style={{ fontSize: 7, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', display: 'block', marginTop: 3 }}>Session</div>
           </div>
           <div style={{ fontSize: 10, color: C.td, letterSpacing: 1, fontFamily: MONO }}>{displayDate}</div>
@@ -1505,7 +1497,7 @@ export default function DashboardClient({
         </div>
 
         {/* ── Main layout ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '25% 1fr', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '20% 1fr', flex: 1, overflow: 'hidden', minHeight: 0 }}>
           <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} trades={trades} />
 
           <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
