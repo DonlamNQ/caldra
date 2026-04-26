@@ -22,7 +22,8 @@
       "Bash(git rm *)",
       "Bash(vercel *)",
       "Bash(npm i *)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(curl *)"
     ]
   },
   "hooks": {
