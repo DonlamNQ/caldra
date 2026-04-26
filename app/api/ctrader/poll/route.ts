@@ -58,14 +58,13 @@ export async function GET(_req: NextRequest) {
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
 
-      if (dealsRes.status === 429) {
-        console.warn(`[poll] Rate limited for user=${conn.user_id}, skip this tick`)
-        continue
-      }
-
       if (!dealsRes.ok) {
-        console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}`)
-        totalErrors++
+        // 429 = rate limit, 403 = scope REST insuffisant → les deux sont non-fatals
+        // Le cBot /api/ingest est la source principale de trades
+        if (dealsRes.status !== 429 && dealsRes.status !== 403) {
+          console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}`)
+          totalErrors++
+        }
         continue
       }
 

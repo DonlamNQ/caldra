@@ -1,0 +1,65 @@
+using System;
+using System.Net.Http;
+using System.Text;
+using cAlgo.API;
+
+namespace cAlgo.Robots
+{
+    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.FullAccess)]
+    public class CaldraBot : Robot
+    {
+        [Parameter("Caldra API Key", DefaultValue = "cal_xxxxxxxxxxxxxx")]
+        public string ApiKey { get; set; }
+
+        [Parameter("Caldra URL", DefaultValue = "https://getcaldra.com")]
+        public string CaldraUrl { get; set; }
+
+        private HttpClient _http;
+
+        protected override void OnStart()
+        {
+            _http = new HttpClient();
+            _http.DefaultRequestHeaders.Add("x-caldra-key", ApiKey);
+            Positions.Closed += OnPositionClosed;
+            Print("CaldraBot: démarré — surveillance des positions active");
+        }
+
+        private void OnPositionClosed(PositionClosedEventArgs args)
+        {
+            var pos = args.Position;
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+            var json = string.Format(inv,
+                "{{\"symbol\":\"{0}\",\"direction\":\"{1}\",\"size\":{2},\"entry_price\":{3},\"exit_price\":{4},\"entry_time\":\"{5}\",\"exit_time\":\"{6}\",\"pnl\":{7}}}",
+                pos.SymbolName,
+                pos.TradeType == TradeType.Buy ? "long" : "short",
+                pos.Quantity,
+                pos.EntryPrice,
+                pos.ClosePrice,
+                pos.EntryTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                Server.Time.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                pos.NetProfit
+            );
+
+            try
+            {
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = _http.PostAsync(CaldraUrl + "/api/ingest", content).GetAwaiter().GetResult();
+                if (response.IsSuccessStatusCode)
+                    Print(string.Format("✓ {0} ingéré (pnl={1:F2})", pos.SymbolName, pos.NetProfit));
+                else
+                    Print(string.Format("✗ Erreur ingest {0}", (int)response.StatusCode));
+            }
+            catch (Exception ex)
+            {
+                Print("✗ CaldraBot erreur: " + ex.Message);
+            }
+        }
+
+        protected override void OnStop()
+        {
+            Positions.Closed -= OnPositionClosed;
+            if (_http != null) _http.Dispose();
+        }
+    }
+}
