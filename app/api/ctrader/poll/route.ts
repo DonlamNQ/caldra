@@ -77,27 +77,35 @@ export async function GET(_req: NextRequest) {
         : Date.now() - 2 * 60 * 1000
       const toTs = Date.now()
 
-      // Teste plusieurs variantes d'URL pour trouver le bon endpoint
+      // Teste différents formats de timestamp pour le paramètre from/to
+      const fromSec  = Math.floor(fromTs / 1000)
+      const toSec    = Math.floor(toTs / 1000)
+      const fromDate = new Date(fromTs).toISOString()
+      const toDate   = new Date(toTs).toISOString()
+
       const urlCandidates = [
-        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}&from=${fromTs}&to=${toTs}`,
+        // Secondes
+        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}&from=${fromSec}&to=${toSec}`,
+        // ISO string
+        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}`,
+        // Sans params (last resort)
         `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/deals?oauth_token=${accessToken}`,
-        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}/orders?oauth_token=${accessToken}`,
-        `${CTRADER_API_BASE}/tradingaccounts/${liveAccountId}?oauth_token=${accessToken}`,
       ]
 
       let dealsRes: Response | null = null
       let workingUrl = ''
       for (const url of urlCandidates) {
         const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
-        errorDetails.push(`${url.split('?')[0].split('/').slice(-2).join('/')}: ${r.status}`)
+        const label = url.includes('from=') ? url.split('from=')[1].slice(0, 15) : 'no-params'
+        errorDetails.push(`deals[${label}]: ${r.status}`)
         if (r.ok) { dealsRes = r; workingUrl = url; break }
+        if (r.status === 429) break // rate limited, stop probing
       }
 
       if (!dealsRes) {
         totalErrors++
         continue
       }
-      errorDetails.push(`working: ${workingUrl.split('?')[0]}`)
 
       const raw = await dealsRes.json()
       const deals: any[] = Array.isArray(raw) ? raw : (raw.data ?? raw.deal ?? [])
