@@ -313,7 +313,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
             <span style={{ fontSize: 12, color: C.td }}>Fenêtre</span>
-            <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>{rules.session_start}–{rules.session_end}</span>
+            <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
           </div>
         </div>
       )}
@@ -377,9 +377,10 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
 }
 
 // ── SessionPanel ───────────────────────────────────────────────────────────────
-function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
+function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules }: {
   trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats
-  yesterdayStats: { score: number; pnl: number; alerts: number } | null; rules: TradingRules | null
+  yesterdayStats: { score: number; pnl: number; alerts: number } | null
+  yesterdayTrend: number | null; rules: TradingRules | null
 }) {
   const [note, setNote] = useState('')
   const score = computeScore(alerts)
@@ -404,11 +405,14 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
         </div>
 
         {/* Chart card — session line + PnL chart empilés */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
-          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 44, overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0 }}>
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 6, textTransform: 'uppercase' as const, fontFamily: MONO }}>Ligne de session</div>
+          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 52, overflow: 'hidden', flexShrink: 0 }}>
             <SessionLine trades={trades} score={score} />
           </div>
-          <div style={{ height: 90, flexShrink: 0 }}>
+          <div style={{ borderTop: `.5px solid ${C.b}`, margin: '8px 0' }} />
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 6, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
+          <div style={{ height: 100, flexShrink: 0 }}>
             <PnlChart trades={trades} />
           </div>
         </div>
@@ -416,13 +420,13 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
         {/* 4 mini stat cards */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: 200 }}>
           {[
-            { val: fmtEur(stats.total_pnl), lbl: 'P&L', col: '#fff' },
-            { val: String(stats.total_trades), lbl: 'Trades', col: C.te },
-            { val: `${drawdownPct}%`, lbl: 'Drawdown', col: drawdownPct > 70 ? C.red : drawdownPct > 40 ? C.o : C.te },
-            { val: String(alerts.length), lbl: 'Alertes', col: alerts.length > 0 ? C.red : C.te },
+            { val: fmtEur(stats.total_pnl), lbl: 'P&L' },
+            { val: String(stats.total_trades), lbl: 'Trades' },
+            { val: `${drawdownPct}%`, lbl: 'Drawdown' },
+            { val: String(alerts.length), lbl: 'Alertes' },
           ].map((item, i) => (
             <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '11px 13px' }}>
-              <div style={{ fontSize: 16, fontWeight: 300, letterSpacing: -.5, color: item.col }}>{item.val}</div>
+              <div style={{ fontSize: 16, fontWeight: 300, letterSpacing: -.5, color: C.tx }}>{item.val}</div>
               <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 3 }}>{item.lbl}</div>
             </div>
           ))}
@@ -435,14 +439,15 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
         {yesterdayStats ? (
           <>
             {[
-              { val: fmtEur(yesterdayStats.pnl), lbl: 'P&L' },
-              { val: String(yesterdayStats.score), lbl: 'Score' },
-              { val: String(yesterdayStats.alerts), lbl: 'Alertes' },
+              { val: fmtEur(yesterdayStats.pnl), lbl: 'P&L', col: C.tm },
+              { val: String(yesterdayStats.score), lbl: 'Score', col: C.tm },
+              { val: String(yesterdayStats.alerts), lbl: 'Alertes', col: C.tm },
+              ...(yesterdayTrend !== null ? [{ val: `${yesterdayTrend > 0 ? '+' : ''}${yesterdayTrend}`, lbl: 'Tendance', col: yesterdayTrend > 0 ? C.g : yesterdayTrend < 0 ? C.red : C.tm }] : []),
             ].map((item, i) => (
               <div key={i} style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
                 {i > 0 && <div style={{ width: .5, height: 18, background: C.b2 }} />}
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: -.3, color: C.tm }}>{item.val}</div>
+                  <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: -.3, color: item.col }}>{item.val}</div>
                   <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .4 }}>{item.lbl}</div>
                 </div>
               </div>
@@ -467,30 +472,27 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
           sortedTrades.map((t, i) => {
             const flaggedAlert = alerts.find(a => a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000)
             const hasCrit = flaggedAlert && (flaggedAlert.level ?? 1) >= 2
-            const hasWarn = flaggedAlert && (flaggedAlert.level ?? 1) === 1
             return (
               <div key={t.id ?? i} style={{
-                display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center',
+                display: 'grid', gridTemplateColumns: '60px 1fr auto', alignItems: 'center',
                 minHeight: 30, borderBottom: `.5px solid rgba(255,255,255,.04)`,
-                background: hasCrit ? 'rgba(255,90,61,.04)' : hasWarn ? 'rgba(255,171,0,.04)' : 'transparent',
-                borderLeft: hasCrit ? `2px solid rgba(255,90,61,.45)` : hasWarn ? `2px solid rgba(255,171,0,.4)` : 'none',
-                padding: hasCrit || hasWarn ? '0 4px 0 10px' : '0',
-                borderRadius: hasCrit || hasWarn ? '0 6px 6px 0' : '0',
+                background: hasCrit ? 'rgba(255,90,61,.04)' : 'transparent',
+                borderLeft: hasCrit ? `2px solid rgba(255,90,61,.45)` : '2px solid transparent',
+                padding: '0 4px 0 10px',
+                borderRadius: '0 6px 6px 0',
               }}>
                 <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
-                <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400 }}>
+                <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                   {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
-                  {flaggedAlert && (
+                  {hasCrit && flaggedAlert && (
                     <span style={{
                       fontSize: 8.5, padding: '2px 7px', borderRadius: 99, fontFamily: MONO, marginLeft: 7,
-                      background: hasCrit ? C.rd : 'rgba(255,171,0,.09)',
-                      border: `.5px solid ${hasCrit ? C.rb : 'rgba(255,171,0,.2)'}`,
-                      color: hasCrit ? C.red : C.o,
+                      background: C.rd, border: `.5px solid ${C.rb}`, color: C.red,
                     }}>{(flaggedAlert.type ?? '').toLowerCase().replace(/_/g, ' ')}</span>
                   )}
                 </span>
-                <span style={{ fontSize: 13, fontFamily: MONO, color: '#fff', whiteSpace: 'nowrap' as const, paddingLeft: 8 }}>
-                  {(t.pnl ?? 0) >= 0 ? '+' : ''}{(t.pnl ?? 0).toFixed(0)}
+                <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const, paddingLeft: 8 }}>
+                  {fmtEur(t.pnl ?? 0)}
                 </span>
               </div>
             )
@@ -1376,6 +1378,12 @@ export default function DashboardClient({
   const today = new Date().toISOString().split('T')[0]
   const score = computeScore(alerts)
 
+  const _yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  const _dayBefore = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0]
+  const _ySess = historicalSessions.find(s => s.date === _yesterday)
+  const _dbSess = historicalSessions.find(s => s.date === _dayBefore)
+  const yesterdayTrend: number | null = (_ySess && _dbSess) ? _ySess.score - _dbSess.score : null
+
   useEffect(() => {
     const supabase = createClient()
     channelRef.current = supabase
@@ -1399,7 +1407,9 @@ export default function DashboardClient({
     return () => { channelRef.current?.unsubscribe() }
   }, [userId, today])
 
-  const displayDate = new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
+  const MONTHS_FR = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'aoû', 'sep', 'oct', 'nov', 'déc']
+  const _now = new Date()
+  const displayDate = `${_now.toLocaleDateString('fr-FR', { weekday: 'short' })} ${_now.getDate()} ${MONTHS_FR[_now.getMonth()]} ${_now.getFullYear()}`
 
   return (
     <>
@@ -1466,7 +1476,7 @@ export default function DashboardClient({
 
           <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
-              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} rules={tradingRules} />
+              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} />
             )}
             {activeTab === 'calendrier' && (
               <CalendrierPanel sessions={historicalSessions} />
