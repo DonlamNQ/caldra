@@ -1325,15 +1325,13 @@ export default function DashboardClient({
     const supabase = createClient()
     channelRef.current = supabase
       .channel('caldra-live')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts', filter: `user_id=eq.${userId}` }, (payload) => {
         const a = payload.new as AlertRow & { session_date?: string; user_id?: string }
-        if (a.user_id !== userId) return
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
       })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades' }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         const t = payload.new as TradeRow & { user_id?: string }
-        if (t.user_id !== userId) return
         setTrades(prev => [t, ...prev])
         setStats(prev => ({
           total_trades: prev.total_trades + 1,
