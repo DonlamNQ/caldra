@@ -122,13 +122,59 @@ function MetricBar({ label, value }: { label: string; value: number }) {
 }
 
 // ── PnlChart (SVG) ─────────────────────────────────────────────────────────────
+// ── SessionLine — animated live line ──────────────────────────────────────────
+function SessionLine({ trades, score }: { trades: TradeRow[]; score: number }) {
+  const col = scoreColor(score)
+  const W = 800, H = 44, PY = 5
+
+  const sorted = [...trades]
+    .filter(t => t.pnl != null && t.entry_time)
+    .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
+
+  const rawPts: number[] = [0]
+  let cum = 0
+  for (const t of sorted) { cum += t.pnl ?? 0; rawPts.push(cum) }
+
+  const n = rawPts.length
+  const minV = Math.min(...rawPts)
+  const maxV = Math.max(...rawPts)
+  const range = maxV - minV || 1
+  const xOf = (i: number) => n <= 1 ? (i === 0 ? 0 : W) : (i / (n - 1)) * W
+  const yOf = (v: number) => PY + (H - 2 * PY) - ((v - minV) / range) * (H - 2 * PY)
+  const midY = H / 2
+
+  const lastX = n <= 1 ? W : xOf(n - 1)
+  const lastY = n <= 1 ? midY : yOf(rawPts[n - 1])
+  const linePts = n <= 1
+    ? `0,${midY} ${W},${midY}`
+    : rawPts.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
+  const fillD = n <= 1
+    ? `M0,${midY} L${W},${midY} L${W},${H} L0,${H} Z`
+    : `M0,${yOf(0)} ${rawPts.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${lastX},${H} L0,${H} Z`
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', height: '100%' }}>
+      <defs>
+        <linearGradient id="sl-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={col} stopOpacity="0.06" />
+          <stop offset="100%" stopColor={col} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={fillD} fill="url(#sl-grad)" />
+      <polyline points={linePts} fill="none" stroke={col} strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" opacity={n <= 1 ? 0.35 : 1} />
+      <circle cx={lastX} cy={lastY} r="3.5" fill={col} style={{ animation: 'pulse 1.8s infinite' }} />
+    </svg>
+  )
+}
+
+// ── PnlChart — cumulative SVG chart ───────────────────────────────────────────
 function PnlChart({ trades }: { trades: TradeRow[] }) {
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
 
   const W = 600, H = 90, PX = 8, PY = 10
-  const LC = 'rgba(216,213,232,.4)'
   const GRID = 'rgba(255,255,255,.06)'
 
   if (sorted.length === 0) {
@@ -148,6 +194,10 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
   for (const t of sorted) { cum += t.pnl ?? 0; pts.push({ t: fmtTime(t.entry_time), v: cum }) }
 
   const vals = pts.map(p => p.v)
+  const finalPnl = vals[vals.length - 1]
+  const LC = finalPnl >= 0 ? C.g : C.red
+  const LCfill = finalPnl >= 0 ? 'rgba(0,209,122,.06)' : 'rgba(255,90,61,.06)'
+
   const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals)
   const range = maxV - minV || 1
   const n = pts.length
@@ -161,19 +211,21 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
         <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
         <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
         <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
-        {pts.map((p, i) => <circle key={i} cx={xOf(i)} cy={yOf(p.v)} r={3} fill={LC} />)}
+        {pts.map((p, i) => <circle key={i} cx={xOf(i)} cy={yOf(p.v)} r={4} fill={LC} />)}
       </svg>
     )
   }
 
   const linePts = pts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
   const last = vals[vals.length - 1]
+  const fillPath = `M${xOf(0)},${y0} ${pts.map((p, i) => `L${xOf(i)},${yOf(p.v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
       <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
       <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
       <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
+      <path d={fillPath} fill={LCfill} />
       <polyline points={linePts} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
       {pts.slice(1).map((p, i) => <circle key={i} cx={xOf(i + 1)} cy={yOf(p.v)} r={2} fill={C.bg} stroke={LC} strokeWidth={1} />)}
       <circle cx={xOf(n - 1)} cy={yOf(last)} r={3.5} fill={LC} />
@@ -330,6 +382,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
   yesterdayStats: { score: number; pnl: number; alerts: number } | null; rules: TradingRules | null
 }) {
   const [note, setNote] = useState('')
+  const score = computeScore(alerts)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
   const drawdownPct = rules
     ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * 10000) * 100))
@@ -350,10 +403,12 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, rules }: {
           <div style={{ fontSize: 10.5, color: C.td, fontFamily: MONO, marginTop: 5 }}>Session en cours</div>
         </div>
 
-        {/* Chart */}
+        {/* Chart card — session line + PnL chart empilés */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
-          <div style={{ fontSize: 10.5, color: C.td }}>Courbe de session</div>
-          <div style={{ height: 90, position: 'relative' }}>
+          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 44, overflow: 'hidden', flexShrink: 0 }}>
+            <SessionLine trades={trades} score={score} />
+          </div>
+          <div style={{ height: 90, flexShrink: 0 }}>
             <PnlChart trades={trades} />
           </div>
         </div>
