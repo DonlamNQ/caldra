@@ -17,8 +17,8 @@ const RD   = 'rgba(255,90,61,.09)'
 const RB   = 'rgba(255,90,61,.25)'
 const G    = '#00d17a'
 const O    = '#ffab00'
-const MONO = "'DM Mono', monospace"
-const SANS = "'DM Sans', sans-serif"
+const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
+const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Platform = 'ctrader' | 'mt5' | 'api'
