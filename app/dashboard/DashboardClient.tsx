@@ -8,10 +8,10 @@ import type { DaySession } from './page'
 
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
-  red: '#ff5a3d', rd: 'rgba(255,90,61,.08)', rb: 'rgba(255,90,61,.2)', rg: 'rgba(255,90,61,.04)',
-  bg: '#06060c', sf: '#0e0e18', sf2: '#131320',
-  b: 'rgba(255,255,255,.04)', b2: 'rgba(255,255,255,.08)', b3: 'rgba(255,255,255,.14)',
-  tx: '#d8d5e8', tm: 'rgba(216,213,232,.92)', td: 'rgba(216,213,232,.42)', te: 'rgba(216,213,232,.22)',
+  red: '#ff5a3d', rd: 'rgba(255,90,61,.1)', rb: 'rgba(255,90,61,.25)', rg: 'rgba(255,90,61,.05)',
+  bg: '#06060c', sf: '#10101e', sf2: '#181830',
+  b: 'rgba(255,255,255,.09)', b2: 'rgba(255,255,255,.15)', b3: 'rgba(255,255,255,.22)',
+  tx: '#eae8f5', tm: 'rgba(234,232,245,.95)', td: 'rgba(234,232,245,.65)', te: 'rgba(234,232,245,.4)',
   g: '#00d17a', o: '#ffab00',
 }
 const C_LIGHT = {
@@ -111,7 +111,7 @@ function ScoreRingSvg({ score }: { score: number }) {
           style={{ transition: 'stroke-dashoffset .6s, stroke .5s' }} />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: col, transition: 'color .5s' }}>{score}</span>
+        <span style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: col, transition: 'color .5s', fontFamily: MONO }}>{score}</span>
         <span style={{ fontSize: 9, color: C.te, fontFamily: MONO, marginTop: 2 }}>/ 100</span>
       </div>
     </div>
@@ -358,7 +358,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
       {/* Streak */}
       <div style={{ padding: '13px 20px', borderBottom: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div>
-          <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: -1, color: streak >= 3 ? C.red : C.tm, transition: 'color .3s' }}>{streak}</div>
+          <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: -1, color: streak >= 3 ? C.red : C.tm, transition: 'color .3s', fontFamily: MONO }}>{streak}</div>
           <div style={{ fontSize: 12, color: C.td, marginTop: 2 }}>{streak <= 1 ? 'perte consécutive' : 'pertes consécutives'}</div>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
@@ -369,7 +369,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
       </div>
 
       {/* Alertes */}
-      <div style={{ padding: '15px 20px', flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <div style={{ padding: '15px 20px', flex: 1, overflowY: 'auto', minHeight: 120 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 11 }}>
           <span style={{ fontSize: 11, letterSpacing: .3, color: C.td }}>Alertes</span>
           {alerts.length > 0 && (
@@ -436,7 +436,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         {/* PnL card */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 22px', minWidth: 160 }}>
           <div style={{ fontSize: 10.5, color: C.td, marginBottom: 8 }}>P&L de session</div>
-          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, color: '#fff' }}>
+          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, color: C.tx, fontFamily: MONO }}>
             {fmtEur(stats.total_pnl)}
           </div>
           <div style={{ fontSize: 10.5, color: C.td, fontFamily: MONO, marginTop: 5 }}>Session en cours</div>
@@ -450,21 +450,20 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '8px 0' }} />
           <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
-          <div style={{ height: 120, flexShrink: 0 }}>
+          <div style={{ height: 84, flexShrink: 0 }}>
             <PnlChart trades={trades} />
           </div>
         </div>
 
-        {/* 4 mini stat cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: 200 }}>
+        {/* 3 mini stat cards — sans P&L */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 120 }}>
           {[
-            { val: fmtEur(stats.total_pnl), lbl: 'P&L' },
             { val: String(stats.total_trades), lbl: 'Trades' },
             { val: `${drawdownPct}%`, lbl: 'Drawdown' },
             { val: String(alerts.length), lbl: 'Alertes' },
           ].map((item, i) => (
             <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '11px 13px' }}>
-              <div style={{ fontSize: 16, fontWeight: 300, letterSpacing: -.5, color: C.tx }}>{item.val}</div>
+              <div style={{ fontSize: 16, fontWeight: 300, letterSpacing: -.5, color: C.tx, fontFamily: MONO }}>{item.val}</div>
               <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 3 }}>{item.lbl}</div>
             </div>
           ))}
@@ -485,7 +484,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
               <div key={i} style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
                 {i > 0 && <div style={{ width: .5, height: 18, background: C.b2 }} />}
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: -.3, color: item.col }}>{item.val}</div>
+                  <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: -.3, color: item.col, fontFamily: MONO }}>{item.val}</div>
                   <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .4 }}>{item.lbl}</div>
                 </div>
               </div>
@@ -1561,10 +1560,38 @@ export default function DashboardClient({
     return () => window.removeEventListener('beforeinstallprompt', handler as EventListener)
   }, [])
 
+  const pollFreshData = useCallback(async () => {
+    const supabase = createClient()
+    const [aRes, tRes] = await Promise.all([
+      supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false }),
+      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', `${today}T00:00:00`).order('entry_time', { ascending: false }),
+    ])
+    if (aRes.data) setAlerts(aRes.data)
+    if (tRes.data) {
+      setTrades(tRes.data)
+      const pnl = tRes.data.reduce((s: number, t: TradeRow) => s + (t.pnl ?? 0), 0)
+      const wins = tRes.data.filter((t: TradeRow) => (t.pnl ?? 0) > 0).length
+      setStats({ total_trades: tRes.data.length, total_pnl: pnl, wins, losses: tRes.data.length - wins })
+    }
+  }, [userId, today])
+
+  useEffect(() => {
+    const id = setInterval(pollFreshData, 30000)
+    const onVisible = () => { if (document.visibilityState === 'visible') pollFreshData() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
+  }, [pollFreshData])
+
   async function requestNotifPermission() {
     if (typeof Notification === 'undefined') return
     const perm = await Notification.requestPermission()
     setNotifPerm(perm)
+    if (perm === 'granted') {
+      new Notification('Caldra — Notifications activées', {
+        body: 'Vous recevrez les alertes comportementales en temps réel.',
+        icon: '/icon.svg',
+      })
+    }
   }
 
   async function triggerInstall() {
