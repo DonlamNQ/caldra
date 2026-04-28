@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" fill="#06060c"/>
+  <rect x="8" y="8" width="176" height="176" fill="#0d0d1a"/>
+  <!-- C shape -->
+  <path d="M120 52 A52 52 0 1 0 120 140 L120 124 A36 36 0 1 1 120 68 Z" fill="#dc503c"/>
+  <!-- Dot indicator -->
+  <circle cx="138" cy="96" r="7" fill="#dc503c" opacity="0.6"/>
+</svg>

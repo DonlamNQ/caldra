@@ -1,0 +1,22 @@
+{
+  "name": "Caldra — Session Monitor",
+  "short_name": "Caldra",
+  "description": "Monitoring comportemental pour traders en temps réel",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#06060c",
+  "theme_color": "#06060c",
+  "orientation": "landscape-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["finance", "productivity"],
+  "lang": "fr"
+}
