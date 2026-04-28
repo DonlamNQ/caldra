@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
@@ -1352,6 +1352,66 @@ function SentinelPanel({ stats, alerts, score, rules }: {
   )
 }
 
+// ── Toast notification system ──────────────────────────────────────────────────
+interface ToastItem { id: string; alert: AlertRow; exiting: boolean }
+
+const LVL_TOAST: Record<number, { label: string; color: string; bg: string; border: string; dot: string }> = {
+  1: { label: 'L1', color: 'rgba(245,166,35,.85)', bg: 'rgba(245,166,35,.07)', border: 'rgba(245,166,35,.22)', dot: '#f5a623' },
+  2: { label: 'L2', color: 'rgba(220,130,0,.9)',   bg: 'rgba(220,130,0,.08)',  border: 'rgba(220,130,0,.28)',  dot: '#dc8200' },
+  3: { label: 'L3', color: 'rgba(220,50,24,.95)',  bg: 'rgba(220,50,24,.1)',   border: 'rgba(220,50,24,.4)',   dot: '#dc3218' },
+}
+
+function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }) {
+  const level = toast.alert.level ?? toast.alert.severity ?? 1
+  const cfg = LVL_TOAST[level] ?? LVL_TOAST[1]
+  const type = (toast.alert.type ?? (toast.alert as any).pattern ?? '').replace(/_/g, ' ').toUpperCase()
+  return (
+    <div
+      onClick={() => onDismiss(toast.id)}
+      style={{
+        width: 310,
+        background: '#0c0c18',
+        border: `1px solid ${cfg.border}`,
+        boxShadow: `0 12px 40px rgba(0,0,0,.6), 0 0 0 .5px rgba(255,255,255,.03)`,
+        padding: '13px 15px 13px 18px',
+        cursor: 'pointer',
+        pointerEvents: 'auto' as const,
+        position: 'relative' as const,
+        animation: toast.exiting
+          ? 'toastOut .28s cubic-bezier(.4,0,1,1) forwards'
+          : 'toastIn .38s cubic-bezier(.16,1,.3,1)',
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: cfg.dot }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
+        <div style={{ width: 5, height: 5, background: cfg.dot, flexShrink: 0 }} />
+        <span style={{
+          color: cfg.color, fontSize: 9, fontWeight: 600, letterSpacing: '.18em',
+          fontFamily: MONO, background: cfg.bg, border: `1px solid ${cfg.border}`,
+          padding: '1px 5px',
+        }}>{cfg.label}</span>
+        <span style={{
+          color: 'rgba(216,213,232,.32)', fontSize: 8.5, fontFamily: MONO,
+          letterSpacing: '.06em', flex: 1, overflow: 'hidden',
+          textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+        }}>{type}</span>
+        <span style={{ color: 'rgba(216,213,232,.2)', fontSize: 11 }}>✕</span>
+      </div>
+      <p style={{ margin: 0, color: 'rgba(216,213,232,.72)', fontSize: 11.5, lineHeight: 1.55, fontFamily: MONO }}>{toast.alert.message}</p>
+    </div>
+  )
+}
+
+function ToastContainer({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss: (id: string) => void }) {
+  if (toasts.length === 0) return null
+  return (
+    <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+      {toasts.map(t => <ToastCard key={t.id} toast={t} onDismiss={onDismiss} />)}
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
   { id: 'session',       label: 'Session live' },
@@ -1374,8 +1434,28 @@ export default function DashboardClient({
   const [trades, setTrades] = useState<TradeRow[]>(initialTrades)
   const [stats, setStats] = useState<SessionStats>(initialStats)
   const [connected, setConnected] = useState(false)
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [installPrompt, setInstallPrompt] = useState<any>(null)
+  const [notifPerm, setNotifPerm] = useState<string>('default')
   const channelRef = useRef<any>(null)
+  const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const today = new Date().toISOString().split('T')[0]
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t))
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id))
+      const timer = toastTimers.current.get(id)
+      if (timer) { clearTimeout(timer); toastTimers.current.delete(id) }
+    }, 320)
+  }, [])
+
+  const addToast = useCallback((alert: AlertRow) => {
+    const id = `t-${Date.now()}`
+    setToasts(prev => [{ id, alert, exiting: false }, ...prev].slice(0, 4))
+    const timer = setTimeout(() => dismissToast(id), 5000)
+    toastTimers.current.set(id, timer)
+  }, [dismissToast])
   const score = computeScore(alerts)
 
   const _yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
@@ -1392,6 +1472,15 @@ export default function DashboardClient({
         const a = payload.new as AlertRow & { session_date?: string; user_id?: string }
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
+        addToast(a)
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden' &&
+            typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          new Notification(`Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`, {
+            body: a.message ?? '',
+            icon: '/icon.svg',
+            tag: a.id ?? 'caldra-alert',
+          })
+        }
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         const t = payload.new as TradeRow & { user_id?: string }
@@ -1405,7 +1494,32 @@ export default function DashboardClient({
       })
       .subscribe(s => setConnected(s === 'SUBSCRIBED'))
     return () => { channelRef.current?.unsubscribe() }
-  }, [userId, today])
+  }, [userId, today, addToast])
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
+    if (typeof Notification !== 'undefined') {
+      setNotifPerm(Notification.permission)
+    }
+    const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e) }
+    window.addEventListener('beforeinstallprompt', handler as EventListener)
+    return () => window.removeEventListener('beforeinstallprompt', handler as EventListener)
+  }, [])
+
+  async function requestNotifPermission() {
+    if (typeof Notification === 'undefined') return
+    const perm = await Notification.requestPermission()
+    setNotifPerm(perm)
+  }
+
+  async function triggerInstall() {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    const result = await installPrompt.userChoice
+    if (result.outcome === 'accepted') setInstallPrompt(null)
+  }
 
   const MONTHS_FR = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'aoû', 'sep', 'oct', 'nov', 'déc']
   const _now = new Date()
@@ -1419,6 +1533,8 @@ export default function DashboardClient({
         ::-webkit-scrollbar{width:0;height:0}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.15}}
         @keyframes sli{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+        @keyframes toastIn{from{opacity:0;transform:translateX(28px) scale(.97)}to{opacity:1;transform:translateX(0) scale(1)}}
+        @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
         .tab-btn{padding:11px 0;font-size:11px;letter-spacing:.5px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex:1;text-align:center;font-weight:400}
         .tab-btn:hover{color:${C.tm}}
         .tab-btn.active{color:${C.tx};border-bottom-color:${C.red};font-weight:500}
@@ -1447,6 +1563,28 @@ export default function DashboardClient({
               <span style={{ fontSize: 9, color: connected ? C.g : C.red, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: MONO }}>{connected ? 'Live' : 'Sync'}</span>
             </div>
             <LiveClock />
+            {notifPerm !== 'granted' && (
+              <button
+                onClick={requestNotifPermission}
+                title="Activer les notifications"
+                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.td, fontFamily: MONO, background: 'rgba(255,255,255,.03)', border: '.5px solid rgba(255,255,255,.08)', padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
+                onMouseEnter={e => { e.currentTarget.style.color = C.tx; e.currentTarget.style.borderColor = 'rgba(255,255,255,.15)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = C.td; e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)' }}
+              >
+                <span style={{ fontSize: 11 }}>🔔</span> notifs
+              </button>
+            )}
+            {installPrompt && (
+              <button
+                onClick={triggerInstall}
+                title="Installer Caldra comme application"
+                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.red, fontFamily: MONO, background: 'rgba(220,80,60,.06)', border: `.5px solid rgba(220,80,60,.2)`, padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,80,60,.1)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(220,80,60,.06)' }}
+              >
+                <span style={{ fontSize: 11 }}>⬇</span> installer
+              </button>
+            )}
             <button
               onClick={() => { window.location.href = '/login' }}
               style={{ fontSize: 11, color: C.te, fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', transition: 'color .2s' }}
@@ -1493,6 +1631,8 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
+
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   )
 }
