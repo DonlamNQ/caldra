@@ -1,19 +1,28 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
 import type { DaySession } from './page'
 
 // ── Palette ────────────────────────────────────────────────────────────────────
-const C = {
+const C_DARK = {
   red: '#ff5a3d', rd: 'rgba(255,90,61,.08)', rb: 'rgba(255,90,61,.2)', rg: 'rgba(255,90,61,.04)',
   bg: '#06060c', sf: '#0e0e18', sf2: '#131320',
   b: 'rgba(255,255,255,.04)', b2: 'rgba(255,255,255,.08)', b3: 'rgba(255,255,255,.14)',
   tx: '#d8d5e8', tm: 'rgba(216,213,232,.92)', td: 'rgba(216,213,232,.42)', te: 'rgba(216,213,232,.22)',
   g: '#00d17a', o: '#ffab00',
 }
+const C_LIGHT = {
+  red: '#d42a0a', rd: 'rgba(212,42,10,.07)', rb: 'rgba(212,42,10,.18)', rg: 'rgba(212,42,10,.04)',
+  bg: '#f0f0f5', sf: '#ffffff', sf2: '#f5f5fa',
+  b: 'rgba(0,0,0,.08)', b2: 'rgba(0,0,0,.13)', b3: 'rgba(0,0,0,.18)',
+  tx: '#0f0f1a', tm: 'rgba(15,15,26,.85)', td: 'rgba(15,15,26,.5)', te: 'rgba(15,15,26,.28)',
+  g: '#007a52', o: '#9a5a00',
+}
+type Palette = typeof C_DARK
+const ThemeCtx = createContext<Palette>(C_DARK)
 const SANS = "'DM Sans', sans-serif"
 const MONO = "'DM Mono', monospace"
 
@@ -59,7 +68,7 @@ function fmtEur(v: number) { return `${v >= 0 ? '+€' : '-€'}${Math.abs(v).to
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
-function scoreColor(s: number) { return s >= 70 ? C.g : s >= 40 ? C.o : C.red }
+function scoreColor(s: number, C: Palette) { return s >= 70 ? C.g : s >= 40 ? C.o : C.red }
 
 function consecutiveLosses(trades: TradeRow[]): number {
   const sorted = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
@@ -78,6 +87,7 @@ function metricScore(alerts: AlertRow[], type: string): number {
 
 // ── LiveClock ──────────────────────────────────────────────────────────────────
 function LiveClock() {
+  const C = useContext(ThemeCtx)
   const [time, setTime] = useState('')
   useEffect(() => {
     const update = () => setTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
@@ -88,9 +98,10 @@ function LiveClock() {
 
 // ── ScoreRingSvg ───────────────────────────────────────────────────────────────
 function ScoreRingSvg({ score }: { score: number }) {
+  const C = useContext(ThemeCtx)
   const CIRC = 226
   const offset = CIRC - (CIRC * score / 100)
-  const col = scoreColor(score)
+  const col = scoreColor(score, C)
   return (
     <div style={{ position: 'relative', width: 86, height: 86, flexShrink: 0 }}>
       <svg width="86" height="86" viewBox="0 0 86 86" style={{ transform: 'rotate(-90deg)' }}>
@@ -109,7 +120,8 @@ function ScoreRingSvg({ score }: { score: number }) {
 
 // ── MetricBar ──────────────────────────────────────────────────────────────────
 function MetricBar({ label, value }: { label: string; value: number }) {
-  const col = scoreColor(value)
+  const C = useContext(ThemeCtx)
+  const col = scoreColor(value, C)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 8 }}>
       <span style={{ fontSize: 12, color: C.td, width: 80, flexShrink: 0 }}>{label}</span>
@@ -124,7 +136,8 @@ function MetricBar({ label, value }: { label: string; value: number }) {
 // ── PnlChart (SVG) ─────────────────────────────────────────────────────────────
 // ── SessionLine — animated live line ──────────────────────────────────────────
 function SessionLine({ trades, score }: { trades: TradeRow[]; score: number }) {
-  const col = scoreColor(score)
+  const C = useContext(ThemeCtx)
+  const col = scoreColor(score, C)
   const W = 800, H = 44, PY = 5
 
   const sorted = [...trades]
@@ -170,6 +183,7 @@ function SessionLine({ trades, score }: { trades: TradeRow[]; score: number }) {
 
 // ── PnlChart — cumulative SVG chart ───────────────────────────────────────────
 function PnlChart({ trades }: { trades: TradeRow[] }) {
+  const C = useContext(ThemeCtx)
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
@@ -237,6 +251,7 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
 function Sidebar({ score, alerts, stats, rules, trades }: {
   score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null; trades: TradeRow[]
 }) {
+  const C = useContext(ThemeCtx)
   const [paused, setPaused] = useState(false)
   const streak = consecutiveLosses(trades)
   const drawdownPct = rules
@@ -306,7 +321,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
                 <span style={{ fontSize: 13, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{r.cur}</span>
                 <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>/ {r.max}</span>
                 <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${r.pct}%`, background: scoreColor(100 - r.pct), borderRadius: 2, transition: 'width .4s' }} />
+                  <div style={{ height: '100%', width: `${r.pct}%`, background: scoreColor(100 - r.pct, C), borderRadius: 2, transition: 'width .4s' }} />
                 </div>
               </div>
             </div>
@@ -382,6 +397,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   yesterdayStats: { score: number; pnl: number; alerts: number } | null
   yesterdayTrend: number | null; rules: TradingRules | null
 }) {
+  const C = useContext(ThemeCtx)
   const [note, setNote] = useState('')
   const score = computeScore(alerts)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
@@ -514,6 +530,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 
 // ── CalendrierPanel ────────────────────────────────────────────────────────────
 function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
+  const C = useContext(ThemeCtx)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [calOffset, setCalOffset] = useState(0)
 
@@ -597,7 +614,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                 </div>
               )
             }
-            const col = scoreColor(s.score)
+            const col = scoreColor(s.score, C)
             const cellBg = s.score >= 70 ? 'rgba(0,209,122,.06)' : s.score >= 40 ? 'rgba(255,171,0,.06)' : 'rgba(255,90,61,.06)'
             const cellBorder = isSelected
               ? 'rgba(255,90,61,.5)'
@@ -631,7 +648,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
             <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 16, position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(255,90,61,.3),transparent)' }} />
               <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 10 }}>{selectedDate}</div>
-              <div style={{ fontSize: 38, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: scoreColor(selectedSession.score) }}>{selectedSession.score}</div>
+              <div style={{ fontSize: 38, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: scoreColor(selectedSession.score, C) }}>{selectedSession.score}</div>
               <div style={{ fontSize: 13.5, color: C.tm, marginBottom: 12, marginTop: 4 }}>{fmtEur(selectedSession.pnl)}</div>
               {[
                 { k: 'Trades', v: String(selectedSession.tradeCount) },
@@ -665,7 +682,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
               const wScores = w.days.map(d => sessionByDate[cellDate(d)]?.score).filter((s): s is number => s !== undefined)
               if (wScores.length === 0) return null
               const avg = Math.round(wScores.reduce((a, b) => a + b) / wScores.length)
-              const col = scoreColor(avg)
+              const col = scoreColor(avg, C)
               return (
                 <div key={w.lbl} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px', marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -679,7 +696,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                     {w.days.map(d => {
                       const ds = sessionByDate[cellDate(d)]
                       if (!ds) return <div key={d} style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(255,255,255,.02)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}><span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: MONO }}>{d}</span></div>
-                      const dc = scoreColor(ds.score)
+                      const dc = scoreColor(ds.score, C)
                       const dbg = ds.score >= 70 ? 'rgba(0,209,122,' : ds.score >= 40 ? 'rgba(255,171,0,' : 'rgba(255,90,61,'
                       return (
                         <div key={d} onClick={() => setSelectedDate(cellDate(d))} style={{ width: 40, height: 40, borderRadius: 8, background: `${dbg}.09)`, border: `.5px solid ${dbg}.2)`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', transition: 'filter .15s' }}>
@@ -698,7 +715,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
             <span style={{ fontSize: 11, letterSpacing: .3, color: C.td, display: 'block', marginBottom: 10 }}>Stats du mois</span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {[
-                { val: String(avgScore), lbl: 'Score moy.', col: scoreColor(avgScore) },
+                { val: String(avgScore), lbl: 'Score moy.', col: scoreColor(avgScore, C) },
                 { val: String(sessions.length), lbl: 'Sessions', col: C.tm },
                 { val: String(critical), lbl: 'Critiques', col: critical > 0 ? C.red : C.te },
                 { val: fmtEur(totalPnl), lbl: 'P&L total', col: '#e2e8f0' },
@@ -718,6 +735,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
 
 // ── AnalyticsPanel ─────────────────────────────────────────────────────────────
 function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; todayAlerts: AlertRow[] }) {
+  const C = useContext(ThemeCtx)
   if (sessions.length === 0) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: C.te, fontSize: 13, fontFamily: MONO }}>
@@ -795,7 +813,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
         {/* Score moyen */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px' }}>
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Score moyen</div>
-          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: scoreColor(avgScore) }}>{avgScore}</div>
+          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: scoreColor(avgScore, C) }}>{avgScore}</div>
           <div style={{ fontSize: 12, color: C.td, marginBottom: 14 }}>Sur {sessions.length} sessions</div>
           {[
             { k: `Sessions > 80`, v: `${sessionsAbove80} / ${sessions.length}` },
@@ -816,7 +834,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
             {dayNames.map((name, i) => {
               const ds = byDow[i] ?? []
               const avg = ds.length > 0 ? Math.round(ds.reduce((s, d) => s + d.score, 0) / ds.length) : null
-              const col = avg !== null ? scoreColor(avg) : C.te
+              const col = avg !== null ? scoreColor(avg, C) : C.te
               const dbg = avg !== null ? (avg >= 70 ? 'rgba(0,209,122,' : avg >= 40 ? 'rgba(255,171,0,' : 'rgba(255,90,61,') : 'rgba(255,255,255,'
               return (
                 <div key={name} style={{ borderRadius: 7, height: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: `${dbg}.09)`, border: `.5px solid ${dbg}.22)` }}>
@@ -901,6 +919,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
 
 // ── RapportsPanel ──────────────────────────────────────────────────────────────
 function RapportsPanel() {
+  const C = useContext(ThemeCtx)
   const now = new Date()
   const weekNum = Math.ceil(now.getDate() / 7)
   const monthName = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
@@ -942,6 +961,7 @@ function RapportsPanel() {
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
 function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
+  const C = useContext(ThemeCtx)
   const hasKey = !!apiKeyPrefix
   const [copied, setCopied] = useState(false)
 
@@ -1092,6 +1112,7 @@ function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
 
 // ── ReglesPanel ────────────────────────────────────────────────────────────────
 function ReglesPanel({ initial }: { initial: TradingRules | null }) {
+  const C = useContext(ThemeCtx)
   const defaults: TradingRules = {
     max_daily_drawdown_pct: 3, max_consecutive_losses: 3,
     min_time_between_entries_sec: 120, session_start: '09:30',
@@ -1202,6 +1223,7 @@ interface ChatMsg { role: 'user' | 'assistant'; content: string; time: string }
 function SentinelPanel({ stats, alerts, score, rules }: {
   stats: SessionStats; alerts: AlertRow[]; score: number; rules: TradingRules | null
 }) {
+  const C = useContext(ThemeCtx)
   const [msgs, setMsgs] = useState<ChatMsg[]>([{
     role: 'assistant',
     content: `Bonjour. Session ouverte. Score comportemental actuel : ${score}/100. ${alerts.length === 0 ? 'Aucune alerte — continuez comme ça.' : `${alerts.length} alerte(s) active(s) — je surveille.`}`,
@@ -1320,7 +1342,7 @@ function SentinelPanel({ stats, alerts, score, rules }: {
         <div style={{ padding: '16px 0', borderBottom: `.5px solid ${C.b}` }}>
           <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Session actuelle</div>
           {[
-            { k: 'Score', v: `${score} / 100`, c: scoreColor(score) },
+            { k: 'Score', v: `${score} / 100`, c: scoreColor(score, C) },
             { k: 'P&L', v: fmtEur(stats.total_pnl), c: '#e2e8f0' },
             { k: 'Trades', v: String(stats.total_trades), c: C.tm },
             { k: 'Alertes', v: String(alerts.length), c: alerts.length > 0 ? C.red : C.td },
@@ -1429,6 +1451,16 @@ export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
   yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions,
 }: DashboardClientProps) {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() =>
+    typeof window !== 'undefined' ? (localStorage.getItem('caldra-theme') as 'dark' | 'light') ?? 'dark' : 'dark'
+  )
+  const C = theme === 'dark' ? C_DARK : C_LIGHT
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    localStorage.setItem('caldra-theme', next)
+  }
+
   const [activeTab, setActiveTab] = useState<TabId>('session')
   const [alerts, setAlerts] = useState<AlertRow[]>(initialAlerts)
   const [trades, setTrades] = useState<TradeRow[]>(initialTrades)
@@ -1526,6 +1558,7 @@ export default function DashboardClient({
   const displayDate = `${_now.toLocaleDateString('fr-FR', { weekday: 'short' })} ${_now.getDate()} ${MONTHS_FR[_now.getMonth()]} ${_now.getFullYear()}`
 
   return (
+    <ThemeCtx.Provider value={C}>
     <>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
@@ -1563,6 +1596,13 @@ export default function DashboardClient({
               <span style={{ fontSize: 9, color: connected ? C.g : C.red, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: MONO }}>{connected ? 'Live' : 'Sync'}</span>
             </div>
             <LiveClock />
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+              style={{ fontSize: 13, color: C.td, background: 'none', border: 'none', cursor: 'pointer', transition: 'color .2s', lineHeight: 1 }}
+              onMouseEnter={e => (e.currentTarget.style.color = C.tm)}
+              onMouseLeave={e => (e.currentTarget.style.color = C.td)}
+            >{theme === 'dark' ? '☀' : '◐'}</button>
             {notifPerm !== 'granted' && (
               <button
                 onClick={requestNotifPermission}
@@ -1634,5 +1674,6 @@ export default function DashboardClient({
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
+    </ThemeCtx.Provider>
   )
 }
