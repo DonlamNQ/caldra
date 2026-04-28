@@ -11,6 +11,8 @@ const DEFAULTS = {
   session_end: '16:00',
   max_trades_per_session: 10,
   max_risk_per_trade_pct: 1,
+  account_size: 10000,
+  slack_webhook_url: null as string | null,
 }
 
 async function getUser() {
@@ -62,6 +64,8 @@ export async function PUT(req: NextRequest) {
     session_end: String(body.session_end),
     max_trades_per_session: Math.round(Number(body.max_trades_per_session)),
     max_risk_per_trade_pct: Number(body.max_risk_per_trade_pct),
+    account_size: Number(body.account_size) || 10000,
+    slack_webhook_url: body.slack_webhook_url ? String(body.slack_webhook_url) : null,
   }
 
   const service = createClient(

@@ -175,3 +175,10 @@ CREATE POLICY "Users own their ctrader connections" ON ctrader_connections
 
 -- Realtime : activer sur la table alerts pour le dashboard live
 alter publication supabase_realtime add table alerts;
+
+-- ─── Migrations (exécuter si la DB existe déjà) ───────────────────────────────
+-- !! Seulement si vous avez déjà exécuté ce schéma une première fois !!
+
+-- v2.1 : taille du compte + webhook sortant
+alter table trading_rules add column if not exists account_size       numeric not null default 10000;
+alter table trading_rules add column if not exists slack_webhook_url  text;

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sendAlertEmail, sendWebhookAlert } from './brevo'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -98,7 +99,7 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
 
   // ── 4. DRAWDOWN JOURNALIER ────────────────────────────────────────────────
   const totalPnl = sessionTrades.reduce((sum, t) => sum + (t.pnl || 0), 0)
-  const accountSize = 10000 // TODO: rendre configurable
+  const accountSize = Number(rules.account_size) || 10000
   const drawdownPct = Math.abs(totalPnl / accountSize) * 100
 
   if (totalPnl < 0 && drawdownPct >= rules.max_daily_drawdown_pct * 0.8) {
@@ -161,6 +162,23 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
         session_date: today
       }))
     )
+
+    // ── Notifications sortantes (L2/L3 uniquement) ────────────────────────
+    const hotAlerts = alerts.filter(a => a.level >= 2)
+    if (hotAlerts.length > 0) {
+      const { data: authData } = await supabase.auth.admin.getUserById(trade.user_id)
+      const userEmail = authData?.user?.email ?? null
+      const webhookUrl: string | null = rules.slack_webhook_url ?? null
+
+      await Promise.all(hotAlerts.map(a => Promise.all([
+        userEmail
+          ? sendAlertEmail({ to: userEmail, alertType: a.type, level: a.level, message: a.message, sessionDate: today, detail: a.detail })
+          : Promise.resolve(),
+        webhookUrl
+          ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
+          : Promise.resolve(),
+      ])))
+    }
   }
 
   return alerts

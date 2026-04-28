@@ -35,6 +35,8 @@ interface TradingRules {
   session_end: string
   max_trades_per_session: number
   max_risk_per_trade_pct: number
+  account_size: number
+  slack_webhook_url: string | null
 }
 
 interface SessionStats { total_trades: number; total_pnl: number; wins: number; losses: number }
@@ -278,7 +280,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
   const [paused, setPaused] = useState(false)
   const streak = consecutiveLosses(trades)
   const drawdownPct = rules
-    ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * 10000) * 100))
+    ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
   const tradesPct = rules ? Math.min(100, Math.round(stats.total_trades / rules.max_trades_per_session * 100)) : 0
 
@@ -436,7 +438,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   const score = computeScore(alerts)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
   const drawdownPct = rules
-    ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * 10000) * 100))
+    ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
 
   return (
@@ -992,10 +994,29 @@ function RapportsPanel() {
 }
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
-function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
+function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: string | null; initialWebhook: string | null }) {
   const C = useContext(ThemeCtx)
   const hasKey = !!apiKeyPrefix
   const [copied, setCopied] = useState(false)
+  const [webhookUrl, setWebhookUrl] = useState(initialWebhook ?? '')
+  const [webhookSave, setWebhookSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  async function saveWebhook() {
+    if (webhookSave === 'saving') return
+    setWebhookSave('saving')
+    try {
+      const current = await fetch('/api/rules').then(r => r.json())
+      const res = await fetch('/api/rules', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...current, slack_webhook_url: webhookUrl || null }),
+      })
+      setWebhookSave(res.ok ? 'saved' : 'error')
+      if (res.ok) setTimeout(() => setWebhookSave('idle'), 3000)
+    } catch {
+      setWebhookSave('error')
+    }
+  }
 
   function copyBot() {
     fetch('/CaldraBot.algo').then(r => r.text()).then(code => {
@@ -1136,6 +1157,42 @@ function IntegrationsPanel({ apiKeyPrefix }: { apiKeyPrefix: string | null }) {
             </div>
             <IntBtn href="/settings/api">Gérer les clés API →</IntBtn>
           </IntCard>
+
+          {/* Slack / Discord webhook */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 9, background: 'rgba(88,101,242,.08)', border: `.5px solid rgba(88,101,242,.22)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'rgba(88,101,242,.9)', fontFamily: MONO }}>WH</div>
+              <div>
+                <div style={{ fontSize: 14.5, fontWeight: 500, color: C.tx }}>Slack / Discord</div>
+                <div style={{ fontSize: 11, color: C.td }}>Alertes L2/L3 dans ton channel</div>
+              </div>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: webhookUrl ? C.g : 'rgba(255,255,255,.18)' }} />
+                <span style={{ color: webhookUrl ? C.g : C.td, letterSpacing: .5 }}>{webhookUrl ? 'ACTIF' : 'INACTIF'}</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
+              Colle ton URL de webhook Slack ou Discord. Chaque alerte L2/L3 sera postée automatiquement dans ton channel.
+            </div>
+            <input
+              type="url"
+              value={webhookUrl}
+              onChange={e => { setWebhookUrl(e.target.value); setWebhookSave('idle') }}
+              placeholder="https://hooks.slack.com/services/… ou https://discord.com/api/webhooks/…"
+              style={{ width: '100%', background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b2}`, borderRadius: 7, padding: '9px 13px', color: C.tm, fontSize: 12, fontFamily: MONO, outline: 'none', boxSizing: 'border-box' as const, marginBottom: 10, transition: 'border-color .2s' }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={saveWebhook}
+                disabled={webhookSave === 'saving'}
+                style={{ padding: '8px 16px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', opacity: webhookSave === 'saving' ? .6 : 1 }}
+              >
+                {webhookSave === 'saving' ? 'Enregistrement…' : 'Sauvegarder'}
+              </button>
+              {webhookSave === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Webhook actif</span>}
+              {webhookSave === 'error' && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
+            </div>
+          </IntCard>
         </div>
       </div>
     </div>
@@ -1149,6 +1206,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
     max_daily_drawdown_pct: 3, max_consecutive_losses: 3,
     min_time_between_entries_sec: 120, session_start: '09:30',
     session_end: '16:00', max_trades_per_session: 10, max_risk_per_trade_pct: 1,
+    account_size: 10000, slack_webhook_url: null,
   }
   const [rules, setRules] = useState<TradingRules>(initial ?? defaults)
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -1199,6 +1257,9 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <RuleGroup title="Risk management" desc="Niveau 2 si seuil dépassé" accent="rgba(255,90,61,.5)">
+            <RuleField label="Taille du compte" unit="€">
+              <input style={{ ...inputStyle, width: 100 }} type="number" min={100} max={10000000} step={100} value={rules.account_size ?? 10000} onChange={e => set('account_size', e.target.value)} />
+            </RuleField>
             <RuleField label="Drawdown max journalier" unit="%">
               <input style={inputStyle} type="number" min={0.1} max={20} step={0.1} value={rules.max_daily_drawdown_pct} onChange={e => set('max_daily_drawdown_pct', e.target.value)} />
             </RuleField>
@@ -1733,7 +1794,7 @@ export default function DashboardClient({
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} />
             )}
             {activeTab === 'rapports' && <RapportsPanel />}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'sentinel' && (
               <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} />
