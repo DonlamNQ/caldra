@@ -1,30 +1,8 @@
-// Caldra service worker — enables PWA install + background push notifications
-const CACHE = 'caldra-v1'
-
+// Caldra service worker — enables PWA install only, no caching
 self.addEventListener('install', () => { self.skipWaiting() })
 self.addEventListener('activate', e => { e.waitUntil(clients.claim()) })
 
-self.addEventListener('fetch', e => {
-  // Pass-through — no aggressive caching, Supabase realtime must stay live
-  if (e.request.method !== 'GET') return
-  if (e.request.url.includes('supabase') || e.request.url.includes('realtime')) return
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)))
-})
-
-// Native push notification handler (fired when page is closed)
-self.addEventListener('push', e => {
-  if (!e.data) return
-  const data = e.data.json()
-  e.waitUntil(
-    self.registration.showNotification(data.title ?? 'Caldra Alert', {
-      body: data.body ?? '',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      tag: data.tag ?? 'caldra',
-      data: { url: '/dashboard' },
-    })
-  )
-})
+// No fetch interception — let the browser and Supabase realtime work natively
 
 self.addEventListener('notificationclick', e => {
   e.notification.close()

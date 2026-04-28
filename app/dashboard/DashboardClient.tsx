@@ -475,45 +475,44 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
       </div>
 
       {/* Row 3: Trade feed */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 180 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ fontSize: 10.5, color: C.td }}>Flux de trades</span>
-          <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>surbrillance = alerte comportementale</span>
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <span style={{ fontSize: 10.5, color: C.td, flexShrink: 0, marginBottom: 10 }}>Flux de trades</span>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+          {sortedTrades.length === 0 ? (
+            <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontWeight: 300, padding: '10px 0' }}>
+              Aucun trade aujourd'hui — connectez votre plateforme via l'onglet Intégrations.
+            </div>
+          ) : (
+            sortedTrades.map((t, i) => {
+              const flaggedAlert = alerts.find(a => a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000)
+              const hasCrit = flaggedAlert && (flaggedAlert.level ?? 1) >= 2
+              return (
+                <div key={t.id ?? i} style={{
+                  display: 'grid', gridTemplateColumns: '60px 1fr auto', alignItems: 'center',
+                  minHeight: 30, borderBottom: `.5px solid ${C.b}`,
+                  background: hasCrit ? C.rd : 'transparent',
+                  borderLeft: hasCrit ? `2px solid rgba(255,90,61,.45)` : '2px solid transparent',
+                  padding: '0 4px 0 10px',
+                  borderRadius: '0 6px 6px 0',
+                }}>
+                  <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
+                  <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
+                    {hasCrit && flaggedAlert && (
+                      <span style={{
+                        fontSize: 8.5, padding: '2px 7px', borderRadius: 99, fontFamily: MONO, marginLeft: 7,
+                        background: C.rd, border: `.5px solid ${C.rb}`, color: C.red,
+                      }}>{(flaggedAlert.type ?? '').toLowerCase().replace(/_/g, ' ')}</span>
+                    )}
+                  </span>
+                  <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const, paddingLeft: 8 }}>
+                    {fmtEur(t.pnl ?? 0)}
+                  </span>
+                </div>
+              )
+            })
+          )}
         </div>
-        {sortedTrades.length === 0 ? (
-          <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontWeight: 300, padding: '10px 0' }}>
-            Aucun trade aujourd'hui — connectez votre plateforme via l'onglet Intégrations.
-          </div>
-        ) : (
-          sortedTrades.map((t, i) => {
-            const flaggedAlert = alerts.find(a => a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000)
-            const hasCrit = flaggedAlert && (flaggedAlert.level ?? 1) >= 2
-            return (
-              <div key={t.id ?? i} style={{
-                display: 'grid', gridTemplateColumns: '60px 1fr auto', alignItems: 'center',
-                minHeight: 30, borderBottom: `.5px solid rgba(255,255,255,.04)`,
-                background: hasCrit ? 'rgba(255,90,61,.04)' : 'transparent',
-                borderLeft: hasCrit ? `2px solid rgba(255,90,61,.45)` : '2px solid transparent',
-                padding: '0 4px 0 10px',
-                borderRadius: '0 6px 6px 0',
-              }}>
-                <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
-                <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
-                  {hasCrit && flaggedAlert && (
-                    <span style={{
-                      fontSize: 8.5, padding: '2px 7px', borderRadius: 99, fontFamily: MONO, marginLeft: 7,
-                      background: C.rd, border: `.5px solid ${C.rb}`, color: C.red,
-                    }}>{(flaggedAlert.type ?? '').toLowerCase().replace(/_/g, ' ')}</span>
-                  )}
-                </span>
-                <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const, paddingLeft: 8 }}>
-                  {fmtEur(t.pnl ?? 0)}
-                </span>
-              </div>
-            )
-          })
-        )}
       </div>
 
       {/* Row 4: Note */}
@@ -1584,10 +1583,10 @@ export default function DashboardClient({
         {/* ── Header ── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 26px', borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 400, letterSpacing: 5, textTransform: 'uppercase' as const, color: '#fff' }}>
+            <div style={{ fontSize: 14, fontWeight: 400, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>
               Cald<span style={{ color: C.red }}>ra</span>
             </div>
-            <div style={{ fontSize: 7.5, letterSpacing: 9.5, textTransform: 'uppercase' as const, color: 'rgba(255,255,255,.55)', display: 'block', marginTop: 4 }}>Session</div>
+            <div style={{ fontSize: 7.5, letterSpacing: 9.5, textTransform: 'uppercase' as const, color: C.td, display: 'block', marginTop: 4 }}>Session</div>
           </div>
           <div style={{ fontSize: 11, color: C.td, fontFamily: MONO, letterSpacing: .3 }}>{displayDate}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1607,9 +1606,9 @@ export default function DashboardClient({
               <button
                 onClick={requestNotifPermission}
                 title="Activer les notifications"
-                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.td, fontFamily: MONO, background: 'rgba(255,255,255,.03)', border: '.5px solid rgba(255,255,255,.08)', padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
-                onMouseEnter={e => { e.currentTarget.style.color = C.tx; e.currentTarget.style.borderColor = 'rgba(255,255,255,.15)' }}
-                onMouseLeave={e => { e.currentTarget.style.color = C.td; e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.td, fontFamily: MONO, background: C.b, border: `.5px solid ${C.b2}`, padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
+                onMouseEnter={e => { e.currentTarget.style.color = C.tx; e.currentTarget.style.borderColor = C.b3 }}
+                onMouseLeave={e => { e.currentTarget.style.color = C.td; e.currentTarget.style.borderColor = C.b2 }}
               >
                 <span style={{ fontSize: 11 }}>🔔</span> notifs
               </button>
