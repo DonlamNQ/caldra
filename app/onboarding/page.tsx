@@ -3,14 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import OnboardingWizard from './OnboardingWizard'
 
-export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
+export default async function OnboardingPage({ searchParams }: { searchParams: { preview?: string } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login?next=/onboarding')
 
-  const { preview } = await searchParams
-  if (!preview) {
+  if (!searchParams.preview) {
     const service = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
