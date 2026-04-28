@@ -133,72 +133,80 @@ function MetricBar({ label, value }: { label: string; value: number }) {
   )
 }
 
-// ── PnlChart (SVG) ─────────────────────────────────────────────────────────────
-// ── SessionLine — animated live line ──────────────────────────────────────────
-function SessionLine({ trades, score }: { trades: TradeRow[]; score: number }) {
+// ── SessionLine — score comportemental dans le temps ──────────────────────────
+function SessionLine({ alerts, score }: { alerts: AlertRow[]; score: number }) {
   const C = useContext(ThemeCtx)
   const col = scoreColor(score, C)
-  const W = 800, H = 44, PY = 5
+  const W = 800, H = 40, PY = 3
 
-  const sorted = [...trades]
-    .filter(t => t.pnl != null && t.entry_time)
-    .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
+  // Build score-over-time points from alerts sorted by created_at
+  const sorted = [...alerts]
+    .filter(a => a.created_at)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
-  const rawPts: number[] = [0]
-  let cum = 0
-  for (const t of sorted) { cum += t.pnl ?? 0; rawPts.push(cum) }
+  const scorePts: number[] = [100]
+  let s = 100
+  for (const a of sorted) {
+    const lvl = a.level ?? (a as any).severity ?? 1
+    s = Math.max(0, s - (lvl === 3 ? 18 : lvl === 2 ? 8 : 3))
+    scorePts.push(s)
+  }
 
-  const n = rawPts.length
-  const minV = Math.min(...rawPts)
-  const maxV = Math.max(...rawPts)
-  const range = maxV - minV || 1
+  const n = scorePts.length
   const xOf = (i: number) => n <= 1 ? (i === 0 ? 0 : W) : (i / (n - 1)) * W
-  const yOf = (v: number) => PY + (H - 2 * PY) - ((v - minV) / range) * (H - 2 * PY)
-  const midY = H / 2
-
-  const lastX = n <= 1 ? W : xOf(n - 1)
-  const lastY = n <= 1 ? midY : yOf(rawPts[n - 1])
+  const yOf = (v: number) => PY + (H - 2 * PY) - (v / 100) * (H - 2 * PY)
+  const startY = yOf(100)
+  const lastX = xOf(n - 1)
+  const lastY = yOf(scorePts[n - 1])
   const linePts = n <= 1
-    ? `0,${midY} ${W},${midY}`
-    : rawPts.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
+    ? `0,${startY} ${W},${startY}`
+    : scorePts.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
   const fillD = n <= 1
-    ? `M0,${midY} L${W},${midY} L${W},${H} L0,${H} Z`
-    : `M0,${yOf(0)} ${rawPts.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${lastX},${H} L0,${H} Z`
+    ? `M0,${startY} L${W},${startY} L${W},${H} L0,${H} Z`
+    : `M0,${startY} ${scorePts.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${lastX},${H} L0,${H} Z`
 
   return (
     <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', height: '100%' }}>
       <defs>
         <linearGradient id="sl-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={col} stopOpacity="0.06" />
+          <stop offset="0%" stopColor={col} stopOpacity="0.1" />
           <stop offset="100%" stopColor={col} stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={fillD} fill="url(#sl-grad)" />
       <polyline points={linePts} fill="none" stroke={col} strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" opacity={n <= 1 ? 0.35 : 1} />
-      <circle cx={lastX} cy={lastY} r="3.5" fill={col} style={{ animation: 'pulse 1.8s infinite' }} />
+        strokeLinecap="round" strokeLinejoin="round" opacity={n <= 1 ? 0.3 : 1} />
+      <circle cx={lastX} cy={lastY} r="3" fill={col} style={{ animation: 'pulse 1.8s infinite' }} />
     </svg>
   )
 }
 
-// ── PnlChart — cumulative SVG chart ───────────────────────────────────────────
+// ── PnlChart — cumulative SVG chart with Y/X axes ────────────────────────────
 function PnlChart({ trades }: { trades: TradeRow[] }) {
   const C = useContext(ThemeCtx)
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
 
-  const W = 600, H = 90, PX = 8, PY = 10
-  const GRID = 'rgba(255,255,255,.06)'
+  const W = 600, H = 120
+  const PXL = 46, PXR = 6, PYT = 6, PYB = 18
+  const DW = W - PXL - PXR, DH = H - PYT - PYB
+  const LC = C.tx
+  const LCfill = `${C.tx}0d`
+  const axisColor = C.te
+  const gridColor = C.b
+
+  const fmtY = (v: number) => v === 0 ? '€0' : v > 0 ? `+€${Math.abs(v).toFixed(0)}` : `-€${Math.abs(v).toFixed(0)}`
 
   if (sorted.length === 0) {
-    const yMid = H / 2
+    const yMid = PYT + DH / 2
     return (
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-        <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
-        <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
-        <line x1={PX} y1={yMid} x2={W - PX} y2={yMid} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
-        <text x={W / 2} y={yMid + 4} textAnchor="middle" fill="rgba(216,213,232,.18)" fontSize="10" fontFamily="'DM Mono',monospace">// en attente de trades</text>
+        <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+        <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+        <line x1={PXL} y1={yMid} x2={W - PXR} y2={yMid} stroke={gridColor} strokeWidth={0.5} strokeDasharray="4 6" />
+        <text x={PXL - 4} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" fontFamily="'DM Mono',monospace">€0</text>
+        <text x={PXL + DW / 2} y={yMid + 4} textAnchor="middle" fill={axisColor} fontSize="10" fontFamily="'DM Mono',monospace">// en attente de trades</text>
       </svg>
     )
   }
@@ -208,40 +216,54 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
   for (const t of sorted) { cum += t.pnl ?? 0; pts.push({ t: fmtTime(t.entry_time), v: cum }) }
 
   const vals = pts.map(p => p.v)
-  const finalPnl = vals[vals.length - 1]
-  const LC = finalPnl >= 0 ? C.g : C.red
-  const LCfill = finalPnl >= 0 ? 'rgba(0,209,122,.06)' : 'rgba(255,90,61,.06)'
-
   const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals)
   const range = maxV - minV || 1
   const n = pts.length
-  const xOf = (i: number) => PX + (i / Math.max(n - 1, 1)) * (W - 2 * PX)
-  const yOf = (v: number) => PY + (H - 2 * PY) - ((v - minV) / range) * (H - 2 * PY)
+  const xOf = (i: number) => PXL + (i / Math.max(n - 1, 1)) * DW
+  const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
   const y0 = yOf(0)
 
-  if (n <= 2) {
-    return (
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-        <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
-        <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
-        <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
-        {pts.map((p, i) => <circle key={i} cx={xOf(i)} cy={yOf(p.v)} r={4} fill={LC} />)}
-      </svg>
-    )
-  }
+  // Y axis ticks: min, 0, max (deduplicated)
+  const rawTicks = [minV, 0, maxV]
+  const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.12) === i)
+
+  // X axis labels: first, last + up to 3 in between
+  const step = Math.max(1, Math.floor((n - 1) / 4))
+  const xIdxSet = new Set([0, n - 1])
+  for (let i = step; i < n - 1; i += step) xIdxSet.add(i)
+  const xIdxs = [...xIdxSet].sort((a, b) => a - b)
 
   const linePts = pts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
-  const last = vals[vals.length - 1]
+  const last = vals[n - 1]
   const fillPath = `M${xOf(0)},${y0} ${pts.map((p, i) => `L${xOf(i)},${yOf(p.v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-      <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
-      <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
-      <line x1={PX} y1={y0} x2={W - PX} y2={y0} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
-      <path d={fillPath} fill={LCfill} />
-      <polyline points={linePts} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-      {pts.slice(1).map((p, i) => <circle key={i} cx={xOf(i + 1)} cy={yOf(p.v)} r={2} fill={C.bg} stroke={LC} strokeWidth={1} />)}
+      {/* Axes */}
+      <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+      <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+      <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={gridColor} strokeWidth={0.5} strokeDasharray="4 6" />
+      {/* Y labels */}
+      {yTicks.map(v => (
+        <text key={v} x={PXL - 4} y={Math.max(PYT + 7, Math.min(H - PYB - 2, yOf(v) + 3))}
+          textAnchor="end" fill={axisColor} fontSize="8" fontFamily="'DM Mono',monospace">{fmtY(v)}</text>
+      ))}
+      {/* X labels */}
+      {xIdxs.map(i => (
+        <text key={i} x={Math.max(PXL + 14, Math.min(W - PXR - 14, xOf(i)))}
+          y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="7.5" fontFamily="'DM Mono',monospace">
+          {pts[i].t}
+        </text>
+      ))}
+      {/* Data */}
+      {n > 2 && <path d={fillPath} fill={LCfill} />}
+      {n > 2
+        ? <polyline points={linePts} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+        : pts.map((p, i) => <circle key={i} cx={xOf(i)} cy={yOf(p.v)} r={4} fill={LC} />)
+      }
+      {n > 2 && pts.slice(1).map((p, i) => (
+        <circle key={i} cx={xOf(i + 1)} cy={yOf(p.v)} r={2} fill={C.bg} stroke={LC} strokeWidth={1} />
+      ))}
       <circle cx={xOf(n - 1)} cy={yOf(last)} r={3.5} fill={LC} />
     </svg>
   )
@@ -422,13 +444,13 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 
         {/* Chart card — session line + PnL chart empilés */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0 }}>
-          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 6, textTransform: 'uppercase' as const, fontFamily: MONO }}>Ligne de session</div>
-          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 52, overflow: 'hidden', flexShrink: 0 }}>
-            <SessionLine trades={trades} score={score} />
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
+          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 40, overflow: 'hidden', flexShrink: 0 }}>
+            <SessionLine alerts={alerts} score={score} />
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '8px 0' }} />
-          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 6, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
-          <div style={{ height: 100, flexShrink: 0 }}>
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
+          <div style={{ height: 120, flexShrink: 0 }}>
             <PnlChart trades={trades} />
           </div>
         </div>
