@@ -104,14 +104,14 @@ function ScoreRingSvg({ score }: { score: number }) {
   const col = scoreColor(score, C)
   return (
     <div style={{ position: 'relative', width: 86, height: 86, flexShrink: 0 }}>
-      <svg width="86" height="86" viewBox="0 0 86 86" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="43" cy="43" r="36" fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="5.5" />
+      <svg width="86" height="86" viewBox="0 0 86 86" style={{ transform: 'rotate(-90deg)', filter: `drop-shadow(0 0 10px ${col}55)`, transition: 'filter .5s' }}>
+        <circle cx="43" cy="43" r="36" fill="none" stroke="rgba(255,255,255,.07)" strokeWidth="5.5" />
         <circle cx="43" cy="43" r="36" fill="none" stroke={col} strokeWidth="5.5"
           strokeDasharray="226" strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset .6s, stroke .5s' }} />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: col, transition: 'color .5s', fontFamily: MONO }}>{score}</span>
+        <span style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: col, transition: 'color .5s' }}>{score}</span>
         <span style={{ fontSize: 9, color: C.te, fontFamily: MONO, marginTop: 2 }}>/ 100</span>
       </div>
     </div>
@@ -125,8 +125,8 @@ function MetricBar({ label, value }: { label: string; value: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 8 }}>
       <span style={{ fontSize: 12, color: C.td, width: 80, flexShrink: 0 }}>{label}</span>
-      <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,.05)', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${value}%`, background: col, borderRadius: 3, transition: 'width .6s, background .4s' }} />
+      <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,.09)', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${value}%`, background: col, borderRadius: 3, transition: 'width .6s, background .4s', boxShadow: `0 0 5px ${col}70` }} />
       </div>
       <span style={{ fontSize: 12, color: C.td, fontFamily: MONO, width: 26, textAlign: 'right' as const }}>{value}</span>
     </div>
@@ -157,6 +157,7 @@ function SessionLine({ alerts, score }: { alerts: AlertRow[]; score: number }) {
   const yOf = (v: number) => PY + (H - 2 * PY) - (v / 100) * (H - 2 * PY)
   const startY = yOf(100)
   const lastX = xOf(n - 1)
+  const dotX = Math.min(lastX, W - 4)
   const lastY = yOf(scorePts[n - 1])
   const linePts = n <= 1
     ? `0,${startY} ${W},${startY}`
@@ -176,7 +177,7 @@ function SessionLine({ alerts, score }: { alerts: AlertRow[]; score: number }) {
       <path d={fillD} fill="url(#sl-grad)" />
       <polyline points={linePts} fill="none" stroke={col} strokeWidth="1.5"
         strokeLinecap="round" strokeLinejoin="round" opacity={n <= 1 ? 0.3 : 1} />
-      <circle cx={lastX} cy={lastY} r="3" fill={col} style={{ animation: 'pulse 1.8s infinite' }} />
+      <circle cx={dotX} cy={lastY} r="3" fill={col} style={{ animation: 'pulse 1.8s infinite' }} />
     </svg>
   )
 }
@@ -281,6 +282,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
     : 0
   const tradesPct = rules ? Math.min(100, Math.round(stats.total_trades / rules.max_trades_per_session * 100)) : 0
 
+  const scoreCol = scoreColor(score, C)
   const statusLabel = score >= 70 ? 'Contrôlé' : score >= 40 ? 'Attention' : 'STOP'
   const statusCls = score >= 70 ? 'ok' : score >= 40 ? 'warn' : 'danger'
   const statusNote = score >= 70
@@ -299,29 +301,33 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
     <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden' }}>
 
       {/* Score */}
-      <div style={{ padding: '22px 20px 18px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <span style={{ fontSize: 11, letterSpacing: .3, color: C.td, display: 'block', marginBottom: 12 }}>Score comportemental</span>
+      <div style={{ padding: '20px 20px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
+        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ScoreRingSvg score={score} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 7,
-              padding: '4px 11px', borderRadius: 99, fontSize: 10, letterSpacing: .5,
-              background: statusCls === 'ok' ? 'rgba(0,209,122,.07)' : statusCls === 'warn' ? 'rgba(255,171,0,.07)' : C.rd,
-              border: `.5px solid ${statusCls === 'ok' ? 'rgba(0,209,122,.18)' : statusCls === 'warn' ? 'rgba(255,171,0,.2)' : C.rb}`,
+              display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8,
+              padding: '5px 12px', borderRadius: 99, fontSize: 10, letterSpacing: .7,
+              fontFamily: MONO,
+              background: statusCls === 'ok' ? 'rgba(0,209,122,.1)' : statusCls === 'warn' ? 'rgba(255,171,0,.1)' : 'rgba(255,90,61,.12)',
+              border: `.5px solid ${statusCls === 'ok' ? 'rgba(0,209,122,.28)' : statusCls === 'warn' ? 'rgba(255,171,0,.3)' : C.rb}`,
               color: statusCls === 'ok' ? C.g : statusCls === 'warn' ? C.o : C.red,
+              boxShadow: `0 0 0 2px ${statusCls === 'ok' ? 'rgba(0,209,122,.06)' : statusCls === 'warn' ? 'rgba(255,171,0,.06)' : 'rgba(255,90,61,.08)'}`,
             }}>
-              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }} />
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', animation: statusCls !== 'ok' ? 'pulse 1.5s infinite' : 'none' }} />
               {statusLabel}
             </div>
-            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.5, fontWeight: 300, fontStyle: 'italic' }}>{statusNote}</div>
+            <div style={{ fontSize: 11, color: C.td, lineHeight: 1.55, fontWeight: 300, fontStyle: 'italic' }}>{statusNote}</div>
           </div>
         </div>
       </div>
 
       {/* Métriques */}
-      <div style={{ padding: '16px 20px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <span style={{ fontSize: 11, letterSpacing: .3, color: C.td, display: 'block', marginBottom: 12 }}>Métriques</span>
+      <div style={{ padding: '14px 20px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 11, textTransform: 'uppercase' as const, fontFamily: MONO }}>Métriques</span>
         <MetricBar label="Sizing"     value={mSizing} />
         <MetricBar label="Risk/trade" value={mRisk} />
         <MetricBar label="Re-entrées" value={mReentry} />
@@ -332,22 +338,17 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
       {/* Règles du jour */}
       {rules && (
         <div style={{ padding: '16px 20px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-          <span style={{ fontSize: 11, letterSpacing: .3, color: C.td, display: 'block', marginBottom: 12 }}>Règles du jour</span>
-          {[
-            { label: 'Max trades', cur: stats.total_trades, max: rules.max_trades_per_session, pct: tradesPct },
-            { label: 'Drawdown',   cur: `${drawdownPct}%`, max: `${rules.max_daily_drawdown_pct}%`, pct: drawdownPct },
-          ].map((r, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: i === 0 ? `.5px solid rgba(255,255,255,.04)` : 'none' }}>
-              <span style={{ fontSize: 12, color: C.td }}>{r.label}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ fontSize: 13, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{r.cur}</span>
-                <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>/ {r.max}</span>
-                <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${r.pct}%`, background: scoreColor(100 - r.pct, C), borderRadius: 2, transition: 'width .4s' }} />
-                </div>
+          <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 11, textTransform: 'uppercase' as const, fontFamily: MONO }}>Règles du jour</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
+            <span style={{ fontSize: 12, color: C.td }}>Max trades</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ fontSize: 13, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{stats.total_trades}</span>
+              <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>/ {rules.max_trades_per_session}</span>
+              <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${tradesPct}%`, background: scoreColor(100 - tradesPct, C), borderRadius: 2, transition: 'width .4s' }} />
               </div>
             </div>
-          ))}
+          </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
             <span style={{ fontSize: 12, color: C.td }}>Fenêtre</span>
             <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
@@ -358,7 +359,7 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
       {/* Streak */}
       <div style={{ padding: '13px 20px', borderBottom: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div>
-          <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: -1, color: streak >= 3 ? C.red : C.tm, transition: 'color .3s', fontFamily: MONO }}>{streak}</div>
+          <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: -1, color: streak >= 3 ? C.red : C.tm, transition: 'color .3s' }}>{streak}</div>
           <div style={{ fontSize: 12, color: C.td, marginTop: 2 }}>{streak <= 1 ? 'perte consécutive' : 'pertes consécutives'}</div>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
@@ -371,30 +372,42 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
       {/* Alertes */}
       <div style={{ padding: '15px 20px', flex: 1, overflowY: 'auto', minHeight: 120 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 11 }}>
-          <span style={{ fontSize: 11, letterSpacing: .3, color: C.td }}>Alertes</span>
+          <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Alertes</span>
           {alerts.length > 0 && (
-            <span style={{ fontSize: 9, fontFamily: MONO, padding: '2px 8px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red }}>
+            <span style={{ fontSize: 9, fontFamily: MONO, padding: '2px 9px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, animation: 'pulse 2s infinite' }}>
               {alerts.length}
             </span>
           )}
         </div>
         {alerts.length === 0 ? (
-          <div style={{ fontSize: 12.5, color: C.te, fontStyle: 'italic' }}>Aucune alerte — session saine.</div>
+          <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontFamily: MONO }}>// session saine</div>
         ) : (
-          alerts.slice(0, 8).map((a, i) => (
-            <div key={a.id ?? i} style={{ padding: '10px 0', borderBottom: i < Math.min(alerts.length, 8) - 1 ? `.5px solid ${C.b}` : 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <span style={{
-                  fontSize: 9, fontFamily: MONO, padding: '2px 7px', borderRadius: 4,
-                  background: (a.level ?? 1) >= 2 ? C.rd : 'rgba(255,171,0,.09)',
-                  border: `.5px solid ${(a.level ?? 1) >= 2 ? C.rb : 'rgba(255,171,0,.22)'}`,
-                  color: (a.level ?? 1) >= 2 ? C.red : C.o,
-                }}>L{a.level ?? 1}</span>
-                <span style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>{(a.type ?? '').replace(/_/g, ' ')}</span>
+          alerts.slice(0, 8).map((a, i) => {
+            const lvl = a.level ?? 1
+            const aCol = lvl >= 2 ? C.red : C.o
+            const aBorder = lvl >= 3 ? `${C.red}` : lvl >= 2 ? `${C.red}bb` : `${C.o}99`
+            const aBg = lvl >= 3 ? `${C.red}0a` : lvl >= 2 ? `${C.red}06` : 'rgba(255,171,0,.04)'
+            return (
+              <div key={a.id ?? i} style={{
+                padding: '9px 9px 9px 11px',
+                borderBottom: i < Math.min(alerts.length, 8) - 1 ? `.5px solid ${C.b}` : 'none',
+                borderLeft: `2px solid ${aBorder}`,
+                background: aBg,
+                animation: 'fadeUp .25s ease',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <span style={{
+                    fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 3,
+                    background: lvl >= 2 ? C.rd : 'rgba(255,171,0,.09)',
+                    border: `.5px solid ${lvl >= 2 ? C.rb : 'rgba(255,171,0,.22)'}`,
+                    color: aCol, letterSpacing: .3,
+                  }}>L{lvl}</span>
+                  <span style={{ fontSize: 10.5, color: C.td, letterSpacing: .3 }}>{(a.type ?? '').replace(/_/g, ' ')}</span>
+                </div>
+                <div style={{ fontSize: 12, color: C.tm, lineHeight: 1.45, fontWeight: 300 }}>{a.message}</div>
               </div>
-              <div style={{ fontSize: 12.5, color: C.tm, lineHeight: 1.45, fontWeight: 300 }}>{a.message}</div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 
@@ -420,7 +433,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   yesterdayTrend: number | null; rules: TradingRules | null
 }) {
   const C = useContext(ThemeCtx)
-  const [note, setNote] = useState('')
   const score = computeScore(alerts)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
   const drawdownPct = rules
@@ -434,45 +446,48 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 12, alignItems: 'start' }}>
 
         {/* PnL card */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 22px', minWidth: 160 }}>
-          <div style={{ fontSize: 10.5, color: C.td, marginBottom: 8 }}>P&L de session</div>
-          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, color: C.tx, fontFamily: MONO }}>
+        <div className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 22px', minWidth: 160, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
+          <div style={{ fontSize: 10, letterSpacing: 1.2, color: C.td, marginBottom: 10, textTransform: 'uppercase' as const, fontFamily: MONO }}>P&L session</div>
+          <div style={{ fontSize: 36, fontWeight: 200, letterSpacing: -2.5, lineHeight: 1, color: C.tx, fontFamily: MONO }}>
             {fmtEur(stats.total_pnl)}
           </div>
-          <div style={{ fontSize: 10.5, color: C.td, fontFamily: MONO, marginTop: 5 }}>Session en cours</div>
+          <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>en cours</div>
         </div>
 
         {/* Chart card — session line + PnL chart empilés */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0 }}>
-          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
-          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 40, overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
+          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
+          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 40, overflow: 'hidden', flexShrink: 0, paddingLeft: 46, paddingRight: 6 }}>
             <SessionLine alerts={alerts} score={score} />
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '8px 0' }} />
-          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
+          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
           <div style={{ height: 84, flexShrink: 0 }}>
             <PnlChart trades={trades} />
           </div>
         </div>
 
-        {/* 3 mini stat cards — sans P&L */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 120 }}>
+        {/* 3 mini stat cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: 110 }}>
           {[
-            { val: String(stats.total_trades), lbl: 'Trades' },
-            { val: `${drawdownPct}%`, lbl: 'Drawdown' },
-            { val: String(alerts.length), lbl: 'Alertes' },
+            { val: String(stats.total_trades), lbl: 'Trades', accent: C.b3 },
+            { val: `${drawdownPct}%`, lbl: 'Drawdown', accent: drawdownPct > 80 ? C.red : drawdownPct > 50 ? C.o : C.b3 },
+            { val: String(alerts.length), lbl: 'Alertes', accent: alerts.length > 0 ? C.red : C.b3 },
           ].map((item, i) => (
-            <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '11px 13px' }}>
-              <div style={{ fontSize: 16, fontWeight: 300, letterSpacing: -.5, color: C.tx, fontFamily: MONO }}>{item.val}</div>
-              <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 3 }}>{item.lbl}</div>
+            <div key={i} className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '10px 13px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 2, background: item.accent, borderRadius: '9px 0 0 9px' }} />
+              <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.5, color: C.tx, fontFamily: MONO }}>{item.val}</div>
+              <div style={{ fontSize: 8.5, color: C.te, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 2 }}>{item.lbl}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Row 2: J-1 */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 18px', display: 'flex', gap: 22, alignItems: 'center', flexShrink: 0 }}>
-        <div style={{ fontSize: 10, color: C.te, letterSpacing: .5, marginRight: 4 }}>Hier</div>
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 18px', display: 'flex', gap: 22, alignItems: 'center', flexShrink: 0, borderLeft: `3px solid ${yesterdayStats ? `${scoreColor(yesterdayStats.score, C)}70` : C.b}` }}>
+        <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, fontFamily: MONO, textTransform: 'uppercase' as const }}>J−1</div>
         {yesterdayStats ? (
           <>
             {[
@@ -484,7 +499,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
               <div key={i} style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
                 {i > 0 && <div style={{ width: .5, height: 18, background: C.b2 }} />}
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: -.3, color: item.col, fontFamily: MONO }}>{item.val}</div>
+                  <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: -.3, color: item.col }}>{item.val}</div>
                   <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .4 }}>{item.lbl}</div>
                 </div>
               </div>
@@ -496,8 +511,12 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
       </div>
 
       {/* Row 3: Trade feed */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-        <span style={{ fontSize: 10.5, color: C.td, flexShrink: 0, marginBottom: 10 }}>Flux de trades</span>
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 10 }}>
+          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Flux de trades</span>
+          {trades.length > 0 && <span style={{ fontSize: 9, fontFamily: MONO, color: C.te }}>{trades.length} trade{trades.length > 1 ? 's' : ''}</span>}
+        </div>
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {sortedTrades.length === 0 ? (
             <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontWeight: 300, padding: '10px 0' }}>
@@ -508,13 +527,14 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
               const flaggedAlert = alerts.find(a => a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000)
               const hasCrit = flaggedAlert && (flaggedAlert.level ?? 1) >= 2
               return (
-                <div key={t.id ?? i} style={{
+                <div key={t.id ?? i} className="c-row" style={{
                   display: 'grid', gridTemplateColumns: '60px 1fr auto', alignItems: 'center',
-                  minHeight: 30, borderBottom: `.5px solid ${C.b}`,
+                  minHeight: 32, borderBottom: `.5px solid ${C.b}`,
                   background: hasCrit ? C.rd : 'transparent',
-                  borderLeft: hasCrit ? `2px solid rgba(255,90,61,.45)` : '2px solid transparent',
+                  borderLeft: hasCrit ? `2px solid ${C.red}80` : `2px solid ${C.b}`,
                   padding: '0 4px 0 10px',
-                  borderRadius: '0 6px 6px 0',
+                  borderRadius: '0 5px 5px 0',
+                  transition: 'background .12s',
                 }}>
                   <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
                   <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -536,14 +556,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         </div>
       </div>
 
-      {/* Row 4: Note */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 16px', flexShrink: 0 }}>
-        <textarea
-          value={note} onChange={e => setNote(e.target.value)} rows={2}
-          placeholder="Contexte, état du marché, comment tu te sens..."
-          style={{ width: '100%', background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 7, padding: '7px 11px', color: C.tm, fontSize: 11, fontFamily: SANS, resize: 'none' as const, outline: 'none', lineHeight: 1.6, fontWeight: 300, boxSizing: 'border-box' as const, transition: 'border-color .2s' }}
-        />
-      </div>
     </div>
   )
 }
@@ -1525,8 +1537,7 @@ export default function DashboardClient({
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
-        if (typeof document !== 'undefined' && document.visibilityState === 'hidden' &&
-            typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
           new Notification(`Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`, {
             body: a.message ?? '',
             icon: '/icon.svg',
@@ -1616,26 +1627,37 @@ export default function DashboardClient({
         @keyframes sli{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
         @keyframes toastIn{from{opacity:0;transform:translateX(28px) scale(.97)}to{opacity:1;transform:translateX(0) scale(1)}}
         @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
+        @keyframes shimmerLine{0%{opacity:.4}50%{opacity:.85}100%{opacity:.4}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
         .tab-btn{padding:11px 0;font-size:11px;letter-spacing:.5px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex:1;text-align:center;font-weight:400}
-        .tab-btn:hover{color:${C.tm}}
+        .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.02)}
         .tab-btn.active{color:${C.tx};border-bottom-color:${C.red};font-weight:500}
-        .tab-sentinel{color:rgba(255,90,61,.5)!important}
+        .tab-sentinel{color:rgba(255,90,61,.45)!important}
         .tab-sentinel.active{color:${C.red}!important;border-bottom-color:${C.red}}
         textarea,input{box-sizing:border-box}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
         input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.3)}
+        .c-card{transition:border-color .18s,box-shadow .18s}
+        .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
+        .c-row:hover{background:rgba(255,255,255,.025)!important}
       `}</style>
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
+        {/* ── Top accent ── */}
+        <div style={{ height: 2, background: `linear-gradient(90deg, transparent 0%, ${C.red}bb 28%, ${C.red}bb 72%, transparent 100%)`, flexShrink: 0, animation: 'shimmerLine 4s ease-in-out infinite' }} />
+
         {/* ── Header ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 26px', borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0 }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 400, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>
-              Cald<span style={{ color: C.red }}>ra</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 26px', borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 2, height: 30, background: `linear-gradient(180deg, ${C.red} 0%, ${C.red}30 100%)`, borderRadius: 2, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: 6, textTransform: 'uppercase' as const, color: C.tx }}>
+                Cald<span style={{ color: C.red }}>ra</span>
+              </div>
+              <div style={{ fontSize: 7, letterSpacing: 8, textTransform: 'uppercase' as const, color: C.td, display: 'block', marginTop: 3 }}>Session</div>
             </div>
-            <div style={{ fontSize: 7.5, letterSpacing: 9.5, textTransform: 'uppercase' as const, color: C.td, display: 'block', marginTop: 4 }}>Session</div>
           </div>
           <div style={{ fontSize: 11, color: C.td, fontFamily: MONO, letterSpacing: .3 }}>{displayDate}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1683,7 +1705,7 @@ export default function DashboardClient({
         </div>
 
         {/* ── Tab nav ── */}
-        <div style={{ display: 'flex', alignItems: 'center', borderBottom: `.5px solid ${C.b}`, background: C.sf, padding: 0, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', borderBottom: `.5px solid ${C.b}`, background: `linear-gradient(180deg, ${C.sf} 0%, ${C.sf2} 100%)`, padding: 0, flexShrink: 0 }}>
           {TABS.map(tab => (
             <button
               key={tab.id}
