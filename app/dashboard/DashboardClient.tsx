@@ -139,7 +139,7 @@ function MetricBar({ label, value }: { label: string; value: number }) {
 function llColor(pnl: number, dailyRisk: number): string {
   if (pnl < 0) return '#dc503c'
   if (pnl >= dailyRisk) return '#3cc87a'
-  return 'rgba(200,197,192,0.5)'
+  return 'rgba(234,232,245,0.35)'
 }
 
 function SessionLine({ alerts, score, pnl, dailyRisk }: { alerts: AlertRow[]; score: number; pnl: number; dailyRisk: number }) {
