@@ -5,9 +5,9 @@ import Stripe from 'stripe'
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
 
-  const PRICE_TO_PLAN: Record<string, 'pro' | 'team'> = {
-    [process.env.STRIPE_PRO_PRICE_ID!]:  'pro',
-    [process.env.STRIPE_TEAM_PRICE_ID!]: 'team',
+  const PRICE_TO_PLAN: Record<string, 'pro' | 'sentinel'> = {
+    [process.env.STRIPE_PRO_PRICE_ID!]:      'pro',
+    [process.env.STRIPE_SENTINEL_PRICE_ID!]: 'sentinel',
   }
 
   const service = createClient(
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
     const userId = session.metadata?.user_id
-    const plan = session.metadata?.plan as 'pro' | 'team' | undefined
+    const plan = session.metadata?.plan as 'pro' | 'sentinel' | undefined
 
     if (userId && plan) {
       await service
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   if (event.type === 'customer.subscription.updated') {
     const sub = event.data.object as Stripe.Subscription
     const priceId = sub.items.data[0]?.price.id
-    const plan = PRICE_TO_PLAN[priceId] ?? 'free'
+    const plan = PRICE_TO_PLAN[priceId] ?? 'pro'
 
     const { data: profile } = await service
       .from('user_profiles')
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     if (profile) {
       await service
         .from('user_profiles')
-        .update({ plan: 'free', stripe_subscription_id: null })
+        .update({ plan: 'pro', stripe_subscription_id: null })
         .eq('user_id', profile.user_id)
     }
   }

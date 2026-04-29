@@ -10,7 +10,7 @@ create extension if not exists "pgcrypto";
 
 create table if not exists user_profiles (
   user_id                 uuid        primary key references auth.users (id) on delete cascade,
-  plan                    text        not null default 'free' check (plan in ('free', 'pro', 'team')),
+  plan                    text        not null default 'pro' check (plan in ('pro', 'sentinel')),
   stripe_customer_id      text        unique,
   stripe_subscription_id  text,
   created_at              timestamptz not null default now(),
@@ -182,3 +182,9 @@ alter publication supabase_realtime add table alerts;
 -- v2.1 : taille du compte + webhook sortant
 alter table trading_rules add column if not exists account_size       numeric not null default 10000;
 alter table trading_rules add column if not exists slack_webhook_url  text;
+
+-- v2.2 : plans Pro/Sentinel (remplace free/pro/team)
+alter table user_profiles drop constraint if exists user_profiles_plan_check;
+alter table user_profiles add constraint user_profiles_plan_check check (plan in ('pro', 'sentinel'));
+update user_profiles set plan = 'pro' where plan in ('free', 'team');
+alter table user_profiles alter column plan set default 'pro';

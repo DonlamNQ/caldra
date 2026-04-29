@@ -11,6 +11,7 @@ const DEFAULTS = {
   session_end: '16:00',
   max_trades_per_session: 10,
   max_risk_per_trade_pct: 1,
+  account_size: 10000,
 }
 
 export default async function SettingsRulesPage() {

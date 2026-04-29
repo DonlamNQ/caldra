@@ -1,10 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendAlertEmail, sendWebhookAlert } from './brevo'
+import Anthropic from '@anthropic-ai/sdk'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export type Trade = {
   id: string
@@ -26,28 +29,52 @@ export type Alert = {
   detail: Record<string, unknown>
 }
 
+async function generateCoachingForAlert(
+  alertId: string,
+  alertType: string,
+  alertMessage: string,
+  alertDetail: Record<string, unknown>,
+  recentTrades: Trade[]
+): Promise<void> {
+  try {
+    const tradeContext = recentTrades.slice(0, 5)
+      .map(t => `${t.symbol} ${t.direction} size=${t.size} pnl=${t.pnl ?? '?'}`)
+      .join(', ')
+
+    const msg = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 150,
+      messages: [{
+        role: 'user',
+        content: `Tu es le coach Caldra. Alerte déclenchée : "${alertMessage}" (${alertType}). Données : ${JSON.stringify(alertDetail)}. Trades récents : ${tradeContext}. Génère exactement 2 phrases : 1) le comportement observé sans jugement, 2) une action concrète à faire maintenant. Ton direct et bienveillant, pas de "vous".`,
+      }],
+    })
+
+    const coaching = (msg.content[0] as { type: string; text: string }).text
+
+    await supabase
+      .from('alerts')
+      .update({ detail: { ...alertDetail, coaching } })
+      .eq('id', alertId)
+  } catch {
+    // Coaching is non-critical — silently skip if Anthropic is unavailable
+  }
+}
+
 export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   const alerts: Alert[] = []
-
-  // Récupère les règles du trader
-  const { data: rules } = await supabase
-    .from('trading_rules')
-    .select('*')
-    .eq('user_id', trade.user_id)
-    .single()
-
-  if (!rules) return []
-
-  // Récupère les trades de la session aujourd'hui
   const today = new Date().toISOString().split('T')[0]
-  const { data: sessionTrades } = await supabase
-    .from('trades')
-    .select('*')
-    .eq('user_id', trade.user_id)
-    .gte('entry_time', today)
-    .order('entry_time', { ascending: false })
 
-  if (!sessionTrades) return []
+  // Fetch rules, plan and session trades in parallel
+  const [{ data: rules }, { data: profile }, { data: sessionTrades }] = await Promise.all([
+    supabase.from('trading_rules').select('*').eq('user_id', trade.user_id).single(),
+    supabase.from('user_profiles').select('plan').eq('user_id', trade.user_id).single(),
+    supabase.from('trades').select('*').eq('user_id', trade.user_id).gte('entry_time', today).order('entry_time', { ascending: false }),
+  ])
+
+  if (!rules || !sessionTrades) return []
+
+  const isSentinel = profile?.plan === 'sentinel'
 
   // ── 1. REVENGE SIZING ─────────────────────────────────────────────────────
   const lastTrade = sessionTrades[0]
@@ -59,8 +86,8 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
       detail: {
         previous_size: lastTrade.size,
         current_size: trade.size,
-        ratio: (trade.size / lastTrade.size).toFixed(2)
-      }
+        ratio: (trade.size / lastTrade.size).toFixed(2),
+      },
     })
   }
 
@@ -77,8 +104,8 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
         message: 'Re-entrée immédiate détectée',
         detail: {
           seconds_since_exit: Math.round(secsSinceLastExit),
-          minimum_required: rules.min_time_between_entries_sec
-        }
+          minimum_required: rules.min_time_between_entries_sec,
+        },
       })
     }
   }
@@ -86,19 +113,19 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   // ── 3. PERTES CONSÉCUTIVES ────────────────────────────────────────────────
   const recentLosses = sessionTrades
     .slice(0, rules.max_consecutive_losses)
-    .filter(t => t.pnl < 0)
+    .filter((t: Trade) => (t.pnl ?? 0) < 0)
 
   if (recentLosses.length >= rules.max_consecutive_losses) {
     alerts.push({
       type: 'consecutive_losses',
       level: 2,
       message: `${rules.max_consecutive_losses} pertes consécutives`,
-      detail: { count: recentLosses.length }
+      detail: { count: recentLosses.length },
     })
   }
 
   // ── 4. DRAWDOWN JOURNALIER ────────────────────────────────────────────────
-  const totalPnl = sessionTrades.reduce((sum, t) => sum + (t.pnl || 0), 0)
+  const totalPnl = sessionTrades.reduce((sum: number, t: Trade) => sum + (t.pnl || 0), 0)
   const accountSize = Number(rules.account_size) || 10000
   const drawdownPct = Math.abs(totalPnl / accountSize) * 100
 
@@ -113,8 +140,9 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
       detail: {
         current_pnl: totalPnl,
         drawdown_pct: drawdownPct.toFixed(2),
-        max_allowed: rules.max_daily_drawdown_pct
-      }
+        max_allowed: rules.max_daily_drawdown_pct,
+        account_size: accountSize,
+      },
     })
   }
 
@@ -128,8 +156,8 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
       detail: {
         entry_time: entryHour,
         session_start: rules.session_start,
-        session_end: rules.session_end
-      }
+        session_end: rules.session_end,
+      },
     })
   }
 
@@ -144,41 +172,51 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
         : 'Tu approches ta limite de trades',
       detail: {
         current: sessionTrades.length,
-        max: rules.max_trades_per_session
-      }
+        max: rules.max_trades_per_session,
+      },
     })
   }
 
+  if (alerts.length === 0) return []
+
   // ── Sauvegarde les alertes en base ────────────────────────────────────────
-  if (alerts.length > 0) {
-    await supabase.from('alerts').insert(
-      alerts.map(a => ({
-        user_id: trade.user_id,
-        trade_id: trade.id,
-        type: a.type,
-        level: a.level,
-        message: a.message,
-        detail: a.detail,
-        session_date: today
-      }))
+  const { data: insertedAlerts } = await supabase.from('alerts').insert(
+    alerts.map(a => ({
+      user_id: trade.user_id,
+      trade_id: trade.id,
+      type: a.type,
+      level: a.level,
+      message: a.message,
+      detail: a.detail,
+      session_date: today,
+    }))
+  ).select('id, type, level, message, detail')
+
+  // ── Notifications sortantes (L2/L3 uniquement) ────────────────────────────
+  const hotAlerts = alerts.filter(a => a.level >= 2)
+  if (hotAlerts.length > 0) {
+    const { data: authData } = await supabase.auth.admin.getUserById(trade.user_id)
+    const userEmail = authData?.user?.email ?? null
+    const webhookUrl: string | null = rules.slack_webhook_url ?? null
+
+    await Promise.all(hotAlerts.map(a => Promise.all([
+      userEmail
+        ? sendAlertEmail({ to: userEmail, alertType: a.type, level: a.level, message: a.message, sessionDate: today, detail: a.detail })
+        : Promise.resolve(),
+      webhookUrl
+        ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
+        : Promise.resolve(),
+    ])))
+  }
+
+  // ── IA coaching Sentinel (L2/L3 uniquement, non-bloquant) ─────────────────
+  if (isSentinel && insertedAlerts) {
+    const toCoach = insertedAlerts.filter((a: { level: number }) => a.level >= 2)
+    void Promise.all(
+      toCoach.map((a: { id: string; type: string; level: number; message: string; detail: Record<string, unknown> }) =>
+        generateCoachingForAlert(a.id, a.type, a.message, a.detail ?? {}, sessionTrades)
+      )
     )
-
-    // ── Notifications sortantes (L2/L3 uniquement) ────────────────────────
-    const hotAlerts = alerts.filter(a => a.level >= 2)
-    if (hotAlerts.length > 0) {
-      const { data: authData } = await supabase.auth.admin.getUserById(trade.user_id)
-      const userEmail = authData?.user?.email ?? null
-      const webhookUrl: string | null = rules.slack_webhook_url ?? null
-
-      await Promise.all(hotAlerts.map(a => Promise.all([
-        userEmail
-          ? sendAlertEmail({ to: userEmail, alertType: a.type, level: a.level, message: a.message, sessionDate: today, detail: a.detail })
-          : Promise.resolve(),
-        webhookUrl
-          ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
-          : Promise.resolve(),
-      ])))
-    }
   }
 
   return alerts

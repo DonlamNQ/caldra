@@ -40,9 +40,10 @@ export default async function BillingPage() {
   return (
     <BillingClient
       userEmail={user.email ?? ''}
-      plan={(profile?.plan as 'free' | 'pro' | 'team') ?? 'free'}
+      plan={(profile?.plan as 'pro' | 'sentinel') ?? 'pro'}
       tradeCount={tradeCount ?? 0}
       alertCount={alertCount ?? 0}
+      hasSubscription={!!profile?.stripe_subscription_id}
     />
   )
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import AppHeader from '@/components/AppHeader'
 
-interface Rules { max_daily_drawdown_pct: number; max_consecutive_losses: number; min_time_between_entries_sec: number; session_start: string; session_end: string; max_trades_per_session: number; max_risk_per_trade_pct: number }
+interface Rules { max_daily_drawdown_pct: number; max_consecutive_losses: number; min_time_between_entries_sec: number; session_start: string; session_end: string; max_trades_per_session: number; max_risk_per_trade_pct: number; account_size: number }
 interface RulesFormProps { initial: Rules; userEmail: string }
 type SaveState = 'idle'|'saving'|'saved'|'error'
 
@@ -67,6 +67,12 @@ export default function RulesForm({ initial, userEmail }: RulesFormProps) {
 
           <form onSubmit={submit}>
             <Section title="Limites de risque">
+              <Field label="Taille du compte" hint="Utilisé pour calculer les % de drawdown avec précision">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input className="rl-in" style={{ ...INPUT, width: 110 }} type="number" min={100} max={10000000} step={100} value={rules.account_size} onChange={e => set('account_size', e.target.value)} />
+                  <span style={{ color: 'rgba(226,224,218,.3)', fontSize: 12, fontFamily: "'DM Sans',sans-serif" }}>€</span>
+                </div>
+              </Field>
               <Field label="Drawdown journalier max" hint="Stop de protection quand la perte atteint X% du compte">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <input className="rl-in" style={INPUT} type="number" min={0.1} max={20} step={0.1} value={rules.max_daily_drawdown_pct} onChange={e => set('max_daily_drawdown_pct', e.target.value)} />
