@@ -334,7 +334,7 @@ function Sidebar({ score, alerts, stats, rules, trades, paused, onTogglePause }:
   const mDiscipline = metricScore(alerts, 'outside_session')
 
   return (
-    <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden' }}>
+    <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none' }}>
 
       {/* Score */}
       <div style={{ padding: '20px 20px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
@@ -1716,7 +1716,8 @@ export default function DashboardClient({
     <ThemeCtx.Provider value={C}>
     <>
       <style>{`
-        *{box-sizing:border-box;margin:0;padding:0}
+        *{box-sizing:border-box;margin:0;padding:0;text-decoration:none}
+        a{text-decoration:none!important}
         html,body{height:100%;background:${C.bg}}
         ::-webkit-scrollbar{width:0;height:0}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.15}}
