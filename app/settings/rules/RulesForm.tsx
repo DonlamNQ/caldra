@@ -10,7 +10,7 @@ type SaveState = 'idle'|'saving'|'saved'|'error'
 const INPUT: React.CSSProperties = {
   background: 'rgba(255,255,255,.04)', border: '0.5px solid rgba(255,255,255,.1)', borderRadius: 6,
   padding: '7px 11px', color: '#e2e0da', fontSize: 13, outline: 'none', width: 95,
-  textAlign: 'right', fontFamily: "'Geist Mono',monospace", transition: 'border-color .2s',
+  textAlign: 'right', fontFamily: "var(--font-geist-mono),monospace", transition: 'border-color .2s',
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

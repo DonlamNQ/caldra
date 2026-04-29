@@ -232,7 +232,7 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={yMid} x2={W - PXR} y2={yMid} stroke={gridColor} strokeWidth={0.5} strokeDasharray="4 6" />
-        <text x={PXL - 4} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" fontFamily="Geist Mono,monospace">€0</text>
+        <text x={PXL - 4} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>€0</text>
       </svg>
     )
   }
@@ -272,12 +272,12 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
       {/* Y labels */}
       {yTicks.map(v => (
         <text key={v} x={PXL - 4} y={Math.max(PYT + 7, Math.min(H - PYB - 2, yOf(v) + 3))}
-          textAnchor="end" fill={axisColor} fontSize="8" fontFamily="Geist Mono,monospace">{fmtY(v)}</text>
+          textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
       ))}
       {/* X labels */}
       {xIdxs.map(i => (
         <text key={i} x={Math.max(PXL + 14, Math.min(W - PXR - 14, xOf(i)))}
-          y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="7.5" fontFamily="Geist Mono,monospace">
+          y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="7.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
           {pts[i].t}
         </text>
       ))}

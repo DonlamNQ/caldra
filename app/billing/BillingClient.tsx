@@ -75,7 +75,7 @@ export default function BillingClient({ userEmail, plan, tradeCount, alertCount,
               ].map((item, i) => (
                 <div key={i}>
                   <div style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(226,224,218,.25)', marginBottom: '.5rem', fontFamily: "'DM Sans',sans-serif" }}>{item.label}</div>
-                  <div style={{ fontSize: 'clamp(1.2rem,2vw,1.5rem)', fontWeight: 500, color: 'rgba(226,224,218,.75)', fontVariantNumeric: 'tabular-nums', fontFamily: "'Geist Mono',monospace", letterSpacing: -.5 }}>
+                  <div style={{ fontSize: 'clamp(1.2rem,2vw,1.5rem)', fontWeight: 500, color: 'rgba(226,224,218,.75)', fontVariantNumeric: 'tabular-nums', fontFamily: "var(--font-geist-mono),monospace", letterSpacing: -.5 }}>
                     {item.value}
                   </div>
                 </div>
@@ -92,7 +92,7 @@ export default function BillingClient({ userEmail, plan, tradeCount, alertCount,
                   <div>
                     <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(220,80,60,.6)', marginBottom: '.5rem', fontFamily: "'DM Sans',sans-serif" }}>Sentinel</div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                      <span style={{ fontSize: 'clamp(1.4rem,2.2vw,1.8rem)', fontWeight: 500, color: '#fff', fontFamily: "'Geist Mono',monospace", letterSpacing: -1, fontVariantNumeric: 'tabular-nums' }}>39€</span>
+                      <span style={{ fontSize: 'clamp(1.4rem,2.2vw,1.8rem)', fontWeight: 500, color: '#fff', fontFamily: "var(--font-geist-mono),monospace", letterSpacing: -1, fontVariantNumeric: 'tabular-nums' }}>39€</span>
                       <span style={{ color: 'rgba(226,224,218,.3)', fontSize: 11, fontFamily: "'DM Sans',sans-serif" }}>/mois</span>
                     </div>
                   </div>
