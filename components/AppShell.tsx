@@ -42,9 +42,8 @@ const NAV = [
 ]
 
 const PLAN_LABELS: Record<string, { label: string; color: string }> = {
-  free:  { label: 'FREE',     color: 'rgba(232,223,192,.3)' },
-  pro:   { label: 'PRO',      color: '#f5a623' },
-  team:  { label: 'TEAM',     color: '#f5a623' },
+  pro:      { label: 'PRO',      color: 'rgba(234,232,245,.5)' },
+  sentinel: { label: 'SENTINEL', color: '#dc503c' },
 }
 
 export default function AppShell({ current, userEmail, children, topBar, plan }: AppShellProps) {
@@ -54,62 +53,61 @@ export default function AppShell({ current, userEmail, children, topBar, plan }:
     window.location.href = '/login'
   }
 
-  const planCfg = plan ? (PLAN_LABELS[plan] ?? PLAN_LABELS.free) : null
+  const planCfg = plan ? (PLAN_LABELS[plan] ?? PLAN_LABELS.pro) : null
 
   return (
     <>
       <style>{`
         *{box-sizing:border-box}
-        html,body{margin:0;padding:0;background:#0f0d00}
+        html,body{margin:0;padding:0;background:#08080d}
         ::-webkit-scrollbar{width:3px;height:3px}
         ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:#3d3000;border-radius:0}
+        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
         .sh-nav-item{
-          display:flex;align-items:center;gap:9px;padding:7px 10px;
-          color:rgba(232,223,192,.3);text-decoration:none;
-          transition:color .12s,background .12s;font-size:12px;
-          font-family:'IBM Plex Mono',monospace;letter-spacing:.03em;
+          display:flex;align-items:center;gap:9px;padding:7px 12px;
+          color:rgba(234,232,245,.3);text-decoration:none;
+          transition:color .12s,background .12s;font-size:11px;
+          font-family:var(--font-geist-mono),monospace;letter-spacing:.04em;
           margin:1px 0;border:none;background:none;cursor:pointer;width:100%;
           border-left:2px solid transparent;
         }
-        .sh-nav-item:hover{color:rgba(232,223,192,.7);background:rgba(245,166,35,.04);border-left-color:rgba(245,166,35,.2)}
-        .sh-nav-active{color:#f5a623!important;background:rgba(245,166,35,.08)!important;border-left-color:#f5a623!important}
+        .sh-nav-item:hover{color:rgba(234,232,245,.65);background:rgba(255,255,255,.03);border-left-color:rgba(255,255,255,.12)}
+        .sh-nav-active{color:#eae8f5!important;background:rgba(220,80,60,.07)!important;border-left-color:#dc503c!important}
         .sh-signout{
-          display:flex;align-items:center;gap:8px;padding:7px 10px;
-          color:rgba(232,223,192,.25);font-size:11px;
-          font-family:'IBM Plex Mono',monospace;background:none;border:none;
+          display:flex;align-items:center;gap:8px;padding:7px 12px;
+          color:rgba(234,232,245,.22);font-size:11px;
+          font-family:var(--font-geist-mono),monospace;background:none;border:none;
           cursor:pointer;transition:color .12s;width:100%;text-align:left;
           letter-spacing:.03em;
         }
-        .sh-signout:hover{color:rgba(232,223,192,.55)}
+        .sh-signout:hover{color:rgba(234,232,245,.5)}
       `}</style>
 
       {/* Sidebar */}
       <aside style={{
-        position: 'fixed', top: 0, left: 0, bottom: 0, width: 200,
-        background: '#0a0900',
-        borderRight: '1px solid #3d3000',
+        position: 'fixed', top: 0, left: 0, bottom: 0, width: 196,
+        background: '#0c0c15',
+        borderRight: '0.5px solid rgba(255,255,255,.06)',
         display: 'flex', flexDirection: 'column',
         zIndex: 100,
-        fontFamily: "'IBM Plex Mono', monospace",
       }}>
 
         {/* Logo */}
-        <div style={{ padding: '18px 12px 14px', borderBottom: '1px solid #3d3000', flexShrink: 0 }}>
+        <div style={{ padding: '18px 14px 14px', borderBottom: '0.5px solid rgba(255,255,255,.06)', flexShrink: 0 }}>
           <a href="/" style={{ textDecoration: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
               <div style={{
-                width: 24, height: 24,
-                background: 'rgba(245,166,35,.1)',
-                border: '1px solid rgba(245,166,35,.3)',
+                width: 26, height: 26, borderRadius: 6,
+                background: 'rgba(220,80,60,.12)',
+                border: '0.5px solid rgba(220,80,60,.3)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
-                <div style={{ width: 7, height: 7, background: '#f5a623' }} />
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: '#dc503c' }} />
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#f5a623', letterSpacing: '.12em' }}>CALDRA</div>
-                <div style={{ fontSize: 8, color: 'rgba(232,223,192,.25)', letterSpacing: '.2em', textTransform: 'uppercase' }}>terminal</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#eae8f5', letterSpacing: 6, textTransform: 'uppercase', fontFamily: 'var(--font-geist-mono),monospace' }}>CALDRA</div>
+                <div style={{ fontSize: 7, color: 'rgba(234,232,245,.2)', letterSpacing: 3, textTransform: 'uppercase', fontFamily: 'var(--font-geist-mono),monospace', marginTop: 1 }}>SESSION</div>
               </div>
             </div>
           </a>
@@ -117,14 +115,13 @@ export default function AppShell({ current, userEmail, children, topBar, plan }:
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
-          <div style={{ fontSize: 8, letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(232,223,192,.18)', padding: '6px 12px 8px', fontFamily: "'IBM Plex Mono',monospace" }}>Navigation</div>
           {NAV.map(item => (
             <a
               key={item.href}
               href={item.href}
               className={`sh-nav-item${current === item.key ? ' sh-nav-active' : ''}`}
             >
-              <span style={{ opacity: current === item.key ? 1 : 0.5, flexShrink: 0 }}>
+              <span style={{ opacity: current === item.key ? 1 : 0.45, flexShrink: 0 }}>
                 {item.icon}
               </span>
               {item.label}
@@ -133,16 +130,16 @@ export default function AppShell({ current, userEmail, children, topBar, plan }:
         </nav>
 
         {/* Bottom */}
-        <div style={{ padding: '10px 0', borderTop: '1px solid #3d3000', flexShrink: 0 }}>
+        <div style={{ padding: '10px 0', borderTop: '0.5px solid rgba(255,255,255,.06)', flexShrink: 0 }}>
           {planCfg && (
-            <div style={{ padding: '0 12px', marginBottom: 8 }}>
-              <span style={{ fontSize: 8, letterSpacing: '.2em', textTransform: 'uppercase', color: planCfg.color, border: `1px solid ${planCfg.color}44`, padding: '2px 6px', fontFamily: "'IBM Plex Mono',monospace" }}>
+            <div style={{ padding: '0 14px', marginBottom: 8 }}>
+              <span style={{ fontSize: 8, letterSpacing: 2, textTransform: 'uppercase', color: planCfg.color, border: `0.5px solid ${planCfg.color}55`, padding: '2px 7px', borderRadius: 3, fontFamily: 'var(--font-geist-mono),monospace' }}>
                 {planCfg.label}
               </span>
             </div>
           )}
-          <div style={{ padding: '3px 12px', marginBottom: 4 }}>
-            <div style={{ fontSize: 10, color: 'rgba(232,223,192,.22)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono',monospace" }}>
+          <div style={{ padding: '3px 14px', marginBottom: 4 }}>
+            <div style={{ fontSize: 10, color: 'rgba(234,232,245,.2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-geist-mono),monospace' }}>
               {userEmail}
             </div>
           </div>
@@ -158,14 +155,14 @@ export default function AppShell({ current, userEmail, children, topBar, plan }:
       </aside>
 
       {/* Content */}
-      <div style={{ marginLeft: 200, minHeight: '100vh', background: '#0f0d00', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ marginLeft: 196, minHeight: '100vh', background: '#08080d', display: 'flex', flexDirection: 'column' }}>
         {topBar && (
           <div style={{
             height: 44,
-            borderBottom: '1px solid #3d3000',
+            borderBottom: '0.5px solid rgba(255,255,255,.06)',
             display: 'flex', alignItems: 'center',
             padding: '0 1.5rem',
-            background: '#0a0900',
+            background: '#0c0c15',
             flexShrink: 0,
             position: 'sticky', top: 0, zIndex: 50,
           }}>
