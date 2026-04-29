@@ -24,7 +24,9 @@
       "Bash(npm i *)",
       "Bash(git config *)",
       "Bash(curl *)",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('exports', {}\\), indent=2\\)\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('exports', {}\\), indent=2\\)\\)\")",
+      "Bash(grep -n \"tab-btn\\\\|tab-sentinel\\\\|style.*{.*\\\\`\" /c/Users/Haby/Documents/caldra/app/dashboard/DashboardClient.tsx)",
+      "Bash(npm run *)"
     ]
   },
   "hooks": {
