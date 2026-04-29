@@ -136,16 +136,33 @@ function MetricBar({ label, value }: { label: string; value: number }) {
 }
 
 // ── SessionLine — score comportemental dans le temps ──────────────────────────
-function llColor(pnl: number, dailyRisk: number): string {
+const DAILY_RISK = 300
+
+function llColor(pnl: number): string {
   if (pnl < 0) return '#dc503c'
-  if (pnl >= dailyRisk) return '#3cc87a'
-  return 'rgba(234,232,245,0.35)'
+  if (pnl >= DAILY_RISK) return '#3cc87a'
+  return 'rgba(200,197,192,0.5)'
 }
 
-function SessionLine({ alerts, score, pnl, dailyRisk }: { alerts: AlertRow[]; score: number; pnl: number; dailyRisk: number }) {
+function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number; pnl: number }) {
   const C = useContext(ThemeCtx)
-  const col = llColor(pnl, dailyRisk)
-  const isNeutral = pnl >= 0 && pnl < dailyRisk
+  const startRef = useRef<SVGStopElement | null>(null)
+  const endRef = useRef<SVGStopElement | null>(null)
+
+  useEffect(() => {
+    const c = llColor(pnl)
+    const isNeutral = pnl >= 0 && pnl < DAILY_RISK
+    const raf = requestAnimationFrame(() => {
+      startRef.current?.setAttribute('stop-color', c)
+      startRef.current?.setAttribute('stop-opacity', isNeutral ? '0.3' : '0.6')
+      endRef.current?.setAttribute('stop-color', c)
+      endRef.current?.setAttribute('stop-opacity', isNeutral ? '0.5' : '1')
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [pnl])
+
+  const col = llColor(pnl)
+  const isNeutral = pnl >= 0 && pnl < DAILY_RISK
   const W = 800, H = 40, PY = 3
 
   // Build score-over-time points from alerts sorted by created_at
@@ -179,8 +196,8 @@ function SessionLine({ alerts, score, pnl, dailyRisk }: { alerts: AlertRow[]; sc
     <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', height: '100%' }}>
       <defs>
         <linearGradient id="sl-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop id="ll-start" offset="0%" stopColor={col} stopOpacity={isNeutral ? 0.3 : 0.6} />
-          <stop id="ll-end" offset="100%" stopColor={col} stopOpacity={isNeutral ? 0.5 : 1} />
+          <stop ref={startRef} id="ll-start" offset="0%" stopColor={col} stopOpacity={isNeutral ? 0.3 : 0.6} />
+          <stop ref={endRef} id="ll-end" offset="100%" stopColor={col} stopOpacity={isNeutral ? 0.5 : 1} />
         </linearGradient>
       </defs>
       <path d={fillD} fill="url(#sl-grad)" />
@@ -216,7 +233,6 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={yMid} x2={W - PXR} y2={yMid} stroke={gridColor} strokeWidth={0.5} strokeDasharray="4 6" />
         <text x={PXL - 4} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" fontFamily="Geist Mono,monospace">€0</text>
-        <text x={PXL + DW / 2} y={yMid + 4} textAnchor="middle" fill={axisColor} fontSize="10" fontFamily="Geist Mono,monospace">// en attente de trades</text>
       </svg>
     )
   }
@@ -469,7 +485,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
           <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 64, overflow: 'hidden', flexShrink: 0, paddingLeft: 46, paddingRight: 6 }}>
-            <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} dailyRisk={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : 300} />
+            <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
