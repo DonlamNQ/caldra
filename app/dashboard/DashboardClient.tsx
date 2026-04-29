@@ -144,66 +144,77 @@ function llColor(pnl: number): string {
   return 'rgba(200,197,192,0.5)'
 }
 
+const LL_STATES: { pts: number[][]; idle?: boolean }[] = [
+  { pts: [[0,22],[160,22],[320,22],[480,22],[640,22],[800,22]], idle: true },
+  { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3]] },
+  { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12]] },
+  { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12],[650,22]] },
+  { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12],[650,22],[720,34]] },
+  { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12],[650,22],[720,34],[790,41]] },
+]
+
 function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number; pnl: number }) {
-  const C = useContext(ThemeCtx)
-  const startRef = useRef<SVGStopElement | null>(null)
-  const endRef = useRef<SVGStopElement | null>(null)
+  const pnlRef = useRef(pnl)
+  const llStateRef = useRef(0)
+
+  useEffect(() => { pnlRef.current = pnl }, [pnl])
 
   useEffect(() => {
-    const c = llColor(pnl)
-    const isNeutral = pnl >= 0 && pnl < DAILY_RISK
-    const raf = requestAnimationFrame(() => {
-      startRef.current?.setAttribute('stop-color', c)
-      startRef.current?.setAttribute('stop-opacity', isNeutral ? '0.3' : '0.6')
-      endRef.current?.setAttribute('stop-color', c)
-      endRef.current?.setAttribute('stop-opacity', isNeutral ? '0.5' : '1')
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [pnl])
+    const stateIdx = Math.min(alerts.length, LL_STATES.length - 1)
+    llStateRef.current = stateIdx
+  }, [alerts.length])
 
-  const col = llColor(pnl)
-  const isNeutral = pnl >= 0 && pnl < DAILY_RISK
-  const W = 800, H = 40, PY = 3
+  useEffect(() => {
+    let llT = 0
+    let rafId: number
 
-  // Build score-over-time points from alerts sorted by created_at
-  const sorted = [...alerts]
-    .filter(a => a.created_at)
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    function ptsToPath(pts: number[][]): string {
+      return pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]).join(' ')
+    }
+    function ptsToFill(pts: number[][]): string {
+      const l = pts[pts.length - 1]
+      return ptsToPath(pts) + ` L${l[0]} 44 L0 44Z`
+    }
 
-  const scorePts: number[] = [100]
-  let s = 100
-  for (const a of sorted) {
-    const lvl = a.level ?? (a as any).severity ?? 1
-    s = Math.max(0, s - (lvl === 3 ? 18 : lvl === 2 ? 8 : 3))
-    scorePts.push(s)
-  }
+    function animateLine() {
+      llT += 0.016
+      const s = LL_STATES[llStateRef.current]
+      const base = s.pts.map(p => [...p])
+      let livePts: number[][]
+      if (s.idle) {
+        const wave = Math.sin(llT * 0.55) * 3.8 + Math.sin(llT * 1.35) * 1.4
+        livePts = base.map(p => [p[0], Math.max(2, Math.min(42, p[1] + wave))])
+      } else {
+        const noise = Math.sin(llT * 1.4) * 1.0 + Math.sin(llT * 3.1) * 0.4
+        const last = base[base.length - 1]
+        const liveY = Math.max(1, Math.min(43, last[1] + noise))
+        livePts = [...base.slice(0, -1), [last[0], liveY]]
+      }
+      document.getElementById('ll-path')?.setAttribute('d', ptsToPath(livePts))
+      document.getElementById('ll-fill')?.setAttribute('d', ptsToFill(livePts))
+      const c = llColor(pnlRef.current)
+      const isNeutral = pnlRef.current >= 0 && pnlRef.current < DAILY_RISK
+      document.getElementById('ll-start')?.setAttribute('stop-color', c)
+      document.getElementById('ll-start')?.setAttribute('stop-opacity', isNeutral ? '0.3' : '0.6')
+      document.getElementById('ll-end')?.setAttribute('stop-color', c)
+      document.getElementById('ll-end')?.setAttribute('stop-opacity', isNeutral ? '0.5' : '1')
+      rafId = requestAnimationFrame(animateLine)
+    }
 
-  const n = scorePts.length
-  const xOf = (i: number) => n <= 1 ? (i === 0 ? 0 : W) : (i / (n - 1)) * W
-  const yOf = (v: number) => PY + (H - 2 * PY) - (v / 100) * (H - 2 * PY)
-  const startY = yOf(100)
-  const lastX = xOf(n - 1)
-  const dotX = Math.min(lastX, W - 4)
-  const lastY = yOf(scorePts[n - 1])
-  const linePts = n <= 1
-    ? `0,${startY} ${W},${startY}`
-    : scorePts.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
-  const fillD = n <= 1
-    ? `M0,${startY} L${W},${startY} L${W},${H} L0,${H} Z`
-    : `M0,${startY} ${scorePts.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${lastX},${H} L0,${H} Z`
+    rafId = requestAnimationFrame(animateLine)
+    return () => cancelAnimationFrame(rafId)
+  }, [])
 
   return (
-    <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', height: '100%' }}>
+    <svg width="100%" viewBox="0 0 800 44" preserveAspectRatio="none" height="44">
       <defs>
-        <linearGradient id="sl-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop ref={startRef} id="ll-start" offset="0%" stopColor={col} stopOpacity={isNeutral ? 0.3 : 0.6} />
-          <stop ref={endRef} id="ll-end" offset="100%" stopColor={col} stopOpacity={isNeutral ? 0.5 : 1} />
+        <linearGradient id="llg" x1="0" y1="0" x2="1" y2="0">
+          <stop id="ll-start" offset="0%" stopColor="rgba(200,197,192,0.5)" stopOpacity="0.3" />
+          <stop id="ll-end" offset="100%" stopColor="rgba(200,197,192,0.5)" stopOpacity="0.5" />
         </linearGradient>
       </defs>
-      <path d={fillD} fill="url(#sl-grad)" />
-      <polyline points={linePts} fill="none" stroke={col} strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" opacity={n <= 1 ? 0.3 : 1} />
-      <circle cx={dotX} cy={lastY} r="3" fill={col} style={{ animation: 'pulse 1.8s infinite' }} />
+      <path id="ll-path" d="M0 22 L800 22" fill="none" stroke="url(#llg)" strokeWidth="1.5" strokeLinecap="round" />
+      <path id="ll-fill" d="M0 22 L800 22 L800 44 L0 44Z" fill="url(#llg)" opacity=".06" />
     </svg>
   )
 }
