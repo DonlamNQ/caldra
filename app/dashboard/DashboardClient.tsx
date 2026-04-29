@@ -136,9 +136,16 @@ function MetricBar({ label, value }: { label: string; value: number }) {
 }
 
 // ── SessionLine — score comportemental dans le temps ──────────────────────────
-function SessionLine({ alerts, score }: { alerts: AlertRow[]; score: number }) {
+function llColor(pnl: number, dailyRisk: number): string {
+  if (pnl < 0) return '#dc503c'
+  if (pnl >= dailyRisk) return '#3cc87a'
+  return 'rgba(200,197,192,0.5)'
+}
+
+function SessionLine({ alerts, score, pnl, dailyRisk }: { alerts: AlertRow[]; score: number; pnl: number; dailyRisk: number }) {
   const C = useContext(ThemeCtx)
-  const col = scoreColor(score, C)
+  const col = llColor(pnl, dailyRisk)
+  const isNeutral = pnl >= 0 && pnl < dailyRisk
   const W = 800, H = 40, PY = 3
 
   // Build score-over-time points from alerts sorted by created_at
@@ -172,8 +179,8 @@ function SessionLine({ alerts, score }: { alerts: AlertRow[]; score: number }) {
     <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', height: '100%' }}>
       <defs>
         <linearGradient id="sl-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={col} stopOpacity="0.1" />
-          <stop offset="100%" stopColor={col} stopOpacity="0" />
+          <stop id="ll-start" offset="0%" stopColor={col} stopOpacity={isNeutral ? 0.3 : 0.6} />
+          <stop id="ll-end" offset="100%" stopColor={col} stopOpacity={isNeutral ? 0.5 : 1} />
         </linearGradient>
       </defs>
       <path d={fillD} fill="url(#sl-grad)" />
@@ -273,11 +280,11 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ score, alerts, stats, rules, trades }: {
+function Sidebar({ score, alerts, stats, rules, trades, paused, onTogglePause }: {
   score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null; trades: TradeRow[]
+  paused: boolean; onTogglePause: () => void
 }) {
   const C = useContext(ThemeCtx)
-  const [paused, setPaused] = useState(false)
   const streak = consecutiveLosses(trades)
   const drawdownPct = rules
     ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
@@ -415,11 +422,16 @@ function Sidebar({ score, alerts, stats, rules, trades }: {
 
       {/* Pause */}
       <div style={{ padding: '12px 20px', borderTop: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        {paused && (
+          <div style={{ padding: '8px 10px', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.18)`, borderRadius: 7, marginBottom: 8, fontSize: 11, color: C.o, textAlign: 'center' as const, letterSpacing: .4, fontFamily: MONO }}>
+            ⏸ Session en pause · Alertes suspendues
+          </div>
+        )}
         <button
-          onClick={() => setPaused(p => !p)}
-          style={{ width: '100%', padding: 11, background: C.rg, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'background .2s' }}
-          onMouseEnter={e => (e.currentTarget.style.background = C.rd)}
-          onMouseLeave={e => (e.currentTarget.style.background = C.rg)}
+          onClick={onTogglePause}
+          style={{ width: '100%', padding: 11, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
+          onMouseEnter={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.13)' : C.rd)}
+          onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
         >
           {paused ? '▶ Reprendre la session' : '⏸ Pause session'}
         </button>
@@ -462,7 +474,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
           <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 64, overflow: 'hidden', flexShrink: 0, paddingLeft: 46, paddingRight: 6 }}>
-            <SessionLine alerts={alerts} score={score} />
+            <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} dailyRisk={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : 300} />
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
@@ -1360,14 +1372,6 @@ function SentinelPanel({ stats, alerts, score, rules }: {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', flex: 1, height: '100%', minHeight: 0 }}>
       <div style={{ padding: 26, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.3, color: C.tx, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 9 }}>
-            Sentinel IA
-            <span style={{ fontSize: 10, padding: '3px 9px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, letterSpacing: .5 }}>Plan Sentinel</span>
-          </div>
-          <div style={{ fontSize: 12.5, color: C.td }}>Coach IA actif pendant la session. Analyse ton comportement et te parle en temps réel.</div>
-        </div>
-
         <div style={{ flex: 1, background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: 400 }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(255,90,61,.3),transparent)' }} />
           <div style={{ paddingBottom: 14, borderBottom: `.5px solid ${C.b}`, marginBottom: 14 }}>
@@ -1562,8 +1566,14 @@ export default function DashboardClient({
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
+  const [paused, setPaused] = useState(false)
+  const pausedRef = useRef(false)
   const channelRef = useRef<any>(null)
   const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  const togglePause = useCallback(() => {
+    setPaused(p => { pausedRef.current = !p; return !p })
+  }, [])
   const today = new Date().toISOString().split('T')[0]
 
   const dismissToast = useCallback((id: string) => {
@@ -1576,6 +1586,7 @@ export default function DashboardClient({
   }, [])
 
   const addToast = useCallback((alert: AlertRow) => {
+    if (pausedRef.current) return
     const id = `t-${Date.now()}`
     setToasts(prev => [{ id, alert, exiting: false }, ...prev].slice(0, 4))
     const timer = setTimeout(() => dismissToast(id), 5000)
@@ -1594,6 +1605,7 @@ export default function DashboardClient({
     channelRef.current = supabase
       .channel('caldra-live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts', filter: `user_id=eq.${userId}` }, (payload) => {
+        if (pausedRef.current) return
         const a = payload.new as AlertRow & { session_date?: string; user_id?: string }
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
@@ -1607,6 +1619,7 @@ export default function DashboardClient({
         }
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
+        if (pausedRef.current) return
         const t = payload.new as TradeRow & { user_id?: string }
         setTrades(prev => [t, ...prev])
         setStats(prev => ({
@@ -1781,7 +1794,7 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '20% 1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
-          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} trades={trades} />
+          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} trades={trades} paused={paused} onTogglePause={togglePause} />
 
           <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (

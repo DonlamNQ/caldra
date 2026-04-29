@@ -67,7 +67,7 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
             <h1 style={{ margin: 0, fontWeight: 400, fontSize: '1.6rem', letterSpacing: -.5, color: '#fff', fontFamily: "'DM Sans',sans-serif", marginBottom: '.4rem' }}>Clé API</h1>
             <p style={{ margin: 0, color: 'rgba(226,224,218,.3)', fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>
               Authentifie les appels vers{' '}
-              <code style={{ background: 'rgba(255,255,255,.06)', padding: '1px 7px', borderRadius: 4, fontSize: 11, color: 'rgba(226,224,218,.55)', fontFamily: "'JetBrains Mono',monospace", border: '0.5px solid rgba(255,255,255,.09)' }}>/api/ingest</code>
+              <code style={{ background: 'rgba(255,255,255,.06)', padding: '1px 7px', borderRadius: 4, fontSize: 11, color: 'rgba(226,224,218,.55)', fontFamily: "'Geist Mono',monospace", border: '0.5px solid rgba(255,255,255,.09)' }}>/api/ingest</code>
               {' '}depuis ta plateforme.
             </p>
           </div>
@@ -78,7 +78,7 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
             {prefix ? (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                 <div>
-                  <code style={{ color: 'rgba(226,224,218,.55)', fontSize: 12.5, fontFamily: "'JetBrains Mono',monospace", letterSpacing: '.04em' }}>
+                  <code style={{ color: 'rgba(226,224,218,.55)', fontSize: 12.5, fontFamily: "'Geist Mono',monospace", letterSpacing: '.04em' }}>
                     {prefix}<span style={{ opacity: .3 }}>{'•'.repeat(20)}</span>
                   </code>
                   <div style={{ marginTop: 5, color: 'rgba(226,224,218,.22)', fontSize: 11, fontFamily: "'DM Sans',sans-serif" }}>Créée le {new Date(createdAt!).toLocaleDateString('fr-FR')}</div>
@@ -110,7 +110,7 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
             <div style={{ background: 'rgba(16,185,129,.05)', border: '0.5px solid rgba(16,185,129,.18)', borderRadius: 10, padding: '1.1rem 1.4rem', marginBottom: '1rem' }}>
               <div style={{ color: 'rgba(16,185,129,.75)', fontSize: 11, marginBottom: '.75rem', fontFamily: "'DM Sans',sans-serif", letterSpacing: .3 }}>⚠ Copiez maintenant — ne sera plus visible.</div>
               <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-                <code style={{ flex: 1, color: 'rgba(134,239,172,.8)', fontSize: 11.5, fontFamily: "'JetBrains Mono',monospace", wordBreak: 'break-all', background: 'rgba(16,185,129,.04)', padding: '8px 12px', borderRadius: 6, border: '0.5px solid rgba(16,185,129,.14)' }}>
+                <code style={{ flex: 1, color: 'rgba(134,239,172,.8)', fontSize: 11.5, fontFamily: "'Geist Mono',monospace", wordBreak: 'break-all', background: 'rgba(16,185,129,.04)', padding: '8px 12px', borderRadius: 6, border: '0.5px solid rgba(16,185,129,.14)' }}>
                   {newKey}
                 </code>
                 <button className="ak-copy" onClick={copy}>{copied ? '✓ Copié' : 'Copier'}</button>
@@ -121,7 +121,7 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
           {/* Auth header */}
           <div style={CARD}>
             <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(226,224,218,.28)', marginBottom: '.9rem', fontFamily: "'DM Sans',sans-serif" }}>Header d'authentification</div>
-            <code style={{ color: 'rgba(226,224,218,.45)', fontSize: 12, fontFamily: "'JetBrains Mono',monospace" }}>
+            <code style={{ color: 'rgba(226,224,218,.45)', fontSize: 12, fontFamily: "'Geist Mono',monospace" }}>
               x-caldra-key: <span style={{ color: 'rgba(56,189,248,.65)' }}>{prefix ? `${prefix}••••` : 'cal_votre_clé'}</span>
             </code>
           </div>
@@ -129,11 +129,11 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
           {/* Code example */}
           <div style={CARD}>
             <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(226,224,218,.28)', marginBottom: '.9rem', fontFamily: "'DM Sans',sans-serif" }}>Exemple d'intégration</div>
-            <pre style={{ margin: 0, color: 'rgba(226,224,218,.38)', fontSize: 11, fontFamily: "'JetBrains Mono',monospace", lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+            <pre style={{ margin: 0, color: 'rgba(226,224,218,.38)', fontSize: 11, fontFamily: "'Geist Mono',monospace", lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
               {SNIPPET(prefix ? `${prefix}••••` : 'cal_votre_clé')}
             </pre>
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(255,255,255,.06)', color: 'rgba(226,224,218,.25)', fontSize: 11, fontFamily: "'DM Sans',sans-serif" }}>
-              Requis : <code style={{ color: 'rgba(226,224,218,.38)', fontFamily: "'JetBrains Mono',monospace" }}>symbol, direction, size, entry_price, entry_time</code>
+              Requis : <code style={{ color: 'rgba(226,224,218,.38)', fontFamily: "'Geist Mono',monospace" }}>symbol, direction, size, entry_price, entry_time</code>
             </div>
           </div>
         </main>

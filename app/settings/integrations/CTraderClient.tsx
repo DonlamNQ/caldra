@@ -172,7 +172,7 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
                         <div style={{ fontSize: 10, color: '#475569', marginBottom: 3 }}>Compte autorisé</div>
-                        <div style={{ fontSize: 13, color: '#e2e8f0', fontFamily: "'JetBrains Mono',monospace" }}>
+                        <div style={{ fontSize: 13, color: '#e2e8f0', fontFamily: "'Geist Mono',monospace" }}>
                           {status.accountName ?? status.accountId ?? '—'}
                         </div>
                       </div>
@@ -225,7 +225,7 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
                     <div style={STEP}>
                       <div style={STEP_NUM}>1</div>
                       <div style={{ fontSize: 12, color: 'rgba(226,224,218,.5)', lineHeight: 1.6 }}>
-                        Téléchargez le fichier <span style={{ color: '#e2e8f0', fontFamily: "'JetBrains Mono',monospace" }}>CaldraBot.algo</span> ci-dessous et ouvrez-le dans cTrader via <span style={{ color: '#e2e8f0' }}>Automate → Open</span>.
+                        Téléchargez le fichier <span style={{ color: '#e2e8f0', fontFamily: "'Geist Mono',monospace" }}>CaldraBot.algo</span> ci-dessous et ouvrez-le dans cTrader via <span style={{ color: '#e2e8f0' }}>Automate → Open</span>.
                       </div>
                     </div>
                     <div style={STEP}>
@@ -233,7 +233,7 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
                       <div style={{ fontSize: 12, color: 'rgba(226,224,218,.5)', lineHeight: 1.6 }}>
                         Récupérez votre clé API depuis{' '}
                         <a href="/settings/api" style={{ color: '#dc503c', textDecoration: 'none' }}>/settings/api</a>
-                        {apiKey && <span style={{ color: 'rgba(226,224,218,.3)' }}> (actuelle : <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{apiKey}</span>)</span>}
+                        {apiKey && <span style={{ color: 'rgba(226,224,218,.3)' }}> (actuelle : <span style={{ fontFamily: "'Geist Mono',monospace" }}>{apiKey}</span>)</span>}
                       </div>
                     </div>
                     <div style={STEP}>

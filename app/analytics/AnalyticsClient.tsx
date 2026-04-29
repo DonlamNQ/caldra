@@ -36,7 +36,7 @@ function PnlChart({ series }: { series: DayStats[] }) {
           <line x1={PX} y1={PY} x2={PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
           <line x1={PX} y1={H - PY} x2={W - PX} y2={H - PY} stroke={GRID} strokeWidth={1} />
           <line x1={PX} y1={yMid} x2={W - PX} y2={yMid} stroke={GRID} strokeWidth={0.5} strokeDasharray="4 6" />
-          <text x={W / 2} y={yMid + 4} textAnchor="middle" fill="rgba(226,232,240,.3)" fontSize="10" fontFamily="'JetBrains Mono',monospace">// aucune donnée</text>
+          <text x={W / 2} y={yMid + 4} textAnchor="middle" fill="rgba(226,232,240,.3)" fontSize="10" fontFamily="'Geist Mono',monospace">// aucune donnée</text>
         </svg>
       </div>
     )
@@ -75,7 +75,7 @@ function PnlChart({ series }: { series: DayStats[] }) {
         <circle cx={xOf(n-1)} cy={yOf(vals[n-1])} r={2.5} fill={LC}/>
         <circle cx={xOf(n-1)} cy={yOf(vals[n-1])} r={6} fill={LC} opacity={0.15}/>
       </svg>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(226,224,218,.2)', fontFamily: "'JetBrains Mono',monospace", marginTop: 4 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(226,224,218,.2)', fontFamily: "'Geist Mono',monospace", marginTop: 4 }}>
         <span>{series[0].date}</span><span>{series[series.length-1].date}</span>
       </div>
     </div>
@@ -120,7 +120,7 @@ export default function AnalyticsClient({ trades, alerts, userEmail }: Analytics
             ].map((s, i) => (
               <div key={i} style={{ ...CARD, padding: '1rem 1.1rem' }}>
                 <div style={{ fontSize: 8.5, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(226,224,218,.25)', marginBottom: '.5rem', fontFamily: "'DM Sans',sans-serif" }}>{s.label}</div>
-                <div style={{ fontSize: 'clamp(1rem,1.6vw,1.3rem)', fontWeight: 500, color: s.color, fontVariantNumeric: 'tabular-nums', fontFamily: "'JetBrains Mono',monospace", letterSpacing: -.5 }}>{s.value}</div>
+                <div style={{ fontSize: 'clamp(1rem,1.6vw,1.3rem)', fontWeight: 500, color: s.color, fontVariantNumeric: 'tabular-nums', fontFamily: "'Geist Mono',monospace", letterSpacing: -.5 }}>{s.value}</div>
               </div>
             ))}
           </div>
@@ -144,8 +144,8 @@ export default function AnalyticsClient({ trades, alerts, userEmail }: Analytics
                   {freq.map(({ type, count, level }) => (
                     <div key={type}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                        <span style={{ color: 'rgba(226,224,218,.4)', fontSize: 10, fontFamily: "'JetBrains Mono',monospace", textTransform: 'uppercase', letterSpacing: .5 }}>{type.replace(/_/g, ' ')}</span>
-                        <span style={{ color: DOT_COLORS[level] ?? 'rgba(226,224,218,.4)', fontSize: 10, fontWeight: 600, fontFamily: "'JetBrains Mono',monospace" }}>{count}</span>
+                        <span style={{ color: 'rgba(226,224,218,.4)', fontSize: 10, fontFamily: "'Geist Mono',monospace", textTransform: 'uppercase', letterSpacing: .5 }}>{type.replace(/_/g, ' ')}</span>
+                        <span style={{ color: DOT_COLORS[level] ?? 'rgba(226,224,218,.4)', fontSize: 10, fontWeight: 600, fontFamily: "'Geist Mono',monospace" }}>{count}</span>
                       </div>
                       <div style={{ height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2 }}>
                         <div style={{ height: '100%', width: `${(count / maxFreq) * 100}%`, background: DOT_COLORS[level] ?? 'rgba(226,224,218,.3)', borderRadius: 2, transition: 'width .5s ease' }} />
@@ -173,10 +173,10 @@ export default function AnalyticsClient({ trades, alerts, userEmail }: Analytics
                   <tbody>
                     {[...series].reverse().map(s => (
                       <tr key={s.date}>
-                        <td style={{ padding: '7px 8px', color: 'rgba(226,224,218,.4)', fontFamily: "'JetBrains Mono',monospace", borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>{s.date}</td>
+                        <td style={{ padding: '7px 8px', color: 'rgba(226,224,218,.4)', fontFamily: "'Geist Mono',monospace", borderBottom: '0.5px solid rgba(255,255,255,.04)' }}>{s.date}</td>
                         <td style={{ padding: '7px 8px', color: 'rgba(226,224,218,.4)', borderBottom: '0.5px solid rgba(255,255,255,.04)', fontVariantNumeric: 'tabular-nums' }}>{s.trades}</td>
                         <td style={{ padding: '7px 8px', color: 'rgba(226,224,218,.4)', borderBottom: '0.5px solid rgba(255,255,255,.04)', fontVariantNumeric: 'tabular-nums' }}>{s.wins}</td>
-                        <td style={{ padding: '7px 8px', color: '#e2e8f0', fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, borderBottom: '0.5px solid rgba(255,255,255,.04)', fontVariantNumeric: 'tabular-nums' }}>
+                        <td style={{ padding: '7px 8px', color: '#e2e8f0', fontFamily: "'Geist Mono',monospace", fontWeight: 600, borderBottom: '0.5px solid rgba(255,255,255,.04)', fontVariantNumeric: 'tabular-nums' }}>
                           {s.pnl >= 0 ? '+' : ''}{s.pnl.toFixed(2)}
                         </td>
                       </tr>

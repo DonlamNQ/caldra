@@ -108,7 +108,7 @@ export default function AlertsClient({ alerts, userEmail }: AlertsClientProps) {
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot, boxShadow: isOn ? `0 0 6px ${cfg.dot}66` : 'none' }} />
                     <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: isOn ? cfg.color : 'rgba(226,224,218,.28)', fontFamily: "'DM Sans',sans-serif" }}>{cfg.label}</span>
                   </div>
-                  <div style={{ fontSize: 'clamp(1.4rem,2.5vw,2rem)', fontWeight: 500, color: isOn ? cfg.color : 'rgba(226,224,218,.75)', fontVariantNumeric: 'tabular-nums', fontFamily: "'JetBrains Mono',monospace", letterSpacing: -1 }}>
+                  <div style={{ fontSize: 'clamp(1.4rem,2.5vw,2rem)', fontWeight: 500, color: isOn ? cfg.color : 'rgba(226,224,218,.75)', fontVariantNumeric: 'tabular-nums', fontFamily: "'Geist Mono',monospace", letterSpacing: -1 }}>
                     {counts[l]}
                   </div>
                 </div>
@@ -152,9 +152,9 @@ export default function AlertsClient({ alerts, userEmail }: AlertsClientProps) {
                             <span style={{ color: cfg.color, fontSize: 9, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase' }}>{cfg.label}</span>
                           </span>
                         </td>
-                        <td style={{ padding: '9px 14px', color: 'rgba(226,224,218,.32)', fontSize: 10, fontFamily: "'JetBrains Mono',monospace", borderBottom: '0.5px solid rgba(255,255,255,.04)', whiteSpace: 'nowrap' }}>{type}</td>
+                        <td style={{ padding: '9px 14px', color: 'rgba(226,224,218,.32)', fontSize: 10, fontFamily: "'Geist Mono',monospace", borderBottom: '0.5px solid rgba(255,255,255,.04)', whiteSpace: 'nowrap' }}>{type}</td>
                         <td style={{ padding: '9px 14px', color: 'rgba(226,224,218,.72)', lineHeight: 1.5, borderBottom: '0.5px solid rgba(255,255,255,.04)', maxWidth: 440 }}>{alert.message}</td>
-                        <td style={{ padding: '9px 14px', color: 'rgba(226,224,218,.25)', fontSize: 10, fontFamily: "'JetBrains Mono',monospace", borderBottom: '0.5px solid rgba(255,255,255,.04)', whiteSpace: 'nowrap' }}>{fmtDate(alert.created_at)}</td>
+                        <td style={{ padding: '9px 14px', color: 'rgba(226,224,218,.25)', fontSize: 10, fontFamily: "'Geist Mono',monospace", borderBottom: '0.5px solid rgba(255,255,255,.04)', whiteSpace: 'nowrap' }}>{fmtDate(alert.created_at)}</td>
                       </tr>
                     )
                   })}
