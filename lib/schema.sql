@@ -173,8 +173,9 @@ CREATE POLICY "service role full access" ON ctrader_connections
 CREATE POLICY "Users own their ctrader connections" ON ctrader_connections
   FOR ALL USING (auth.uid() = user_id);
 
--- Realtime : activer sur la table alerts pour le dashboard live
+-- Realtime : activer sur alerts + trades pour le dashboard live
 alter publication supabase_realtime add table alerts;
+alter publication supabase_realtime add table trades;
 
 -- ─── Migrations (exécuter si la DB existe déjà) ───────────────────────────────
 -- !! Seulement si vous avez déjà exécuté ce schéma une première fois !!

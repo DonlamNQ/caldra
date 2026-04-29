@@ -422,18 +422,13 @@ function Sidebar({ score, alerts, stats, rules, trades, paused, onTogglePause }:
 
       {/* Pause */}
       <div style={{ padding: '12px 20px', borderTop: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        {paused && (
-          <div style={{ padding: '8px 10px', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.18)`, borderRadius: 7, marginBottom: 8, fontSize: 11, color: C.o, textAlign: 'center' as const, letterSpacing: .4, fontFamily: MONO }}>
-            ⏸ Session en pause · Alertes suspendues
-          </div>
-        )}
         <button
           onClick={onTogglePause}
           style={{ width: '100%', padding: 11, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
           onMouseEnter={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.13)' : C.rd)}
           onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
         >
-          {paused ? '▶ Reprendre la session' : '⏸ Pause session'}
+          {paused ? '⏸ Alertes suspendues · Reprendre' : '⏸ Pause session'}
         </button>
       </div>
     </div>
