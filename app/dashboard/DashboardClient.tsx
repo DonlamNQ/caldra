@@ -8,7 +8,7 @@ import type { DaySession } from './page'
 
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
-  red: '#ff5a3d', rd: 'rgba(255,90,61,.1)', rb: 'rgba(255,90,61,.25)', rg: 'rgba(255,90,61,.05)',
+  red: '#7c3aed', rd: 'rgba(124,58,237,.1)', rb: 'rgba(124,58,237,.25)', rg: 'rgba(124,58,237,.05)',
   bg: '#0c0c15', sf: '#12121c', sf2: '#181826',
   b: 'rgba(255,255,255,.055)', b2: 'rgba(255,255,255,.1)', b3: 'rgba(255,255,255,.16)',
   tx: '#eae8f5', tm: 'rgba(234,232,245,.95)', td: 'rgba(234,232,245,.65)', te: 'rgba(234,232,245,.4)',
@@ -348,10 +348,10 @@ function Sidebar({ score, alerts, stats, rules, trades, paused, onTogglePause }:
               display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8,
               padding: '5px 12px', borderRadius: 99, fontSize: 10, letterSpacing: .7,
               fontFamily: MONO,
-              background: statusCls === 'ok' ? 'rgba(0,209,122,.1)' : statusCls === 'warn' ? 'rgba(255,171,0,.1)' : 'rgba(255,90,61,.12)',
+              background: statusCls === 'ok' ? 'rgba(0,209,122,.1)' : statusCls === 'warn' ? 'rgba(255,171,0,.1)' : 'rgba(124,58,237,.12)',
               border: `.5px solid ${statusCls === 'ok' ? 'rgba(0,209,122,.28)' : statusCls === 'warn' ? 'rgba(255,171,0,.3)' : C.rb}`,
               color: statusCls === 'ok' ? C.g : statusCls === 'warn' ? C.o : C.red,
-              boxShadow: `0 0 0 2px ${statusCls === 'ok' ? 'rgba(0,209,122,.06)' : statusCls === 'warn' ? 'rgba(255,171,0,.06)' : 'rgba(255,90,61,.08)'}`,
+              boxShadow: `0 0 0 2px ${statusCls === 'ok' ? 'rgba(0,209,122,.06)' : statusCls === 'warn' ? 'rgba(255,171,0,.06)' : 'rgba(124,58,237,.08)'}`,
             }}>
               <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', animation: statusCls !== 'ok' ? 'pulse 1.5s infinite' : 'none' }} />
               {statusLabel}
@@ -691,10 +691,10 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
             return (
               <div key={d} onClick={() => setSelectedDate(isSelected ? null : dateStr)} style={{
                 minHeight: 74, borderRadius: 9, border: `.5px solid ${cellBorder}`,
-                background: isSelected ? 'rgba(255,90,61,.12)' : cellBg,
+                background: isSelected ? 'rgba(124,58,237,.12)' : cellBg,
                 cursor: 'pointer', display: 'flex', flexDirection: 'column', padding: 9,
                 position: 'relative', transition: 'all .18s',
-                outline: isSelected ? '1.5px solid rgba(255,90,61,.5)' : 'none', outlineOffset: 1,
+                outline: isSelected ? '1.5px solid rgba(124,58,237,.5)' : 'none', outlineOffset: 1,
               }}>
                 {s.alertCount > 0 && <div style={{ position: 'absolute', top: 7, right: 7, width: 5, height: 5, borderRadius: '50%', background: C.red }} />}
                 <div style={{ fontSize: 11, color: C.te, fontFamily: MONO, marginBottom: 4 }}>{d}</div>
@@ -714,7 +714,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
           <span style={{ fontSize: 11, letterSpacing: .3, color: C.td, display: 'block', marginBottom: 10 }}>Détail du jour</span>
           {selectedSession ? (
             <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 16, position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(255,90,61,.3),transparent)' }} />
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.3),transparent)' }} />
               <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 10 }}>{selectedDate}</div>
               <div style={{ fontSize: 38, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: scoreColor(selectedSession.score, C) }}>{selectedSession.score}</div>
               <div style={{ fontSize: 13.5, color: C.tm, marginBottom: 12, marginTop: 4 }}>{fmtEur(selectedSession.pnl)}</div>
@@ -1290,7 +1290,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
       </div>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <RuleGroup title="Risk management" desc="Niveau 2 si seuil dépassé" accent="rgba(255,90,61,.5)">
+          <RuleGroup title="Risk management" desc="Niveau 2 si seuil dépassé" accent="rgba(124,58,237,.5)">
             <RuleField label="Taille du compte" unit="€">
               <input style={{ ...inputStyle, width: 100 }} type="number" min={100} max={10000000} step={100} value={rules.account_size ?? 10000} onChange={e => set('account_size', e.target.value)} />
             </RuleField>
@@ -1395,7 +1395,7 @@ function SentinelPanel({ stats, alerts, score, rules }: {
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', flex: 1, height: '100%', minHeight: 0 }}>
       <div style={{ padding: 26, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ flex: 1, background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: 400 }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(255,90,61,.3),transparent)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.3),transparent)' }} />
           <div style={{ paddingBottom: 14, borderBottom: `.5px solid ${C.b}`, marginBottom: 14 }}>
             <div style={{ fontSize: 14.5, fontWeight: 500, color: C.tx, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 9 }}>
               Sentinel
@@ -1729,7 +1729,7 @@ export default function DashboardClient({
         .tab-btn{padding:11px 0;font-size:11px;letter-spacing:.5px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex:1;text-align:center;font-weight:400}
         .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.02)}
         .tab-btn.active{color:${C.tx};border-bottom-color:${C.red};font-weight:500}
-        .tab-sentinel{color:rgba(255,90,61,.45)!important}
+        .tab-sentinel{color:rgba(124,58,237,.45)!important}
         .tab-sentinel.active{color:${C.red}!important;border-bottom-color:${C.red}}
         textarea,input{box-sizing:border-box}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
