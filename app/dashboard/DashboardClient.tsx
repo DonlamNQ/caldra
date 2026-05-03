@@ -309,10 +309,10 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, onReset, notifPerm, onRequestNotif, onTestNotif }: {
+function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm, onRequestNotif }: {
   score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
-  paused: boolean; onTogglePause: () => void; onReset: () => void
-  notifPerm: string; onRequestNotif: () => void; onTestNotif: () => void
+  paused: boolean; onTogglePause: () => void
+  notifPerm: string; onRequestNotif: () => void
 }) {
   const C = useContext(ThemeCtx)
   const drawdownPct = rules
@@ -437,14 +437,9 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, onReset, 
       {/* Notifications status */}
       <div style={{ padding: '12px 20px', borderTop: `.5px solid ${C.b}`, flexShrink: 0 }}>
         {notifPerm === 'granted' ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
-              <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>Notifs actives</span>
-            </div>
-            <button onClick={onTestNotif} style={{ fontSize: 10, padding: '3px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.te, cursor: 'pointer', fontFamily: MONO }}>
-              Test
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
+            <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>Notifications actives</span>
           </div>
         ) : notifPerm === 'denied' ? (
           <div>
@@ -469,8 +464,8 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, onReset, 
         )}
       </div>
 
-      {/* Pause + Reset */}
-      <div style={{ padding: '8px 20px 14px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
+      {/* Pause */}
+      <div style={{ padding: '8px 20px 14px', flexShrink: 0 }}>
         <button
           onClick={onTogglePause}
           style={{ width: '100%', padding: 10, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
@@ -478,14 +473,6 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, onReset, 
           onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
         >
           {paused ? '⏸ Alertes suspendues · Reprendre' : '⏸ Pause session'}
-        </button>
-        <button
-          onClick={onReset}
-          style={{ width: '100%', padding: 10, background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.te, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.04)'; e.currentTarget.style.color = C.td }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.te }}
-        >
-          ↺ Réinitialiser session
         </button>
       </div>
     </div>
@@ -2017,8 +2004,6 @@ export default function DashboardClient({
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [paused, setPaused] = useState(false)
   const pausedRef = useRef(false)
-  const resetTimestamp = useRef<string | null>(null)
-  const hiddenIds = useRef<Set<string>>(new Set())
   const notifDelay = useRef(0)
   const notifReset = useRef<ReturnType<typeof setTimeout> | null>(null)
   const channelRef = useRef<any>(null)
@@ -2054,13 +2039,6 @@ export default function DashboardClient({
     setPaused(p => { pausedRef.current = !p; return !p })
   }, [])
 
-  const resetSession = useCallback(() => {
-    if (!confirm('Réinitialiser la session ? Les trades et alertes affichés seront effacés (les données restent en base).')) return
-    resetTimestamp.current = new Date().toISOString()
-    setTrades(prev => { prev.forEach(t => t.id && hiddenIds.current.add(t.id)); return [] })
-    setAlerts(prev => { prev.forEach(a => a.id && hiddenIds.current.add(a.id)); return [] })
-    setStats({ total_trades: 0, total_pnl: 0, wins: 0, losses: 0 })
-  }, [])
   const today = new Date().toISOString().split('T')[0]
 
   const dismissToast = useCallback((id: string) => {
@@ -2095,7 +2073,6 @@ export default function DashboardClient({
         if (pausedRef.current) return
         const a = payload.new as AlertRow & { session_date?: string; user_id?: string }
         if (a.session_date && a.session_date !== today) return
-        if (hiddenIds.current.has(a.id)) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
         showPushNotif(
@@ -2107,7 +2084,6 @@ export default function DashboardClient({
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         if (pausedRef.current) return
         const t = payload.new as TradeRow & { user_id?: string }
-        if (hiddenIds.current.has(t.id)) return
         setTrades(prev => [t, ...prev])
         setStats(prev => ({
           total_trades: prev.total_trades + 1,
@@ -2143,9 +2119,9 @@ export default function DashboardClient({
       supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false }),
       supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', `${today}T00:00:00`).order('entry_time', { ascending: false }),
     ])
-    if (aRes.data) setAlerts(aRes.data.filter((a: AlertRow) => !hiddenIds.current.has(a.id)))
+    if (aRes.data) setAlerts(aRes.data)
     if (tRes.data) {
-      const visible = tRes.data.filter((t: TradeRow) => !hiddenIds.current.has(t.id))
+      const visible = tRes.data
       setTrades(visible)
       const pnl = visible.reduce((s: number, t: TradeRow) => s + (t.pnl ?? 0), 0)
       const wins = visible.filter((t: TradeRow) => (t.pnl ?? 0) > 0).length
@@ -2178,11 +2154,6 @@ export default function DashboardClient({
     if (perm === 'granted') {
       showPushNotif('Caldra — Notifications activées ✓', 'Vous recevrez les alertes comportementales en temps réel.', 'caldra-welcome')
     }
-  }
-
-  function testNotification() {
-    if (Notification.permission !== 'granted') { requestNotifPermission(); return }
-    showPushNotif('Caldra — Alerte TEST', 'L2 revenge_sizing — Sizing ×2.3 après une perte.', 'caldra-test')
   }
 
   async function triggerInstall() {
@@ -2364,7 +2335,7 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '20% 1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
-          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} onReset={resetSession} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} onTestNotif={testNotification} />
+          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} />
 
           <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
