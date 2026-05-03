@@ -1030,10 +1030,31 @@ function RapportsPanel() {
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
 function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: string | null; initialWebhook: string | null }) {
   const C = useContext(ThemeCtx)
-  const hasKey = !!apiKeyPrefix
+  const [prefix, setPrefix]     = useState(apiKeyPrefix)
+  const [newKey, setNewKey]     = useState<string|null>(null)
+  const [keyCopied, setKeyCopied] = useState(false)
+  const [keyLoading, setKeyLoading] = useState(false)
+  const [keyConfirm, setKeyConfirm] = useState(false)
+  const hasKey = !!prefix
   const [copied, setCopied] = useState(false)
   const [webhookUrl, setWebhookUrl] = useState(initialWebhook ?? '')
   const [webhookSave, setWebhookSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  async function genKey() {
+    setKeyLoading(true); setNewKey(null); setKeyConfirm(false)
+    const d = await fetch('/api/api-key', { method: 'POST' }).then(r => r.json())
+    setNewKey(d.key); setPrefix(d.key_prefix); setKeyLoading(false)
+  }
+  async function revokeKey() {
+    setKeyLoading(true)
+    await fetch('/api/api-key', { method: 'DELETE' })
+    setPrefix(null); setNewKey(null); setKeyLoading(false)
+  }
+  async function copyKey() {
+    if (!newKey) return
+    await navigator.clipboard.writeText(newKey)
+    setKeyCopied(true); setTimeout(() => setKeyCopied(false), 2000)
+  }
 
   async function saveWebhook() {
     if (webhookSave === 'saving') return
@@ -1086,6 +1107,63 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
         <div style={{ fontSize: 12.5, color: C.td }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
       </div>
 
+      {/* ── Clé API ── */}
+      <IntCard style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.red, marginBottom: 4 }}>Authentification</div>
+            <div style={{ fontSize: 15, fontWeight: 500, color: C.tx }}>Clé API</div>
+            <div style={{ fontSize: 11, color: C.td, marginTop: 2 }}>Requise pour envoyer des trades depuis ta plateforme.</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)' }} />
+            <span style={{ fontSize: 10, color: hasKey ? C.g : C.td, letterSpacing: .5 }}>{hasKey ? 'ACTIVE' : 'INACTIVE'}</span>
+          </div>
+        </div>
+
+        {prefix ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 7, padding: '10px 14px', marginBottom: 12 }}>
+            <code style={{ color: C.tm, fontSize: 12, fontFamily: MONO }}>
+              {prefix}<span style={{ opacity: .3 }}>{'•'.repeat(18)}</span>
+            </code>
+            <div style={{ display: 'flex', gap: 7, flexShrink: 0 }}>
+              {keyConfirm ? (
+                <>
+                  <button onClick={() => setKeyConfirm(false)} style={{ fontSize: 9, padding: '5px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.td, cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Annuler</button>
+                  <button onClick={genKey} disabled={keyLoading} style={{ fontSize: 9, padding: '5px 10px', background: 'rgba(244,63,94,.07)', border: '.5px solid rgba(244,63,94,.22)', borderRadius: 5, color: 'rgba(244,63,94,.75)', cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Confirmer</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={revokeKey} disabled={keyLoading} style={{ fontSize: 9, padding: '5px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.td, cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Révoquer</button>
+                  <button onClick={() => setKeyConfirm(true)} style={{ fontSize: 9, padding: '5px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.td, cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Regénérer</button>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 12.5, color: C.te }}>Aucune clé active</span>
+            <button onClick={genKey} disabled={keyLoading} style={{ padding: '7px 16px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5 }}>{keyLoading ? 'Génération…' : 'Générer une clé'}</button>
+          </div>
+        )}
+
+        {newKey && (
+          <div style={{ background: 'rgba(16,185,129,.05)', border: '.5px solid rgba(16,185,129,.18)', borderRadius: 7, padding: '10px 14px', marginBottom: 4 }}>
+            <div style={{ color: 'rgba(16,185,129,.75)', fontSize: 11, marginBottom: 8, fontFamily: SANS }}>⚠ Copiez maintenant — ne sera plus visible.</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <code style={{ flex: 1, color: 'rgba(134,239,172,.85)', fontSize: 11, fontFamily: MONO, wordBreak: 'break-all' as const, background: 'rgba(16,185,129,.04)', padding: '7px 10px', borderRadius: 5, border: '.5px solid rgba(16,185,129,.14)' }}>{newKey}</code>
+              <button onClick={copyKey} style={{ padding: '7px 12px', background: 'rgba(16,185,129,.09)', border: '.5px solid rgba(16,185,129,.22)', borderRadius: 5, color: 'rgba(16,185,129,.8)', fontSize: 9, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, flexShrink: 0 }}>{keyCopied ? '✓ Copié' : 'Copier'}</button>
+            </div>
+          </div>
+        )}
+
+        <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '8px 12px', marginTop: newKey ? 10 : 0 }}>
+          <code style={{ fontSize: 10, fontFamily: MONO, color: C.te }}>
+            x-caldra-key: <span style={{ color: 'rgba(56,189,248,.55)' }}>{prefix ? `${prefix}••••` : 'cal_votre_clé'}</span>
+          </code>
+        </div>
+      </IntCard>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
 
         {/* Colonne gauche : cTrader OAuth + CaldraBot */}
@@ -1106,10 +1184,7 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
             </div>
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 10.5, color: C.td, marginBottom: 4 }}>Clé API configurée</div>
-              <div style={{ fontSize: 15, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{hasKey ? `${apiKeyPrefix}…` : '—'}</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <IntBtn primary href="/settings/api">{hasKey ? 'Gérer la clé' : 'Générer une clé'}</IntBtn>
+              <div style={{ fontSize: 15, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{hasKey ? `${prefix}…` : '—'}</div>
             </div>
           </IntCard>
 
@@ -1131,7 +1206,7 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
               {[
                 ['1', <>Téléchargez <span style={{ fontFamily: MONO, color: C.tm, fontWeight: 500 }}>CaldraBot.algo</span> ci-dessous et ouvrez-le via <span style={{ color: C.tm }}>Automate → Open</span>.</>],
-                ['2', <>Récupérez votre clé API depuis <span style={{ fontFamily: MONO, color: C.red }}>/settings/api</span>.</>],
+                ['2', <>Copiez votre clé API depuis la section <span style={{ fontFamily: MONO, color: C.red }}>Clé API</span> ci-dessus.</>],
                 ['3', <>Démarrez le cBot et collez votre clé dans le paramètre <span style={{ color: C.tm }}>Caldra API Key</span>.</>],
                 ['4', 'Chaque position fermée sera automatiquement analysée dans votre dashboard.'],
               ].map(([n, t]) => (
@@ -1167,9 +1242,6 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
             <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.6, marginBottom: 18 }}>
               Utilisez l'EA Caldra pour envoyer vos trades MT5 automatiquement via la clé API.
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <IntBtn href="/settings/api">Configurer la clé API →</IntBtn>
-            </div>
           </IntCard>
 
           {/* API directe */}
@@ -1187,9 +1259,8 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
             </div>
             <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '9px 13px', fontSize: 10, fontFamily: MONO, color: C.td, marginBottom: 14 }}>
               <div style={{ color: C.te, marginBottom: 3 }}>POST https://getcaldra.com/api/ingest</div>
-              <div>Header: x-caldra-key: {hasKey ? `${apiKeyPrefix}…` : '<votre-clé>'}</div>
+              <div>Header: x-caldra-key: {hasKey ? `${prefix}…` : '<votre-clé>'}</div>
             </div>
-            <IntBtn href="/settings/api">Gérer les clés API →</IntBtn>
           </IntCard>
 
           {/* Slack / Discord webhook */}
