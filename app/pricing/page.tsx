@@ -1,4 +1,4 @@
-const PLANS = [
+﻿const PLANS = [
   {
     name: 'Free',
     price: 0,
@@ -17,7 +17,7 @@ const PLANS = [
   },
   {
     name: 'Pro',
-    price: 29,
+    price: 19,
     period: '/ mois',
     description: 'Pour les traders sérieux',
     features: [
@@ -35,7 +35,7 @@ const PLANS = [
   },
   {
     name: 'Team',
-    price: 99,
+    price: 39,
     period: '/ mois',
     description: 'Pour les prop firms et coaches',
     features: [
