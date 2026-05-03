@@ -50,21 +50,26 @@ caldra/
 │   │   ├── rules/
 │   │   │   ├── page.tsx              # Server Component — charge trading_rules
 │   │   │   └── RulesForm.tsx         # Formulaire règles (Client Component)
-│   │   └── api/
-│   │       ├── page.tsx              # Server Component — charge api_keys
-│   │       └── ApiKeyClient.tsx      # Génération/révocation clé API + snippet curl
+│   │   ├── api/
+│   │   │   ├── page.tsx              # Server Component — charge api_keys
+│   │   │   └── ApiKeyClient.tsx      # Génération/révocation clé API + snippet curl
+│   │   └── integrations/
+│   │       ├── page.tsx              # Server Component — intégrations tierces
+│   │       └── CTraderClient.tsx     # Config webhook Slack/Discord + connexion cTrader
 │   └── api/
 │       ├── ingest/route.ts           # POST — ingest trades via x-caldra-key
 │       ├── rules/route.ts            # GET/PUT — trading_rules
 │       ├── session/route.ts          # GET — session stats du jour
 │       ├── api-key/route.ts          # GET/POST/DELETE — gestion clés API
+│       ├── sentinel/route.ts         # POST — débrief IA Sentinel (Anthropic)
 │       ├── detect/route.js           # POST — ancien endpoint (legacy, garder)
 │       └── billing/
 │           ├── checkout/route.ts     # POST — crée Stripe Checkout Session
 │           ├── portal/route.ts       # POST — lien Stripe Customer Portal
 │           └── webhook/route.ts      # POST — Stripe webhook (update plan)
 ├── components/
-│   ├── AppHeader.tsx                 # Header nav partagé (dashboard, alerts, analytics…)
+│   ├── AppShell.tsx                  # Layout sidebar partagé (toutes les pages authentifiées)
+│   ├── AppHeader.tsx                 # Header legacy (encore utilisé dans dashboard/alerts/analytics)
 │   ├── AlertPanel.jsx                # (legacy)
 │   └── dashboard/
 │       ├── ScoreRing.tsx             # SVG ring score 0-100
@@ -283,7 +288,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 
 ---
 
-## État du projet (2026-04-08)
+## État du projet (2026-05-03)
 
 ### ✅ Terminé
 - Auth complète (login/signup Server Actions, middleware, callback, onboarding)
@@ -293,7 +298,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - 6 détecteurs comportementaux dans `lib/engine.ts`
 - Analytics (PnL chart SVG, alertes par type, performance par jour)
 - Alertes (historique, filtres, search, export CSV)
-- Settings (règles trading, clé API)
+- Settings (règles trading, clé API, intégrations)
 - Billing (Stripe checkout + portal + webhook)
 - Toutes les pages — TypeScript 0 erreur
 
@@ -313,6 +318,16 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - PnL affiché en `#e2e8f0` (neutre) **partout dans le dashboard** — jamais rouge ou vert. Règle anti-biais cognitif appliquée dans : SessionPanel, J-1 bar, trade feed, footer stats, AnalyticsPanel, graphique cumulé analytics, SentinelPanel.
 - Page de connexion (`app/login/page.tsx`) : redesign complet cohérent avec la landing — fond `#08080d`, card `#0d0d1a`, logo CALDRA style header, bouton `#dc503c`, DM Sans, lien inscription en bas.
 
+### ✅ Sprint mai 2026 (03/05/2026)
+- **AppShell** (`components/AppShell.tsx`) : layout sidebar partagé remplaçant AppHeader sur rules/api/integrations/billing — nav verticale avec icônes SVG, logout intégré
+- **SessionLine** : composant rAF animé dans le dashboard (wave idle, couleur PnL via DOM setAttribute, LL_STATES machine d'états)
+- **Geist fonts** (Sans + Mono) via CSS variable — `next.config.js` avec `transpilePackages: ['geist']` requis
+- **Onboarding rewrite** : wizard 4 étapes on-brand + mode preview `?preview=1`
+- **account_size configurable** dans `trading_rules` (plus hardcodé à 10 000)
+- **Intégrations** (`settings/integrations`) : webhook Slack/Discord sortant + connexion cTrader
+- **Sentinel debrief** (`/api/sentinel`) : endpoint POST → analyse IA Anthropic de la session
+- **Brevo email** : envoi email via API Brevo (waitlist + notifications)
+
 ### 🎨 Conventions visuelles à respecter
 - **PnL = toujours `#e2e8f0`** dans le dashboard (jamais C.g/C.red) — anti-biais cognitif
 - **Logo** : CALDRA `letterSpacing: 8`, SESSION `letterSpacing: 3`, fontSize 7
@@ -329,8 +344,6 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Créer produits Stripe + webhook → remplir `.env.local` et Vercel env vars
 
 ### 🔜 Prochaines features possibles
-- Alertes Slack / Webhook sortant
 - Export PDF rapport hebdomadaire
 - Dashboard consolidé Team (multi-traders)
-- IA coaching via Anthropic pour les alertes level 3
-- `account_size` configurable dans `trading_rules` (actuellement hardcodé à 10 000)
+- IA coaching Anthropic étendu (alertes level 2 + coaching proactif)
