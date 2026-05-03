@@ -1866,15 +1866,18 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
 
 // ── Main component ─────────────────────────────────────────────────────────────
 const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
-  { id: 'session',       label: 'Session live' },
-  { id: 'calendrier',   label: 'Calendrier' },
-  { id: 'analytics',    label: 'Analytics' },
-  { id: 'rapports',     label: 'Rapports' },
-  { id: 'integrations', label: 'Intégrations' },
-  { id: 'regles',       label: 'Règles' },
-  { id: 'billing',      label: 'Billing' },
-  { id: 'profil',       label: 'Profil' },
-  { id: 'sentinel',     label: 'Sentinel IA', sentinel: true },
+  { id: 'session',     label: 'Session live' },
+  { id: 'calendrier', label: 'Calendrier' },
+  { id: 'analytics',  label: 'Analytics' },
+  { id: 'rapports',   label: 'Rapports' },
+  { id: 'sentinel',   label: 'Sentinel IA', sentinel: true },
+]
+
+const SETTINGS_ITEMS = [
+  { id: 'regles',        label: 'Règles' },
+  { id: 'integrations',  label: 'Intégrations' },
+  { id: 'billing',       label: 'Billing' },
+  { id: 'profil',        label: 'Profil' },
 ]
 
 type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'sentinel'
@@ -1894,6 +1897,8 @@ export default function DashboardClient({
   }
 
   const [activeTab, setActiveTab] = useState<TabId>('session')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsRef = useRef<HTMLDivElement>(null)
   const [alerts, setAlerts] = useState<AlertRow[]>(initialAlerts)
   const [trades, setTrades] = useState<TradeRow[]>(initialTrades)
   const [stats, setStats] = useState<SessionStats>(initialStats)
@@ -1905,6 +1910,20 @@ export default function DashboardClient({
   const pausedRef = useRef(false)
   const channelRef = useRef<any>(null)
   const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  const initials = userMeta.first_name
+    ? `${userMeta.first_name[0]}${userMeta.last_name?.[0] ?? ''}`.toUpperCase()
+    : userEmail.slice(0, 2).toUpperCase()
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   const togglePause = useCallback(() => {
     setPaused(p => { pausedRef.current = !p; return !p })
@@ -2120,12 +2139,75 @@ export default function DashboardClient({
             <button
               key={tab.id}
               className={`tab-btn${tab.sentinel ? ' tab-sentinel' : ''}${activeTab === tab.id ? ' active' : ''}`}
-              onClick={() => setActiveTab(tab.id as TabId)}
+              onClick={() => { setActiveTab(tab.id as TabId); setSettingsOpen(false) }}
             >
               {tab.label}
               {tab.sentinel && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: C.red, marginLeft: 5, verticalAlign: 'middle', animation: 'pulse 2s infinite' }} />}
             </button>
           ))}
+
+          {/* ── Avatar / settings ── */}
+          <div ref={settingsRef} style={{ position: 'relative', marginLeft: 'auto', padding: '0 14px', flexShrink: 0 }}>
+            <button
+              onClick={() => setSettingsOpen(o => !o)}
+              style={{
+                width: 30, height: 30, borderRadius: '50%',
+                background: settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) ? C.rd : C.sf2,
+                border: `.5px solid ${settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) ? C.rb : C.b}`,
+                color: settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) ? C.red : C.tm,
+                fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: MONO,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0,
+                transition: 'all .15s',
+              }}
+            >
+              {initials}
+            </button>
+            {settingsOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 200,
+                background: C.sf, border: `.5px solid ${C.b2}`, borderRadius: 10,
+                padding: 5, minWidth: 160,
+                boxShadow: '0 8px 32px rgba(0,0,0,.35)',
+              }}>
+                <div style={{ padding: '6px 10px 5px', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: C.te }}>Paramètres</div>
+                {SETTINGS_ITEMS.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id as TabId); setSettingsOpen(false) }}
+                    style={{
+                      display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left',
+                      background: activeTab === item.id ? C.rd : 'transparent',
+                      border: 'none', borderRadius: 7,
+                      color: activeTab === item.id ? C.red : C.tm,
+                      fontSize: 12.5, fontFamily: SANS, cursor: 'pointer',
+                      transition: 'background .12s',
+                    }}
+                    onMouseEnter={e => { if (activeTab !== item.id) e.currentTarget.style.background = C.b }}
+                    onMouseLeave={e => { if (activeTab !== item.id) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+                <div style={{ margin: '5px 10px', borderTop: `.5px solid ${C.b}` }} />
+                <button
+                  onClick={async () => {
+                    const { createClient } = await import('@/lib/supabase/client')
+                    await createClient().auth.signOut()
+                    window.location.href = '/login'
+                  }}
+                  style={{
+                    display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left',
+                    background: 'transparent', border: 'none', borderRadius: 7,
+                    color: 'rgba(244,63,94,.6)', fontSize: 12.5, fontFamily: SANS, cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,.06)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  Déconnexion
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Main layout ── */}
