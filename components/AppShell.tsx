@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -43,7 +43,7 @@ const NAV = [
 
 const PLAN_LABELS: Record<string, { label: string; color: string }> = {
   pro:      { label: 'PRO',      color: 'rgba(234,232,245,.5)' },
-  sentinel: { label: 'SENTINEL', color: '#dc503c' },
+  sentinel: { label: 'SENTINEL', color: '#7c3aed' },
 }
 
 export default function AppShell({ current, userEmail, children, topBar, plan }: AppShellProps) {
@@ -72,7 +72,7 @@ export default function AppShell({ current, userEmail, children, topBar, plan }:
           border-left:2px solid transparent;
         }
         .sh-nav-item:hover{color:rgba(234,232,245,.65);background:rgba(255,255,255,.03);border-left-color:rgba(255,255,255,.12)}
-        .sh-nav-active{color:#eae8f5!important;background:rgba(220,80,60,.07)!important;border-left-color:#dc503c!important}
+        .sh-nav-active{color:#eae8f5!important;background:rgba(124,58,237,.07)!important;border-left-color:#7c3aed!important}
         .sh-signout{
           display:flex;align-items:center;gap:8px;padding:7px 12px;
           color:rgba(234,232,245,.22);font-size:11px;
@@ -98,12 +98,12 @@ export default function AppShell({ current, userEmail, children, topBar, plan }:
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
               <div style={{
                 width: 26, height: 26, borderRadius: 6,
-                background: 'rgba(220,80,60,.12)',
-                border: '0.5px solid rgba(220,80,60,.3)',
+                background: 'rgba(124,58,237,.12)',
+                border: '0.5px solid rgba(124,58,237,.3)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: '#dc503c' }} />
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: '#7c3aed' }} />
               </div>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: '#eae8f5', letterSpacing: 6, textTransform: 'uppercase', fontFamily: 'var(--font-geist-mono),monospace' }}>CALDRA</div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -139,7 +139,7 @@ function MetricBar({ label, value }: { label: string; value: number }) {
 const DAILY_RISK = 300
 
 function llColor(pnl: number): string {
-  if (pnl < 0) return '#dc503c'
+  if (pnl < 0) return '#7c3aed'
   if (pnl >= DAILY_RISK) return '#3cc87a'
   return 'rgba(200,197,192,0.5)'
 }
@@ -1785,9 +1785,9 @@ export default function DashboardClient({
               <button
                 onClick={triggerInstall}
                 title="Installer Caldra comme application"
-                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.red, fontFamily: MONO, background: 'rgba(220,80,60,.06)', border: `.5px solid rgba(220,80,60,.2)`, padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,80,60,.1)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(220,80,60,.06)' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.red, fontFamily: MONO, background: 'rgba(124,58,237,.06)', border: `.5px solid rgba(124,58,237,.2)`, padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,.1)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(124,58,237,.06)' }}
               >
                 <span style={{ fontSize: 11 }}>⬇</span> installer
               </button>

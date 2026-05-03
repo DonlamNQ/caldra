@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -38,9 +38,9 @@ export default function LoginPage() {
         *{box-sizing:border-box;margin:0;padding:0}
         .lg-input{background:rgba(255,255,255,.04);border:0.5px solid #1e1e35;border-radius:8px;padding:14px 16px;color:#e2e8f0;font-size:14px;font-family:'DM Sans',sans-serif;width:100%;outline:none;transition:border-color .2s}
         .lg-input::placeholder{color:rgba(226,232,240,.2)}
-        .lg-input:focus{border-color:rgba(220,80,60,.5)!important}
-        .lg-btn{background:#dc503c;color:#fff;border:none;border-radius:8px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;transition:background .2s;letter-spacing:.2px}
-        .lg-btn:hover{background:#c94535}
+        .lg-input:focus{border-color:rgba(124,58,237,.5)!important}
+        .lg-btn{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;transition:background .2s;letter-spacing:.2px}
+        .lg-btn:hover{background:#6d28d9}
         .lg-btn:disabled{opacity:.55;cursor:not-allowed}
         .lg-signup-link{color:rgba(226,232,240,.4);text-decoration:none;transition:color .2s}
         .lg-signup-link:hover{color:rgba(226,232,240,.75)}
@@ -61,7 +61,7 @@ export default function LoginPage() {
         <div style={{
           position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%,-50%)',
           width: 700, height: 700, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(220,80,60,.05) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(124,58,237,.05) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
@@ -82,7 +82,7 @@ export default function LoginPage() {
               textTransform: 'uppercase', color: '#e2e8f0', lineHeight: 1,
               marginBottom: 10,
             }}>
-              Cald<span style={{ color: '#dc503c' }}>ra</span>
+              Cald<span style={{ color: '#7c3aed' }}>ra</span>
             </div>
             <div style={{
               fontSize: 13, fontStyle: 'italic', color: '#475569', fontWeight: 300, lineHeight: 1.5,
@@ -101,7 +101,7 @@ export default function LoginPage() {
             overflow: 'hidden',
           }}>
             {/* Top accent */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(220,80,60,.4),transparent)' }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.4),transparent)' }} />
 
             {sent ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -129,9 +129,9 @@ export default function LoginPage() {
 
                   {error && (
                     <div style={{
-                      color: '#dc503c', fontSize: 12,
-                      background: 'rgba(220,80,60,.07)',
-                      border: '0.5px solid rgba(220,80,60,.2)',
+                      color: '#7c3aed', fontSize: 12,
+                      background: 'rgba(124,58,237,.07)',
+                      border: '0.5px solid rgba(124,58,237,.2)',
                       borderRadius: 6, padding: '9px 12px',
                     }}>
                       {error}

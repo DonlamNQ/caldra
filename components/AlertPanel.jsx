@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
@@ -23,10 +23,10 @@ const SEVERITY_CONFIG = {
   },
   3: {
     label: 'CRITICAL',
-    color: '#dc503c',
+    color: '#7c3aed',
     bg: 'rgba(220, 80, 60, 0.10)',
     border: 'rgba(220, 80, 60, 0.40)',
-    dot: '#dc503c',
+    dot: '#7c3aed',
   },
 };
 
@@ -56,7 +56,7 @@ function scoreColor(score) {
   if (score >= 75) return '#4ade80'; // green
   if (score >= 45) return '#f0c040'; // yellow
   if (score >= 20) return '#e07820'; // orange
-  return '#dc503c';                  // red
+  return '#7c3aed';                  // red
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -207,7 +207,7 @@ export default function AlertPanel({ sessionId, onSessionStop }) {
         {/* ── Status bar ── */}
         <div style={styles.statusBar}>
           {sessionStopped ? (
-            <span style={{ color: '#dc503c', fontWeight: 600 }}>● Session stopped</span>
+            <span style={{ color: '#7c3aed', fontWeight: 600 }}>● Session stopped</span>
           ) : error ? (
             <span style={{ color: '#e07820' }}>⚠ {error}</span>
           ) : (
@@ -347,12 +347,12 @@ const styles = {
   },
   criticalIcon: {
     fontSize: 16,
-    color: '#dc503c',
+    color: '#7c3aed',
   },
   criticalTitle: {
     fontWeight: 600,
     fontSize: 14,
-    color: '#dc503c',
+    color: '#7c3aed',
     letterSpacing: '-0.2px',
   },
   criticalAiMessage: {
@@ -363,7 +363,7 @@ const styles = {
   },
   stopButton: {
     alignSelf: 'flex-start',
-    background: '#dc503c',
+    background: '#7c3aed',
     color: '#fff',
     border: 'none',
     borderRadius: 6,

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import AppShell from '@/components/AppShell'
@@ -35,13 +35,13 @@ const STEP_NUM: React.CSSProperties = {
   width: 22,
   height: 22,
   borderRadius: '50%',
-  background: 'rgba(220,80,60,.12)',
-  border: '0.5px solid rgba(220,80,60,.3)',
+  background: 'rgba(124,58,237,.12)',
+  border: '0.5px solid rgba(124,58,237,.3)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   fontSize: 10,
-  color: '#dc503c',
+  color: '#7c3aed',
   flexShrink: 0,
   fontFamily: "'DM Sans',sans-serif",
   fontWeight: 600,
@@ -98,8 +98,8 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
         .ig-btn{font-size:9px;padding:7px 14px;background:transparent;border:0.5px solid rgba(255,255,255,.1);border-radius:5px;color:rgba(226,224,218,.4);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
         .ig-btn:hover{background:rgba(255,255,255,.04);color:rgba(226,224,218,.7)}
         .ig-btn:disabled{opacity:.35;cursor:not-allowed}
-        .ig-primary{background:rgba(220,80,60,.85)!important;border-color:transparent!important;color:#fff!important}
-        .ig-primary:hover{background:rgba(220,80,60,.7)!important}
+        .ig-primary{background:rgba(124,58,237,.85)!important;border-color:transparent!important;color:#fff!important}
+        .ig-primary:hover{background:rgba(124,58,237,.7)!important}
         .ig-danger{border-color:rgba(244,63,94,.22)!important;color:rgba(244,63,94,.55)!important}
         .ig-danger:hover{background:rgba(244,63,94,.06)!important;color:rgba(244,63,94,.8)!important}
         .ig-green{border-color:rgba(34,197,94,.22)!important;color:rgba(34,197,94,.7)!important}
@@ -110,7 +110,7 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
 
           {/* Header */}
           <div style={{ marginBottom: '1.75rem' }}>
-            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(220,80,60,.55)', marginBottom: '.4rem' }}>Connecteurs</div>
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(124,58,237,.55)', marginBottom: '.4rem' }}>Connecteurs</div>
             <h1 style={{ margin: 0, fontWeight: 400, fontSize: '1.6rem', letterSpacing: -.5, color: '#fff', marginBottom: '.4rem' }}>Intégrations</h1>
             <p style={{ margin: 0, color: 'rgba(226,224,218,.3)', fontSize: 13 }}>
               Connectez vos plateformes de trading — les trades seront analysés automatiquement.
@@ -121,8 +121,8 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
           {banner && (
             <div style={{
               marginBottom: '1.5rem', padding: '11px 15px', borderRadius: 7, fontSize: 12,
-              background: banner.type === 'error' ? 'rgba(220,80,60,.08)' : 'rgba(16,185,129,.06)',
-              border: `0.5px solid ${banner.type === 'error' ? 'rgba(220,80,60,.3)' : 'rgba(16,185,129,.22)'}`,
+              background: banner.type === 'error' ? 'rgba(124,58,237,.08)' : 'rgba(16,185,129,.06)',
+              border: `0.5px solid ${banner.type === 'error' ? 'rgba(124,58,237,.3)' : 'rgba(16,185,129,.22)'}`,
               color: banner.type === 'error' ? '#f87171' : '#4ade80',
             }}>
               {banner.msg}
@@ -141,9 +141,9 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{
                         width: 34, height: 34, borderRadius: 7, flexShrink: 0,
-                        background: 'rgba(220,80,60,.1)', border: '0.5px solid rgba(220,80,60,.25)',
+                        background: 'rgba(124,58,237,.1)', border: '0.5px solid rgba(124,58,237,.25)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 11, fontWeight: 700, color: '#dc503c',
+                        fontSize: 11, fontWeight: 700, color: '#7c3aed',
                       }}>CT</div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>cTrader</div>
@@ -231,7 +231,7 @@ export default function CTraderClient({ userEmail, initialStatus, searchParams }
                       <div style={STEP_NUM}>2</div>
                       <div style={{ fontSize: 12, color: 'rgba(226,224,218,.5)', lineHeight: 1.6 }}>
                         Récupérez votre clé API depuis{' '}
-                        <a href="/settings/api" style={{ color: '#dc503c', textDecoration: 'none' }}>/settings/api</a>
+                        <a href="/settings/api" style={{ color: '#7c3aed', textDecoration: 'none' }}>/settings/api</a>
                         {apiKey && <span style={{ color: 'rgba(226,224,218,.3)' }}> (actuelle : <span style={{ fontFamily: "var(--font-geist-mono),monospace" }}>{apiKey}</span>)</span>}
                       </div>
                     </div>

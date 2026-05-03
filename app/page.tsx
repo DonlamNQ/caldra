@@ -1,14 +1,14 @@
-'use client'
+﻿'use client'
 
 import { useEffect } from 'react'
 
 const CSS = `
 *{margin:0;padding:0;box-sizing:border-box;scroll-behavior:smooth}
-:root{--red:#dc503c;--rd:rgba(220,80,60,.1);--rb:rgba(220,80,60,.25);--bg:#08080d;--sf:#0f0f16;--sf2:#141420;--b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);--tx:#e8e6e0;--tm:rgba(232,230,224,.45);--td:rgba(232,230,224,.2)}
+:root{--red:#7c3aed;--rd:rgba(124,58,237,.1);--rb:rgba(124,58,237,.25);--bg:#08080d;--sf:#0f0f16;--sf2:#141420;--b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);--tx:#e8e6e0;--tm:rgba(232,230,224,.45);--td:rgba(232,230,224,.2)}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
 #net{position:fixed;inset:0;z-index:0;pointer-events:none}
-.g1{position:fixed;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(220,80,60,.07) 0%,transparent 65%);top:-250px;left:50%;transform:translateX(-50%);pointer-events:none;z-index:0}
-.g2{position:fixed;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(180,50,220,.04) 0%,transparent 65%);bottom:20%;right:-100px;pointer-events:none;z-index:0}
+.g1{position:fixed;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.07) 0%,transparent 65%);top:-250px;left:50%;transform:translateX(-50%);pointer-events:none;z-index:0}
+.g2{position:fixed;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.04) 0%,transparent 65%);bottom:20%;right:-100px;pointer-events:none;z-index:0}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.25rem 3rem;border-bottom:.5px solid var(--b);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(8,8,13,.88)}
 .logo-block{display:flex;flex-direction:column;gap:5px}
 .logo{font-family:'DM Sans',sans-serif;font-weight:300;font-size:14px;letter-spacing:5px;text-transform:uppercase;color:#fff;line-height:1}
@@ -35,7 +35,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .story-title{font-size:14px;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:.35rem}
 .story-desc{font-size:13px;color:var(--tm);line-height:1.65}
 .story-card{background:var(--sf);border:.5px solid var(--b2);border-radius:16px;padding:2.5rem;position:relative;overflow:hidden}
-.story-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(220,80,60,.4),transparent)}
+.story-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),transparent)}
 .story-quote{font-size:24px;font-weight:200;color:#fff;letter-spacing:-.5px;line-height:1.3;margin-bottom:2rem;font-style:italic}
 .story-quote em{color:var(--red);font-style:normal}
 .story-sig{display:flex;align-items:center;gap:12px;border-top:.5px solid var(--b);padding-top:1.25rem;margin-bottom:1.5rem}
@@ -48,7 +48,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .story-stat-n span{color:var(--red)}
 .story-stat-l{font-size:11px;color:var(--td);margin-top:2px}
 .hero{position:relative;z-index:1;text-align:center;padding:10rem 2rem 4rem;max-width:860px;margin:0 auto}
-.ey{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(220,80,60,.75);margin-bottom:2.25rem;padding:5px 14px;border:.5px solid var(--rb);border-radius:100px;background:var(--rd)}
+.ey{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(124,58,237,.75);margin-bottom:2.25rem;padding:5px 14px;border:.5px solid var(--rb);border-radius:100px;background:var(--rd)}
 .eyd{width:5px;height:5px;border-radius:50%;background:var(--red);animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 h1{font-family:'DM Sans',sans-serif;font-size:clamp(2.8rem,6.5vw,4.8rem);font-weight:200;line-height:1.06;letter-spacing:-2px;color:#fff;margin-bottom:1.5rem}
@@ -78,7 +78,7 @@ h1 em{font-style:normal;color:var(--red);font-weight:400}
 .sna{color:var(--red)}
 .sl{font-size:12px;color:var(--td);margin-top:5px}
 section{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:5rem 2rem}
-.stag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(220,80,60,.6);margin-bottom:1rem}
+.stag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(124,58,237,.6);margin-bottom:1rem}
 .stit{font-family:'DM Sans',sans-serif;font-size:clamp(1.9rem,4vw,2.9rem);font-weight:200;letter-spacing:-1px;color:#fff;margin-bottom:1rem;line-height:1.1}
 .sdesc{font-size:15px;color:var(--tm);line-height:1.75;max-width:520px;margin-bottom:3rem;font-weight:300}
 .sdiv{width:100%;max-width:940px;margin:0 auto;height:.5px;background:var(--b)}
@@ -148,11 +148,11 @@ section{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:5rem 2
 .step-tl{display:grid;grid-template-columns:56px 1fr;gap:0 2rem;position:relative;padding-bottom:3.5rem}
 .step-tl:last-child{padding-bottom:0}
 .step-tl-left{display:flex;flex-direction:column;align-items:center;gap:0}
-.step-tl-num{width:40px;height:40px;border-radius:50%;border:.5px solid rgba(220,80,60,.3);background:rgba(220,80,60,.06);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--red);flex-shrink:0;position:relative;z-index:1}
-.step-tl-line{width:.5px;flex:1;background:linear-gradient(to bottom,rgba(220,80,60,.2),rgba(220,80,60,.04));margin-top:8px}
+.step-tl-num{width:40px;height:40px;border-radius:50%;border:.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.06);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--red);flex-shrink:0;position:relative;z-index:1}
+.step-tl-line{width:.5px;flex:1;background:linear-gradient(to bottom,rgba(124,58,237,.2),rgba(124,58,237,.04));margin-top:8px}
 .step-tl:last-child .step-tl-line{display:none}
 .step-tl-right{padding-top:8px}
-.step-tl-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(220,80,60,.5);margin-bottom:.5rem}
+.step-tl-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(124,58,237,.5);margin-bottom:.5rem}
 .step-tl-title{font-size:17px;font-weight:500;color:#fff;margin-bottom:.5rem;line-height:1.3}
 .step-tl-desc{font-size:14px;color:rgba(255,255,255,.32);line-height:1.7}
 .ip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(255,255,255,.03);border:.5px solid var(--b2);border-radius:100px;font-size:11px;color:var(--tm);margin-top:.75rem;margin-right:6px}
@@ -174,26 +174,26 @@ section{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:5rem 2
 .fc2 p{font-size:16px;color:var(--tm);margin-bottom:2.5rem;font-weight:300}
 footer{border-top:.5px solid var(--b);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;color:var(--td);font-size:12px}
 .fl{font-family:'DM Sans',sans-serif;font-weight:300;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.15)}
-.fl span{color:rgba(220,80,60,.3)}
+.fl span{color:rgba(124,58,237,.3)}
 @media(max-width:768px){nav{padding:1.25rem 1.5rem}.nc{display:none}.sr{gap:1.5rem}.tg{grid-template-columns:1fr}.dc{grid-template-columns:1fr}.dca{border-right:none;border-bottom:.5px solid var(--b)}.wf{flex-direction:column}footer{flex-direction:column;gap:1rem;text-align:center}.scm{flex-direction:column}.pricing-grid{grid-template-columns:1fr!important}.nav-links{display:none}.story-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.ssel{display:none}}
 .pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:780px;margin:0 auto}
 .plan-card{border-radius:16px;padding:2rem;position:relative;overflow:hidden}
 .plan-pro{background:var(--sf);border:.5px solid var(--b2)}
-.plan-sentinel{background:linear-gradient(135deg,rgba(220,80,60,.07) 0%,var(--sf) 55%);border:.5px solid rgba(220,80,60,.35)}
+.plan-sentinel{background:linear-gradient(135deg,rgba(124,58,237,.07) 0%,var(--sf) 55%);border:.5px solid rgba(124,58,237,.35)}
 .plan-shine{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
-.plan-shine-red{background:linear-gradient(90deg,transparent,rgba(220,80,60,.6),transparent)}
+.plan-shine-red{background:linear-gradient(90deg,transparent,rgba(124,58,237,.6),transparent)}
 .plan-recommended{position:absolute;top:1.25rem;right:1.25rem;font-size:9px;padding:3px 9px;background:rgba(255,255,255,.05);border:.5px solid rgba(255,255,255,.1);border-radius:100px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase}
 .plan-early{display:inline-block;font-size:9px;padding:3px 9px;background:var(--rd);border:.5px solid var(--rb);border-radius:100px;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:1rem}
 .plan-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(232,230,224,.3);margin-bottom:1.5rem}
-.plan-label-red{color:rgba(220,80,60,.7)}
+.plan-label-red{color:rgba(124,58,237,.7)}
 .plan-price{font-family:'DM Sans',sans-serif;font-size:42px;font-weight:200;color:#fff;letter-spacing:2px;line-height:1;margin-bottom:.25rem}
 .plan-price sup{font-size:20px;vertical-align:super;letter-spacing:0}
 .plan-price sub{font-size:14px;font-weight:400;color:var(--tm);letter-spacing:0}
 .plan-note{font-size:12px;color:var(--td);margin-bottom:1.5rem}
 .plan-tagline{font-size:13px;color:rgba(255,255,255,.5);font-style:italic;line-height:1.55;padding:1rem 0;border-top:.5px solid var(--b);border-bottom:.5px solid var(--b);margin-bottom:1.5rem}
 .plan-tagline strong{font-style:normal;font-weight:500;color:rgba(255,255,255,.75)}
-.plan-sentinel .plan-tagline{border-color:rgba(220,80,60,.15)}
+.plan-sentinel .plan-tagline{border-color:rgba(124,58,237,.15)}
 .plan-features{list-style:none;margin-bottom:2rem}
 .plan-features li{font-size:13px;color:rgba(255,255,255,.4);padding:.55rem 0;border-bottom:.5px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:10px}
 .plan-features li:last-child{border-bottom:none}
@@ -233,28 +233,22 @@ const HTML = `
     </div>
   </div>
   <div class="nr">
-    <div class="nb">Acc&egrave;s anticip&eacute;</div>
-    <button class="nc" onclick="document.querySelector('.fc2').scrollIntoView({behavior:'smooth'})">Rejoindre la liste</button>
+    <a href="/login" class="nc" style="text-decoration:none">Connexion</a>
+    <a href="/signup" class="bp" style="text-decoration:none;padding:9px 20px;border-radius:4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif">Commencer &rarr;</a>
   </div>
 </nav>
 <div class="hero">
   <div class="ey"><div class="eyd"></div>Intelligence comportementale &mdash; Temps r&eacute;el</div>
   <h1>Tu ne vois pas<br>quand tu d&eacute;railles.<br><em>Lui si.</em></h1>
   <p class="hs">Caldra analyse chaque trade en temps r&eacute;el et d&eacute;tecte les comportements qui d&eacute;truisent les sessions &mdash; <em>avant</em> que le tilt, le revenge trading ou l&rsquo;impulsion ne fasse les d&eacute;g&acirc;ts.</p>
-  <div class="ww">
-    <form id="sf" method="POST" action="https://a806dab9.sibforms.com/serve/MUIFANoJA13XoDD-YU3gz-iJOwWo-c9SqObOFk1Qa9n60DzwU189XDDxTThw0He7q94l9Q8HxA9ONRpQkCJ1H6RSu8t2tfqa0qQ3pCYb8fl5Z4sOm160PnRRimX972hYp2NFf9ivyszl0PkR8Osor-V3Sb1uKEopust0j4-ntBN7aV9lgtMLIVf64TtwNyvf3ACh7UNRAYn6xoe8MQ==">
-      <div class="wf">
-        <input type="email" id="EM" name="EMAIL" autocomplete="off" placeholder="ton@email.com" required/>
-        <button type="submit" class="bp">Rejoindre &rarr;</button>
-      </div>
-      <input type="text" name="email_address_check" value="" style="display:none">
-      <input type="hidden" name="locale" value="fr">
-      <input type="hidden" name="html_type" value="simple">
-    </form>
-    <div class="sm" id="smsg">&#10003; Tu es sur la liste. Prix acc&egrave;s anticip&eacute; garanti.</div>
+  <div class="ww" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <a href="/signup" class="bp" style="text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;display:inline-block">Commencer gratuitement &rarr;</a>
+      <a href="/login" class="nc" style="text-decoration:none;padding:14px 24px;border-radius:8px;font-size:14px;display:inline-block">Se connecter</a>
+    </div>
     <div class="ff">
-      <span class="fn">Pas de spam</span><div class="fs"></div>
-      <span class="fn">19&euro;/mois &middot; Prix bloqu&eacute; &agrave; vie</span><div class="fs"></div>
+      <span class="fn">14 jours gratuits</span><div class="fs"></div>
+      <span class="fn">Sans carte requise</span><div class="fs"></div>
       <span class="fn">Annulable &agrave; tout moment</span>
     </div>
   </div>
@@ -265,7 +259,7 @@ const HTML = `
       <div class="sa" style="background:#1a1a28">T</div><div class="sa" style="background:#1a2018">M</div>
       <div class="sa" style="background:#201818">R</div><div class="sa" style="background:#18201a">K</div>
     </div>
-    +78 traders sur la liste d&rsquo;attente
+    +78 traders actifs sur Caldra
   </div>
   <div class="ssep"></div>
   <div class="si"><span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>Beta-testeurs &mdash; 4.9/5</div>
@@ -421,10 +415,9 @@ const HTML = `
 
     <div class="plan-card plan-pro">
       <div class="plan-shine"></div>
-      <div class="plan-early">Acc&egrave;s anticip&eacute; &middot; Places limit&eacute;es</div>
       <div class="plan-label">Pro</div>
-      <div class="plan-price"><sup>&euro;</sup>19<sub>/mois</sub></div>
-      <div class="plan-note">Prix bloqu&eacute; &agrave; vie pour les premiers inscrits</div>
+      <div class="plan-price"><sup>&euro;</sup>29<sub>/mois</sub></div>
+      <div class="plan-note">14 jours gratuits &middot; Sans carte requise</div>
       <div class="plan-tagline">Surveillance comportementale compl&egrave;te. Alertes imm&eacute;diates d&egrave;s qu&rsquo;un pattern dangereux est d&eacute;tect&eacute;.</div>
       <ul class="plan-features">
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>8 d&eacute;tections comportementales</li>
@@ -434,14 +427,14 @@ const HTML = `
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique &amp; analytics 30 jours</li>
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Seuils configurables</li>
       </ul>
+      <a href="/signup" class="plan-btn plan-btn-secondary" style="display:block;text-align:center;text-decoration:none;padding:12px;border-radius:8px">Commencer gratuit &rarr;</a>
     </div>
 
     <div class="plan-card plan-sentinel">
       <div class="plan-shine plan-shine-red"></div>
-      <div class="plan-recommended">Bient&ocirc;t disponible</div>
       <div class="plan-label plan-label-red">Sentinel</div>
       <div class="plan-price"><sup>&euro;</sup>39<sub>/mois</sub></div>
-      <div class="plan-note">Prix bloqu&eacute; &agrave; vie pour les premiers inscrits</div>
+      <div class="plan-note">14 jours gratuits &middot; Sans carte requise</div>
       <div class="plan-tagline">Tout le plan Pro, augment&eacute; d&rsquo;un coach IA actif. Analyse, recommandations et debriefing &agrave; chaque session.</div>
       <ul class="plan-features">
         <li class="plan-divider"><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:rgba(232,230,224,.3)">Tout le plan Pro, plus&nbsp;:</span></li>
@@ -452,6 +445,7 @@ const HTML = `
         <li class="plan-highlight"><div class="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique &amp; analytics 180 jours</strong></li>
         <li class="plan-highlight"><div class="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Support prioritaire</strong></li>
       </ul>
+      <a href="/signup" class="plan-btn plan-btn-primary" style="display:block;text-align:center;text-decoration:none;padding:12px;border-radius:8px">Commencer avec Sentinel &rarr;</a>
     </div>
 
   </div>
@@ -485,19 +479,12 @@ const HTML = `
 </section>
 
 <div class="fc2">
-  <div class="fcl">Rejoindre l&rsquo;acc&egrave;s anticip&eacute;</div>
+  <div class="fcl">Prot&egrave;ge tes sessions. D&egrave;s maintenant.</div>
   <h2>Ton prochain tilt<br><em>peut &ecirc;tre le dernier.</em></h2>
-  <p>78 traders d&eacute;j&agrave; sur la liste. Prix garanti &agrave; vie &agrave; l&rsquo;inscription.</p>
-  <div class="ww">
-    <form method="POST" action="https://a806dab9.sibforms.com/serve/MUIFANoJA13XoDD-YU3gz-iJOwWo-c9SqObOFk1Qa9n60DzwU189XDDxTThw0He7q94l9Q8HxA9ONRpQkCJ1H6RSu8t2tfqa0qQ3pCYb8fl5Z4sOm160PnRRimX972hYp2NFf9ivyszl0PkR8Osor-V3Sb1uKEopust0j4-ntBN7aV9lgtMLIVf64TtwNyvf3ACh7UNRAYn6xoe8MQ==">
-      <div class="wf">
-        <input type="email" name="EMAIL" autocomplete="off" placeholder="ton@email.com" required/>
-        <button type="submit" class="bp">Rejoindre &rarr;</button>
-      </div>
-      <input type="text" name="email_address_check" value="" style="display:none">
-      <input type="hidden" name="locale" value="fr"><input type="hidden" name="html_type" value="simple">
-    </form>
-    <div class="ff" style="margin-top:.75rem"><span class="fn">19&euro;/mois &middot; Prix bloqu&eacute; &agrave; vie &middot; Annulable &agrave; tout moment</span></div>
+  <p>14 jours gratuits. Sans carte. Annulable &agrave; tout moment.</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:0">
+    <a href="/signup" class="bp" style="text-decoration:none;padding:14px 32px;border-radius:8px;font-size:14px;display:inline-block;font-weight:500">Commencer gratuitement &rarr;</a>
+    <a href="/login" class="nc" style="text-decoration:none;padding:14px 24px;border-radius:8px;font-size:14px;display:inline-block">D&eacute;j&agrave; un compte ?</a>
   </div>
 </div>
 
@@ -588,18 +575,6 @@ function resetD(){
   document.getElementById('ac').innerHTML='<div style="font-size:12px;color:var(--td);padding:.5rem 0">Aucune alerte \u2014 session saine.</div>';
   document.getElementById('sb').textContent='\u2192 Simuler le trade suivant';
 }
-var form=document.getElementById('sf');
-if(form){
-  form.addEventListener('submit',function(e){
-    e.preventDefault();
-    var em=document.getElementById('EM').value;
-    if(!em)return;
-    fetch(form.action,{method:'POST',body:new FormData(form),mode:'no-cors'}).finally(function(){
-      form.style.display='none';
-      document.getElementById('smsg').style.display='block';
-    });
-  });
-}
 async function sendContact(){
   var name=document.getElementById('c-name').value;
   var email=document.getElementById('c-email').value;
@@ -649,7 +624,7 @@ const NET_JS = `(function(){
   var cv=document.getElementById('net');
   if(!cv)return;
   var ctx=cv.getContext('2d');
-  var RED='rgba(220,80,60,',WHT='rgba(255,255,255,';
+  var RED='rgba(124,58,237,',WHT='rgba(255,255,255,';
   var W,H,pts,N_BASE=55,MAX_DIST=160,SPEED=0.28;
   function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
   function mkPts(){var n=Math.round(N_BASE*(W/1440));pts=Array.from({length:Math.max(30,n)},function(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*SPEED,vy:(Math.random()-.5)*SPEED,r:Math.random()<.06?2.2:1.1,red:Math.random()<.06};});}

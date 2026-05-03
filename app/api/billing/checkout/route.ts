@@ -22,8 +22,8 @@ async function getUser() {
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
   const PRICE_IDS: Record<string, string> = {
-    pro:  process.env.STRIPE_PRO_PRICE_ID!,
-    team: process.env.STRIPE_TEAM_PRICE_ID!,
+    pro:      process.env.STRIPE_PRO_PRICE_ID!,
+    sentinel: process.env.STRIPE_SENTINEL_PRICE_ID ?? process.env.STRIPE_TEAM_PRICE_ID!,
   }
 
   const { data: { user } } = await getUser()

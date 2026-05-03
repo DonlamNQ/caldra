@@ -1,13 +1,13 @@
-'use client'
+﻿'use client'
 
 import { useEffect } from 'react'
 
 const CSS = `
 *{margin:0;padding:0;box-sizing:border-box;scroll-behavior:smooth}
-:root{--red:#dc503c;--rd:rgba(220,80,60,.1);--rb:rgba(220,80,60,.25);--bg:#08080d;--sf:#0f0f16;--sf2:#141420;--b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);--tx:#e8e6e0;--tm:rgba(232,230,224,.45);--td:rgba(232,230,224,.2)}
+:root{--red:#7c3aed;--rd:rgba(124,58,237,.1);--rb:rgba(124,58,237,.25);--bg:#08080d;--sf:#0f0f16;--sf2:#141420;--b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);--tx:#e8e6e0;--tm:rgba(232,230,224,.45);--td:rgba(232,230,224,.2)}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
 #net{position:fixed;inset:0;z-index:0;pointer-events:none}
-.g1{position:fixed;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(220,80,60,.07) 0%,transparent 65%);top:-250px;left:50%;transform:translateX(-50%);pointer-events:none;z-index:0}
+.g1{position:fixed;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.07) 0%,transparent 65%);top:-250px;left:50%;transform:translateX(-50%);pointer-events:none;z-index:0}
 .g2{position:fixed;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(180,50,220,.04) 0%,transparent 65%);bottom:20%;right:-100px;pointer-events:none;z-index:0}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.25rem 3rem;border-bottom:.5px solid var(--b);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(8,8,13,.88)}
 .logo-block{display:flex;flex-direction:column;gap:5px}
@@ -23,12 +23,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .nb{font-size:9px;padding:4px 12px;border:.5px solid var(--rb);border-radius:100px;color:var(--red);letter-spacing:1.5px;text-transform:uppercase}
 .nc{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;padding:9px 20px;background:transparent;border:.5px solid rgba(255,255,255,.85);border-radius:4px;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s,color .2s;text-decoration:none}
 .nc:hover{background:#fff;color:#08080d}
-.stag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(220,80,60,.6);margin-bottom:1rem}
+.stag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(124,58,237,.6);margin-bottom:1rem}
 .stit{font-family:'DM Sans',sans-serif;font-size:clamp(1.9rem,4vw,2.9rem);font-weight:200;letter-spacing:-1px;color:#fff;margin-bottom:1rem;line-height:1.1}
 .sdesc{font-size:15px;color:var(--tm);line-height:1.75;max-width:520px;margin-bottom:3rem;font-weight:300}
 footer{border-top:.5px solid var(--b);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;color:var(--td);font-size:12px}
 .fl{font-family:'DM Sans',sans-serif;font-weight:300;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.15)}
-.fl span{color:rgba(220,80,60,.3)}
+.fl span{color:rgba(124,58,237,.3)}
 @media(max-width:768px){nav{padding:1.25rem 1.5rem}.nc{display:none}footer{flex-direction:column;gap:1rem;text-align:center}.nav-links{display:none}}
 `
 
@@ -68,20 +68,20 @@ const HTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
         <div>
           <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--td);display:block;margin-bottom:.5rem">Pr&eacute;nom</label>
-          <input id="c-name" name="name" type="text" placeholder="Pr&eacute;nom" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(220,80,60,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
+          <input id="c-name" name="name" type="text" placeholder="Pr&eacute;nom" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(124,58,237,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
         </div>
         <div>
           <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--td);display:block;margin-bottom:.5rem">Email</label>
-          <input id="c-email" name="email" type="email" placeholder="Email" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(220,80,60,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
+          <input id="c-email" name="email" type="email" placeholder="Email" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(124,58,237,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
         </div>
       </div>
       <div>
         <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--td);display:block;margin-bottom:.5rem">Sujet</label>
-        <input id="c-subject" name="subject" type="text" placeholder="Sujet" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(220,80,60,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
+        <input id="c-subject" name="subject" type="text" placeholder="Sujet" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(124,58,237,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
       </div>
       <div>
         <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--td);display:block;margin-bottom:.5rem">Message</label>
-        <textarea id="c-msg" name="message" rows="5" placeholder="Message" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor='rgba(220,80,60,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"></textarea>
+        <textarea id="c-msg" name="message" rows="5" placeholder="Message" style="width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor='rgba(124,58,237,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"></textarea>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
         <span style="font-size:12px;color:var(--td)">R&eacute;ponse sous 24h</span>
@@ -90,7 +90,7 @@ const HTML = `
       <div id="c-success" style="display:none;padding:12px 16px;background:rgba(30,180,100,.08);border:.5px solid rgba(30,180,100,.25);border-radius:8px;color:rgba(80,220,140,.9);font-size:13px;text-align:center">
         &#10003; Message envoy&eacute;. On revient vers toi sous 24h.
       </div>
-      <div id="c-error" style="display:none;padding:12px 16px;background:rgba(220,80,60,.08);border:.5px solid rgba(220,80,60,.25);border-radius:8px;color:rgba(220,80,60,.9);font-size:13px;text-align:center">
+      <div id="c-error" style="display:none;padding:12px 16px;background:rgba(124,58,237,.08);border:.5px solid rgba(124,58,237,.25);border-radius:8px;color:rgba(124,58,237,.9);font-size:13px;text-align:center">
         Une erreur s&rsquo;est produite. R&eacute;essaie ou &eacute;cris &agrave; contact@getcaldra.com
       </div>
     </div>
@@ -139,7 +139,7 @@ const NET_JS = `(function(){
   var cv=document.getElementById('net');
   if(!cv)return;
   var ctx=cv.getContext('2d');
-  var RED='rgba(220,80,60,',WHT='rgba(255,255,255,';
+  var RED='rgba(124,58,237,',WHT='rgba(255,255,255,';
   var W,H,pts,N_BASE=55,MAX_DIST=160,SPEED=0.28;
   function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
   function mkPts(){var n=Math.round(N_BASE*(W/1440));pts=Array.from({length:Math.max(30,n)},function(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*SPEED,vy:(Math.random()-.5)*SPEED,r:Math.random()<.06?2.2:1.1,red:Math.random()<.06};});}

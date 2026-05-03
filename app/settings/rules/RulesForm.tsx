@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import AppShell from '@/components/AppShell'
@@ -59,7 +59,7 @@ export default function RulesForm({ initial, userEmail }: RulesFormProps) {
         <main style={{ padding: '2rem', maxWidth: 700, animation: 'rlFadeIn .4s ease both' }}>
 
           <div style={{ marginBottom: '1.75rem' }}>
-            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(220,80,60,.55)', marginBottom: '.4rem', fontFamily: "'DM Sans',sans-serif" }}>Configuration</div>
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(124,58,237,.55)', marginBottom: '.4rem', fontFamily: "'DM Sans',sans-serif" }}>Configuration</div>
             <h1 style={{ margin: 0, fontWeight: 400, fontSize: '1.6rem', letterSpacing: -.5, color: '#fff', fontFamily: "'DM Sans',sans-serif", marginBottom: '.4rem' }}>Règles de trading</h1>
             <p style={{ margin: 0, color: 'rgba(226,224,218,.3)', fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Le moteur surveille ces seuils en temps réel à chaque trade.</p>
           </div>
@@ -112,7 +112,7 @@ export default function RulesForm({ initial, userEmail }: RulesFormProps) {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
               <button type="submit" disabled={save === 'saving'} style={{
-                background: save === 'saving' ? 'rgba(220,80,60,.5)' : '#dc503c', color: '#fff', border: 'none', borderRadius: 6,
+                background: save === 'saving' ? 'rgba(124,58,237,.5)' : '#7c3aed', color: '#fff', border: 'none', borderRadius: 6,
                 padding: '9px 22px', fontSize: 10, fontWeight: 500, cursor: save === 'saving' ? 'not-allowed' : 'pointer',
                 letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans',sans-serif", transition: 'all .2s',
               }}>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -47,7 +47,7 @@ export default function AppHeader({ current, userEmail, liveStatus }: AppHeaderP
         <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
           <a href="/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 3, marginRight: '2rem' }}>
             <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: 3, textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>
-              Cald<span style={{ color: '#dc503c' }}>ra</span>
+              Cald<span style={{ color: '#7c3aed' }}>ra</span>
             </span>
             <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: 2, textTransform: 'uppercase', color: '#475569', lineHeight: 1 }}>Session</span>
           </a>

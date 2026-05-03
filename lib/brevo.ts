@@ -1,4 +1,4 @@
-interface AlertEmailOpts {
+﻿interface AlertEmailOpts {
   to: string
   alertType: string
   level: number
@@ -34,7 +34,7 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
   <div style="max-width:520px;margin:0 auto">
 
     <div style="margin-bottom:24px">
-      <span style="font-size:11px;letter-spacing:3px;color:#dc503c;text-transform:uppercase">Caldra</span>
+      <span style="font-size:11px;letter-spacing:3px;color:#7c3aed;text-transform:uppercase">Caldra</span>
       <span style="font-size:11px;color:#475569;margin-left:12px">${opts.sessionDate}</span>
     </div>
 
@@ -50,7 +50,7 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
       </div>
 
       <a href="https://getcaldra.com/dashboard"
-         style="display:block;text-align:center;padding:13px;background:rgba(220,80,60,.08);border:1px solid rgba(220,80,60,.25);border-radius:8px;color:#ff5a3d;text-decoration:none;font-size:13px;letter-spacing:.5px">
+         style="display:block;text-align:center;padding:13px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);border-radius:8px;color:#ff5a3d;text-decoration:none;font-size:13px;letter-spacing:.5px">
         Ouvrir le dashboard →
       </a>
     </div>
