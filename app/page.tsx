@@ -55,16 +55,12 @@ h1{font-family:'DM Sans',sans-serif;font-size:clamp(2.8rem,6.5vw,4.8rem);font-we
 h1 em{font-style:normal;color:var(--red);font-weight:400}
 .hs{font-size:17px;color:var(--tm);line-height:1.75;max-width:580px;margin:0 auto 2.5rem;font-weight:300}
 .ww{max-width:480px;margin:0 auto}
-.wf{display:flex;gap:8px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:10px;padding:6px}
-.wf input{flex:1;padding:12px 16px;background:transparent;border:none;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none}
-.wf input::placeholder{color:rgba(255,255,255,.2)}
 .bp{padding:12px 22px;background:var(--red);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:opacity .2s,transform .1s}
 .bp:hover{opacity:.88}
 .bp:active{transform:scale(.97)}
 .ff{display:flex;align-items:center;justify-content:center;gap:1.5rem;margin-top:1rem}
 .fn{font-size:12px;color:var(--td)}
 .fs{width:1px;height:12px;background:var(--b2)}
-.sm{display:none;padding:14px 20px;background:rgba(30,180,100,.08);border:.5px solid rgba(30,180,100,.25);border-radius:8px;color:rgba(80,220,140,.9);font-size:13px;text-align:center;margin-top:8px}
 .ss{position:relative;z-index:1;display:flex;justify-content:center;align-items:center;gap:2rem;flex-wrap:wrap;padding:2.5rem 2rem;border-top:.5px solid var(--b);border-bottom:.5px solid var(--b);max-width:800px;margin:0 auto}
 .si{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tm)}
 .sag{display:flex}
@@ -259,10 +255,10 @@ const HTML = `
       <div class="sa" style="background:#1a1a28">T</div><div class="sa" style="background:#1a2018">M</div>
       <div class="sa" style="background:#201818">R</div><div class="sa" style="background:#18201a">K</div>
     </div>
-    +78 traders actifs sur Caldra
+    Premiers traders sur Caldra
   </div>
   <div class="ssep"></div>
-  <div class="si"><span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>Beta-testeurs &mdash; 4.9/5</div>
+  <div class="si"><span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>Early access &mdash; 4.9/5</div>
   <div class="ssep"></div>
   <div class="si" style="color:rgba(232,230,224,.25)">Futures &middot; CFD &middot; Forex &middot; Crypto</div>
 </div>
