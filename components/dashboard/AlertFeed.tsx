@@ -2,6 +2,7 @@
 
 export interface AlertRow {
   id: string
+  trade_id?: string | null
   type?: string
   pattern?: string
   level?: number

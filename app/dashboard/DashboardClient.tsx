@@ -560,29 +560,44 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             </div>
           ) : (
             sortedTrades.map((t, i) => {
-              const flaggedAlert = alerts.find(a => a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000)
-              const hasCrit = flaggedAlert && (flaggedAlert.level ?? 1) >= 2
+              const tradeAlerts = alerts.filter(a =>
+                a.trade_id ? a.trade_id === t.id
+                : a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000
+              )
+              const topAlert = tradeAlerts.sort((a, b) => (b.level ?? b.severity ?? 1) - (a.level ?? a.severity ?? 1))[0]
+              const lvl = topAlert ? (topAlert.level ?? topAlert.severity ?? 1) : 0
+
+              const LVL_STYLE: Record<number, { bg: string; border: string; badge: string; dot: string }> = {
+                1: { bg: 'rgba(245,166,35,.05)', border: 'rgba(245,166,35,.35)', badge: '#f5a623', dot: 'rgba(245,166,35,.9)' },
+                2: { bg: C.rd, border: `${C.red}80`, badge: C.red, dot: C.red },
+                3: { bg: 'rgba(220,50,24,.08)', border: 'rgba(220,50,24,.5)', badge: '#dc3218', dot: '#dc3218' },
+              }
+              const ls = lvl > 0 ? LVL_STYLE[lvl] ?? LVL_STYLE[1] : null
+
               return (
                 <div key={t.id ?? i} className="c-row" style={{
-                  display: 'grid', gridTemplateColumns: '60px 1fr auto', alignItems: 'center',
+                  display: 'grid', gridTemplateColumns: '60px 1fr auto auto', alignItems: 'center',
                   minHeight: 32, borderBottom: `.5px solid ${C.b}`,
-                  background: hasCrit ? C.rd : 'transparent',
-                  borderLeft: hasCrit ? `2px solid ${C.red}80` : `2px solid ${C.b}`,
-                  padding: '0 4px 0 10px',
+                  background: ls ? ls.bg : 'transparent',
+                  borderLeft: `2px solid ${ls ? ls.border : C.b}`,
+                  padding: '0 8px 0 10px',
                   borderRadius: '0 5px 5px 0',
                   transition: 'background .12s',
                 }}>
                   <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
-                  <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 6 }}>
                     {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
-                    {hasCrit && flaggedAlert && (
-                      <span style={{
-                        fontSize: 8.5, padding: '2px 7px', borderRadius: 99, fontFamily: MONO, marginLeft: 7,
-                        background: C.rd, border: `.5px solid ${C.rb}`, color: C.red,
-                      }}>{(flaggedAlert.type ?? '').toLowerCase().replace(/_/g, ' ')}</span>
-                    )}
                   </span>
-                  <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const, paddingLeft: 8 }}>
+                  {ls && topAlert ? (
+                    <span style={{
+                      fontSize: 8, padding: '1px 5px', fontFamily: MONO, letterSpacing: '.14em',
+                      background: `${ls.bg}`, border: `.5px solid ${ls.border}`, color: ls.badge,
+                      textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const, marginRight: 6,
+                    }}>
+                      L{lvl} {(topAlert.type ?? '').replace(/_/g, ' ')}
+                    </span>
+                  ) : <span />}
+                  <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const }}>
                     {fmtEur(t.pnl ?? 0)}
                   </span>
                 </div>
