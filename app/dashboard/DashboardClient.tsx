@@ -1319,157 +1319,144 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
         </div>
       </IntCard>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
+      {/* ── Plateformes ── */}
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 12 }}>Plateformes</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
 
-        {/* Colonne gauche : cTrader OAuth + CaldraBot */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-          {/* cTrader OAuth */}
+          {/* cTrader */}
           <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 16 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 9, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: C.tm, fontFamily: MONO }}>CT</div>
-              <div>
-                <div style={{ fontSize: 14.5, fontWeight: 500, color: C.tx }}>cTrader</div>
-                <div style={{ fontSize: 11, color: C.td }}>Étape 1 — Connexion OAuth</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>CT</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>cTrader</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>cBot CaldraBot.algo</div>
               </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)' }} />
-                <span style={{ color: hasKey ? C.g : C.td, letterSpacing: .5 }}>{hasKey ? 'CONNECTÉ' : 'NON CONNECTÉ'}</span>
-              </div>
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10.5, color: C.td, marginBottom: 4 }}>Clé API configurée</div>
-              <div style={{ fontSize: 15, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{hasKey ? `${prefix}…` : '—'}</div>
-            </div>
-          </IntCard>
-
-          {/* CaldraBot */}
-          <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>CaldraBot</div>
-                <div style={{ fontSize: 11, color: C.td }}>Étape 2 — Envoi automatique des trades</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,.18)' }} />
-                <span style={{ color: C.td, letterSpacing: .5 }}>INACTIF</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)', flexShrink: 0 }} />
+                <span style={{ fontSize: 9, color: hasKey ? C.g : C.te, letterSpacing: .5 }}>{hasKey ? 'PRÊT' : 'CLÉ REQUISE'}</span>
               </div>
             </div>
-            <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.6, marginBottom: 16 }}>
-              Installez le cBot dans cTrader pour envoyer vos trades en temps réel à Caldra dès qu'une position se ferme.
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
+              Installe CaldraBot dans cTrader. Chaque position fermée est envoyée à Caldra automatiquement.
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
-              {[
-                ['1', <>Téléchargez <span style={{ fontFamily: MONO, color: C.tm, fontWeight: 500 }}>CaldraBot.algo</span> ci-dessous et ouvrez-le via <span style={{ color: C.tm }}>Automate → Open</span>.</>],
-                ['2', <>Copiez votre clé API depuis la section <span style={{ fontFamily: MONO, color: C.red }}>Clé API</span> ci-dessus.</>],
-                ['3', <>Démarrez le cBot et collez votre clé dans le paramètre <span style={{ color: C.tm }}>Caldra API Key</span>.</>],
-                ['4', 'Chaque position fermée sera automatiquement analysée dans votre dashboard.'],
-              ].map(([n, t]) => (
-                <div key={String(n)} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                  <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <a href="/CaldraBot.algo" download="CaldraBot.algo" style={{ flex: 1.4, padding: 9, borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: 'pointer', textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, display: 'block', transition: 'all .2s' }}>
-                ↓ Télécharger CaldraBot.algo
-              </a>
-              <IntBtn onClick={copyBot}>{copied ? '✓ Copié' : 'Copier le code'}</IntBtn>
-            </div>
-          </IntCard>
-        </div>
-
-        {/* Colonne droite : MT5 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 16 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 9, background: 'rgba(255,171,0,.06)', border: `.5px solid rgba(255,171,0,.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: C.o, fontFamily: MONO }}>MT5</div>
-              <div>
-                <div style={{ fontSize: 14.5, fontWeight: 500, color: C.tx }}>MetaTrader 5</div>
-                <div style={{ fontSize: 11, color: C.td }}>Futures · Forex · EA CaldraMT5</div>
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)' }} />
-                <span style={{ color: hasKey ? C.g : C.td, letterSpacing: .5 }}>{hasKey ? 'PRÊT' : 'CLEF REQUISE'}</span>
-              </div>
-            </div>
-            <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
-              Expert Advisor MQL5 — envoie chaque trade fermé vers Caldra automatiquement.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
               {([
-                ['1', 'Téléchargez CaldraMT5.mq5 et ouvrez-le dans MetaEditor (F4 dans MT5).'],
-                ['2', <>Copiez votre clé API depuis la section <span style={{ fontFamily: MONO, color: C.red }}>Clé API</span> ci-dessus.</>],
-                ['3', 'Dans MT5 : Outils → Options → Expert Advisors → autorisez les WebRequests pour getcaldra.com.'],
-                ['4', 'Attachez l\'EA à n\'importe quel graphique, collez votre clé dans le paramètre CaldraApiKey.'],
+                ['1', <>Télécharge <span style={{ color: C.tm, fontFamily: MONO }}>CaldraBot.algo</span> et ouvre-le via <span style={{ color: C.tm }}>Automate → Open</span>.</> as React.ReactNode],
+                ['2', <>Colle ta clé API dans le champ <span style={{ color: C.tm, fontFamily: MONO }}>Caldra API Key</span>.</> as React.ReactNode],
+                ['3', 'Lance le cBot. Toute position fermée apparaît dans ton dashboard.' as React.ReactNode],
               ] as [string, React.ReactNode][]).map(([n, t]) => (
-                <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: C.o, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                  <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
+                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                  <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
                 </div>
               ))}
             </div>
-            <a href="/CaldraMT5.mq5" download="CaldraMT5.mq5" style={{ display: 'block', padding: 9, borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.25)`, color: C.o, transition: 'all .2s' }}>
-              ↓ Télécharger CaldraMT5.mq5
+            <div style={{ display: 'flex', gap: 7 }}>
+              <a href="/CaldraBot.algo" download="CaldraBot.algo" style={{ flex: 1, padding: '8px 10px', borderRadius: 7, fontSize: 10.5, fontFamily: SANS, cursor: 'pointer', textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, display: 'block', transition: 'all .2s' }}>
+                ↓ CaldraBot.algo
+              </a>
+              <IntBtn onClick={copyBot}>{copied ? '✓' : 'Copier code'}</IntBtn>
+            </div>
+          </IntCard>
+
+          {/* MT5 */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(255,171,0,.06)', border: `.5px solid rgba(255,171,0,.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.o, fontFamily: MONO, flexShrink: 0 }}>MT5</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>MetaTrader 5</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Expert Advisor MQL5</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)', flexShrink: 0 }} />
+                <span style={{ fontSize: 9, color: hasKey ? C.g : C.te, letterSpacing: .5 }}>{hasKey ? 'PRÊT' : 'CLÉ REQUISE'}</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
+              EA MQL5 — envoie chaque trade fermé vers Caldra. Fonctionne sur tous les symboles et tous les brokers MT5.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+              {([
+                ['1', 'Télécharge CaldraMT5.mq5, ouvre-le dans MetaEditor (F4).'],
+                ['2', <>MT5 → Outils → Options → Expert Advisors → autorise <span style={{ color: C.tm, fontFamily: MONO }}>getcaldra.com</span>.</> as React.ReactNode],
+                ['3', <>Attache l&apos;EA, colle ta clé dans <span style={{ color: C.tm, fontFamily: MONO }}>CaldraApiKey</span>.</> as React.ReactNode],
+              ] as [string, React.ReactNode][]).map(([n, t]) => (
+                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.o, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                  <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
+                </div>
+              ))}
+            </div>
+            <a href="/CaldraMT5.mq5" download="CaldraMT5.mq5" style={{ display: 'block', padding: '8px 10px', borderRadius: 7, fontSize: 10.5, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.25)`, color: C.o, transition: 'all .2s' }}>
+              ↓ CaldraMT5.mq5
             </a>
           </IntCard>
 
           {/* API directe */}
           <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 16 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 9, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 500, color: C.tm, fontFamily: MONO }}>API</div>
-              <div>
-                <div style={{ fontSize: 14.5, fontWeight: 500, color: C.tx }}>API directe</div>
-                <div style={{ fontSize: 11, color: C.td }}>POST /api/ingest</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>API</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>API directe</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>POST /api/ingest</div>
               </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)' }} />
-                <span style={{ color: hasKey ? C.g : C.td }}>{hasKey ? 'Active' : 'Inactif'}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)', flexShrink: 0 }} />
+                <span style={{ fontSize: 9, color: hasKey ? C.g : C.te }}>{hasKey ? 'ACTIVE' : 'INACTIF'}</span>
               </div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '9px 13px', fontSize: 10, fontFamily: MONO, color: C.td, marginBottom: 14 }}>
-              <div style={{ color: C.te, marginBottom: 3 }}>POST https://getcaldra.com/api/ingest</div>
-              <div>Header: x-caldra-key: {hasKey ? `${prefix}…` : '<votre-clé>'}</div>
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
+              Envoie un POST à chaque clôture de trade depuis n&apos;importe quelle plateforme ou script custom.
+            </div>
+            <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '10px 13px', marginBottom: 14 }}>
+              <div style={{ fontSize: 9.5, fontFamily: MONO, color: C.te, marginBottom: 4 }}>POST https://getcaldra.com/api/ingest</div>
+              <div style={{ fontSize: 9.5, fontFamily: MONO, color: C.td }}>x-caldra-key: <span style={{ color: 'rgba(56,189,248,.6)' }}>{hasKey ? `${prefix}…` : 'cal_votre_clé'}</span></div>
+            </div>
+            <div style={{ fontSize: 11, color: C.te, lineHeight: 1.55 }}>
+              Champs requis : <span style={{ color: C.tm, fontFamily: MONO }}>symbol</span>, <span style={{ color: C.tm, fontFamily: MONO }}>direction</span>, <span style={{ color: C.tm, fontFamily: MONO }}>size</span>, <span style={{ color: C.tm, fontFamily: MONO }}>entry_price</span>, <span style={{ color: C.tm, fontFamily: MONO }}>pnl</span>, <span style={{ color: C.tm, fontFamily: MONO }}>entry_time</span>
             </div>
           </IntCard>
 
-          {/* Slack / Discord webhook */}
-          <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 14 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 9, background: 'rgba(88,101,242,.08)', border: `.5px solid rgba(88,101,242,.22)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'rgba(88,101,242,.9)', fontFamily: MONO }}>WH</div>
+        </div>
+      </div>
+
+      {/* ── Notifications ── */}
+      <div>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 12 }}>Notifications</div>
+        <IntCard>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13, flexShrink: 0 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(88,101,242,.08)', border: `.5px solid rgba(88,101,242,.22)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'rgba(88,101,242,.9)', fontFamily: MONO }}>WH</div>
               <div>
-                <div style={{ fontSize: 14.5, fontWeight: 500, color: C.tx }}>Slack / Discord</div>
-                <div style={{ fontSize: 11, color: C.td }}>Alertes L2/L3 dans ton channel</div>
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: webhookUrl ? C.g : 'rgba(255,255,255,.18)' }} />
-                <span style={{ color: webhookUrl ? C.g : C.td, letterSpacing: .5 }}>{webhookUrl ? 'ACTIF' : 'INACTIF'}</span>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Slack / Discord</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Alertes L2/L3 dans ton channel</div>
               </div>
             </div>
-            <div style={{ fontSize: 12, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
-              Colle ton URL de webhook Slack ou Discord. Chaque alerte L2/L3 sera postée automatiquement dans ton channel.
-            </div>
-            <input
-              type="url"
-              value={webhookUrl}
-              onChange={e => { setWebhookUrl(e.target.value); setWebhookSave('idle') }}
-              placeholder="https://hooks.slack.com/services/… ou https://discord.com/api/webhooks/…"
-              style={{ width: '100%', background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b2}`, borderRadius: 7, padding: '9px 13px', color: C.tm, fontSize: 12, fontFamily: MONO, outline: 'none', boxSizing: 'border-box' as const, marginBottom: 10, transition: 'border-color .2s' }}
-            />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input
+                type="url"
+                value={webhookUrl}
+                onChange={e => { setWebhookUrl(e.target.value); setWebhookSave('idle') }}
+                placeholder="https://hooks.slack.com/services/… ou https://discord.com/api/webhooks/…"
+                style={{ flex: 1, background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b2}`, borderRadius: 7, padding: '9px 13px', color: C.tm, fontSize: 12, fontFamily: MONO, outline: 'none', boxSizing: 'border-box' as const, transition: 'border-color .2s' }}
+              />
               <button
                 onClick={saveWebhook}
                 disabled={webhookSave === 'saving'}
-                style={{ padding: '8px 16px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', opacity: webhookSave === 'saving' ? .6 : 1 }}
+                style={{ padding: '9px 18px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', opacity: webhookSave === 'saving' ? .6 : 1, whiteSpace: 'nowrap' as const, flexShrink: 0 }}
               >
                 {webhookSave === 'saving' ? 'Enregistrement…' : 'Sauvegarder'}
               </button>
-              {webhookSave === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Webhook actif</span>}
+              {webhookSave === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO, whiteSpace: 'nowrap' as const }}>✓ Actif</span>}
               {webhookSave === 'error' && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: webhookUrl ? C.g : 'rgba(255,255,255,.18)' }} />
+                <span style={{ fontSize: 9, color: webhookUrl ? C.g : C.te, letterSpacing: .5 }}>{webhookUrl ? 'ACTIF' : 'INACTIF'}</span>
+              </div>
             </div>
-          </IntCard>
-        </div>
+          </div>
+        </IntCard>
       </div>
     </div>
   )
@@ -2063,6 +2050,8 @@ export default function DashboardClient({
   const pausedRef = useRef(false)
   const resetTimestamp = useRef<string | null>(null)
   const hiddenIds = useRef<Set<string>>(new Set())
+  const notifDelay = useRef(0)
+  const notifReset = useRef<ReturnType<typeof setTimeout> | null>(null)
   const channelRef = useRef<any>(null)
   const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
@@ -2204,7 +2193,13 @@ export default function DashboardClient({
 
   function showPushNotif(title: string, body: string, tag: string) {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
-    try { new Notification(title, { body, icon: '/icon.svg', tag }) } catch {}
+    notifDelay.current += 600
+    const delay = notifDelay.current
+    if (notifReset.current) clearTimeout(notifReset.current)
+    notifReset.current = setTimeout(() => { notifDelay.current = 0 }, delay + 1500)
+    setTimeout(() => {
+      try { new Notification(title, { body, icon: '/icon.svg', tag }) } catch {}
+    }, delay)
   }
 
   async function requestNotifPermission() {

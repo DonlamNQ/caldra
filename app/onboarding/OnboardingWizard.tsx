@@ -86,7 +86,7 @@ function StepBar({ step }: { step: number }) {
 function Field({ label, hint, suffix, children }: { label: string; hint?: string; suffix?: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' as const, color: TD, fontFamily: MONO }}>{label}</label>
+      <label style={{ fontSize: 11, letterSpacing: .8, textTransform: 'uppercase' as const, color: TD, fontFamily: SANS }}>{label}</label>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {children}
         {suffix && <span style={{ fontSize: 12, color: TE, fontFamily: MONO, flexShrink: 0 }}>{suffix}</span>}
@@ -227,7 +227,7 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
           </div>
         </div>
 
-        <div style={{ width: '100%', maxWidth: 560 }}>
+        <div style={{ width: '100%', maxWidth: 740 }}>
           <StepBar step={step} />
 
           {/* ── Step 1 — Bienvenue ── */}
@@ -378,9 +378,9 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
               <div style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 12, overflow: 'hidden' }}>
 
                 {/* Risk */}
-                <div style={{ padding: '18px 20px', borderBottom: `.5px solid ${B}` }}>
-                  <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 14 }}>Risk management</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div style={{ padding: '20px 24px', borderBottom: `.5px solid ${B}` }}>
+                  <div style={{ fontSize: 10, letterSpacing: 1.2, color: TE, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 16 }}>Risk management</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                     <Field label="Drawdown max / jour" suffix="%">
                       <input type="number" min={0.1} max={20} step={0.1} value={rules.max_daily_drawdown_pct} onChange={e => setRule('max_daily_drawdown_pct', e.target.value)} style={numInput} />
                     </Field>
@@ -391,9 +391,9 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                 </div>
 
                 {/* Discipline */}
-                <div style={{ padding: '18px 20px', borderBottom: `.5px solid ${B}` }}>
-                  <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 14 }}>Discipline</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div style={{ padding: '20px 24px', borderBottom: `.5px solid ${B}` }}>
+                  <div style={{ fontSize: 10, letterSpacing: 1.2, color: TE, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 16 }}>Discipline</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                     <Field label="Max trades / session">
                       <input type="number" min={1} max={100} step={1} value={rules.max_trades_per_session} onChange={e => setRule('max_trades_per_session', e.target.value)} style={numInput} />
                     </Field>
@@ -407,7 +407,7 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                 </div>
 
                 {/* Preview */}
-                <div style={{ padding: '14px 20px', background: `${RED}05` }}>
+                <div style={{ padding: '14px 24px', background: `${RED}05` }}>
                   <div style={{ fontSize: 11, color: TD, fontFamily: MONO }}>
                     Drawdown max = <span style={{ color: TX }}>{rules.max_daily_drawdown_pct}%</span> de <span style={{ color: TX }}>{Number(rules.account_size).toLocaleString('fr-FR')}€</span> = <span style={{ color: RED, fontWeight: 500 }}>−{((Number(rules.max_daily_drawdown_pct) / 100) * Number(rules.account_size)).toFixed(0)}€</span> de perte max / jour
                   </div>

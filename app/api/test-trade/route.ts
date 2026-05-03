@@ -41,7 +41,12 @@ export async function POST() {
     .single()
 
   if (error || !trade) {
-    return NextResponse.json({ error: error?.message ?? 'insert failed' }, { status: 500 })
+    const msg = error?.message ?? 'insert failed'
+    // FK violation means this session's user_id doesn't exist in the current DB — user should re-login
+    if (msg.includes('user_id_fkey')) {
+      return NextResponse.json({ error: 'Session expirée — déconnecte-toi et reconnecte-toi.' }, { status: 400 })
+    }
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 
   await analyzeTradeForAlerts(trade)

@@ -79,6 +79,17 @@ export async function PUT(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    // Fallback: retry without v2.1 columns (account_size, slack_webhook_url) if migration not yet applied
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { account_size, slack_webhook_url, ...baseRules } = rules
+    const { data: data2, error: error2 } = await service
+      .from('trading_rules')
+      .upsert(baseRules, { onConflict: 'user_id' })
+      .select()
+      .single()
+    if (error2) return NextResponse.json({ error: error2.message }, { status: 500 })
+    return NextResponse.json(data2)
+  }
   return NextResponse.json(data)
 }
