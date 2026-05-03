@@ -309,9 +309,10 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, onReset }: {
+function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, onReset, notifPerm, onRequestNotif, onTestNotif }: {
   score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
   paused: boolean; onTogglePause: () => void; onReset: () => void
+  notifPerm: string; onRequestNotif: () => void; onTestNotif: () => void
 }) {
   const C = useContext(ThemeCtx)
   const drawdownPct = rules
@@ -433,8 +434,43 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, onReset }
         )}
       </div>
 
+      {/* Notifications status */}
+      <div style={{ padding: '12px 20px', borderTop: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        {notifPerm === 'granted' ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
+              <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>Notifs actives</span>
+            </div>
+            <button onClick={onTestNotif} style={{ fontSize: 10, padding: '3px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.te, cursor: 'pointer', fontFamily: MONO }}>
+              Test
+            </button>
+          </div>
+        ) : notifPerm === 'denied' ? (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc3218' }} />
+              <span style={{ fontSize: 10.5, color: '#dc3218', fontFamily: MONO }}>Notifs bloquées</span>
+            </div>
+            <div style={{ fontSize: 10.5, color: C.te, lineHeight: 1.55 }}>
+              Autorise dans les paramètres du navigateur :<br />
+              <span style={{ color: C.td }}>Paramètres → Confidentialité → Notifications → getcaldra.com → Autoriser</span>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={onRequestNotif}
+            style={{ width: '100%', padding: 10, background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, transition: 'all .2s', animation: 'pulse 2s infinite' }}
+            onMouseEnter={e => { e.currentTarget.style.background = C.rg; e.currentTarget.style.animation = 'none' }}
+            onMouseLeave={e => { e.currentTarget.style.background = C.rd; e.currentTarget.style.animation = 'pulse 2s infinite' }}
+          >
+            🔔 Activer les notifications
+          </button>
+        )}
+      </div>
+
       {/* Pause + Reset */}
-      <div style={{ padding: '12px 20px', borderTop: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <div style={{ padding: '8px 20px 14px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
         <button
           onClick={onTogglePause}
           style={{ width: '100%', padding: 10, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
@@ -2166,16 +2202,9 @@ export default function DashboardClient({
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
   }, [pollFreshData])
 
-  async function showPushNotif(title: string, body: string, tag: string) {
+  function showPushNotif(title: string, body: string, tag: string) {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
-    try {
-      const reg = await navigator.serviceWorker?.getRegistration()
-      if (reg?.showNotification) {
-        await reg.showNotification(title, { body, icon: '/icon.svg', tag, data: { url: '/dashboard' } })
-        return
-      }
-    } catch {}
-    new Notification(title, { body, icon: '/icon.svg', tag })
+    try { new Notification(title, { body, icon: '/icon.svg', tag }) } catch {}
   }
 
   async function requestNotifPermission() {
@@ -2183,8 +2212,13 @@ export default function DashboardClient({
     const perm = await Notification.requestPermission()
     setNotifPerm(perm)
     if (perm === 'granted') {
-      await showPushNotif('Caldra — Notifications activées', 'Vous recevrez les alertes comportementales en temps réel.', 'caldra-welcome')
+      showPushNotif('Caldra — Notifications activées ✓', 'Vous recevrez les alertes comportementales en temps réel.', 'caldra-welcome')
     }
+  }
+
+  function testNotification() {
+    if (Notification.permission !== 'granted') { requestNotifPermission(); return }
+    showPushNotif('Caldra — Alerte TEST', 'L2 revenge_sizing — Sizing ×2.3 après une perte.', 'caldra-test')
   }
 
   async function triggerInstall() {
@@ -2366,7 +2400,7 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '20% 1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
-          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} onReset={resetSession} />
+          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} onReset={resetSession} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} onTestNotif={testNotification} />
 
           <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
