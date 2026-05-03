@@ -309,12 +309,11 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ score, alerts, stats, rules, trades, paused, onTogglePause }: {
-  score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null; trades: TradeRow[]
-  paused: boolean; onTogglePause: () => void
+function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, onReset }: {
+  score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
+  paused: boolean; onTogglePause: () => void; onReset: () => void
 }) {
   const C = useContext(ThemeCtx)
-  const streak = consecutiveLosses(trades)
   const drawdownPct = rules
     ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
@@ -394,19 +393,6 @@ function Sidebar({ score, alerts, stats, rules, trades, paused, onTogglePause }:
         </div>
       )}
 
-      {/* Streak */}
-      <div style={{ padding: '13px 20px', borderBottom: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div>
-          <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: -1, color: streak >= 3 ? C.red : C.tm, transition: 'color .3s' }}>{streak}</div>
-          <div style={{ fontSize: 12, color: C.td, marginTop: 2 }}>{streak <= 1 ? 'perte consécutive' : 'pertes consécutives'}</div>
-        </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i < streak ? C.red : 'rgba(255,255,255,.12)', opacity: i < streak ? .85 : 1, transition: 'background .3s' }} />
-          ))}
-        </div>
-      </div>
-
       {/* Alertes */}
       <div style={{ padding: '15px 20px', flex: 1, overflowY: 'auto', minHeight: 120 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 11 }}>
@@ -447,15 +433,23 @@ function Sidebar({ score, alerts, stats, rules, trades, paused, onTogglePause }:
         )}
       </div>
 
-      {/* Pause */}
-      <div style={{ padding: '12px 20px', borderTop: `.5px solid ${C.b}`, flexShrink: 0 }}>
+      {/* Pause + Reset */}
+      <div style={{ padding: '12px 20px', borderTop: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
         <button
           onClick={onTogglePause}
-          style={{ width: '100%', padding: 11, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
+          style={{ width: '100%', padding: 10, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
           onMouseEnter={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.13)' : C.rd)}
           onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
         >
           {paused ? '⏸ Alertes suspendues · Reprendre' : '⏸ Pause session'}
+        </button>
+        <button
+          onClick={onReset}
+          style={{ width: '100%', padding: 10, background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.te, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.04)'; e.currentTarget.style.color = C.td }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.te }}
+        >
+          ↺ Réinitialiser session
         </button>
       </div>
     </div>
@@ -470,6 +464,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 }) {
   const C = useContext(ThemeCtx)
   const score = computeScore(alerts)
+  const streak = consecutiveLosses(trades)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
   const drawdownPct = rules
     ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
@@ -478,7 +473,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
 
-      {/* Row 1: PnL card | Chart | 4 mini stats */}
+      {/* Row 1: PnL card | Session line | 4 mini stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 12, alignItems: 'start' }}>
 
         {/* PnL card */}
@@ -491,37 +486,42 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>en cours</div>
         </div>
 
-        {/* Chart card — session line + PnL chart empilés */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+        {/* Session line card only */}
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
-          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 64, overflow: 'hidden', flexShrink: 0, paddingLeft: 46, paddingRight: 6 }}>
+          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 64, overflow: 'hidden', paddingLeft: 46, paddingRight: 6 }}>
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
-          </div>
-          <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
-          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
-          <div style={{ height: 180, flexShrink: 0 }}>
-            <PnlChart trades={trades} />
           </div>
         </div>
 
-        {/* 3 mini stat cards */}
+        {/* 4 mini stat cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: 110 }}>
           {[
             { val: String(stats.total_trades), lbl: 'Trades', accent: C.b3 },
             { val: `${drawdownPct}%`, lbl: 'Drawdown', accent: drawdownPct > 80 ? C.red : drawdownPct > 50 ? C.o : C.b3 },
             { val: String(alerts.length), lbl: 'Alertes', accent: alerts.length > 0 ? C.red : C.b3 },
+            { val: String(streak), lbl: streak <= 1 ? 'Perte consec.' : 'Pertes consec.', accent: streak >= 3 ? C.red : streak >= 2 ? C.o : C.b3 },
           ].map((item, i) => (
-            <div key={i} className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '10px 13px', position: 'relative', overflow: 'hidden' }}>
+            <div key={i} className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '8px 13px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 2, background: item.accent, borderRadius: '9px 0 0 9px' }} />
-              <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.5, color: C.tx, fontFamily: MONO }}>{item.val}</div>
-              <div style={{ fontSize: 8.5, color: C.te, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 2 }}>{item.lbl}</div>
+              <div style={{ fontSize: 17, fontWeight: 300, letterSpacing: -.5, color: C.tx, fontFamily: MONO }}>{item.val}</div>
+              <div style={{ fontSize: 8, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 1 }}>{item.lbl}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Row 2: J-1 */}
+      {/* Row 2: PnL chart — full width in its own card */}
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '14px 18px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
+        <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 8, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
+        <div style={{ height: 160 }}>
+          <PnlChart trades={trades} />
+        </div>
+      </div>
+
+      {/* Row 3: J-1 */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 18px', display: 'flex', gap: 22, alignItems: 'center', flexShrink: 0, borderLeft: `3px solid ${yesterdayStats ? `${scoreColor(yesterdayStats.score, C)}70` : C.b}` }}>
         <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, fontFamily: MONO, textTransform: 'uppercase' as const }}>J−1</div>
         {yesterdayStats ? (
@@ -695,16 +695,16 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
 
             if (isWeekend || !s) {
               return (
-                <div key={d} style={{ minHeight: 68, borderRadius: 9, border: `.5px solid ${C.b}`, background: C.sf, display: 'flex', flexDirection: 'column', padding: 9, opacity: 0.25 }}>
-                  <div style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>{d}</div>
+                <div key={d} style={{ minHeight: 68, borderRadius: 9, border: `.5px solid ${C.b2}`, background: C.sf2, display: 'flex', flexDirection: 'column', padding: 9, opacity: isWeekend ? 0.3 : 0.45 }}>
+                  <div style={{ fontSize: 11, color: C.td, fontFamily: MONO }}>{d}</div>
                 </div>
               )
             }
             const col = scoreColor(s.score, C)
-            const cellBg = s.score >= 70 ? 'rgba(0,209,122,.06)' : s.score >= 40 ? 'rgba(255,171,0,.06)' : 'rgba(255,90,61,.06)'
+            const cellBg = s.score >= 70 ? 'rgba(0,209,122,.13)' : s.score >= 40 ? 'rgba(255,171,0,.12)' : 'rgba(255,90,61,.12)'
             const cellBorder = isSelected
-              ? 'rgba(255,90,61,.5)'
-              : s.score >= 70 ? 'rgba(0,209,122,.15)' : s.score >= 40 ? 'rgba(255,171,0,.15)' : 'rgba(255,90,61,.15)'
+              ? 'rgba(124,58,237,.6)'
+              : s.score >= 70 ? 'rgba(0,209,122,.35)' : s.score >= 40 ? 'rgba(255,171,0,.35)' : 'rgba(255,90,61,.35)'
 
             return (
               <div key={d} onClick={() => setSelectedDate(isSelected ? null : dateStr)} style={{
@@ -781,13 +781,13 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                   <div style={{ display: 'flex', gap: 5 }}>
                     {w.days.map(d => {
                       const ds = sessionByDate[cellDate(d)]
-                      if (!ds) return <div key={d} style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(255,255,255,.02)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}><span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: MONO }}>{d}</span></div>
+                      if (!ds) return <div key={d} style={{ width: 40, height: 40, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b2}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, opacity: .4 }}><span style={{ fontSize: 8.5, color: C.td, fontFamily: MONO }}>{d}</span></div>
                       const dc = scoreColor(ds.score, C)
                       const dbg = ds.score >= 70 ? 'rgba(0,209,122,' : ds.score >= 40 ? 'rgba(255,171,0,' : 'rgba(255,90,61,'
                       return (
-                        <div key={d} onClick={() => setSelectedDate(cellDate(d))} style={{ width: 40, height: 40, borderRadius: 8, background: `${dbg}.09)`, border: `.5px solid ${dbg}.2)`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', transition: 'filter .15s' }}>
+                        <div key={d} onClick={() => setSelectedDate(cellDate(d))} style={{ width: 40, height: 40, borderRadius: 8, background: `${dbg}.14)`, border: `.5px solid ${dbg}.35)`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', transition: 'filter .15s' }}>
                           <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: dc }}>{ds.score}</span>
-                          <span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: MONO }}>{d}</span>
+                          <span style={{ fontSize: 8.5, color: C.td, fontFamily: MONO }}>{d}</span>
                         </div>
                       )
                     })}
@@ -880,16 +880,30 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
             const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals)
             const range = maxV - minV || 1
             const n = cumulPts.length
-            const W2 = 600, H2 = 60, PX2 = 4, PY2 = 6
-            const xOf = (i: number) => PX2 + (i / (n - 1)) * (W2 - 2 * PX2)
-            const yOf = (v: number) => PY2 + (H2 - 2 * PY2) - ((v - minV) / range) * (H2 - 2 * PY2)
-            const pts = cumulPts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
+            const W2 = 600, H2 = 110, PXL2 = 42, PXR2 = 6, PYT2 = 6, PYB2 = 18
+            const DW2 = W2 - PXL2 - PXR2, DH2 = H2 - PYT2 - PYB2
+            const xOf = (i: number) => PXL2 + (i / (n - 1)) * DW2
+            const yOf = (v: number) => PYT2 + DH2 - ((v - minV) / range) * DH2
             const y0 = yOf(0)
+            const ptStr = cumulPts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
+            const fillPath = `M${xOf(0)},${y0} ${cumulPts.map((p, i) => `L${xOf(i)},${yOf(p.v)}`).join(' ')} L${xOf(n-1)},${y0} Z`
+            const rawTicks = [minV, 0, maxV].filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.12) === i)
+            const fmtY2 = (v: number) => v === 0 ? '€0' : v > 0 ? `+€${Math.abs(v).toFixed(0)}` : `-€${Math.abs(v).toFixed(0)}`
+            const step2 = Math.max(1, Math.floor((n - 1) / 4))
+            const xIdxSet2 = new Set([0, n - 1])
+            for (let i = step2; i < n - 1; i += step2) xIdxSet2.add(i)
+            const xIdxs2 = [...xIdxSet2].sort((a, b) => a - b)
             return (
-              <div style={{ marginTop: 12, height: 60 }}>
+              <div style={{ marginTop: 14, height: 110 }}>
                 <svg viewBox={`0 0 ${W2} ${H2}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-                  <line x1={PX2} y1={y0} x2={W2 - PX2} y2={y0} stroke="rgba(255,255,255,.06)" strokeWidth={1} strokeDasharray="4 6" />
-                  <polyline points={pts} fill="none" stroke="#e2e8f0" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+                  <line x1={PXL2} y1={PYT2} x2={PXL2} y2={H2 - PYB2} stroke="rgba(255,255,255,.08)" strokeWidth={1} />
+                  <line x1={PXL2} y1={H2 - PYB2} x2={W2 - PXR2} y2={H2 - PYB2} stroke="rgba(255,255,255,.08)" strokeWidth={1} />
+                  <line x1={PXL2} y1={y0} x2={W2 - PXR2} y2={y0} stroke="rgba(255,255,255,.08)" strokeWidth={0.5} strokeDasharray="4 6" />
+                  {rawTicks.map(v => <text key={v} x={PXL2 - 4} y={Math.max(PYT2 + 7, Math.min(H2 - PYB2 - 2, yOf(v) + 3))} textAnchor="end" fill="rgba(234,232,245,.35)" fontSize="8" style={{ fontFamily: 'monospace' }}>{fmtY2(v)}</text>)}
+                  {xIdxs2.map(i => <text key={i} x={Math.max(PXL2 + 14, Math.min(W2 - PXR2 - 14, xOf(i)))} y={H2 - PYB2 + 12} textAnchor="middle" fill="rgba(234,232,245,.3)" fontSize="7.5" style={{ fontFamily: 'monospace' }}>{cumulPts[i].date.slice(5)}</text>)}
+                  <path d={fillPath} fill="rgba(234,232,245,.05)" />
+                  <polyline points={ptStr} fill="none" stroke="#e2e8f0" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+                  <circle cx={xOf(n-1)} cy={yOf(vals[n-1])} r={3} fill="#e2e8f0" />
                 </svg>
               </div>
             )
@@ -1003,6 +1017,66 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
   )
 }
 
+function downloadReport(title: string) {
+  const win = window.open('', '_blank', 'width=860,height=780')
+  if (!win) return
+  win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title><style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Courier New',monospace;background:#fff;color:#111;padding:48px 64px;max-width:740px;margin:0 auto;font-size:13px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;padding-bottom:20px;border-bottom:2px solid #111}
+    .brand{font-size:10px;letter-spacing:4px;color:#999;margin-bottom:8px}
+    h1{font-size:22px;font-weight:300;letter-spacing:-.5px;line-height:1.2}
+    .meta{font-size:11px;color:#777;text-align:right;line-height:1.8}
+    .accent{color:#7c3aed;font-weight:600}
+    .section{margin-bottom:30px}
+    .section-title{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#aaa;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #eee}
+    .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12.5px}
+    .val{font-weight:600}
+    .green{color:#006b45}.red{color:#b83225}.muted{color:#888}
+    .insight{font-size:12.5px;line-height:1.75;color:#444;padding:16px 18px;border:1px solid #e8e8e8;border-radius:4px;background:#fafafa;border-left:3px solid #7c3aed}
+    .footer{margin-top:48px;padding-top:18px;border-top:1px solid #eee;font-size:10.5px;color:#bbb;text-align:center;line-height:1.8}
+    .btn{margin-top:24px;padding:10px 22px;background:#7c3aed;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-family:inherit;letter-spacing:.5px}
+    @media print{.btn{display:none}body{padding:20px 32px}}
+  </style></head><body>
+  <div class="header">
+    <div><div class="brand">CALDRA</div><h1>${title}</h1></div>
+    <div class="meta">Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}<br/><span class="accent">● Rapport comportemental</span></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Résumé de la semaine</div>
+    <div class="row"><span>Score comportemental moyen</span><span class="val green">82 / 100</span></div>
+    <div class="row"><span>P&amp;L total</span><span class="val">+€ 312</span></div>
+    <div class="row"><span>Sessions tradées</span><span class="val">4 / 5</span></div>
+    <div class="row"><span>Win rate</span><span class="val">61%</span></div>
+    <div class="row"><span>Alertes déclenchées</span><span class="val">7</span></div>
+    <div class="row"><span>Sessions critiques (score &lt; 40)</span><span class="val red">1</span></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Détail par session</div>
+    <div class="row"><span>Lundi</span><span class="val green">Score 91 · +€ 124 · 0 alerte</span></div>
+    <div class="row"><span>Mardi</span><span class="val green">Score 88 · +€ 87 · 1 alerte</span></div>
+    <div class="row"><span>Mercredi</span><span class="val red">Score 34 · -€ 210 · 4 alertes</span></div>
+    <div class="row"><span>Jeudi</span><span class="val green">Score 79 · +€ 311 · 2 alertes</span></div>
+    <div class="row"><span>Vendredi</span><span class="val muted">—</span></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Patterns comportementaux détectés</div>
+    <div class="row"><span>immediate_reentry</span><span class="val">3 ×</span></div>
+    <div class="row"><span>revenge_sizing</span><span class="val red">2 ×</span></div>
+    <div class="row"><span>drawdown_alert</span><span class="val">1 ×</span></div>
+    <div class="row"><span>overtrading</span><span class="val">1 ×</span></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Recommandation Sentinel IA</div>
+    <div class="insight">Mercredi a été une session difficile avec une série de 3 re-entrées impulsives après la perte initiale. Le revenge sizing détecté (×2) indique une réponse émotionnelle aux pertes. Recommandation : appliquer une pause obligatoire de 15 minutes après 2 pertes consécutives. Le reste de la semaine montre une excellente discipline.</div>
+  </div>
+  <div class="footer">Rapport généré automatiquement par Caldra — getcaldra.com · Document confidentiel</div>
+  <br/><button class="btn" onclick="window.print()">↓ Imprimer / Sauvegarder en PDF</button>
+  </body></html>`)
+  win.document.close()
+  win.focus()
+}
+
 // ── RapportsPanel ──────────────────────────────────────────────────────────────
 function RapportsPanel() {
   const C = useContext(ThemeCtx)
@@ -1037,7 +1111,7 @@ function RapportsPanel() {
           </div>
           <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: MONO, whiteSpace: 'nowrap' as const, background: r.badgeBg, border: `.5px solid ${r.badgeBorder}`, color: r.badgeCol }}>{r.badge}</span>
           {r.canDownload && (
-            <button style={{ fontSize: 12, padding: '7px 16px', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, background: 'transparent', cursor: 'pointer', transition: 'all .2s', fontFamily: SANS, whiteSpace: 'nowrap' as const }}>↓ PDF</button>
+            <button onClick={() => downloadReport(r.title)} style={{ fontSize: 12, padding: '7px 16px', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, background: 'transparent', cursor: 'pointer', transition: 'all .2s', fontFamily: SANS, whiteSpace: 'nowrap' as const }}>↓ PDF</button>
           )}
         </div>
       ))}
@@ -1921,10 +1995,10 @@ const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
 ]
 
 const SETTINGS_ITEMS = [
+  { id: 'profil',        label: 'Profil' },
   { id: 'regles',        label: 'Règles' },
   { id: 'integrations',  label: 'Intégrations' },
   { id: 'billing',       label: 'Billing' },
-  { id: 'profil',        label: 'Profil' },
 ]
 
 type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'sentinel'
@@ -1986,6 +2060,13 @@ export default function DashboardClient({
 
   const togglePause = useCallback(() => {
     setPaused(p => { pausedRef.current = !p; return !p })
+  }, [])
+
+  const resetSession = useCallback(() => {
+    if (!confirm('Réinitialiser la session ? Les trades et alertes affichés seront effacés (les données restent en base).')) return
+    setTrades([])
+    setAlerts([])
+    setStats({ total_trades: 0, total_pnl: 0, wins: 0, losses: 0 })
   }, [])
   const today = new Date().toISOString().split('T')[0]
 
@@ -2271,7 +2352,7 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '20% 1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
-          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} trades={trades} paused={paused} onTogglePause={togglePause} />
+          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} onReset={resetSession} />
 
           <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
