@@ -491,7 +491,11 @@ const HTML = `
 
 <footer>
   <div class="fl">Cald<span>ra</span></div>
-  <div>&copy; 2026 Caldra &mdash; Tous droits r&eacute;serv&eacute;s</div>
+  <div style="display:flex;gap:2rem;align-items:center">
+    <a href="/mentions-legales" style="color:rgba(232,230,224,.2);font-size:11px;text-decoration:none;letter-spacing:.5px">CGU</a>
+    <a href="/confidentialite" style="color:rgba(232,230,224,.2);font-size:11px;text-decoration:none;letter-spacing:.5px">Confidentialit&eacute;</a>
+    <a href="/support" style="color:rgba(232,230,224,.2);font-size:11px;text-decoration:none;letter-spacing:.5px">Support</a>
+  </div>
   <div>contact@getcaldra.com</div>
 </footer>
 <script id="caldra-landing-js">

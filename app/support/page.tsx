@@ -53,8 +53,8 @@ const HTML = `
     </div>
   </div>
   <div class="nr">
-    <div class="nb">Acc&egrave;s anticip&eacute;</div>
-    <a class="nc" href="/">Rejoindre la liste</a>
+    <a href="/login" class="nc">Connexion</a>
+    <a href="/signup" class="bp" style="text-decoration:none;padding:9px 20px;border-radius:4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif;background:var(--red);border:none;color:#fff;cursor:pointer">Commencer &rarr;</a>
   </div>
 </nav>
 
@@ -99,7 +99,11 @@ const HTML = `
 
 <footer>
   <div class="fl">Cald<span>ra</span></div>
-  <div>&copy; 2026 Caldra &mdash; Tous droits r&eacute;serv&eacute;s</div>
+  <div style="display:flex;gap:2rem;align-items:center">
+    <a href="/mentions-legales" style="color:rgba(232,230,224,.2);font-size:11px;text-decoration:none;letter-spacing:.5px">CGU</a>
+    <a href="/confidentialite" style="color:rgba(232,230,224,.2);font-size:11px;text-decoration:none;letter-spacing:.5px">Confidentialit&eacute;</a>
+    <a href="/support" style="color:rgba(232,230,224,.2);font-size:11px;text-decoration:none;letter-spacing:.5px">Support</a>
+  </div>
   <div>contact@getcaldra.com</div>
 </footer>
 <script id="caldra-support-js">

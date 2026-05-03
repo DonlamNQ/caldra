@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_ROUTES = ['/', '/login', '/pricing', '/auth/callback', '/api/ctrader/callback', '/api/ctrader/connect']
+const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/ctrader/callback', '/api/ctrader/connect']
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -47,8 +47,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Sur /login avec session active → dashboard
-  if (path === '/login' && user) {
+  // Sur /login ou /signup avec session active → dashboard
+  if ((path === '/login' || path === '/signup') && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
