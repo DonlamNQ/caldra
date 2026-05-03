@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { ctraderClient } from '@/lib/ctrader'
 
@@ -8,7 +8,7 @@ export async function GET() {
 
   if (!user) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://getcaldra.com'}/login?next=/settings/integrations`
+      `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://getcaldra.com'}/login?next=/dashboard?tab=integrations`
     )
   }
 

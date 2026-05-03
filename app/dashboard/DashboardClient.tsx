@@ -1232,16 +1232,32 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
               <div style={{ width: 40, height: 40, borderRadius: 9, background: 'rgba(255,171,0,.06)', border: `.5px solid rgba(255,171,0,.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: C.o, fontFamily: MONO }}>MT5</div>
               <div>
                 <div style={{ fontSize: 14.5, fontWeight: 500, color: C.tx }}>MetaTrader 5</div>
-                <div style={{ fontSize: 11, color: C.td }}>Futures · Forex · EA Caldra</div>
+                <div style={{ fontSize: 11, color: C.td }}>Futures · Forex · EA CaldraMT5</div>
               </div>
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,.18)' }} />
-                <span style={{ color: C.td, letterSpacing: .5 }}>VIA API</span>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)' }} />
+                <span style={{ color: hasKey ? C.g : C.td, letterSpacing: .5 }}>{hasKey ? 'PRÊT' : 'CLEF REQUISE'}</span>
               </div>
             </div>
-            <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.6, marginBottom: 18 }}>
-              Utilisez l'EA Caldra pour envoyer vos trades MT5 automatiquement via la clé API.
+            <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
+              Expert Advisor MQL5 — envoie chaque trade fermé vers Caldra automatiquement.
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 16 }}>
+              {([
+                ['1', 'Téléchargez CaldraMT5.mq5 et ouvrez-le dans MetaEditor (F4 dans MT5).'],
+                ['2', <>Copiez votre clé API depuis la section <span style={{ fontFamily: MONO, color: C.red }}>Clé API</span> ci-dessus.</>],
+                ['3', 'Dans MT5 : Outils → Options → Expert Advisors → autorisez les WebRequests pour getcaldra.com.'],
+                ['4', 'Attachez l\'EA à n\'importe quel graphique, collez votre clé dans le paramètre CaldraApiKey.'],
+              ] as [string, React.ReactNode][]).map(([n, t]) => (
+                <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: C.o, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                  <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
+                </div>
+              ))}
+            </div>
+            <a href="/CaldraMT5.mq5" download="CaldraMT5.mq5" style={{ display: 'block', padding: 9, borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.25)`, color: C.o, transition: 'all .2s' }}>
+              ↓ Télécharger CaldraMT5.mq5
+            </a>
           </IntCard>
 
           {/* API directe */}

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { ctraderClient } from '@/lib/ctrader'
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error(`[cTrader][callback] OAuth error: ${error}`)
-    return NextResponse.redirect(`${base}/settings/integrations?ctrader=error`)
+    return NextResponse.redirect(`${base}/dashboard?tab=integrations?ctrader=error`)
   }
 
   // Fallback : si state manquant, récupère l'user depuis la session
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!code || !userId) {
-    return NextResponse.redirect(`${base}/settings/integrations?ctrader=missing_params`)
+    return NextResponse.redirect(`${base}/dashboard?tab=integrations?ctrader=missing_params`)
   }
 
   const service = createServiceClient(
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     const accounts = await ctraderClient.getAccounts(tokens.accessToken)
 
     if (accounts.length === 0) {
-      return NextResponse.redirect(`${base}/settings/integrations?ctrader=no_account`)
+      return NextResponse.redirect(`${base}/dashboard?tab=integrations?ctrader=no_account`)
     }
 
     const account   = accounts[0]
@@ -68,14 +68,14 @@ export async function GET(req: NextRequest) {
 
     if (upsertErr) {
       console.error(`[cTrader][callback] DB upsert error:`, upsertErr)
-      return NextResponse.redirect(`${base}/settings/integrations?ctrader=db_error`)
+      return NextResponse.redirect(`${base}/dashboard?tab=integrations?ctrader=db_error`)
     }
 
     console.log(`[cTrader][callback] user=${userId} connecté — account=${account.accountId} (${account.accountName})`)
   } catch (err) {
     console.error(`[cTrader][callback] Erreur:`, err instanceof Error ? err.message : err)
-    return NextResponse.redirect(`${base}/settings/integrations?ctrader=error`)
+    return NextResponse.redirect(`${base}/dashboard?tab=integrations?ctrader=error`)
   }
 
-  return NextResponse.redirect(`${base}/settings/integrations?ctrader=connected`)
+  return NextResponse.redirect(`${base}/dashboard?tab=integrations?ctrader=connected`)
 }
