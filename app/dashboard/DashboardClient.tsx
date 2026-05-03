@@ -585,18 +585,21 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                   transition: 'background .12s',
                 }}>
                   <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
-                  <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400 }}>
-                    {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
-                  </span>
-                  {ls ? (
-                    <span style={{
-                      fontSize: 8, padding: '1px 5px', fontFamily: MONO, letterSpacing: '.16em',
-                      background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.badge,
-                      fontWeight: 600, marginRight: 6,
-                    }}>
-                      L{lvl}
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                    <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400 }}>
+                      {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
                     </span>
-                  ) : <span />}
+                    {ls && (
+                      <span style={{
+                        fontSize: 8, padding: '1px 5px', fontFamily: MONO, letterSpacing: '.16em',
+                        background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.badge,
+                        fontWeight: 600,
+                      }}>
+                        L{lvl}
+                      </span>
+                    )}
+                  </span>
+                  <span />
                   <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const }}>
                     {fmtEur(t.pnl ?? 0)}
                   </span>
