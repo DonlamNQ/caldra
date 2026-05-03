@@ -203,11 +203,12 @@ score = 100 - Σ(deductions)
 - `customer.subscription.deleted` → downgrade vers `free`
 
 ### Plans
-| Plan | Prix | Limite |
-|---|---|---|
-| `free` | Gratuit | 50 trades/jour |
-| `pro` | 29€/mois | Illimité + IA coaching |
-| `team` | 99€/mois | 5 traders + dashboard consolidé |
+| Plan en DB | Nom affiché | Prix | Notes |
+|---|---|---|---|
+| `pro` | Pro | 19€/mois | Plan de base |
+| `sentinel` | Sentinel | 39€/mois | IA coaching + détections étendues |
+
+`STRIPE_PRO_PRICE_ID` → plan `pro` / `STRIPE_SENTINEL_PRICE_ID` → plan `sentinel`
 
 ---
 
@@ -227,8 +228,8 @@ ANTHROPIC_API_KEY=
 # Stripe (dashboard.stripe.com → Developers → API Keys)
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
-STRIPE_PRO_PRICE_ID=      # Price ID du produit Pro dans Stripe
-STRIPE_TEAM_PRICE_ID=     # Price ID du produit Team dans Stripe
+STRIPE_PRO_PRICE_ID=          # Price ID du produit Pro 19€/mois
+STRIPE_SENTINEL_PRICE_ID=     # Price ID du produit Sentinel 39€/mois
 
 # App (pour les redirects Stripe en production)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -253,11 +254,12 @@ Exécuter `lib/schema.sql` en entier pour créer les tables, triggers, RLS et re
 
 ## Stripe — configuration requise
 
-1. Créer deux produits (Pro 29€/mois, Team 99€/mois) → copier les Price IDs dans `.env.local`
+1. Créer deux produits (Pro 19€/mois, Sentinel 39€/mois) → copier les Price IDs dans `.env.local` et Vercel
 2. Ajouter un webhook endpoint :
-   - URL : `https://votre-app.vercel.app/api/billing/webhook`
+   - URL : `https://getcaldra.com/api/billing/webhook`
    - Events : `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
 3. Copier le Webhook Secret dans `STRIPE_WEBHOOK_SECRET`
+4. ✅ Webhook validé en prod — retourne `{ "received": true }`
 
 ---
 
@@ -288,7 +290,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 
 ---
 
-## État du projet (2026-05-03)
+## État du projet (2026-05-04)
 
 ### ✅ Terminé
 - Auth complète (login/signup Server Actions, middleware, callback, onboarding)
@@ -299,37 +301,46 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Analytics (PnL chart SVG, alertes par type, performance par jour)
 - Alertes (historique, filtres, search, export CSV)
 - Settings (règles trading, clé API, intégrations)
-- Billing (Stripe checkout + portal + webhook)
+- Billing (Stripe checkout + portal + webhook) ✅ validé en prod
 - Toutes les pages — TypeScript 0 erreur
 
 ### ✅ Déploiement prod (01/04/2026)
-- Fix Stripe lazy init dans `app/api/billing/webhook/route.ts`, `checkout/route.ts`, `portal/route.ts` — évite le crash au build quand `STRIPE_SECRET_KEY` est absent
-- Contrainte UNIQUE ajoutée sur `trading_rules.user_id` dans Supabase (`ALTER TABLE trading_rules ADD CONSTRAINT trading_rules_user_id_key UNIQUE (user_id)`)
-- Variables d'env configurées sur Vercel (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`)
-- Domaine `getcaldra.com` acheté sur Namecheap et connecté à Vercel (A record `216.198.79.1` + CNAME `e18fb8e584972c72.vercel-dns-017.com`)
-- Supabase URL Configuration mis à jour : Site URL = `https://getcaldra.com`, Redirect URLs = `https://getcaldra.com/**`
-- Landing page mise à jour : nouveau design, pricing 2 plans (Pro/Sentinel), carousel patterns comportementaux, témoignages mis à jour
+- Fix Stripe lazy init dans `app/api/billing/webhook/route.ts`, `checkout/route.ts`, `portal/route.ts`
+- Contrainte UNIQUE ajoutée sur `trading_rules.user_id` dans Supabase
+- Variables d'env configurées sur Vercel
+- Domaine `getcaldra.com` connecté à Vercel (A record + CNAME)
+- Supabase URL Configuration mis à jour : Site URL = `https://getcaldra.com`
 
 ### ✅ Polissage UI (08/04/2026)
-- Logo "CALDRA SESSION" : `letterSpacing` de "CALDRA" augmenté à 8, `letterSpacing` de "SESSION" réduit à 3 → hiérarchie visuelle claire. Appliqué dans `AppHeader.tsx` ET `DashboardClient.tsx`.
-- Inputs number dans `RulesForm.tsx` : flèches webkit/moz supprimées via `<style>` global injecté dans le composant.
-- Calendrier (`CalendrierPanel` dans `DashboardClient.tsx`) : jours avec trades → `#1a1a2e` / border `rgba(220,80,60,.45)` / texte `#e2e8f0`. Jours sans trades → `#0d0d1a` / border `#1e1e35` / texte `#475569`. Jour sélectionné → fond `rgba(220,80,60,.12)` / border `#dc503c`. Numéros de jours 13px.
-- Graphique PnL (`PnlChart`) dans l'onglet "Session live" : toujours visible. 0 trade → axes + "// en attente de trades". 1 trade → point unique. 2+ → ligne continue. Couleur neutre `#e2e8f0`, grille `#1e1e35`.
-- PnL affiché en `#e2e8f0` (neutre) **partout dans le dashboard** — jamais rouge ou vert. Règle anti-biais cognitif appliquée dans : SessionPanel, J-1 bar, trade feed, footer stats, AnalyticsPanel, graphique cumulé analytics, SentinelPanel.
-- Page de connexion (`app/login/page.tsx`) : redesign complet cohérent avec la landing — fond `#08080d`, card `#0d0d1a`, logo CALDRA style header, bouton `#dc503c`, DM Sans, lien inscription en bas.
+- Logo "CALDRA SESSION" : `letterSpacing` CALDRA=8, SESSION=3. Appliqué dans `AppHeader.tsx` ET `DashboardClient.tsx`.
+- Inputs number dans `RulesForm.tsx` : flèches webkit/moz supprimées
+- Calendrier, PnlChart, PnL neutre (`#e2e8f0`) partout dans le dashboard — anti-biais cognitif
+- Page de connexion redesignée cohérente avec la landing
 
 ### ✅ Sprint mai 2026 (03/05/2026)
-- **AppShell** (`components/AppShell.tsx`) : layout sidebar partagé remplaçant AppHeader sur rules/api/integrations/billing — nav verticale avec icônes SVG, logout intégré
-- **SessionLine** : composant rAF animé dans le dashboard (wave idle, couleur PnL via DOM setAttribute, LL_STATES machine d'états)
-- **Geist fonts** (Sans + Mono) via CSS variable — `next.config.js` avec `transpilePackages: ['geist']` requis
-- **Onboarding rewrite** : wizard 4 étapes on-brand + mode preview `?preview=1`
-- **account_size configurable** dans `trading_rules` (plus hardcodé à 10 000)
-- **Intégrations** (`settings/integrations`) : webhook Slack/Discord sortant + connexion cTrader
-- **Sentinel debrief** (`/api/sentinel`) : endpoint POST → analyse IA Anthropic de la session
-- **Brevo email** : envoi email via API Brevo (waitlist + notifications)
+- **AppShell** (`components/AppShell.tsx`) : layout sidebar partagé
+- **SessionLine** : composant rAF animé dans le dashboard
+- **Geist fonts** (Sans + Mono) via CSS variable
+- **Onboarding rewrite** : wizard 4 étapes + mode preview `?preview=1`
+- **account_size configurable** dans `trading_rules`
+- **Intégrations** : webhook Slack/Discord + connexion cTrader
+- **Sentinel debrief** (`/api/sentinel`) : endpoint POST → analyse IA Anthropic
+- **Brevo email** : `lib/brevo.ts` — alertes email + waitlist
+
+### ✅ Nettoyage pré-lancement (04/05/2026)
+- **Landing** : formulaire waitlist (hero + footer CTA) — tous les CTA `/signup` remplacés par `joinWaitlist()` → `/api/waitlist` → Brevo. Bouton "Connexion" conservé partout.
+- **`/api/waitlist`** : route POST créée — crée un contact Brevo (silencieux si clé absente)
+- **`/pricing`** : page alignée sur Pro €19 / Sentinel €39, même design que la landing
+- **Dashboard** : suppression bouton "Envoyer un trade test", bouton "Réinitialiser session", bouton "Test" notif — fonctions et refs associées retirées
+- **`/api/test-trade`** : route supprimée
+- **DB Supabase** : trades et alertes de test effacés via SQL Editor
+- **`app/billing/page.tsx`** : page créée — `?success=1` → confirmation verte, `?canceled=1` → annulation, sans params → redirect `/dashboard`
+- **`app/api/billing/webhook`** : `export const dynamic = 'force-dynamic'` + `headers()` de `next/headers` — fix "Invalid signature" Stripe. ✅ Validé en prod (`{ "received": true }`)
+- **`middleware.ts`** : `/api/billing/webhook` et `/api/waitlist` explicitement listés comme routes publiques
 
 ### 🎨 Conventions visuelles à respecter
 - **PnL = toujours `#e2e8f0`** dans le dashboard (jamais C.g/C.red) — anti-biais cognitif
+- **Accent app** : `#7c3aed` (violet) dans le dashboard / `#dc503c` (rouge) dans les pages standalone (billing, login)
 - **Logo** : CALDRA `letterSpacing: 8`, SESSION `letterSpacing: 3`, fontSize 7
 - **Calendrier** : jours avec trades = `#1a1a2e` bg + border rouge ; sans trades = `#0d0d1a` bg + border `#1e1e35`
 - **PnlChart** : toujours rendu (même à 0 trade), couleur ligne `#e2e8f0`, grille `#1e1e35`
@@ -337,13 +348,15 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 
 ### 🌍 Prod
 - URL : https://getcaldra.com
-- Waitlist Brevo opérationnelle
-- Auth magic link fonctionnelle end-to-end
+- Landing en mode **waitlist** — lancement prévu semaine du 05/05/2026
+- Webhook Stripe validé end-to-end
+- Auth + ingest + alertes fonctionnels
 
-### ⏳ À configurer (une seule fois, hors code)
-- Créer produits Stripe + webhook → remplir `.env.local` et Vercel env vars
+### ✅ Stripe configuré
+- Produits : Pro 19€/mois (`STRIPE_PRO_PRICE_ID`) + Sentinel 39€/mois (`STRIPE_SENTINEL_PRICE_ID`)
+- Webhook : `https://getcaldra.com/api/billing/webhook` — secret dans `STRIPE_WEBHOOK_SECRET`
 
 ### 🔜 Prochaines features possibles
 - Export PDF rapport hebdomadaire
-- Dashboard consolidé Team (multi-traders)
+- Dashboard consolidé multi-traders
 - IA coaching Anthropic étendu (alertes level 2 + coaching proactif)
