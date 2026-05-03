@@ -49,6 +49,7 @@ export default async function DashboardPage() {
     { data: apiKey },
     { data: yesterdayAlerts },
     { data: yesterdayTrades },
+    { data: profile },
   ] = await Promise.all([
     service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
       .order('level', { ascending: false }).order('created_at', { ascending: false }),
@@ -64,6 +65,7 @@ export default async function DashboardPage() {
     service.from('alerts').select('level').eq('user_id', user.id).eq('session_date', yesterday),
     service.from('trades').select('pnl').eq('user_id', user.id)
       .gte('entry_time', yesterday).lt('entry_time', today),
+    service.from('user_profiles').select('plan').eq('user_id', user.id).single(),
   ])
 
   // Today
@@ -115,6 +117,8 @@ export default async function DashboardPage() {
       }
     })
 
+  const meta = user.user_metadata ?? {}
+
   return (
     <DashboardClient
       userId={user.id}
@@ -127,6 +131,8 @@ export default async function DashboardPage() {
       tradingRules={rules ?? null}
       apiKeyPrefix={apiKey?.key_prefix ?? null}
       historicalSessions={historicalSessions}
+      plan={profile?.plan ?? 'free'}
+      userMeta={{ first_name: meta.first_name, last_name: meta.last_name, phone: meta.phone }}
     />
   )
 }

@@ -52,6 +52,8 @@ interface DashboardClientProps {
   tradingRules: TradingRules | null
   apiKeyPrefix: string | null
   historicalSessions: DaySession[]
+  plan: string
+  userMeta: { first_name?: string; last_name?: string; phone?: string }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -1640,6 +1642,228 @@ function ToastContainer({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss:
   )
 }
 
+// ── BillingPanel ───────────────────────────────────────────────────────────────
+function BillingPanel({ plan: initialPlan }: { plan: string }) {
+  const C = useContext(ThemeCtx)
+  const [plan]   = useState(initialPlan)
+  const [loading, setLoading] = useState<string | null>(null)
+
+  async function checkout(planKey: string) {
+    setLoading(planKey)
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planKey }),
+      })
+      const d = await res.json()
+      if (d.url) window.location.href = d.url
+    } finally { setLoading(null) }
+  }
+
+  async function portal() {
+    setLoading('portal')
+    try {
+      const res = await fetch('/api/billing/portal', { method: 'POST' })
+      const d = await res.json()
+      if (d.url) window.location.href = d.url
+    } finally { setLoading(null) }
+  }
+
+  const isPaid = plan === 'pro' || plan === 'sentinel'
+
+  const plans = [
+    {
+      id: 'pro', name: 'Pro', price: '19€',
+      accent: C.g, accentAlpha: 'rgba(0,209,122,',
+      features: ['Trades illimités', 'Analytics avancées', 'Calendrier des sessions', 'Rapports exportables', 'Alertes Slack / Discord'],
+    },
+    {
+      id: 'sentinel', name: 'Sentinel', price: '39€',
+      accent: C.red, accentAlpha: `rgba(124,58,237,`,
+      features: ['Tout Pro inclus', 'Débrief IA après chaque session', 'Analyse comportementale profonde', 'Coaching Anthropic personnalisé', 'Accès prioritaire aux nouvelles features'],
+    },
+  ]
+
+  return (
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Abonnement</div>
+        <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3, marginBottom: 4 }}>Billing</div>
+        <div style={{ fontSize: 12.5, color: C.td }}>
+          Plan actuel : <span style={{ color: C.tm, fontWeight: 500, textTransform: 'capitalize' }}>{plan}</span>
+          {isPaid && (
+            <button onClick={portal} disabled={loading === 'portal'} style={{ marginLeft: 14, padding: '4px 12px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 6, color: C.td, fontSize: 10, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5 }}>
+              {loading === 'portal' ? 'Chargement…' : 'Gérer l\'abonnement →'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 780 }}>
+        {plans.map(p => {
+          const isCurrent = plan === p.id
+          return (
+            <div key={p.id} style={{ background: C.sf, border: `.5px solid ${isCurrent ? p.accent : C.b}`, borderRadius: 12, padding: 24, position: 'relative', overflow: 'hidden' }}>
+              {isCurrent && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${p.accent},transparent)` }} />}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 500, color: C.tx, marginBottom: 6 }}>{p.name}</div>
+                  <div style={{ fontSize: 26, fontWeight: 200, letterSpacing: -1, color: isCurrent ? p.accent : C.tx, lineHeight: 1 }}>
+                    {p.price}<span style={{ fontSize: 13, color: C.td, fontWeight: 300 }}>/mois</span>
+                  </div>
+                </div>
+                {isCurrent && (
+                  <span style={{ padding: '4px 10px', background: `${p.accentAlpha}.08)`, border: `.5px solid ${p.accentAlpha}.25)`, borderRadius: 99, fontSize: 9, color: p.accent, letterSpacing: 1.5 }}>ACTIF</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                {p.features.map(f => (
+                  <div key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12.5, color: C.td }}>
+                    <span style={{ color: p.accent, flexShrink: 0, marginTop: 1 }}>✓</span>{f}
+                  </div>
+                ))}
+              </div>
+              {!isCurrent && (
+                <button
+                  onClick={() => checkout(p.id)}
+                  disabled={loading === p.id}
+                  style={{ width: '100%', padding: 11, background: p.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: loading === p.id ? 'not-allowed' : 'pointer', fontFamily: SANS, opacity: loading === p.id ? .7 : 1, letterSpacing: .3, transition: 'opacity .2s' }}
+                >
+                  {loading === p.id ? 'Redirection…' : `Passer à ${p.name} →`}
+                </button>
+              )}
+              {isCurrent && isPaid && (
+                <div style={{ fontSize: 11, color: C.te, textAlign: 'center' as const, marginTop: 4 }}>Abonnement actif · Gérez-le via le bouton ci-dessus</div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {plan === 'free' && (
+        <div style={{ marginTop: 14, padding: '11px 16px', background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 8, fontSize: 12, color: C.te, maxWidth: 780 }}>
+          14 jours d'essai gratuit inclus sur Pro et Sentinel — aucune carte requise pour commencer.
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── ProfilPanel ─────────────────────────────────────────────────────────────────
+function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { first_name?: string; last_name?: string; phone?: string } }) {
+  const C = useContext(ThemeCtx)
+  const [firstName, setFirstName] = useState(userMeta.first_name ?? '')
+  const [lastName,  setLastName]  = useState(userMeta.last_name  ?? '')
+  const [phone,     setPhone]     = useState(userMeta.phone      ?? '')
+  const [save,  setSave]  = useState<'idle'|'saving'|'saved'|'error'>('idle')
+  const [pwSave, setPwSave] = useState<'idle'|'saving'|'saved'|'error'>('idle')
+  const [newPw,     setNewPw]     = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+
+  async function saveProfile() {
+    setSave('saving')
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const { error } = await createClient().auth.updateUser({
+        data: { first_name: firstName, last_name: lastName, phone, full_name: `${firstName} ${lastName}`.trim() },
+      })
+      setSave(error ? 'error' : 'saved')
+      if (!error) setTimeout(() => setSave('idle'), 2500)
+    } catch { setSave('error') }
+  }
+
+  async function changePassword() {
+    if (newPw.length < 8 || newPw !== confirmPw) return
+    setPwSave('saving')
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const { error } = await createClient().auth.updateUser({ password: newPw })
+      setPwSave(error ? 'error' : 'saved')
+      if (!error) { setNewPw(''); setConfirmPw(''); setTimeout(() => setPwSave('idle'), 2500) }
+    } catch { setPwSave('error') }
+  }
+
+  async function logout() {
+    const { createClient } = await import('@/lib/supabase/client')
+    await createClient().auth.signOut()
+    window.location.href = '/login'
+  }
+
+  const inp: React.CSSProperties = {
+    width: '100%', background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b2}`,
+    borderRadius: 8, padding: '11px 14px', color: C.tx, fontSize: 13,
+    fontFamily: SANS, outline: 'none', boxSizing: 'border-box' as const, transition: 'border-color .2s',
+  }
+
+  const Sec = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, marginBottom: 14 }}>
+      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.te, marginBottom: 16 }}>{title}</div>
+      {children}
+    </div>
+  )
+
+  return (
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
+      <div style={{ marginBottom: 24, maxWidth: 520 }}>
+        <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Compte</div>
+        <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3 }}>Profil</div>
+      </div>
+
+      <div style={{ maxWidth: 520 }}>
+        <Sec title="Informations personnelles">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>PRÉNOM</div>
+                <input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Prénom" />
+              </div>
+              <div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>NOM</div>
+                <input style={inp} value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Nom" />
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>EMAIL</div>
+              <input style={{ ...inp, opacity: .45, cursor: 'not-allowed' }} value={userEmail} readOnly />
+            </div>
+            <div>
+              <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>TÉLÉPHONE</div>
+              <input style={inp} value={phone} onChange={e => setPhone(e.target.value)} placeholder="+33 6 00 00 00 00" />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={saveProfile} disabled={save === 'saving'} style={{ padding: '9px 20px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, opacity: save === 'saving' ? .6 : 1 }}>
+                {save === 'saving' ? 'Enregistrement…' : 'Sauvegarder'}
+              </button>
+              {save === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Sauvegardé</span>}
+              {save === 'error'  && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
+            </div>
+          </div>
+        </Sec>
+
+        <Sec title="Mot de passe">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <input type="password" style={inp} value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="Nouveau mot de passe (8 min)" autoComplete="new-password" />
+            <input type="password" style={{ ...inp, borderColor: confirmPw && confirmPw !== newPw ? 'rgba(224,80,80,.4)' : undefined }} value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Confirmer" autoComplete="new-password" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={changePassword} disabled={pwSave === 'saving' || newPw.length < 8 || newPw !== confirmPw} style={{ padding: '9px 20px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, opacity: (newPw.length < 8 || newPw !== confirmPw) ? .35 : 1 }}>
+                {pwSave === 'saving' ? 'Mise à jour…' : 'Changer le mot de passe'}
+              </button>
+              {pwSave === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Mis à jour</span>}
+              {pwSave === 'error'  && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
+            </div>
+          </div>
+        </Sec>
+
+        <Sec title="Session">
+          <button onClick={logout} style={{ padding: '9px 20px', background: 'transparent', border: '.5px solid rgba(244,63,94,.2)', borderRadius: 7, color: 'rgba(244,63,94,.65)', fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5 }}>
+            Se déconnecter
+          </button>
+        </Sec>
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
   { id: 'session',       label: 'Session live' },
@@ -1648,14 +1872,16 @@ const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
   { id: 'rapports',     label: 'Rapports' },
   { id: 'integrations', label: 'Intégrations' },
   { id: 'regles',       label: 'Règles' },
+  { id: 'billing',      label: 'Billing' },
+  { id: 'profil',       label: 'Profil' },
   { id: 'sentinel',     label: 'Sentinel IA', sentinel: true },
 ]
 
-type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'sentinel'
+type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'sentinel'
 
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
-  yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions,
+  yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, plan, userMeta,
 }: DashboardClientProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     typeof window !== 'undefined' ? (localStorage.getItem('caldra-theme') as 'dark' | 'light') ?? 'dark' : 'dark'
@@ -1919,6 +2145,8 @@ export default function DashboardClient({
             {activeTab === 'rapports' && <RapportsPanel />}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
+            {activeTab === 'billing' && <BillingPanel plan={plan} />}
+            {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
             {activeTab === 'sentinel' && (
               <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} />
             )}
