@@ -141,9 +141,9 @@ function MetricBar({ label, value }: { label: string; value: number }) {
 const DAILY_RISK = 300
 
 function llColor(pnl: number): string {
-  if (pnl < 0) return '#7c3aed'
-  if (pnl >= DAILY_RISK) return '#3cc87a'
-  return 'rgba(200,197,192,0.5)'
+  if (pnl < -20) return '#7c3aed'
+  if (pnl >= 100)  return '#3cc87a'
+  return '#8ba0be'
 }
 
 const LL_STATES: { pts: number[][]; idle?: boolean }[] = [
@@ -197,9 +197,9 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       const c = llColor(pnlRef.current)
       const isNeutral = pnlRef.current >= 0 && pnlRef.current < DAILY_RISK
       document.getElementById('ll-start')?.setAttribute('stop-color', c)
-      document.getElementById('ll-start')?.setAttribute('stop-opacity', isNeutral ? '0.3' : '0.6')
+      document.getElementById('ll-start')?.setAttribute('stop-opacity', isNeutral ? '0.7' : '0.7')
       document.getElementById('ll-end')?.setAttribute('stop-color', c)
-      document.getElementById('ll-end')?.setAttribute('stop-opacity', isNeutral ? '0.5' : '1')
+      document.getElementById('ll-end')?.setAttribute('stop-opacity', isNeutral ? '0.95' : '1')
       rafId = requestAnimationFrame(animateLine)
     }
 
@@ -211,8 +211,8 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
     <svg width="100%" viewBox="0 0 800 44" preserveAspectRatio="none" height="44">
       <defs>
         <linearGradient id="llg" x1="0" y1="0" x2="1" y2="0">
-          <stop id="ll-start" offset="0%" stopColor="rgba(200,197,192,0.5)" stopOpacity="0.3" />
-          <stop id="ll-end" offset="100%" stopColor="rgba(200,197,192,0.5)" stopOpacity="0.5" />
+          <stop id="ll-start" offset="0%" stopColor="#8ba0be" stopOpacity="0.7" />
+          <stop id="ll-end" offset="100%" stopColor="#8ba0be" stopOpacity="0.95" />
         </linearGradient>
       </defs>
       <path id="ll-path" d="M0 22 L800 22" fill="none" stroke="url(#llg)" strokeWidth="1.5" strokeLinecap="round" />
@@ -2026,6 +2026,7 @@ export default function DashboardClient({
   const [paused, setPaused] = useState(false)
   const pausedRef = useRef(false)
   const resetTimestamp = useRef<string | null>(null)
+  const hiddenIds = useRef<Set<string>>(new Set())
   const channelRef = useRef<any>(null)
   const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
@@ -2062,8 +2063,8 @@ export default function DashboardClient({
   const resetSession = useCallback(() => {
     if (!confirm('Réinitialiser la session ? Les trades et alertes affichés seront effacés (les données restent en base).')) return
     resetTimestamp.current = new Date().toISOString()
-    setTrades([])
-    setAlerts([])
+    setTrades(prev => { prev.forEach(t => t.id && hiddenIds.current.add(t.id)); return [] })
+    setAlerts(prev => { prev.forEach(a => a.id && hiddenIds.current.add(a.id)); return [] })
     setStats({ total_trades: 0, total_pnl: 0, wins: 0, losses: 0 })
   }, [])
   const today = new Date().toISOString().split('T')[0]
@@ -2100,21 +2101,19 @@ export default function DashboardClient({
         if (pausedRef.current) return
         const a = payload.new as AlertRow & { session_date?: string; user_id?: string }
         if (a.session_date && a.session_date !== today) return
-        if (resetTimestamp.current && a.created_at < resetTimestamp.current) return
+        if (hiddenIds.current.has(a.id)) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          new Notification(`Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`, {
-            body: a.message ?? '',
-            icon: '/icon.svg',
-            tag: a.id ?? 'caldra-alert',
-          })
-        }
+        showPushNotif(
+          `Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
+          a.message ?? '',
+          a.id ?? 'caldra-alert'
+        )
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         if (pausedRef.current) return
         const t = payload.new as TradeRow & { user_id?: string }
-        if (resetTimestamp.current && t.entry_time < resetTimestamp.current) return
+        if (hiddenIds.current.has(t.id)) return
         setTrades(prev => [t, ...prev])
         setStats(prev => ({
           total_trades: prev.total_trades + 1,
@@ -2133,6 +2132,11 @@ export default function DashboardClient({
     }
     if (typeof Notification !== 'undefined') {
       setNotifPerm(Notification.permission)
+      if (Notification.permission === 'default') {
+        setTimeout(() => {
+          Notification.requestPermission().then(p => setNotifPerm(p))
+        }, 2500)
+      }
     }
     const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e) }
     window.addEventListener('beforeinstallprompt', handler as EventListener)
@@ -2141,17 +2145,17 @@ export default function DashboardClient({
 
   const pollFreshData = useCallback(async () => {
     const supabase = createClient()
-    const since = resetTimestamp.current ?? `${today}T00:00:00`
     const [aRes, tRes] = await Promise.all([
-      supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).gte('created_at', since).order('created_at', { ascending: false }),
-      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', since).order('entry_time', { ascending: false }),
+      supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false }),
+      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', `${today}T00:00:00`).order('entry_time', { ascending: false }),
     ])
-    if (aRes.data) setAlerts(aRes.data)
+    if (aRes.data) setAlerts(aRes.data.filter((a: AlertRow) => !hiddenIds.current.has(a.id)))
     if (tRes.data) {
-      setTrades(tRes.data)
-      const pnl = tRes.data.reduce((s: number, t: TradeRow) => s + (t.pnl ?? 0), 0)
-      const wins = tRes.data.filter((t: TradeRow) => (t.pnl ?? 0) > 0).length
-      setStats({ total_trades: tRes.data.length, total_pnl: pnl, wins, losses: tRes.data.length - wins })
+      const visible = tRes.data.filter((t: TradeRow) => !hiddenIds.current.has(t.id))
+      setTrades(visible)
+      const pnl = visible.reduce((s: number, t: TradeRow) => s + (t.pnl ?? 0), 0)
+      const wins = visible.filter((t: TradeRow) => (t.pnl ?? 0) > 0).length
+      setStats({ total_trades: visible.length, total_pnl: pnl, wins, losses: visible.length - wins })
     }
   }, [userId, today])
 
@@ -2162,15 +2166,24 @@ export default function DashboardClient({
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
   }, [pollFreshData])
 
+  async function showPushNotif(title: string, body: string, tag: string) {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+    try {
+      const reg = await navigator.serviceWorker?.getRegistration()
+      if (reg?.showNotification) {
+        await reg.showNotification(title, { body, icon: '/icon.svg', tag, data: { url: '/dashboard' } })
+        return
+      }
+    } catch {}
+    new Notification(title, { body, icon: '/icon.svg', tag })
+  }
+
   async function requestNotifPermission() {
     if (typeof Notification === 'undefined') return
     const perm = await Notification.requestPermission()
     setNotifPerm(perm)
     if (perm === 'granted') {
-      new Notification('Caldra — Notifications activées', {
-        body: 'Vous recevrez les alertes comportementales en temps réel.',
-        icon: '/icon.svg',
-      })
+      await showPushNotif('Caldra — Notifications activées', 'Vous recevrez les alertes comportementales en temps réel.', 'caldra-welcome')
     }
   }
 
@@ -2243,15 +2256,15 @@ export default function DashboardClient({
               onMouseEnter={e => (e.currentTarget.style.color = C.tm)}
               onMouseLeave={e => (e.currentTarget.style.color = C.td)}
             >{theme === 'dark' ? '☀' : '◐'}</button>
-            {notifPerm !== 'granted' && (
+            {notifPerm !== 'granted' && notifPerm !== 'denied' && (
               <button
                 onClick={requestNotifPermission}
-                title="Activer les notifications"
-                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.td, fontFamily: MONO, background: C.b, border: `.5px solid ${C.b2}`, padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
-                onMouseEnter={e => { e.currentTarget.style.color = C.tx; e.currentTarget.style.borderColor = C.b3 }}
-                onMouseLeave={e => { e.currentTarget.style.color = C.td; e.currentTarget.style.borderColor = C.b2 }}
+                title="Activer les notifications d'alertes"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: C.red, fontFamily: MONO, background: C.rd, border: `.5px solid ${C.rb}`, padding: '4px 11px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3, animation: 'pulse 2s infinite' }}
+                onMouseEnter={e => { e.currentTarget.style.background = C.rg; e.currentTarget.style.animation = 'none' }}
+                onMouseLeave={e => { e.currentTarget.style.background = C.rd; e.currentTarget.style.animation = 'pulse 2s infinite' }}
               >
-                <span style={{ fontSize: 11 }}>🔔</span> notifs
+                <span style={{ fontSize: 11 }}>🔔</span> Activer les alertes
               </button>
             )}
             {installPrompt && (
