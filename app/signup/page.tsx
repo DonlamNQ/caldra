@@ -4,34 +4,38 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  .sg-input{background:rgba(255,255,255,.04);border:0.5px solid #1e1e35;border-radius:8px;padding:13px 16px;color:#e2e8f0;font-size:14px;font-family:'DM Sans',sans-serif;width:100%;outline:none;transition:border-color .2s}
+  .sg-input::placeholder{color:rgba(226,232,240,.2)}
+  .sg-input:focus{border-color:rgba(124,58,237,.5)!important}
+`
+
 export default function SignupPage() {
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [confirm,  setConfirm]  = useState('')
-  const [error,    setError]    = useState('')
-  const [loading,  setLoading]  = useState(false)
-  const [sent,     setSent]     = useState(false)
+  const [firstName, setFirstName] = useState('')
+  const [lastName,  setLastName]  = useState('')
+  const [phone,     setPhone]     = useState('')
+  const [email,     setEmail]     = useState('')
+  const [password,  setPassword]  = useState('')
+  const [confirm,   setConfirm]   = useState('')
+  const [error,     setError]     = useState('')
+  const [loading,   setLoading]   = useState(false)
+  const [sent,      setSent]      = useState(false)
 
   const strength = password.length === 0 ? 0
-    : password.length < 8 ? 1
+    : password.length < 8  ? 1
     : password.length < 12 ? 2
     : 3
-
   const strengthLabel = ['', 'Trop court', 'Correct', 'Fort']
   const strengthColor = ['', '#e05050', '#f59e0b', '#22c55e']
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-
-    if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères.')
-      return
-    }
-    if (password !== confirm) {
-      setError('Les mots de passe ne correspondent pas.')
-      return
-    }
+    if (!firstName.trim()) { setError('Le prénom est requis.'); return }
+    if (password.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return }
+    if (password !== confirm) { setError('Les mots de passe ne correspondent pas.'); return }
 
     setLoading(true)
     const supabase = createClient()
@@ -41,6 +45,12 @@ export default function SignupPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          first_name: firstName.trim(),
+          last_name:  lastName.trim(),
+          phone:      phone.trim(),
+          full_name:  `${firstName.trim()} ${lastName.trim()}`.trim(),
+        },
       },
     })
 
@@ -64,10 +74,7 @@ export default function SignupPage() {
   if (sent) {
     return (
       <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
-          *{box-sizing:border-box;margin:0;padding:0}
-        `}</style>
+        <style dangerouslySetInnerHTML={{ __html: CSS }} />
         <div style={S.page}>
           <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,.06) 0%, transparent 65%)', pointerEvents: 'none' }} />
           <div style={{ ...S.card, position: 'relative', zIndex: 1 }}>
@@ -90,31 +97,20 @@ export default function SignupPage() {
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0}
-        .sg-input{background:rgba(255,255,255,.04);border:0.5px solid #1e1e35;border-radius:8px;padding:13px 16px;color:#e2e8f0;font-size:14px;font-family:'DM Sans',sans-serif;width:100%;outline:none;transition:border-color .2s}
-        .sg-input::placeholder{color:rgba(226,232,240,.2)}
-        .sg-input:focus{border-color:rgba(124,58,237,.5)!important}
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div style={S.page}>
-        <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,.06) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)', width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,.06) 0%, transparent 65%)', pointerEvents: 'none' }} />
 
-        <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }}>
+        <div style={{ width: '100%', maxWidth: 460, position: 'relative', zIndex: 1 }}>
 
-          {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: 4, textTransform: 'uppercase', color: '#e2e8f0', lineHeight: 1, marginBottom: 8 }}>
-              Cald<span style={{ color: VIO }}>ra</span>
-            </div>
+            <div style={S.logo}>Cald<span style={{ color: VIO }}>ra</span></div>
             <div style={{ fontSize: 12, color: '#475569', fontWeight: 300, letterSpacing: 1 }}>
               Intelligence comportementale pour traders
             </div>
           </div>
 
-          {/* Card */}
           <div style={S.card}>
-            {/* Top accent */}
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.5),transparent)' }} />
 
             <div style={{ marginBottom: 24 }}>
@@ -124,8 +120,36 @@ export default function SignupPage() {
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
+              {/* Prénom + Nom */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={S.label}>Prénom <span style={{ color: 'rgba(124,58,237,.7)' }}>*</span></label>
+                  <input
+                    className="sg-input"
+                    type="text"
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    placeholder="Jean"
+                    required
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={S.label}>Nom</label>
+                  <input
+                    className="sg-input"
+                    type="text"
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    placeholder="Dupont"
+                    autoComplete="family-name"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={S.label}>Adresse email</label>
+                <label style={S.label}>Email <span style={{ color: 'rgba(124,58,237,.7)' }}>*</span></label>
                 <input
                   className="sg-input"
                   type="email"
@@ -137,8 +161,22 @@ export default function SignupPage() {
                 />
               </div>
 
+              {/* Téléphone */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={S.label}>Mot de passe</label>
+                <label style={S.label}>Téléphone <span style={{ color: '#475569', fontWeight: 300, letterSpacing: 0 }}>(optionnel)</span></label>
+                <input
+                  className="sg-input"
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="+33 6 00 00 00 00"
+                  autoComplete="tel"
+                />
+              </div>
+
+              {/* Mot de passe */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={S.label}>Mot de passe <span style={{ color: 'rgba(124,58,237,.7)' }}>*</span></label>
                 <input
                   className="sg-input"
                   type="password"
@@ -158,8 +196,9 @@ export default function SignupPage() {
                 )}
               </div>
 
+              {/* Confirmer */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={S.label}>Confirmer le mot de passe</label>
+                <label style={S.label}>Confirmer le mot de passe <span style={{ color: 'rgba(124,58,237,.7)' }}>*</span></label>
                 <input
                   className="sg-input"
                   type="password"
@@ -181,7 +220,7 @@ export default function SignupPage() {
                 </div>
               )}
 
-              <button type="submit" disabled={loading} style={{ marginTop: 4, padding: '13px', background: VIO, border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans',sans-serif", opacity: loading ? .65 : 1, transition: 'opacity .2s, background .2s', letterSpacing: .2 }}>
+              <button type="submit" disabled={loading} style={{ marginTop: 4, padding: '13px', background: VIO, border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans',sans-serif", opacity: loading ? .65 : 1, transition: 'opacity .2s', letterSpacing: .2 }}>
                 {loading ? 'Création…' : 'Créer mon compte →'}
               </button>
 
@@ -226,6 +265,16 @@ const S: Record<string, React.CSSProperties> = {
     padding: '32px 32px',
     position: 'relative',
     overflow: 'hidden',
+  },
+  logo: {
+    fontSize: 20,
+    fontWeight: 800,
+    letterSpacing: 4,
+    textTransform: 'uppercase' as const,
+    color: '#e2e8f0',
+    lineHeight: 1,
+    marginBottom: 8,
+    textAlign: 'center' as const,
   },
   label: {
     fontSize: 11,
