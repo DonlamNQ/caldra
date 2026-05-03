@@ -15,7 +15,7 @@ const INPUT: React.CSSProperties = {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#0f0f17', border: '0.5px solid rgba(255,255,255,.065)', borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
+    <div style={{ background: '#0d0d1a', border: '0.5px solid rgba(255,255,255,.07)', borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
       <div style={{ padding: '12px 18px', borderBottom: '0.5px solid rgba(255,255,255,.07)', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(226,224,218,.28)', fontFamily: "'DM Sans',sans-serif" }}>{title}</div>
       <div style={{ padding: '0 18px .5rem' }}>{children}</div>
     </div>

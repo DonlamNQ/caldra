@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import AppShell from '@/components/AppShell'
@@ -42,7 +42,7 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
     if (!newKey) return; await navigator.clipboard.writeText(newKey); setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
-  const CARD: React.CSSProperties = { background: '#0f0f17', border: '0.5px solid rgba(255,255,255,.065)', borderRadius: 10, padding: '1.4rem 1.6rem', marginBottom: '1rem', position: 'relative', overflow: 'hidden' }
+  const CARD: React.CSSProperties = { background: '#0d0d1a', border: '0.5px solid rgba(255,255,255,.07)', borderRadius: 10, padding: '1.4rem 1.6rem', marginBottom: '1rem', position: 'relative', overflow: 'hidden' }
 
   return (
     <>
@@ -53,8 +53,8 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
         .ak-btn:disabled{opacity:.35;cursor:not-allowed}
         .ak-danger{border-color:rgba(244,63,94,.22)!important;color:rgba(244,63,94,.65)!important}
         .ak-danger:hover{background:rgba(244,63,94,.07)!important;color:rgba(244,63,94,.85)!important}
-        .ak-primary{background:rgba(220,80,60,.85)!important;border-color:transparent!important;color:#fff!important}
-        .ak-primary:hover{background:rgba(220,80,60,.7)!important}
+        .ak-primary{background:rgba(124,58,237,.85)!important;border-color:transparent!important;color:#fff!important}
+        .ak-primary:hover{background:rgba(124,58,237,.7)!important}
         .ak-copy{font-size:9px;padding:6px 12px;background:rgba(16,185,129,.09);border:0.5px solid rgba(16,185,129,.22);border-radius:5px;color:rgba(16,185,129,.8);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif;transition:all .15s;flex-shrink:0}
         .ak-copy:hover{background:rgba(16,185,129,.14)}
       `}</style>
@@ -62,7 +62,7 @@ export default function ApiKeyClient({ userEmail, existingPrefix, existingCreate
         <main style={{ padding: '2rem', maxWidth: 740, animation: 'apFadeIn .4s ease both' }}>
 
           <div style={{ marginBottom: '1.75rem' }}>
-            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(220,80,60,.55)', marginBottom: '.4rem', fontFamily: "'DM Sans',sans-serif" }}>Intégration</div>
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(124,58,237,.55)', marginBottom: '.4rem', fontFamily: "'DM Sans',sans-serif" }}>Intégration</div>
             <h1 style={{ margin: 0, fontWeight: 400, fontSize: '1.6rem', letterSpacing: -.5, color: '#fff', fontFamily: "'DM Sans',sans-serif", marginBottom: '.4rem' }}>Clé API</h1>
             <p style={{ margin: 0, color: 'rgba(226,224,218,.3)', fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>
               Authentifie les appels vers{' '}

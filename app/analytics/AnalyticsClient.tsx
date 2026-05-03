@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import AppShell from '@/components/AppShell'
 
@@ -95,7 +95,7 @@ export default function AnalyticsClient({ trades, alerts, userEmail }: Analytics
   const best = series.reduce((b, s) => s.pnl > (b?.pnl ?? -Infinity) ? s : b, null as DayStats|null)
   const worst = series.reduce((w, s) => s.pnl < (w?.pnl ?? Infinity) ? s : w, null as DayStats|null)
 
-  const CARD: React.CSSProperties = { background: '#0f0f17', border: '0.5px solid rgba(255,255,255,.065)', borderRadius: 10, position: 'relative', overflow: 'hidden' }
+  const CARD: React.CSSProperties = { background: '#0d0d1a', border: '0.5px solid rgba(255,255,255,.07)', borderRadius: 10, position: 'relative', overflow: 'hidden' }
 
   return (
     <>
@@ -104,7 +104,7 @@ export default function AnalyticsClient({ trades, alerts, userEmail }: Analytics
         <main style={{ padding: '2rem', animation: 'anFadeIn .4s ease both' }}>
 
           <div style={{ marginBottom: '1.75rem' }}>
-            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(220,80,60,.55)', marginBottom: '.4rem', fontFamily: "'DM Sans',sans-serif" }}>Période</div>
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(124,58,237,.55)', marginBottom: '.4rem', fontFamily: "'DM Sans',sans-serif" }}>Période</div>
             <h1 style={{ margin: 0, fontWeight: 400, fontSize: '1.6rem', letterSpacing: -.5, color: '#fff', fontFamily: "'DM Sans',sans-serif" }}>Analytics — 30 jours</h1>
           </div>
 

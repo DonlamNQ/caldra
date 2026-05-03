@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo } from 'react'
 import AppShell from '@/components/AppShell'
@@ -59,7 +59,7 @@ export default function AlertsClient({ alerts, userEmail }: AlertsClientProps) {
   const counts = { 1: 0, 2: 0, 3: 0 }
   alerts.forEach(a => { const l = (a.level ?? a.severity ?? 1) as 1|2|3; counts[l]++ })
 
-  const CARD: React.CSSProperties = { background: '#0f0f17', border: '0.5px solid rgba(255,255,255,.065)', borderRadius: 10, position: 'relative', overflow: 'hidden' }
+  const CARD: React.CSSProperties = { background: '#0d0d1a', border: '0.5px solid rgba(255,255,255,.07)', borderRadius: 10, position: 'relative', overflow: 'hidden' }
 
   return (
     <>
@@ -83,7 +83,7 @@ export default function AlertsClient({ alerts, userEmail }: AlertsClientProps) {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.75rem' }}>
             <div>
-              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(220,80,60,.55)', marginBottom: '.4rem', fontFamily: "'DM Sans',sans-serif" }}>Historique</div>
+              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(124,58,237,.55)', marginBottom: '.4rem', fontFamily: "'DM Sans',sans-serif" }}>Historique</div>
               <h1 style={{ margin: 0, fontWeight: 400, fontSize: '1.6rem', letterSpacing: -.5, color: '#fff', lineHeight: 1, fontFamily: "'DM Sans',sans-serif" }}>Alertes</h1>
               <p style={{ margin: '.4rem 0 0', color: 'rgba(226,224,218,.3)', fontSize: 12, fontFamily: "'DM Sans',sans-serif" }}>
                 {alerts.length} alerte{alerts.length !== 1 ? 's' : ''} au total
@@ -102,7 +102,7 @@ export default function AlertsClient({ alerts, userEmail }: AlertsClientProps) {
               return (
                 <div key={l} className="al-sumcard" onClick={() => setFilter(isOn ? 'all' : String(l))} style={{
                   ...CARD, padding: '1.1rem 1.3rem', transition: 'border-color .15s',
-                  background: isOn ? cfg.bg : '#0f0f17', border: `0.5px solid ${isOn ? cfg.border : 'rgba(255,255,255,.065)'}`,
+                  background: isOn ? cfg.bg : '#0d0d1a', border: `0.5px solid ${isOn ? cfg.border : 'rgba(255,255,255,.07)'}`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: '.5rem' }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot, boxShadow: isOn ? `0 0 6px ${cfg.dot}66` : 'none' }} />

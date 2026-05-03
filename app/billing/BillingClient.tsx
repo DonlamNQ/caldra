@@ -46,8 +46,8 @@ export default function BillingClient({ userEmail, plan, tradeCount, alertCount,
   }
 
   const CARD: React.CSSProperties = {
-    background: '#0f0f17',
-    border: '0.5px solid rgba(255,255,255,.065)',
+    background: '#0d0d1a',
+    border: '0.5px solid rgba(255,255,255,.07)',
     borderRadius: 10,
     position: 'relative',
     overflow: 'hidden',
