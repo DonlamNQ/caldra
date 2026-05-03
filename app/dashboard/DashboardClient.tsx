@@ -486,12 +486,17 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>en cours</div>
         </div>
 
-        {/* Session line card only */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+        {/* Chart card — session line + PnL chart empilés */}
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
-          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 64, overflow: 'hidden', paddingLeft: 46, paddingRight: 6 }}>
+          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 64, overflow: 'hidden', flexShrink: 0, paddingLeft: 46, paddingRight: 6 }}>
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
+          </div>
+          <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
+          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
+          <div style={{ height: 180, flexShrink: 0 }}>
+            <PnlChart trades={trades} />
           </div>
         </div>
 
@@ -512,16 +517,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         </div>
       </div>
 
-      {/* Row 2: PnL chart — full width in its own card */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '14px 18px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
-        <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 8, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
-        <div style={{ height: 160 }}>
-          <PnlChart trades={trades} />
-        </div>
-      </div>
-
-      {/* Row 3: J-1 */}
+      {/* Row 2: J-1 */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 18px', display: 'flex', gap: 22, alignItems: 'center', flexShrink: 0, borderLeft: `3px solid ${yesterdayStats ? `${scoreColor(yesterdayStats.score, C)}70` : C.b}` }}>
         <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, fontFamily: MONO, textTransform: 'uppercase' as const }}>J−1</div>
         {yesterdayStats ? (
@@ -2029,6 +2025,7 @@ export default function DashboardClient({
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [paused, setPaused] = useState(false)
   const pausedRef = useRef(false)
+  const resetTimestamp = useRef<string | null>(null)
   const channelRef = useRef<any>(null)
   const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
@@ -2064,6 +2061,7 @@ export default function DashboardClient({
 
   const resetSession = useCallback(() => {
     if (!confirm('Réinitialiser la session ? Les trades et alertes affichés seront effacés (les données restent en base).')) return
+    resetTimestamp.current = new Date().toISOString()
     setTrades([])
     setAlerts([])
     setStats({ total_trades: 0, total_pnl: 0, wins: 0, losses: 0 })
@@ -2102,6 +2100,7 @@ export default function DashboardClient({
         if (pausedRef.current) return
         const a = payload.new as AlertRow & { session_date?: string; user_id?: string }
         if (a.session_date && a.session_date !== today) return
+        if (resetTimestamp.current && a.created_at < resetTimestamp.current) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -2115,6 +2114,7 @@ export default function DashboardClient({
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         if (pausedRef.current) return
         const t = payload.new as TradeRow & { user_id?: string }
+        if (resetTimestamp.current && t.entry_time < resetTimestamp.current) return
         setTrades(prev => [t, ...prev])
         setStats(prev => ({
           total_trades: prev.total_trades + 1,
@@ -2141,9 +2141,10 @@ export default function DashboardClient({
 
   const pollFreshData = useCallback(async () => {
     const supabase = createClient()
+    const since = resetTimestamp.current ?? `${today}T00:00:00`
     const [aRes, tRes] = await Promise.all([
-      supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false }),
-      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', `${today}T00:00:00`).order('entry_time', { ascending: false }),
+      supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).gte('created_at', since).order('created_at', { ascending: false }),
+      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', since).order('entry_time', { ascending: false }),
     ])
     if (aRes.data) setAlerts(aRes.data)
     if (tRes.data) {
