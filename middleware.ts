@@ -1,12 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/ctrader/callback', '/api/ctrader/connect']
+const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/ctrader/callback', '/api/ctrader/connect', '/api/billing/webhook', '/api/waitlist']
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Toutes les routes /api/ gèrent leur propre auth — jamais de redirection middleware
+  // /api/billing/webhook doit rester accessible sans session pour les appels Stripe
   if (pathname.startsWith('/api/')) {
     return NextResponse.next()
   }
