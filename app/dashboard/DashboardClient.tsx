@@ -1205,20 +1205,6 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
     }).catch(() => {})
   }
 
-  const [testLoading, setTestLoading] = useState(false)
-  const [testResult, setTestResult]   = useState<{ ok?: boolean; trade?: { symbol: string; direction: string; pnl: number }; error?: string } | null>(null)
-
-  async function sendTestTrade() {
-    setTestLoading(true); setTestResult(null)
-    try {
-      const res = await fetch('/api/test-trade', { method: 'POST' })
-      const d = await res.json()
-      setTestResult(d)
-      setTimeout(() => setTestResult(null), 6000)
-    } catch { setTestResult({ error: 'Erreur réseau' }) }
-    finally { setTestLoading(false) }
-  }
-
   const IntCard = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
     <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden', transition: 'border-color .2s', ...style }}>
       {children}
@@ -1239,27 +1225,10 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
 
   return (
     <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
-      <div style={{ marginBottom: 22, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
-        <div>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Connecteurs</div>
-          <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3, marginBottom: 4 }}>Intégrations</div>
-          <div style={{ fontSize: 12.5, color: C.td }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
-        </div>
-        <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <button
-            onClick={sendTestTrade}
-            disabled={testLoading}
-            style={{ padding: '9px 18px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 8, color: C.red, fontSize: 11, fontFamily: SANS, cursor: testLoading ? 'not-allowed' : 'pointer', letterSpacing: .5, opacity: testLoading ? .6 : 1, whiteSpace: 'nowrap' as const }}
-          >
-            {testLoading ? 'Envoi…' : '▶ Envoyer un trade test'}
-          </button>
-          {testResult?.ok && testResult.trade && (
-            <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>
-              ✓ {testResult.trade.symbol} {testResult.trade.direction} — {testResult.trade.pnl > 0 ? '+' : ''}{testResult.trade.pnl.toFixed(0)}$
-            </span>
-          )}
-          {testResult?.error && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>{testResult.error}</span>}
-        </div>
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Connecteurs</div>
+        <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3, marginBottom: 4 }}>Intégrations</div>
+        <div style={{ fontSize: 12.5, color: C.td }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
       </div>
 
       {/* ── Clé API ── */}

@@ -26,7 +26,9 @@
       "Bash(curl *)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('exports', {}\\), indent=2\\)\\)\")",
       "Bash(grep -n \"tab-btn\\\\|tab-sentinel\\\\|style.*{.*\\\\`\" /c/Users/Haby/Documents/caldra/app/dashboard/DashboardClient.tsx)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(Remove-Item -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\app\\\\api\\\\test-trade\\\\route.ts\" -Force)",
+      "Bash(Remove-Item -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\app\\\\api\\\\test-trade\" -Force)"
     ]
   },
   "hooks": {

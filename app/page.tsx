@@ -55,9 +55,13 @@ h1{font-family:'DM Sans',sans-serif;font-size:clamp(2.8rem,6.5vw,4.8rem);font-we
 h1 em{font-style:normal;color:var(--red);font-weight:400}
 .hs{font-size:17px;color:var(--tm);line-height:1.75;max-width:580px;margin:0 auto 2.5rem;font-weight:300}
 .ww{max-width:480px;margin:0 auto}
+.wf{display:flex;gap:8px;background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:10px;padding:6px}
+.wf input{flex:1;padding:12px 16px;background:transparent;border:none;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none}
+.wf input::placeholder{color:rgba(255,255,255,.2)}
 .bp{padding:12px 22px;background:var(--red);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:opacity .2s,transform .1s}
 .bp:hover{opacity:.88}
 .bp:active{transform:scale(.97)}
+.sm{display:none;padding:12px 16px;background:rgba(30,180,100,.08);border:.5px solid rgba(30,180,100,.25);border-radius:8px;color:rgba(80,220,140,.9);font-size:13px;text-align:center;margin-top:8px}
 .ff{display:flex;align-items:center;justify-content:center;gap:1.5rem;margin-top:1rem}
 .fn{font-size:12px;color:var(--td)}
 .fs{width:1px;height:12px;background:var(--b2)}
@@ -230,23 +234,25 @@ const HTML = `
   </div>
   <div class="nr">
     <a href="/login" class="nc" style="text-decoration:none">Connexion</a>
-    <a href="/signup" class="bp" style="text-decoration:none;padding:9px 20px;border-radius:4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif">Commencer &rarr;</a>
+    <button onclick="scrollToWaitlist()" class="bp" style="padding:9px 20px;border-radius:4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif">Rejoindre &rarr;</button>
   </div>
 </nav>
-<div class="hero">
+<div class="hero" id="hero">
   <div class="ey"><div class="eyd"></div>Intelligence comportementale &mdash; Temps r&eacute;el</div>
   <h1>Tu ne vois pas<br>quand tu d&eacute;railles.<br><em>Lui si.</em></h1>
   <p class="hs">Caldra analyse chaque trade en temps r&eacute;el et d&eacute;tecte les comportements qui d&eacute;truisent les sessions &mdash; <em>avant</em> que le tilt, le revenge trading ou l&rsquo;impulsion ne fasse les d&eacute;g&acirc;ts.</p>
-  <div class="ww" style="display:flex;flex-direction:column;align-items:center;gap:14px">
-    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <a href="/signup" class="bp" style="text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;display:inline-block">Commencer gratuitement &rarr;</a>
-      <a href="/login" class="nc" style="text-decoration:none;padding:14px 24px;border-radius:8px;font-size:14px;display:inline-block">Se connecter</a>
+  <div class="ww" id="wf-hero">
+    <div class="wf">
+      <input id="wf-hero-email" type="email" placeholder="Ton adresse email" autocomplete="email"/>
+      <button id="wf-hero-btn" class="bp" onclick="joinWaitlist('wf-hero-email','wf-hero-msg','wf-hero-btn')">Rejoindre la liste &rarr;</button>
     </div>
-    <div class="ff">
-      <span class="fn">14 jours gratuits</span><div class="fs"></div>
-      <span class="fn">Sans carte requise</span><div class="fs"></div>
-      <span class="fn">Annulable &agrave; tout moment</span>
+    <div id="wf-hero-msg" class="sm">&#10003; Tu es sur la liste. On t&rsquo;envoie ton acc&egrave;s d&egrave;s l&rsquo;ouverture.</div>
+    <div class="ff" style="margin-top:.75rem">
+      <span class="fn">Lancement la semaine prochaine</span><div class="fs"></div>
+      <span class="fn">Acc&egrave;s prioritaire</span><div class="fs"></div>
+      <span class="fn">Gratuit pour commencer</span>
     </div>
+    <div style="margin-top:.75rem"><a href="/login" style="font-size:12px;color:var(--td);text-decoration:none">D&eacute;j&agrave; un compte ? <span style="color:var(--red)">Connexion &rarr;</span></a></div>
   </div>
 </div>
 <div class="ss">
@@ -423,7 +429,7 @@ const HTML = `
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique &amp; analytics 30 jours</li>
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Seuils configurables</li>
       </ul>
-      <a href="/signup" class="plan-btn plan-btn-secondary" style="display:block;text-align:center;text-decoration:none;padding:12px;border-radius:8px">Commencer gratuit &rarr;</a>
+      <button onclick="scrollToWaitlist()" class="plan-btn plan-btn-secondary" style="width:100%;padding:12px;border-radius:8px">Rejoindre la liste d&rsquo;attente &rarr;</button>
     </div>
 
     <div class="plan-card plan-sentinel">
@@ -441,7 +447,7 @@ const HTML = `
         <li class="plan-highlight"><div class="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique &amp; analytics 180 jours</strong></li>
         <li class="plan-highlight"><div class="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Support prioritaire</strong></li>
       </ul>
-      <a href="/signup" class="plan-btn plan-btn-primary" style="display:block;text-align:center;text-decoration:none;padding:12px;border-radius:8px">Commencer avec Sentinel &rarr;</a>
+      <button onclick="scrollToWaitlist()" class="plan-btn plan-btn-primary" style="width:100%;padding:12px;border-radius:8px">Rejoindre la liste d&rsquo;attente &rarr;</button>
     </div>
 
   </div>
@@ -475,12 +481,16 @@ const HTML = `
 </section>
 
 <div class="fc2">
-  <div class="fcl">Prot&egrave;ge tes sessions. D&egrave;s maintenant.</div>
+  <div class="fcl">Lancement la semaine prochaine.</div>
   <h2>Ton prochain tilt<br><em>peut &ecirc;tre le dernier.</em></h2>
-  <p>14 jours gratuits. Sans carte. Annulable &agrave; tout moment.</p>
-  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:0">
-    <a href="/signup" class="bp" style="text-decoration:none;padding:14px 32px;border-radius:8px;font-size:14px;display:inline-block;font-weight:500">Commencer gratuitement &rarr;</a>
-    <a href="/login" class="nc" style="text-decoration:none;padding:14px 24px;border-radius:8px;font-size:14px;display:inline-block">D&eacute;j&agrave; un compte ?</a>
+  <p>Inscris-toi maintenant pour recevoir ton acc&egrave;s en priorit&eacute;.</p>
+  <div style="max-width:420px;margin:1.5rem auto 0">
+    <div class="wf">
+      <input id="wf-footer-email" type="email" placeholder="Ton adresse email" autocomplete="email"/>
+      <button id="wf-footer-btn" class="bp" onclick="joinWaitlist('wf-footer-email','wf-footer-msg','wf-footer-btn')">Rejoindre &rarr;</button>
+    </div>
+    <div id="wf-footer-msg" class="sm">&#10003; Tu es sur la liste. On t&rsquo;envoie ton acc&egrave;s d&egrave;s l&rsquo;ouverture.</div>
+    <div style="margin-top:.75rem"><a href="/login" style="font-size:12px;color:var(--td);text-decoration:none">D&eacute;j&agrave; un compte ? <span style="color:var(--red)">Connexion &rarr;</span></a></div>
   </div>
 </div>
 
@@ -606,6 +616,23 @@ async function sendContact(){
   }
 }
 window.sendContact=sendContact;
+async function joinWaitlist(emailId,msgId,btnId){
+  var email=document.getElementById(emailId).value.trim();
+  if(!email||!email.includes('@'))return;
+  var btn=document.getElementById(btnId);
+  btn.textContent='Envoi…';btn.disabled=true;
+  try{
+    var res=await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+    if(res.ok){document.getElementById(msgId).style.display='block';}
+    else{throw new Error();}
+  }catch(e){btn.textContent='Rejoindre →';btn.disabled=false;}
+}
+window.joinWaitlist=joinWaitlist;
+function scrollToWaitlist(){
+  var wf=document.getElementById('wf-hero');
+  if(wf){wf.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){var i=document.getElementById('wf-hero-email');if(i)i.focus();},500);}
+}
+window.scrollToWaitlist=scrollToWaitlist;
 var car=document.getElementById('pcarousel');
 if(car){
   var isDown=false,startX,scrollLeft;
