@@ -15,10 +15,10 @@ const C_DARK = {
   g: '#00d17a', o: '#ffab00',
 }
 const C_LIGHT = {
-  red: '#d42a0a', rd: 'rgba(212,42,10,.07)', rb: 'rgba(212,42,10,.18)', rg: 'rgba(212,42,10,.04)',
-  bg: '#f0f0f5', sf: '#ffffff', sf2: '#f5f5fa',
-  b: 'rgba(0,0,0,.08)', b2: 'rgba(0,0,0,.13)', b3: 'rgba(0,0,0,.18)',
-  tx: '#0f0f1a', tm: 'rgba(15,15,26,.85)', td: 'rgba(15,15,26,.5)', te: 'rgba(15,15,26,.28)',
+  red: '#7c3aed', rd: 'rgba(124,58,237,.09)', rb: 'rgba(124,58,237,.22)', rg: 'rgba(124,58,237,.05)',
+  bg: '#ebebf4', sf: '#f6f6fb', sf2: '#eeeef8',
+  b: 'rgba(0,0,0,.09)', b2: 'rgba(0,0,0,.16)', b3: 'rgba(0,0,0,.22)',
+  tx: '#0f0f1a', tm: 'rgba(15,15,26,.88)', td: 'rgba(15,15,26,.62)', te: 'rgba(15,15,26,.42)',
   g: '#007a52', o: '#9a5a00',
 }
 type Palette = typeof C_DARK
@@ -417,9 +417,7 @@ function Sidebar({ score, alerts, stats, rules, trades, paused, onTogglePause }:
             </span>
           )}
         </div>
-        {alerts.length === 0 ? (
-          <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontFamily: MONO }}>// session saine</div>
-        ) : (
+        {alerts.length === 0 ? null : (
           alerts.slice(0, 8).map((a, i) => {
             const lvl = a.level ?? 1
             const aCol = lvl >= 2 ? C.red : C.o
@@ -1083,6 +1081,20 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
     }).catch(() => {})
   }
 
+  const [testLoading, setTestLoading] = useState(false)
+  const [testResult, setTestResult]   = useState<{ ok?: boolean; trade?: { symbol: string; direction: string; pnl: number }; error?: string } | null>(null)
+
+  async function sendTestTrade() {
+    setTestLoading(true); setTestResult(null)
+    try {
+      const res = await fetch('/api/test-trade', { method: 'POST' })
+      const d = await res.json()
+      setTestResult(d)
+      setTimeout(() => setTestResult(null), 6000)
+    } catch { setTestResult({ error: 'Erreur réseau' }) }
+    finally { setTestLoading(false) }
+  }
+
   const IntCard = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
     <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden', transition: 'border-color .2s', ...style }}>
       {children}
@@ -1103,10 +1115,27 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
 
   return (
     <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
-      <div style={{ marginBottom: 22 }}>
-        <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Connecteurs</div>
-        <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3, marginBottom: 4 }}>Intégrations</div>
-        <div style={{ fontSize: 12.5, color: C.td }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
+      <div style={{ marginBottom: 22, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Connecteurs</div>
+          <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3, marginBottom: 4 }}>Intégrations</div>
+          <div style={{ fontSize: 12.5, color: C.td }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
+        </div>
+        <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+          <button
+            onClick={sendTestTrade}
+            disabled={testLoading}
+            style={{ padding: '9px 18px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 8, color: C.red, fontSize: 11, fontFamily: SANS, cursor: testLoading ? 'not-allowed' : 'pointer', letterSpacing: .5, opacity: testLoading ? .6 : 1, whiteSpace: 'nowrap' as const }}
+          >
+            {testLoading ? 'Envoi…' : '▶ Envoyer un trade test'}
+          </button>
+          {testResult?.ok && testResult.trade && (
+            <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>
+              ✓ {testResult.trade.symbol} {testResult.trade.direction} — {testResult.trade.pnl > 0 ? '+' : ''}{testResult.trade.pnl.toFixed(0)}$
+            </span>
+          )}
+          {testResult?.error && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>{testResult.error}</span>}
+        </div>
       </div>
 
       {/* ── Clé API ── */}
@@ -1923,6 +1952,18 @@ export default function DashboardClient({
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  // Keyboard shortcuts: Alt+1…5 for main tabs
+  useEffect(() => {
+    const map: Record<string, TabId> = {
+      '1': 'session', '2': 'calendrier', '3': 'analytics', '4': 'rapports', '5': 'sentinel'
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.altKey && map[e.key]) { e.preventDefault(); setActiveTab(map[e.key]); setSettingsOpen(false) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   const togglePause = useCallback(() => {

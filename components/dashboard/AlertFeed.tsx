@@ -104,12 +104,7 @@ export default function AlertFeed({ alerts }: AlertFeedProps) {
       )}
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        {alerts.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '2rem 0' }}>
-            <div style={{ width: 6, height: 6, background: '#7acc3a', opacity: .6 }} />
-            <span style={{ color: 'rgba(232,223,192,.22)', fontSize: 11, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '.05em' }}>session saine</span>
-          </div>
-        ) : (
+        {alerts.length === 0 ? null : (
           alerts.map((a, i) => <AlertCard key={a.id ?? i} alert={a} isNew={i === 0} />)
         )}
       </div>

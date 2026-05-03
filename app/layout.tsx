@@ -15,6 +15,21 @@ export const metadata: Metadata = {
     icon: '/icon.svg',
     apple: '/icon.svg',
   },
+  openGraph: {
+    type: 'website',
+    url: 'https://getcaldra.com',
+    title: 'Caldra — Monitoring comportemental pour traders',
+    description: 'Caldra détecte en temps réel le revenge trading, l\'overtrading, les re-entrées impulsives et le tilt — avant que ça coûte.',
+    siteName: 'Caldra',
+    images: [{ url: 'https://getcaldra.com/og.png', width: 1200, height: 630, alt: 'Caldra — Session Monitor' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Caldra — Monitoring comportemental pour traders',
+    description: 'Caldra détecte en temps réel le revenge trading, le tilt, l\'overtrading — avant que ça coûte.',
+    images: ['https://getcaldra.com/og.png'],
+  },
+  keywords: ['trading', 'discipline trading', 'revenge trading', 'tilt trading', 'monitoring trader', 'caldra', 'session trading'],
 }
 
 export const viewport: Viewport = {
