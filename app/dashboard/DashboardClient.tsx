@@ -2004,6 +2004,11 @@ export default function DashboardClient({
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [paused, setPaused] = useState(false)
+
+  // Redirection automatique vers /mobile sur petit écran
+  useEffect(() => {
+    if (window.innerWidth < 768) window.location.replace('/mobile')
+  }, [])
   const pausedRef = useRef(false)
   const notifDelay = useRef(0)
   const notifReset = useRef<ReturnType<typeof setTimeout> | null>(null)
