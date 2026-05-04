@@ -19,7 +19,7 @@ const C_LIGHT = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.08)', rb: 'rgba(124,58,237,.18)', rg: 'rgba(124,58,237,.04)',
   bg: '#c2c8e0', sf: '#ccd2ea', sf2: '#c6cce4',
   b: 'rgba(30,30,80,.14)', b2: 'rgba(30,30,80,.24)', b3: 'rgba(30,30,80,.34)',
-  tx: '#08081e', tm: 'rgba(8,8,30,.94)', td: 'rgba(8,8,30,.68)', te: 'rgba(8,8,30,.44)',
+  tx: '#06061c', tm: 'rgba(6,6,28,.98)', td: 'rgba(6,6,28,.84)', te: 'rgba(6,6,28,.62)',
   g: '#005c38', o: '#7a4800',
 }
 type Palette = typeof C_DARK
@@ -1852,10 +1852,14 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
   const [firstName, setFirstName] = useState(userMeta.first_name ?? '')
   const [lastName,  setLastName]  = useState(userMeta.last_name  ?? '')
   const [phone,     setPhone]     = useState(userMeta.phone      ?? '')
-  const [save,  setSave]  = useState<'idle'|'saving'|'saved'|'error'>('idle')
-  const [pwSave, setPwSave] = useState<'idle'|'saving'|'saved'|'error'>('idle')
+  const [save,      setSave]      = useState<'idle'|'saving'|'saved'|'error'>('idle')
+  const [pwSave,    setPwSave]    = useState<'idle'|'saving'|'saved'|'error'>('idle')
+  const [emailSave, setEmailSave] = useState<'idle'|'saving'|'sent'|'error'>('idle')
   const [newPw,     setNewPw]     = useState('')
   const [confirmPw, setConfirmPw] = useState('')
+  const [email,     setEmail]     = useState(userEmail)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleting,  setDeleting]  = useState(false)
 
   async function saveProfile() {
     setSave('saving')
@@ -1880,6 +1884,30 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
     } catch { setPwSave('error') }
   }
 
+  async function changeEmail() {
+    if (!email || email === userEmail) return
+    setEmailSave('saving')
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const { error } = await createClient().auth.updateUser({ email })
+      setEmailSave(error ? 'error' : 'sent')
+      if (!error) setTimeout(() => setEmailSave('idle'), 4000)
+    } catch { setEmailSave('error') }
+  }
+
+  async function deleteAccount() {
+    if (deleteConfirm !== 'SUPPRIMER') return
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/account/delete', { method: 'DELETE' })
+      if (res.ok) {
+        const { createClient } = await import('@/lib/supabase/client')
+        await createClient().auth.signOut()
+        window.location.href = '/login'
+      } else setDeleting(false)
+    } catch { setDeleting(false) }
+  }
+
   async function logout() {
     const { createClient } = await import('@/lib/supabase/client')
     await createClient().auth.signOut()
@@ -1887,7 +1915,7 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
   }
 
   const inp: React.CSSProperties = {
-    width: '100%', background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b2}`,
+    width: '100%', background: C.bg, border: `.5px solid ${C.b2}`,
     borderRadius: 8, padding: '11px 14px', color: C.tx, fontSize: 13,
     fontFamily: SANS, outline: 'none', boxSizing: 'border-box' as const, transition: 'border-color .2s',
   }
@@ -1921,7 +1949,14 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
             </div>
             <div>
               <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>EMAIL</div>
-              <input style={{ ...inp, opacity: .45, cursor: 'not-allowed' }} value={userEmail} readOnly />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input style={inp} value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemple.com" type="email" />
+                <button onClick={changeEmail} disabled={emailSave === 'saving' || email === userEmail} style={{ padding: '0 14px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap' as const, opacity: email === userEmail ? .3 : 1 }}>
+                  {emailSave === 'saving' ? '…' : 'Changer'}
+                </button>
+              </div>
+              {emailSave === 'sent'  && <div style={{ fontSize: 11, color: C.g, marginTop: 5, fontFamily: MONO }}>✓ Lien de confirmation envoyé</div>}
+              {emailSave === 'error' && <div style={{ fontSize: 11, color: C.red, marginTop: 5 }}>Erreur — réessaie</div>}
             </div>
             <div>
               <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>TÉLÉPHONE</div>
@@ -1956,6 +1991,28 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
             Se déconnecter
           </button>
         </Sec>
+
+        <div style={{ background: C.sf, border: '.5px solid rgba(224,80,80,.18)', borderLeft: '3px solid rgba(224,80,80,.4)', borderRadius: 12, padding: 22, marginBottom: 14 }}>
+          <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: 'rgba(224,80,80,.5)', marginBottom: 12 }}>Zone dangereuse</div>
+          <div style={{ fontSize: 13, color: C.td, marginBottom: 14, lineHeight: 1.5 }}>
+            Supprime définitivement ton compte et toutes tes données (trades, alertes, règles). Action irréversible.
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              style={{ ...inp, maxWidth: 200, borderColor: deleteConfirm === 'SUPPRIMER' ? 'rgba(224,80,80,.4)' : undefined }}
+              value={deleteConfirm}
+              onChange={e => setDeleteConfirm(e.target.value)}
+              placeholder='Tape "SUPPRIMER"'
+            />
+            <button
+              onClick={deleteAccount}
+              disabled={deleteConfirm !== 'SUPPRIMER' || deleting}
+              style={{ padding: '9px 18px', background: deleteConfirm === 'SUPPRIMER' ? 'rgba(224,80,80,.12)' : 'transparent', border: '.5px solid rgba(224,80,80,.25)', borderRadius: 7, color: 'rgba(224,80,80,.7)', fontSize: 11, fontFamily: SANS, cursor: deleteConfirm === 'SUPPRIMER' ? 'pointer' : 'not-allowed', opacity: deleteConfirm !== 'SUPPRIMER' ? .35 : 1, whiteSpace: 'nowrap' as const }}
+            >
+              {deleting ? 'Suppression…' : 'Supprimer mon compte'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -2004,6 +2061,7 @@ export default function DashboardClient({
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [paused, setPaused] = useState(false)
+  const [sentinelPrompt, setSentinelPrompt] = useState<AlertRow | null>(null)
 
   // Redirection automatique vers /mobile sur petit écran
   useEffect(() => {
@@ -2081,6 +2139,7 @@ export default function DashboardClient({
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
+        if ((a.level ?? 1) >= 3) setSentinelPrompt(a)
         showPushNotif(
           `Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
           a.message ?? '',
@@ -2202,6 +2261,20 @@ export default function DashboardClient({
       `}</style>
 
       <PushNotifSetup />
+
+      {sentinelPrompt && (
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(255,90,61,.45)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 8px 40px rgba(255,90,61,.18)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5a3d', flexShrink: 0, animation: 'pulse 1s infinite' }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, color: '#ff5a3d', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Alerte critique</div>
+            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{sentinelPrompt.message}</div>
+          </div>
+          <button onClick={() => { setActiveTab('sentinel'); setSentinelPrompt(null) }} style={{ background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' as const }}>
+            Ouvrir Sentinel
+          </button>
+          <button onClick={() => setSentinelPrompt(null)} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
