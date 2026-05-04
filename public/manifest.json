@@ -2,7 +2,7 @@
   "name": "Caldra — Session Monitor",
   "short_name": "Caldra",
   "description": "Monitoring comportemental pour traders en temps réel",
-  "start_url": "/dashboard",
+  "start_url": "/mobile",
   "scope": "/",
   "display": "standalone",
   "background_color": "#06060c",

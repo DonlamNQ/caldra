@@ -207,3 +207,7 @@ alter table user_profiles drop constraint if exists user_profiles_plan_check;
 alter table user_profiles add constraint user_profiles_plan_check check (plan in ('pro', 'sentinel'));
 update user_profiles set plan = 'pro' where plan in ('free', 'team');
 alter table user_profiles alter column plan set default 'pro';
+
+-- v2.3 : déduplication cTrader (cron poll)
+alter table trades add column if not exists ctrader_deal_id text;
+create unique index if not exists trades_ctrader_deal_id_idx on trades (ctrader_deal_id) where ctrader_deal_id is not null;

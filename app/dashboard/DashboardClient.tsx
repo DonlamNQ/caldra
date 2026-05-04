@@ -17,10 +17,10 @@ const C_DARK = {
 }
 const C_LIGHT = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.09)', rb: 'rgba(124,58,237,.22)', rg: 'rgba(124,58,237,.05)',
-  bg: '#ebebf4', sf: '#f6f6fb', sf2: '#eeeef8',
-  b: 'rgba(0,0,0,.09)', b2: 'rgba(0,0,0,.16)', b3: 'rgba(0,0,0,.22)',
-  tx: '#0f0f1a', tm: 'rgba(15,15,26,.88)', td: 'rgba(15,15,26,.62)', te: 'rgba(15,15,26,.42)',
-  g: '#007a52', o: '#9a5a00',
+  bg: '#c8c8e0', sf: '#d4d4ec', sf2: '#cecee6',
+  b: 'rgba(0,0,0,.13)', b2: 'rgba(0,0,0,.22)', b3: 'rgba(0,0,0,.30)',
+  tx: '#09091a', tm: 'rgba(9,9,26,.92)', td: 'rgba(9,9,26,.65)', te: 'rgba(9,9,26,.42)',
+  g: '#006b44', o: '#8a5000',
 }
 type Palette = typeof C_DARK
 const ThemeCtx = createContext<Palette>(C_DARK)
@@ -2250,12 +2250,6 @@ export default function DashboardClient({
                 <span style={{ fontSize: 11 }}>⬇</span> installer
               </button>
             )}
-            <button
-              onClick={() => { window.location.href = '/login' }}
-              style={{ fontSize: 11, color: C.te, fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', transition: 'color .2s' }}
-              onMouseEnter={e => (e.currentTarget.style.color = C.td)}
-              onMouseLeave={e => (e.currentTarget.style.color = C.te)}
-            >logout</button>
           </div>
         </div>
 
