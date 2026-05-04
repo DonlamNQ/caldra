@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
 import type { DaySession } from './page'
+import PushNotifSetup from '@/components/PushNotifSetup'
 
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
@@ -2194,6 +2195,8 @@ export default function DashboardClient({
         .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
         .c-row:hover{background:rgba(255,255,255,.025)!important}
       `}</style>
+
+      <PushNotifSetup />
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 

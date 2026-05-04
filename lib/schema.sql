@@ -177,6 +177,24 @@ CREATE POLICY "Users own their ctrader connections" ON ctrader_connections
 alter publication supabase_realtime add table alerts;
 alter publication supabase_realtime add table trades;
 
+-- ─── push_subscriptions ──────────────────────────────────────────────────────
+
+create table if not exists push_subscriptions (
+  id         uuid        primary key default gen_random_uuid(),
+  user_id    uuid        not null references auth.users (id) on delete cascade,
+  endpoint   text        not null,
+  p256dh     text        not null,
+  auth       text        not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, endpoint)
+);
+
+alter table push_subscriptions enable row level security;
+
+drop policy if exists "service role full access" on push_subscriptions;
+create policy "service role full access" on push_subscriptions
+  for all using (true) with check (true);
+
 -- ─── Migrations (exécuter si la DB existe déjà) ───────────────────────────────
 -- !! Seulement si vous avez déjà exécuté ce schéma une première fois !!
 

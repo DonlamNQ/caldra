@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendAlertEmail, sendWebhookAlert } from './brevo'
+import { sendPushToUser } from './push'
 import Anthropic from '@anthropic-ai/sdk'
 
 const supabase = createClient(
@@ -199,6 +200,8 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
     const userEmail = authData?.user?.email ?? null
     const webhookUrl: string | null = rules.slack_webhook_url ?? null
 
+    const levelLabel = (l: number) => l === 3 ? '🔴 Critique' : '🟠 Attention'
+
     await Promise.all(hotAlerts.map(a => Promise.all([
       userEmail
         ? sendAlertEmail({ to: userEmail, alertType: a.type, level: a.level, message: a.message, sessionDate: today, detail: a.detail })
@@ -206,6 +209,7 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
       webhookUrl
         ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
         : Promise.resolve(),
+      sendPushToUser(trade.user_id, `${levelLabel(a.level)} — Caldra`, a.message, a.level),
     ])))
   }
 
