@@ -28,7 +28,9 @@
       "Bash(grep -n \"tab-btn\\\\|tab-sentinel\\\\|style.*{.*\\\\`\" /c/Users/Haby/Documents/caldra/app/dashboard/DashboardClient.tsx)",
       "Bash(npm run *)",
       "Bash(Remove-Item -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\app\\\\api\\\\test-trade\\\\route.ts\" -Force)",
-      "Bash(Remove-Item -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\app\\\\api\\\\test-trade\" -Force)"
+      "Bash(Remove-Item -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\app\\\\api\\\\test-trade\" -Force)",
+      "Bash(Get-ChildItem C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\public *)",
+      "Bash(npx web-push *)"
     ]
   },
   "hooks": {
