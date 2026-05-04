@@ -1986,17 +1986,8 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
           </div>
         </Sec>
 
-        <Sec title="Session">
-          <button onClick={logout} style={{ padding: '9px 20px', background: 'transparent', border: '.5px solid rgba(244,63,94,.2)', borderRadius: 7, color: 'rgba(244,63,94,.65)', fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5 }}>
-            Se déconnecter
-          </button>
-        </Sec>
-
         <div style={{ background: C.sf, border: '.5px solid rgba(224,80,80,.18)', borderLeft: '3px solid rgba(224,80,80,.4)', borderRadius: 12, padding: 22, marginBottom: 14 }}>
-          <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: 'rgba(224,80,80,.5)', marginBottom: 12 }}>Zone dangereuse</div>
-          <div style={{ fontSize: 13, color: C.td, marginBottom: 14, lineHeight: 1.5 }}>
-            Supprime définitivement ton compte et toutes tes données (trades, alertes, règles). Action irréversible.
-          </div>
+          <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: 'rgba(224,80,80,.5)', marginBottom: 14 }}>Zone dangereuse</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <input
               style={{ ...inp, maxWidth: 200, borderColor: deleteConfirm === 'SUPPRIMER' ? 'rgba(224,80,80,.4)' : undefined }}

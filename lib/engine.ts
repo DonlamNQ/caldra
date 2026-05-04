@@ -76,28 +76,32 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
 
   const isSentinel = profile?.plan === 'sentinel'
 
+  // sessionTrades inclut le trade courant (inséré avant l'analyse).
+  // On l'exclut pour les comparaisons "trade précédent".
+  const prevTrades = sessionTrades.filter((t: Trade) => t.id !== trade.id)
+  const prevTrade = prevTrades[0] ?? null  // trade précédent le plus récent
+
   // ── 1. REVENGE SIZING ─────────────────────────────────────────────────────
-  const lastTrade = sessionTrades[0]
-  if (lastTrade && lastTrade.pnl < 0 && trade.size > lastTrade.size * 1.5) {
+  if (prevTrade && (prevTrade.pnl ?? 0) < 0 && trade.size > prevTrade.size * 1.5) {
     alerts.push({
       type: 'revenge_sizing',
       level: 2,
       message: 'Revenge sizing détecté',
       detail: {
-        previous_size: lastTrade.size,
+        previous_size: prevTrade.size,
         current_size: trade.size,
-        ratio: (trade.size / lastTrade.size).toFixed(2),
+        ratio: (trade.size / prevTrade.size).toFixed(2),
       },
     })
   }
 
   // ── 2. RE-ENTRÉE IMMÉDIATE ────────────────────────────────────────────────
-  if (lastTrade?.exit_time) {
+  if (prevTrade?.exit_time) {
     const secsSinceLastExit =
       (new Date(trade.entry_time).getTime() -
-        new Date(lastTrade.exit_time).getTime()) / 1000
+        new Date(prevTrade.exit_time).getTime()) / 1000
 
-    if (secsSinceLastExit < rules.min_time_between_entries_sec) {
+    if (secsSinceLastExit >= 0 && secsSinceLastExit < rules.min_time_between_entries_sec) {
       alerts.push({
         type: 'immediate_reentry',
         level: 1,
@@ -111,16 +115,17 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   }
 
   // ── 3. PERTES CONSÉCUTIVES ────────────────────────────────────────────────
-  const recentLosses = sessionTrades
-    .slice(0, rules.max_consecutive_losses)
-    .filter((t: Trade) => (t.pnl ?? 0) < 0)
+  // On inclut le trade courant dans le décompte des pertes consécutives
+  const allToday = sessionTrades // inclut le trade courant
+  const lastN = allToday.slice(0, rules.max_consecutive_losses)
+  const consecutiveLossCount = lastN.filter((t: Trade) => (t.pnl ?? 0) < 0).length
 
-  if (recentLosses.length >= rules.max_consecutive_losses) {
+  if (consecutiveLossCount >= rules.max_consecutive_losses) {
     alerts.push({
       type: 'consecutive_losses',
       level: 2,
       message: `${rules.max_consecutive_losses} pertes consécutives`,
-      detail: { count: recentLosses.length },
+      detail: { count: consecutiveLossCount },
     })
   }
 
@@ -147,7 +152,8 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   }
 
   // ── 5. HORS HORAIRES ──────────────────────────────────────────────────────
-  const entryHour = new Date(trade.entry_time).toTimeString().slice(0, 5)
+  // Utilise UTC pour être cohérent avec le format ISO envoyé par MT5/cTrader
+  const entryHour = new Date(trade.entry_time).toISOString().slice(11, 16)
   if (entryHour < rules.session_start || entryHour > rules.session_end) {
     alerts.push({
       type: 'outside_session',
@@ -162,8 +168,9 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   }
 
   // ── 6. SURACTIVITÉ ────────────────────────────────────────────────────────
-  if (sessionTrades.length >= rules.max_trades_per_session * 0.8) {
-    const level = sessionTrades.length >= rules.max_trades_per_session ? 2 : 1
+  const tradeCount = sessionTrades.length  // inclut le trade courant
+  if (tradeCount >= rules.max_trades_per_session * 0.8) {
+    const level = tradeCount >= rules.max_trades_per_session ? 2 : 1
     alerts.push({
       type: 'overtrading',
       level,
@@ -171,7 +178,7 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
         ? 'Limite de trades atteinte'
         : 'Tu approches ta limite de trades',
       detail: {
-        current: sessionTrades.length,
+        current: tradeCount,
         max: rules.max_trades_per_session,
       },
     })
