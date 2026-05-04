@@ -8,11 +8,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, x-caldra-key',
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 200, headers: CORS_HEADERS })
+}
+
 export async function POST(req: NextRequest) {
   // Vérification de la clé API per-user
   const rawKey = req.headers.get('x-caldra-key')
   if (!rawKey) {
-    return NextResponse.json({ error: 'Missing x-caldra-key header' }, { status: 401 })
+    return NextResponse.json({ error: 'Missing x-caldra-key header' }, { status: 401, headers: CORS_HEADERS })
   }
 
   const keyHash = createHash('sha256').update(rawKey).digest('hex')
@@ -23,7 +33,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (!apiKey) {
-    return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
+    return NextResponse.json({ error: 'Invalid API key' }, { status: 401, headers: CORS_HEADERS })
   }
 
   const user_id = apiKey.user_id
@@ -33,12 +43,12 @@ export async function POST(req: NextRequest) {
 
   // Validation basique
   if (!symbol || !direction || !size || !entry_price || !entry_time) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    return NextResponse.json({ error: 'Missing required fields' }, { status: 400, headers: CORS_HEADERS })
   }
 
   // Ignorer les positions encore ouvertes (pas d'exit_price = trade non clôturé)
   if (!exit_price || pnl == null) {
-    return NextResponse.json({ ignored: true, reason: 'Position still open — no exit_price or pnl' }, { status: 200 })
+    return NextResponse.json({ ignored: true, reason: 'Position still open — no exit_price or pnl' }, { status: 200, headers: CORS_HEADERS })
   }
 
   // Sauvegarde le trade
@@ -61,7 +71,7 @@ export async function POST(req: NextRequest) {
 
 if (error) {
     console.error('SUPABASE ERROR:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })
   }
 
   // Lance l'analyse comportementale
@@ -72,5 +82,5 @@ if (error) {
     trade_id: trade.id,
     alerts_generated: alerts.length,
     alerts
-  })
+  }, { headers: CORS_HEADERS })
 }
