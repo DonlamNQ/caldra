@@ -16,10 +16,10 @@ const C_DARK = {
   g: '#00d17a', o: '#ffab00',
 }
 const C_LIGHT = {
-  red: '#7c3aed', rd: 'rgba(124,58,237,.1)', rb: 'rgba(124,58,237,.24)', rg: 'rgba(124,58,237,.06)',
-  bg: '#9494ac', sf: '#a0a0ba', sf2: '#9a9ab4',
-  b: 'rgba(0,0,0,.18)', b2: 'rgba(0,0,0,.28)', b3: 'rgba(0,0,0,.38)',
-  tx: '#06061a', tm: 'rgba(6,6,26,.96)', td: 'rgba(6,6,26,.72)', te: 'rgba(6,6,26,.48)',
+  red: '#7c3aed', rd: 'rgba(124,58,237,.08)', rb: 'rgba(124,58,237,.18)', rg: 'rgba(124,58,237,.04)',
+  bg: '#c2c8e0', sf: '#ccd2ea', sf2: '#c6cce4',
+  b: 'rgba(30,30,80,.14)', b2: 'rgba(30,30,80,.24)', b3: 'rgba(30,30,80,.34)',
+  tx: '#08081e', tm: 'rgba(8,8,30,.94)', td: 'rgba(8,8,30,.68)', te: 'rgba(8,8,30,.44)',
   g: '#005c38', o: '#7a4800',
 }
 type Palette = typeof C_DARK
