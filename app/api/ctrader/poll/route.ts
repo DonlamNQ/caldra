@@ -53,8 +53,10 @@ export async function GET(_req: NextRequest) {
         }
       }
 
+      const fromMs = Date.now() - 24 * 60 * 60 * 1000
+      const toMs   = Date.now()
       const dealsRes = await fetch(
-        `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}`,
+        `${CTRADER_API_BASE}/tradingaccounts/${conn.account_id}/deals?oauth_token=${accessToken}&from=${fromMs}&to=${toMs}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
 
@@ -71,12 +73,8 @@ export async function GET(_req: NextRequest) {
       const raw = await dealsRes.json()
       const deals: any[] = Array.isArray(raw) ? raw : (raw.data ?? raw.deal ?? raw.deals ?? [])
 
-      // Ne traite que les deals des dernières 24h pour limiter le volume au premier poll
-      const cutoff = Date.now() - 24 * 60 * 60 * 1000
-
       for (const deal of deals) {
         if (deal.dealStatus !== 'FULLY_FILLED') continue
-        if ((deal.executionTimestamp ?? deal.createTimestamp ?? 0) < cutoff) continue
 
         const dealId = String(deal.dealId)
 

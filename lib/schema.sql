@@ -211,3 +211,6 @@ alter table user_profiles alter column plan set default 'pro';
 -- v2.3 : déduplication cTrader (cron poll)
 alter table trades add column if not exists ctrader_deal_id text;
 create unique index if not exists trades_ctrader_deal_id_idx on trades (ctrader_deal_id) where ctrader_deal_id is not null;
+
+-- v2.4 : tracking dernier poll cTrader
+alter table ctrader_connections add column if not exists last_polled_at timestamptz;
