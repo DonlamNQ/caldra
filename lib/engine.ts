@@ -2,12 +2,12 @@ import { createClient } from '@supabase/supabase-js'
 import { sendAlertEmail, sendWebhookAlert } from './brevo'
 import Anthropic from '@anthropic-ai/sdk'
 
-const supabase = createClient(
+const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const getAnthropic = () => new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export type Trade = {
   id: string
@@ -41,7 +41,7 @@ async function generateCoachingForAlert(
       .map(t => `${t.symbol} ${t.direction} size=${t.size} pnl=${t.pnl ?? '?'}`)
       .join(', ')
 
-    const msg = await anthropic.messages.create({
+    const msg = await getAnthropic().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 150,
       messages: [{
@@ -52,7 +52,7 @@ async function generateCoachingForAlert(
 
     const coaching = (msg.content[0] as { type: string; text: string }).text
 
-    await supabase
+    await getSupabase()
       .from('alerts')
       .update({ detail: { ...alertDetail, coaching } })
       .eq('id', alertId)
@@ -64,6 +64,8 @@ async function generateCoachingForAlert(
 export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   const alerts: Alert[] = []
   const today = new Date().toISOString().split('T')[0]
+
+  const supabase = getSupabase()
 
   // Fetch rules, plan and session trades in parallel
   const [{ data: rules }, { data: profile }, { data: sessionTrades }] = await Promise.all([
