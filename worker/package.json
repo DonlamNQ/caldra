@@ -1,0 +1,15 @@
+{
+  "name": "caldra-worker",
+  "version": "1.0.0",
+  "description": "cTrader polling worker for Caldra",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
