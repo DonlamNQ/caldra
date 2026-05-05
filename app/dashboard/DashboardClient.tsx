@@ -1148,8 +1148,16 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
   const [keyLoading, setKeyLoading] = useState(false)
   const [keyConfirm, setKeyConfirm] = useState(false)
   const hasKey = !!prefix
-  const [copied, setCopied] = useState(false)
   const [webhookUrl, setWebhookUrl] = useState(initialWebhook ?? '')
+
+  type CTraderStatus = { connected: boolean; polling: boolean; accountId: string | null; accountName: string | null; lastPolledAt: string | null }
+  const [ct, setCt] = useState<CTraderStatus | null>(null)
+  const [ctLoading, setCtLoading] = useState(true)
+  const [ctDisconnecting, setCtDisconnecting] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/ctrader/status').then(r => r.json()).then(d => { setCt(d); setCtLoading(false) }).catch(() => setCtLoading(false))
+  }, [])
   const [webhookSave, setWebhookSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   async function genKey() {
@@ -1168,6 +1176,13 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
     setKeyCopied(true); setTimeout(() => setKeyCopied(false), 2000)
   }
 
+  async function disconnectCtrader() {
+    setCtDisconnecting(true)
+    await fetch('/api/ctrader/disconnect', { method: 'POST' })
+    setCt(null)
+    setCtDisconnecting(false)
+  }
+
   async function saveWebhook() {
     if (webhookSave === 'saving') return
     setWebhookSave('saving')
@@ -1183,14 +1198,6 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
     } catch {
       setWebhookSave('error')
     }
-  }
-
-  function copyBot() {
-    fetch('/CaldraBot.algo').then(r => r.text()).then(code => {
-      navigator.clipboard.writeText(code)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }).catch(() => {})
   }
 
   const IntCard = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
@@ -1279,7 +1286,7 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
       {/* ── Plateformes ── */}
       <div style={{ marginBottom: 8 }}>
         <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 12 }}>Plateformes</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
 
           {/* cTrader */}
           <IntCard>
@@ -1287,67 +1294,65 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
               <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>CT</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>cTrader</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>cBot CaldraBot.algo</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Connexion OAuth2 — tous brokers cTrader</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)', flexShrink: 0 }} />
-                <span style={{ fontSize: 9, color: hasKey ? C.g : C.te, letterSpacing: .5 }}>{hasKey ? 'PRÊT' : 'CLÉ REQUISE'}</span>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: ct?.connected ? C.g : 'rgba(255,255,255,.18)', flexShrink: 0 }} />
+                <span style={{ fontSize: 9, color: ct?.connected ? C.g : C.te, letterSpacing: .5 }}>
+                  {ctLoading ? '…' : ct?.connected ? (ct.polling ? 'ACTIF' : 'CONNECTÉ') : 'NON CONNECTÉ'}
+                </span>
               </div>
             </div>
-            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
-              Installe CaldraBot dans cTrader. Chaque position fermée est envoyée à Caldra automatiquement.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-              {([
-                ['1', <>Télécharge <span style={{ color: C.tm, fontFamily: MONO }}>CaldraBot.algo</span> et ouvre-le via <span style={{ color: C.tm }}>Automate → Open</span>.</> as React.ReactNode],
-                ['2', <>Colle ta clé API dans le champ <span style={{ color: C.tm, fontFamily: MONO }}>Caldra API Key</span>.</> as React.ReactNode],
-                ['3', 'Lance le cBot. Toute position fermée apparaît dans ton dashboard.' as React.ReactNode],
-              ] as [string, React.ReactNode][]).map(([n, t]) => (
-                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                  <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 7 }}>
-              <a href="/CaldraBot.algo" download="CaldraBot.algo" style={{ flex: 1, padding: '8px 10px', borderRadius: 7, fontSize: 10.5, fontFamily: SANS, cursor: 'pointer', textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, display: 'block', transition: 'all .2s' }}>
-                ↓ CaldraBot.algo
-              </a>
-              <IntBtn onClick={copyBot}>{copied ? '✓' : 'Copier code'}</IntBtn>
-            </div>
-          </IntCard>
 
-          {/* MT5 */}
-          <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(255,171,0,.06)', border: `.5px solid rgba(255,171,0,.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.o, fontFamily: MONO, flexShrink: 0 }}>MT5</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>MetaTrader 5</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Expert Advisor MQL5</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)', flexShrink: 0 }} />
-                <span style={{ fontSize: 9, color: hasKey ? C.g : C.te, letterSpacing: .5 }}>{hasKey ? 'PRÊT' : 'CLÉ REQUISE'}</span>
-              </div>
-            </div>
-            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
-              EA MQL5 — envoie chaque trade fermé vers Caldra. Fonctionne sur tous les symboles et tous les brokers MT5.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-              {([
-                ['1', 'Télécharge CaldraMT5.mq5, ouvre-le dans MetaEditor (F4).'],
-                ['2', <>MT5 → Outils → Options → Expert Advisors → autorise <span style={{ color: C.tm, fontFamily: MONO }}>getcaldra.com</span>.</> as React.ReactNode],
-                ['3', <>Attache l&apos;EA, colle ta clé dans <span style={{ color: C.tm, fontFamily: MONO }}>CaldraApiKey</span>.</> as React.ReactNode],
-              ] as [string, React.ReactNode][]).map(([n, t]) => (
-                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.o, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                  <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
+            {ctLoading ? (
+              <div style={{ fontSize: 11.5, color: C.te, fontFamily: MONO }}>Chargement…</div>
+            ) : ct?.connected ? (
+              <>
+                <div style={{ background: 'rgba(0,209,122,.04)', border: '.5px solid rgba(0,209,122,.18)', borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, color: C.te, marginBottom: 3 }}>Compte connecté</div>
+                  <div style={{ fontSize: 13, color: C.tx, fontFamily: MONO }}>{ct.accountName ?? ct.accountId}</div>
+                  {ct.lastPolledAt && (
+                    <div style={{ fontSize: 10, color: C.te, marginTop: 4 }}>
+                      Dernier poll : {new Date(ct.lastPolledAt).toLocaleTimeString('fr-FR')}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-            <a href="/CaldraMT5.mq5" download="CaldraMT5.mq5" style={{ display: 'block', padding: '8px 10px', borderRadius: 7, fontSize: 10.5, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: 'rgba(255,171,0,.07)', border: `.5px solid rgba(255,171,0,.25)`, color: C.o, transition: 'all .2s' }}>
-              ↓ CaldraMT5.mq5
-            </a>
+                <div style={{ fontSize: 11, color: C.td, lineHeight: 1.55, marginBottom: 14 }}>
+                  Chaque position fermée est détectée automatiquement et analysée par Caldra.
+                </div>
+                <button
+                  onClick={disconnectCtrader}
+                  disabled={ctDisconnecting}
+                  style={{ width: '100%', padding: '8px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: 'pointer', background: 'transparent', border: `.5px solid ${C.b2}`, color: C.te, opacity: ctDisconnecting ? .5 : 1 }}
+                >
+                  {ctDisconnecting ? 'Déconnexion…' : 'Déconnecter'}
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
+                  Connecte ton compte cTrader en un clic. Fonctionne avec tous les brokers cTrader (Pepperstone, IC Markets, Vantage…).
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                  {([
+                    ['1', 'Clique sur "Connecter cTrader" ci-dessous.'],
+                    ['2', 'Autorise Caldra sur la page Spotware — aucune config requise.'],
+                    ['3', 'Tes positions fermées arrivent dans le dashboard automatiquement.'],
+                  ] as [string, string][]).map(([n, t]) => (
+                    <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                      <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
+                    </div>
+                  ))}
+                </div>
+                <a
+                  href="/api/ctrader/connect"
+                  style={{ display: 'block', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s' }}
+                >
+                  Connecter cTrader →
+                </a>
+              </>
+            )}
           </IntCard>
 
           {/* API directe */}

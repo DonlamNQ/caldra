@@ -152,7 +152,7 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   }
 
   // ── 5. HORS HORAIRES ──────────────────────────────────────────────────────
-  // Utilise UTC pour être cohérent avec le format ISO envoyé par MT5/cTrader
+  // Utilise UTC pour être cohérent avec le format ISO des trades entrants
   const entryHour = new Date(trade.entry_time).toISOString().slice(11, 16)
   if (entryHour < rules.session_start || entryHour > rules.session_end) {
     alerts.push({

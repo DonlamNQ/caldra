@@ -371,7 +371,7 @@ const HTML = `
         <div class="step-tl-label">Connecte</div>
         <div class="step-tl-title">Ta plateforme de trading</div>
         <div class="step-tl-desc">Connexion directe via WebSocket. Tes trades remontent automatiquement &mdash; rien &agrave; saisir manuellement.</div>
-        <div style="margin-top:.875rem"><span class="ip"><span class="idot"></span>MT5</span><span class="ip"><span class="idot"></span>Tradovate</span><span class="ip" style="opacity:.35">+ &agrave; venir</span></div>
+        <div style="margin-top:.875rem"><span class="ip"><span class="idot"></span>cTrader</span><span class="ip"><span class="idot"></span>API directe</span><span class="ip" style="opacity:.35">+ &agrave; venir</span></div>
       </div>
     </div>
     <div class="step-tl">
@@ -425,7 +425,7 @@ const HTML = `
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>8 d&eacute;tections comportementales</li>
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Alertes temps r&eacute;el (push + desktop)</li>
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard comportemental</li>
-        <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Compatible MT5 &amp; Tradovate</li>
+        <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Connexion cTrader OAuth2</li>
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique &amp; analytics 30 jours</li>
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Seuils configurables</li>
       </ul>

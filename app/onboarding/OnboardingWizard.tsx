@@ -21,7 +21,7 @@ const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
 const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type Platform = 'ctrader' | 'mt5' | 'api'
+type Platform = 'ctrader' | 'api'
 type Level    = 'beginner' | 'confirmed' | 'expert'
 
 interface Rules {
@@ -323,8 +323,7 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                     value={platform}
                     onChange={setPlatform}
                     options={[
-                      { value: 'ctrader', label: 'cTrader', sub: 'Bot automatique' },
-                      { value: 'mt5',     label: 'MetaTrader 5', sub: 'EA Caldra' },
+                      { value: 'ctrader', label: 'cTrader', sub: 'OAuth2 — 1 clic' },
                       { value: 'api',     label: 'API directe', sub: 'Tout broker' },
                     ]}
                   />
@@ -481,37 +480,24 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
               {/* Platform instructions */}
               <div style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 12, padding: '18px 20px', marginBottom: 20 }}>
                 <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 14 }}>
-                  {platform === 'ctrader' ? 'Connexion cTrader' : platform === 'mt5' ? 'Connexion MetaTrader 5' : 'Connexion API directe'}
+                  {platform === 'ctrader' ? 'Connexion cTrader' : 'Connexion API directe'}
                 </div>
 
                 {platform === 'ctrader' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {[
-                      ['1', 'Télécharge CaldraBot.algo ci-dessous et ouvre-le dans cTrader via Automate → Open.'],
-                      ['2', 'Dans les paramètres du cBot, colle ta clé API Caldra dans le champ prévu.'],
-                      ['3', 'Lance le cBot. Chaque position fermée sera analysée automatiquement.'],
+                      ['1', 'Depuis le dashboard, onglet Intégrations, clique sur "Connecter cTrader".'],
+                      ['2', 'Autorise Caldra sur la page Spotware — aucune installation requise.'],
+                      ['3', 'Chaque position fermée est détectée et analysée automatiquement.'],
                     ].map(([n, t]) => (
                       <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                         <div style={{ width: 22, height: 22, borderRadius: '50%', background: RD, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: RED, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
                         <div style={{ fontSize: 12.5, color: TD, lineHeight: 1.55 }}>{t}</div>
                       </div>
                     ))}
-                    <a href="/CaldraBot.algo" download="CaldraBot.algo" style={{ display: 'block', textAlign: 'center' as const, padding: '10px', background: RD, border: `.5px solid ${RB}`, borderRadius: 7, color: RED, textDecoration: 'none', fontSize: 12, marginTop: 4, fontFamily: SANS }}>↓ Télécharger CaldraBot.algo</a>
-                  </div>
-                )}
-
-                {platform === 'mt5' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {[
-                      ['1', 'Télécharge l\'EA Caldra pour MT5 depuis l\'onglet Intégrations du dashboard.'],
-                      ['2', 'Place le fichier .ex5 dans MetaTrader → File → Open Data Folder → Experts.'],
-                      ['3', 'Attache l\'EA à un graphique. Colle ta clé API dans les paramètres.'],
-                    ].map(([n, t]) => (
-                      <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: RD, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: RED, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                        <div style={{ fontSize: 12.5, color: TD, lineHeight: 1.55 }}>{t}</div>
-                      </div>
-                    ))}
+                    <div style={{ marginTop: 4, padding: '9px 12px', background: `${RED}08`, border: `.5px solid ${RED}30`, borderRadius: 7, fontSize: 11, color: TD }}>
+                      Fonctionne avec tous les brokers cTrader : Pepperstone, IC Markets, Vantage, FP Markets…
+                    </div>
                   </div>
                 )}
 

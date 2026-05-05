@@ -59,7 +59,7 @@ export async function GET(_req: NextRequest) {
       )
 
       if (!dealsRes.ok) {
-        // 404 = endpoint REST non disponible (deals via WebSocket uniquement — utiliser CaldraBot.algo)
+        // 404 = endpoint REST non disponible sur ce broker
         // 403/429 = scope insuffisant ou rate limit — non-fatals
         if (dealsRes.status !== 404 && dealsRes.status !== 429 && dealsRes.status !== 403) {
           console.error(`[poll] cTrader API ${dealsRes.status} user=${conn.user_id}`)

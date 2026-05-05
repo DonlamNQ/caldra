@@ -30,7 +30,8 @@
       "Bash(Remove-Item -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\app\\\\api\\\\test-trade\\\\route.ts\" -Force)",
       "Bash(Remove-Item -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\app\\\\api\\\\test-trade\" -Force)",
       "Bash(Get-ChildItem C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\public *)",
-      "Bash(npx web-push *)"
+      "Bash(npx web-push *)",
+      "Bash(xargs grep *)"
     ]
   },
   "hooks": {
