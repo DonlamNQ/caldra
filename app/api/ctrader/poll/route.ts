@@ -78,7 +78,7 @@ export async function GET() {
 
         const tradePayload = {
           user_id:         conn.user_id,
-          symbol:          deal.symbolId,          // symbolId = name après résolution
+          symbol:          deal.symbol,
           direction:       deal.direction,
           size:            deal.volume / 100,       // cTrader volume / 100 = taille standard
           entry_price:     deal.entryPrice,
@@ -100,7 +100,7 @@ export async function GET() {
         try { await analyzeTradeForAlerts(inserted) } catch {}
 
         totalDeals++
-        console.log(`[poll] Deal ${deal.dealId} ingéré — user=${conn.user_id} symbol=${deal.symbolId} pnl=${tradePayload.pnl}`)
+        console.log(`[poll] Deal ${deal.dealId} ingéré — user=${conn.user_id} symbol=${deal.symbol} pnl=${tradePayload.pnl}`)
       }
 
       await service.from('ctrader_connections')
