@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function POST(req: NextRequest) {
   const authClient = await createServerClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -17,6 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   }
 
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   await supabase.from('push_subscriptions').upsert(
     { user_id: user.id, endpoint, p256dh, auth },
     { onConflict: 'user_id,endpoint' }
@@ -32,6 +28,7 @@ export async function DELETE(req: NextRequest) {
 
   const { endpoint } = await req.json()
   if (endpoint) {
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     await supabase.from('push_subscriptions').delete()
       .eq('user_id', user.id).eq('endpoint', endpoint)
   }
