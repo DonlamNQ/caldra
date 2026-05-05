@@ -5,11 +5,6 @@ import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
 import { analyzeTradeForAlerts } from '@/lib/engine'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -21,6 +16,11 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   // Vérification de la clé API per-user
   const rawKey = req.headers.get('x-caldra-key')
   if (!rawKey) {
