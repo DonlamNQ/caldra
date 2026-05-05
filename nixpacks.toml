@@ -1,5 +1,0 @@
-[phases.build]
-cmds = ["cd worker && npm install --production"]
-
-[start]
-cmd = "node worker/index.js"
