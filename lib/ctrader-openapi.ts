@@ -174,7 +174,9 @@ export async function fetchDealsOpenAPI(opts: {
 
     const timer = setTimeout(() => done(new Error('cTrader Open API timeout')), timeoutMs)
 
-    socket.on('error', done)
+    socket.on('error', (err: NodeJS.ErrnoException) => {
+      done(new Error(`TCP ${err.code ?? 'ERR'}: ${err.message}`))
+    })
     socket.on('close', () => { if (!settled) done(new Error('cTrader connection closed unexpectedly')) })
 
     function send(payloadType: number, payload: Buffer) {
