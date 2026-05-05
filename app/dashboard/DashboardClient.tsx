@@ -1158,6 +1158,17 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
   useEffect(() => {
     fetch('/api/ctrader/status').then(r => r.json()).then(d => { setCt(d); setCtLoading(false) }).catch(() => setCtLoading(false))
   }, [])
+
+  // Poll cTrader toutes les 30s quand connecté
+  useEffect(() => {
+    if (!ct?.connected) return
+    const run = () => fetch('/api/ctrader/poll').then(r => r.json()).then(d => {
+      if (d.deals > 0) fetch('/api/ctrader/status').then(r => r.json()).then(setCt)
+    }).catch(() => {})
+    run()
+    const id = setInterval(run, 30_000)
+    return () => clearInterval(id)
+  }, [ct?.connected])
   const [webhookSave, setWebhookSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   async function genKey() {
