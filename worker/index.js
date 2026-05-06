@@ -7,7 +7,7 @@ const tls     = require('tls')
 const https   = require('https')
 const { createClient } = require('@supabase/supabase-js')
 
-const SUPABASE_URL             = process.env.SUPABASE_URL
+const SUPABASE_URL             = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const CTRADER_CLIENT_ID        = process.env.CTRADER_CLIENT_ID
 const CTRADER_CLIENT_SECRET    = process.env.CTRADER_CLIENT_SECRET
