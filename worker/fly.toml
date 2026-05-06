@@ -1,5 +1,5 @@
 app = "caldra-worker"
-primary_region = "cdg"
+primary_region = "iad"
 
 [build]
 
