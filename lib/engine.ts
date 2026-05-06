@@ -201,7 +201,7 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
     }))
   ).select('id, type, level, message, detail')
 
-  // ── Notifications sortantes (L2/L3 uniquement) ────────────────────────────
+  // ── Notifications sortantes ──────────────────────────────────────────────
   const hotAlerts = alerts.filter(a => a.level >= 2)
   if (hotAlerts.length > 0) {
     const { data: authData } = await supabase.auth.admin.getUserById(trade.user_id)
@@ -216,11 +216,13 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
         ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
         : Promise.resolve(),
     ])))
+  }
 
-    // Push notifications — import dynamique non-bloquant (ne doit jamais casser l'ingest)
+  // Push notifications pour tous les niveaux (non-bloquant)
+  if (alerts.length > 0) {
     void import('./push').then(({ sendPushToUser }) => {
-      const label = a => a.level === 3 ? '🔴 Critique' : '🟠 Attention'
-      return Promise.all(hotAlerts.map(a => sendPushToUser(trade.user_id, `${label(a)} — Caldra`, a.message, a.level)))
+      const label = (a: { level: number }) => a.level === 3 ? '🔴 Critique' : a.level === 2 ? '🟠 Attention' : '🔵 Info'
+      return Promise.all(alerts.map(a => sendPushToUser(trade.user_id, `${label(a)} — Caldra`, a.message, a.level)))
     }).catch(() => {})
   }
 
