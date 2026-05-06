@@ -113,13 +113,28 @@ function parseSymbols(payload) {
 
 function parseDeal(buf) {
   const f = decode(buf)
-  if (Number(f.get(5)?.[0] ?? 0n) !== DEAL_STATUS_FILLED) return null
 
-  const dealId      = String(f.get(1)?.[0] ?? 0n)
-  const entryPrice  = f.get(6)?.[0] ?? 0
-  const grossProfit = Number(zigzagDec(f.get(10)?.[0] ?? 0n))
-  const exitTs      = Number(zigzagDec(f.get(8)?.[0]  ?? 0n))
-  const entryTs     = Number(zigzagDec(f.get(9)?.[0]  ?? 0n))
+  const dealId = String(f.get(1)?.[0] ?? 0n)
+  const status = Number(f.get(5)?.[0] ?? 0n)
+
+  if (status !== DEAL_STATUS_FILLED) {
+    console.log(`[worker] deal=${dealId} skipped — status=${status} (not FILLED)`)
+    return null
+  }
+
+  // closePositionDetail (field 13) is only present on closing deals
+  const cpdBuf = f.get(13)?.[0]
+  if (!cpdBuf || !Buffer.isBuffer(cpdBuf)) {
+    console.log(`[worker] deal=${dealId} skipped — no closePositionDetail (opening deal)`)
+    return null
+  }
+
+  const cpd         = decode(cpdBuf)
+  const entryPrice  = cpd.get(1)?.[0] ?? 0                          // double
+  const grossProfit = Number(zigzagDec(cpd.get(2)?.[0] ?? 0n))      // sint64, ×100
+  const entryTs     = Number(cpd.get(12)?.[0] ?? 0n)                // openTimestamp ms
+  const exitPrice   = f.get(6)?.[0] ?? 0                            // deal execution price
+  const exitTs      = Number(f.get(8)?.[0] ?? 0n)                   // executionTimestamp ms
 
   const tdBuf = f.get(4)?.[0]
   if (!tdBuf || !Buffer.isBuffer(tdBuf)) return null
@@ -128,15 +143,18 @@ function parseDeal(buf) {
   const volume = Number(td.get(2)?.[0] ?? 0n)
   const side   = Number(td.get(3)?.[0] ?? 1n)
 
+  console.log(`[worker] deal=${dealId} parsed — symbol=${symId} side=${side} vol=${volume} entry=${entryPrice} exit=${exitPrice} pnl=${grossProfit / 100}`)
+
   return {
     dealId,
-    symbolId:    symId,
-    direction:   side === 1 ? 'long' : 'short',
+    symbolId:  symId,
+    direction: side === 1 ? 'long' : 'short',
     volume,
     entryPrice,
+    exitPrice,
     grossProfit,
-    entryTime:   new Date(entryTs || exitTs).toISOString(),
-    exitTime:    new Date(exitTs  || entryTs).toISOString(),
+    entryTime: new Date(entryTs || exitTs).toISOString(),
+    exitTime:  new Date(exitTs  || entryTs).toISOString(),
   }
 }
 
@@ -209,9 +227,10 @@ function fetchDeals({ ctidTraderAccountId, accessToken, fromMs, toMs, timeoutMs 
           ]))
 
         } else if (payloadType === PT.GET_DEAL_LIST_RES && step === 'get_deals') {
+          const rawItems = (decode(payload).get(2) ?? []).filter(Buffer.isBuffer)
+          console.log(`[worker] GET_DEAL_LIST_RES — ${rawItems.length} raw deals received`)
           const deals = []
-          for (const item of (decode(payload).get(2) ?? [])) {
-            if (!Buffer.isBuffer(item)) continue
+          for (const item of rawItems) {
             const d = parseDeal(item)
             if (!d) continue
             d.symbol = symbols[d.symbolId] ?? d.symbolId
@@ -284,7 +303,7 @@ async function pollConnection(conn) {
       direction:       deal.direction,
       size:            deal.volume / 100,
       entry_price:     deal.entryPrice,
-      exit_price:      deal.entryPrice,
+      exit_price:      deal.exitPrice,
       entry_time:      deal.entryTime,
       exit_time:       deal.exitTime,
       pnl:             deal.grossProfit / 100,
