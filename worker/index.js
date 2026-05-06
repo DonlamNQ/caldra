@@ -183,11 +183,14 @@ function fetchDeals({ ctidTraderAccountId, accessToken, fromMs, toMs, timeoutMs 
     const send = (pt, payload) => socket.write(frame(pt, payload))
 
     socket.on('secureConnect', () => {
+      console.log(`[worker] TCP secureConnect OK — sending APP_AUTH_REQ`)
       send(PT.APP_AUTH_REQ, Buffer.concat([
         fStr(1, CTRADER_CLIENT_ID),
         fStr(2, CTRADER_CLIENT_SECRET),
       ]))
     })
+
+    socket.on('connect', () => console.log(`[worker] TCP connect OK (before TLS handshake)`))
 
     socket.on('data', chunk => {
       partial = Buffer.concat([partial, chunk])
@@ -207,6 +210,7 @@ function fetchDeals({ ctidTraderAccountId, accessToken, fromMs, toMs, timeoutMs 
         }
 
         if (payloadType === PT.APP_AUTH_RES && step === 'app_auth') {
+          console.log(`[worker] APP_AUTH_RES OK — sending ACCOUNT_AUTH_REQ account=${ctidTraderAccountId}`)
           step = 'account_auth'
           send(PT.ACCOUNT_AUTH_REQ, Buffer.concat([
             fSint64(1, ctidTraderAccountId),
@@ -214,6 +218,7 @@ function fetchDeals({ ctidTraderAccountId, accessToken, fromMs, toMs, timeoutMs 
           ]))
 
         } else if (payloadType === PT.ACCOUNT_AUTH_RES && step === 'account_auth') {
+          console.log(`[worker] ACCOUNT_AUTH_RES OK — sending SYMBOLS_LIST_REQ`)
           step = 'symbols'
           send(PT.SYMBOLS_LIST_REQ, fSint64(1, ctidTraderAccountId))
 
