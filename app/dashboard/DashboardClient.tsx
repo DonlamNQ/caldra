@@ -434,7 +434,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <span style={{
-                    fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 99,
+                    fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 3,
                     background: lvl >= 2 ? C.rd : 'rgba(255,171,0,.09)',
                     border: `.5px solid ${lvl >= 2 ? C.rb : 'rgba(255,171,0,.22)'}`,
                     color: aCol, letterSpacing: .3,
