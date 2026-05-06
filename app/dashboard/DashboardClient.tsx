@@ -317,7 +317,6 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
         ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
         : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={4} fill={LC} />
       }
-      <circle cx={xOf(n - 1)} cy={yOf(last)} r={3.5} fill={LC} />
     </svg>
   )
 }
@@ -350,7 +349,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
   const mDiscipline = metricScore(alerts, 'outside_session')
 
   return (
-    <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none' }}>
+    <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none', borderRadius: 16, margin: '10px 0 10px 10px', overflow: 'hidden' }}>
 
       {/* Score */}
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
