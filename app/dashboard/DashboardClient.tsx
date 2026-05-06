@@ -271,20 +271,11 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
   const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
   const y0 = yOf(0)
 
-  function bezier(ps: [number, number][]): string {
-    if (ps.length < 2) return `M${ps[0][0]} ${ps[0][1]}`
-    const T = 0.4
-    let d = `M${ps[0][0]} ${ps[0][1]}`
-    for (let i = 1; i < ps.length; i++) {
-      const p0 = ps[Math.max(0, i - 2)], p1 = ps[i - 1], p2 = ps[i], p3 = ps[Math.min(ps.length - 1, i + 1)]
-      d += ` C${(p1[0] + (p2[0] - p0[0]) * T).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) * T).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) * T).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) * T).toFixed(1)} ${p2[0]} ${p2[1]}`
-    }
-    return d
-  }
-
   const xyPts = pts.map((p, i) => [xOf(i), yOf(p.v)] as [number, number])
-  const linePath = bezier(xyPts)
-  const fillPath = `${linePath} L${xOf(n - 1)} ${y0} L${xOf(0)} ${y0} Z`
+  const polyPoints = xyPts.map(([x, y]) => `${x},${y}`).join(' ')
+  const fillPath = `M${xyPts[0][0]} ${xyPts[0][1]} ${xyPts.slice(1).map(([x, y]) => `L${x} ${y}`).join(' ')} L${xOf(n - 1)} ${y0} L${xOf(0)} ${y0} Z`
+  const gridStepY = (H - PYB - PYT) / 5
+  const gridYs = [1, 2, 3, 4].map(k => PYT + k * gridStepY)
 
   const rawTicks = [rawMin, 0, rawMax]
   const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < rawRange * 0.12) === i)
@@ -303,6 +294,9 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
           <stop offset="100%" stopColor={LC} stopOpacity="0"/>
         </linearGradient>
       </defs>
+      {gridYs.map((gy, k) => (
+        <line key={`dg${k}`} x1={PXL} y1={gy} x2={W - PXR} y2={gy} stroke="rgba(255,255,255,.06)" strokeWidth={0.5} strokeDasharray="4 6" />
+      ))}
       {yTicks.map(v => (
         <line key={`g${v}`} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={gridColor} strokeWidth={0.5} />
       ))}
@@ -320,7 +314,7 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
       ))}
       {n > 2 && <path d={fillPath} fill="url(#pnl-grad)" />}
       {n >= 2
-        ? <path d={linePath} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+        ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
         : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={4} fill={LC} />
       }
       <circle cx={xOf(n - 1)} cy={yOf(last)} r={3.5} fill={LC} />
@@ -359,7 +353,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
     <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none' }}>
 
       {/* Score */}
-      <div style={{ padding: '20px 20px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</span>
@@ -384,7 +378,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
       </div>
 
       {/* Métriques */}
-      <div style={{ padding: '14px 20px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+      <div style={{ padding: '20px 20px', flexShrink: 0, background: 'rgba(255,255,255,.012)' }}>
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 11, textTransform: 'uppercase' as const, fontFamily: MONO }}>Métriques</span>
         <MetricBar label="Sizing"     value={mSizing} />
         <MetricBar label="Risk/trade" value={mRisk} />
@@ -395,7 +389,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
 
       {/* Règles du jour */}
       {rules && (
-        <div style={{ padding: '16px 20px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        <div style={{ padding: '20px 20px', flexShrink: 0, background: 'rgba(255,255,255,.012)' }}>
           <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 11, textTransform: 'uppercase' as const, fontFamily: MONO }}>Règles du jour</span>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
             <span style={{ fontSize: 12, color: C.td }}>Max trades</span>
@@ -440,7 +434,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <span style={{
-                    fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 3,
+                    fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 99,
                     background: lvl >= 2 ? C.rd : 'rgba(255,171,0,.09)',
                     border: `.5px solid ${lvl >= 2 ? C.rb : 'rgba(255,171,0,.22)'}`,
                     color: aCol, letterSpacing: .3,
@@ -523,7 +517,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         <div className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 22px', minWidth: 160, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
           <div style={{ fontSize: 10, letterSpacing: 1.2, color: C.td, marginBottom: 10, textTransform: 'uppercase' as const, fontFamily: MONO }}>P&L session</div>
-          <div style={{ fontSize: 36, fontWeight: 200, letterSpacing: -2.5, lineHeight: 1, color: C.tx, fontFamily: MONO }}>
+          <div style={{ fontSize: 36, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
             {fmtEur(stats.total_pnl)}
           </div>
           <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>en cours</div>
