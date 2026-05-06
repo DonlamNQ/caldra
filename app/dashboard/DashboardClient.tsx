@@ -75,6 +75,14 @@ function fmtTime(iso: string) {
 }
 function scoreColor(s: number, C: Palette) { return s >= 70 ? C.g : s >= 40 ? C.o : C.red }
 
+function fmtDuration(entry: string, exit?: string | null): string {
+  if (!exit) return '—'
+  const diff = Math.round((new Date(exit).getTime() - new Date(entry).getTime()) / 1000)
+  if (diff <= 0) return '—'
+  const m = Math.floor(diff / 60), s = diff % 60
+  return m > 0 ? `${m}m ${s}s` : `${s}s`
+}
+
 function consecutiveLosses(trades: TradeRow[]): number {
   const sorted = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
   let streak = 0
@@ -408,7 +416,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
       )}
 
       {/* Alertes */}
-      <div style={{ padding: '15px 20px', flex: 1, overflowY: 'auto', minHeight: 120 }}>
+      <div style={{ padding: '15px 20px', flex: 1, overflowY: 'auto', minHeight: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 11 }}>
           <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Alertes</span>
           {alerts.length > 0 && (
@@ -433,7 +441,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <span style={{
-                    fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 3,
+                    fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 99,
                     background: lvl >= 2 ? C.rd : 'rgba(255,171,0,.09)',
                     border: `.5px solid ${lvl >= 2 ? C.rb : 'rgba(255,171,0,.22)'}`,
                     color: aCol, letterSpacing: .3,
@@ -499,6 +507,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   yesterdayTrend: number | null; rules: TradingRules | null
 }) {
   const C = useContext(ThemeCtx)
+  const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
   const score = computeScore(alerts)
   const streak = consecutiveLosses(trades)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
@@ -606,35 +615,66 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
               }
               const ls = lvl > 0 ? LVL_STYLE[lvl] ?? LVL_STYLE[1] : null
 
+              const tradeKey = String(t.id ?? i)
+              const isExpanded = expandedTrade === tradeKey
               return (
-                <div key={t.id ?? i} className="c-row" style={{
-                  display: 'grid', gridTemplateColumns: '60px 1fr auto auto', alignItems: 'center',
-                  minHeight: 32, borderBottom: `.5px solid ${C.b}`,
-                  background: ls ? ls.bg : 'transparent',
-                  borderLeft: `2px solid ${ls ? ls.border : C.b}`,
-                  padding: '0 8px 0 10px',
-                  borderRadius: '0 5px 5px 0',
-                  transition: 'background .12s',
-                }}>
-                  <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                    <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400 }}>
-                      {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
-                    </span>
-                    {ls && (
-                      <span style={{
-                        fontSize: 8, padding: '1px 5px', fontFamily: MONO, letterSpacing: '.16em',
-                        background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.badge,
-                        fontWeight: 600,
-                      }}>
-                        L{lvl}
+                <div key={tradeKey}>
+                  <div className="c-row" onClick={() => setExpandedTrade(isExpanded ? null : tradeKey)} style={{
+                    display: 'grid', gridTemplateColumns: '60px 1fr auto auto', alignItems: 'center',
+                    minHeight: 32, borderBottom: `.5px solid ${C.b}`,
+                    background: ls ? ls.bg : 'transparent',
+                    borderLeft: `2px solid ${ls ? ls.border : C.b}`,
+                    padding: '0 8px 0 10px',
+                    borderRadius: '0 5px 5px 0',
+                    transition: 'background .12s',
+                    cursor: 'pointer',
+                  }}>
+                    <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                      <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400 }}>
+                        {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
                       </span>
-                    )}
-                  </span>
-                  <span />
-                  <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const }}>
-                    {fmtEur(t.pnl ?? 0)}
-                  </span>
+                      {ls && (
+                        <span style={{
+                          fontSize: 8, padding: '1px 5px', fontFamily: MONO, letterSpacing: '.16em',
+                          background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.badge,
+                          fontWeight: 600, borderRadius: 99,
+                        }}>
+                          L{lvl}
+                        </span>
+                      )}
+                    </span>
+                    <span />
+                    <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const }}>
+                      {fmtEur(t.pnl ?? 0)}
+                    </span>
+                  </div>
+                  {isExpanded && (
+                    <div style={{
+                      background: 'rgba(255,255,255,.04)',
+                      border: '.5px solid rgba(255,255,255,.08)',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                      margin: '2px 0 4px',
+                      display: 'flex',
+                      gap: 24,
+                      flexWrap: 'wrap' as const,
+                      animation: 'fadeIn .15s',
+                    }}>
+                      {[
+                        { label: 'Entrée',  val: t.entry_price != null ? String(t.entry_price) : '—' },
+                        { label: 'Sortie',  val: t.exit_price  != null ? String(t.exit_price)  : '—' },
+                        { label: 'Durée',   val: fmtDuration(t.entry_time, t.exit_time) },
+                        { label: 'Taille',  val: `${t.size} lot` },
+                        { label: 'Symbole', val: t.symbol },
+                      ].map(({ label, val }) => (
+                        <div key={label}>
+                          <div style={{ fontSize: 11, color: 'rgba(234,232,245,.4)', fontFamily: MONO, marginBottom: 2 }}>{label}</div>
+                          <div style={{ fontSize: 11, color: 'rgba(234,232,245,.95)', fontFamily: MONO }}>{val}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })
@@ -2295,6 +2335,7 @@ export default function DashboardClient({
         @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
         @keyframes shimmerLine{0%{opacity:.4}50%{opacity:.85}100%{opacity:.4}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         .tab-btn{padding:11px 0;font-size:11px;letter-spacing:.5px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex:1;text-align:center;font-weight:400}
         .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.02)}
         .tab-btn.active{color:${C.tx};border-bottom-color:${C.red};font-weight:500}

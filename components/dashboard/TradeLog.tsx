@@ -9,6 +9,7 @@ export interface TradeRow {
   exit_price?: number
   pnl?: number
   entry_time: string
+  exit_time?: string
   status?: string
 }
 
