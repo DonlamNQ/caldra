@@ -148,7 +148,7 @@ function llColor(pnl: number): string {
 }
 
 const LL_STATES: { pts: number[][]; idle?: boolean }[] = [
-  { pts: [[0,22],[160,22],[320,22],[480,22],[640,22],[800,22]], idle: true },
+  { pts: [[0,40],[160,40],[320,40],[480,40],[640,40],[800,40]], idle: true },
   { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3]] },
   { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12]] },
   { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12],[650,22]] },
@@ -216,8 +216,8 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
           <stop id="ll-end" offset="100%" stopColor="#8ba0be" stopOpacity="0.95" />
         </linearGradient>
       </defs>
-      <path id="ll-path" d="M0 22 L800 22" fill="none" stroke="url(#llg)" strokeWidth="1.5" strokeLinecap="round" />
-      <path id="ll-fill" d="M0 22 L800 22 L800 44 L0 44Z" fill="url(#llg)" opacity=".06" />
+      <path id="ll-path" d="M0 40 L800 40" fill="none" stroke="url(#llg)" strokeWidth="1.5" strokeLinecap="round" />
+      <path id="ll-fill" d="M0 40 L800 40 L800 44 L0 44Z" fill="url(#llg)" opacity=".06" />
     </svg>
   )
 }
@@ -230,7 +230,7 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
 
   const W = 600, H = 120
-  const PXL = 46, PXR = 6, PYT = 6, PYB = 18
+  const PXL = 46, PXR = 6, PYT = 16, PYB = 18
   const DW = W - PXL - PXR, DH = H - PYT - PYB
   const LC = C.tx
   const LCfill = `${C.tx}0d`
