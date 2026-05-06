@@ -1150,25 +1150,6 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
   const hasKey = !!prefix
   const [webhookUrl, setWebhookUrl] = useState(initialWebhook ?? '')
 
-  type CTraderStatus = { connected: boolean; polling: boolean; accountId: string | null; accountName: string | null; lastPolledAt: string | null }
-  const [ct, setCt] = useState<CTraderStatus | null>(null)
-  const [ctLoading, setCtLoading] = useState(true)
-  const [ctDisconnecting, setCtDisconnecting] = useState(false)
-
-  useEffect(() => {
-    fetch('/api/ctrader/status').then(r => r.json()).then(d => { setCt(d); setCtLoading(false) }).catch(() => setCtLoading(false))
-  }, [])
-
-  // Poll cTrader toutes les 30s quand connecté
-  useEffect(() => {
-    if (!ct?.connected) return
-    const run = () => fetch('/api/ctrader/poll').then(r => r.json()).then(d => {
-      if (d.deals > 0) fetch('/api/ctrader/status').then(r => r.json()).then(setCt)
-    }).catch(() => {})
-    run()
-    const id = setInterval(run, 30_000)
-    return () => clearInterval(id)
-  }, [ct?.connected])
   const [webhookSave, setWebhookSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   async function genKey() {
@@ -1187,11 +1168,70 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
     setKeyCopied(true); setTimeout(() => setKeyCopied(false), 2000)
   }
 
-  async function disconnectCtrader() {
-    setCtDisconnecting(true)
-    await fetch('/api/ctrader/disconnect', { method: 'POST' })
-    setCt(null)
-    setCtDisconnecting(false)
+  function downloadBot() {
+    const key = newKey ?? (prefix ? `${prefix}... /* remplace par ta clé complète */` : 'cal_votre_clé_api')
+    const cs = `using System;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using System.Globalization;
+using cAlgo.API;
+
+namespace CaldraBot
+{
+    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.FullAccess)]
+    public class CaldraBot : Robot
+    {
+        [Parameter("Caldra API Key", DefaultValue = "${key}")]
+        public string CaldraApiKey { get; set; }
+
+        private static readonly HttpClient Http = new HttpClient();
+
+        protected override void OnStart()
+        {
+            Http.DefaultRequestHeaders.Remove("x-caldra-key");
+            Http.DefaultRequestHeaders.Add("x-caldra-key", CaldraApiKey);
+            Positions.Closed += OnPositionClosed;
+            Print("Caldra: bot démarré");
+        }
+
+        private void OnPositionClosed(PositionClosedEventArgs args)
+        {
+            var pos = args.Position;
+            var direction = pos.TradeType == TradeType.Buy ? "long" : "short";
+            var entryTime = pos.EntryTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
+            var exitTime  = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            var exitPrice = pos.ClosePrice.HasValue
+                ? pos.ClosePrice.Value.ToString(CultureInfo.InvariantCulture)
+                : pos.EntryPrice.ToString(CultureInfo.InvariantCulture);
+
+            var json = string.Format(
+                "{{\\"symbol\\":\\"{0}\\",\\"direction\\":\\"{1}\\",\\"size\\":{2},\\"entry_price\\":{3},\\"exit_price\\":{4},\\"entry_time\\":\\"{5}\\",\\"exit_time\\":\\"{6}\\",\\"pnl\\":{7}}}",
+                pos.SymbolName, direction,
+                pos.Quantity.ToString(CultureInfo.InvariantCulture),
+                pos.EntryPrice.ToString(CultureInfo.InvariantCulture),
+                exitPrice, entryTime, exitTime,
+                pos.GrossProfit.ToString(CultureInfo.InvariantCulture)
+            );
+
+            Task.Run(async () => {
+                try {
+                    var res = await Http.PostAsync("https://getcaldra.com/api/ingest",
+                        new StringContent(json, Encoding.UTF8, "application/json"));
+                    Print(string.Format("Caldra: {0} {1} — PnL={2} ({3})",
+                        pos.SymbolName, direction, pos.GrossProfit, (int)res.StatusCode));
+                } catch (Exception e) { Print("Caldra erreur: " + e.Message); }
+            });
+        }
+
+        protected override void OnStop() { }
+    }
+}`
+    const blob = new Blob([cs], { type: 'text/plain' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url; a.download = 'CaldraBot.cs'; a.click()
+    URL.revokeObjectURL(url)
   }
 
   async function saveWebhook() {
@@ -1299,71 +1339,38 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
         <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 12 }}>Plateformes</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
 
-          {/* cTrader */}
+          {/* cTrader cBot */}
           <IntCard>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>CT</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>cTrader</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Connexion OAuth2 — tous brokers cTrader</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: ct?.connected ? C.g : 'rgba(255,255,255,.18)', flexShrink: 0 }} />
-                <span style={{ fontSize: 9, color: ct?.connected ? C.g : C.te, letterSpacing: .5 }}>
-                  {ctLoading ? '…' : ct?.connected ? (ct.polling ? 'ACTIF' : 'CONNECTÉ') : 'NON CONNECTÉ'}
-                </span>
+                <div style={{ fontSize: 10.5, color: C.td }}>Pepperstone, IC Markets, Vantage, FxPro…</div>
               </div>
             </div>
 
-            {ctLoading ? (
-              <div style={{ fontSize: 11.5, color: C.te, fontFamily: MONO }}>Chargement…</div>
-            ) : ct?.connected ? (
-              <>
-                <div style={{ background: 'rgba(0,209,122,.04)', border: '.5px solid rgba(0,209,122,.18)', borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, color: C.te, marginBottom: 3 }}>Compte connecté</div>
-                  <div style={{ fontSize: 13, color: C.tx, fontFamily: MONO }}>{ct.accountName ?? ct.accountId}</div>
-                  {ct.lastPolledAt && (
-                    <div style={{ fontSize: 10, color: C.te, marginTop: 4 }}>
-                      Dernier poll : {new Date(ct.lastPolledAt).toLocaleTimeString('fr-FR')}
-                    </div>
-                  )}
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
+              {([
+                ['1', 'Génère ta clé API ci-dessus (si pas encore fait).'],
+                ['2', 'Télécharge le fichier CaldraBot.cs ci-dessous.'],
+                ['3', 'Dans cTrader → cAlgo → New cBot → colle le code → Build.'],
+                ['4', 'Ajoute le bot sur un graphique → Start.'],
+                ['5', 'Chaque position fermée arrive dans Caldra automatiquement.'],
+              ] as [string, string][]).map(([n, t]) => (
+                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                  <div style={{ fontSize: 11, color: C.td, lineHeight: 1.5 }}>{t}</div>
                 </div>
-                <div style={{ fontSize: 11, color: C.td, lineHeight: 1.55, marginBottom: 14 }}>
-                  Chaque position fermée est détectée automatiquement et analysée par Caldra.
-                </div>
-                <button
-                  onClick={disconnectCtrader}
-                  disabled={ctDisconnecting}
-                  style={{ width: '100%', padding: '8px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: 'pointer', background: 'transparent', border: `.5px solid ${C.b2}`, color: C.te, opacity: ctDisconnecting ? .5 : 1 }}
-                >
-                  {ctDisconnecting ? 'Déconnexion…' : 'Déconnecter'}
-                </button>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
-                  Connecte ton compte cTrader en un clic. Fonctionne avec tous les brokers cTrader (Pepperstone, IC Markets, Vantage…).
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-                  {([
-                    ['1', 'Clique sur "Connecter cTrader" ci-dessous.'],
-                    ['2', 'Autorise Caldra sur la page Spotware — aucune config requise.'],
-                    ['3', 'Tes positions fermées arrivent dans le dashboard automatiquement.'],
-                  ] as [string, string][]).map(([n, t]) => (
-                    <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                      <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.5 }}>{t}</div>
-                    </div>
-                  ))}
-                </div>
-                <a
-                  href="/api/ctrader/connect"
-                  style={{ display: 'block', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s' }}
-                >
-                  Connecter cTrader →
-                </a>
-              </>
-            )}
+              ))}
+            </div>
+
+            <button
+              onClick={downloadBot}
+              disabled={!hasKey}
+              style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: hasKey ? 'pointer' : 'not-allowed', background: C.rd, border: `.5px solid ${C.rb}`, color: hasKey ? C.red : C.te, transition: 'all .2s', opacity: hasKey ? 1 : .5 }}
+            >
+              {hasKey ? 'Télécharger CaldraBot.cs →' : 'Génère d\'abord ta clé API'}
+            </button>
           </IntCard>
 
           {/* API directe */}
