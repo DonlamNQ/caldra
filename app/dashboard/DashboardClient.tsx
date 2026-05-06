@@ -148,7 +148,7 @@ function llColor(pnl: number): string {
 }
 
 const LL_STATES: { pts: number[][]; idle?: boolean }[] = [
-  { pts: [[0,32],[160,32],[320,32],[480,32],[640,32],[800,32]], idle: true },
+  { pts: [[0,40],[160,40],[320,40],[480,40],[640,40],[800,40]], idle: true },
   { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3]] },
   { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12]] },
   { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12],[650,22]] },
@@ -176,7 +176,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
     }
     function ptsToFill(pts: number[][]): string {
       const l = pts[pts.length - 1]
-      return ptsToPath(pts) + ` L${l[0]} 36 L0 36Z`
+      return ptsToPath(pts) + ` L${l[0]} 44 L0 44Z`
     }
 
     function animateLine() {
@@ -186,11 +186,11 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       let livePts: number[][]
       if (s.idle) {
         const wave = Math.sin(llT * 0.55) * 3.8 + Math.sin(llT * 1.35) * 1.4
-        livePts = base.map(p => [p[0], Math.max(2, Math.min(34, p[1] + wave))])
+        livePts = base.map(p => [p[0], Math.max(2, Math.min(42, p[1] + wave))])
       } else {
         const noise = Math.sin(llT * 1.4) * 1.0 + Math.sin(llT * 3.1) * 0.4
         const last = base[base.length - 1]
-        const liveY = Math.max(1, Math.min(35, last[1] + noise))
+        const liveY = Math.max(1, Math.min(43, last[1] + noise))
         livePts = [...base.slice(0, -1), [last[0], liveY]]
       }
       document.getElementById('ll-path')?.setAttribute('d', ptsToPath(livePts))
@@ -209,15 +209,15 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
   }, [])
 
   return (
-    <svg width="100%" viewBox="0 0 800 36" preserveAspectRatio="none" height="36">
+    <svg width="100%" viewBox="0 0 800 44" preserveAspectRatio="none" height="44" style={{ display: 'block' }}>
       <defs>
         <linearGradient id="llg" x1="0" y1="0" x2="1" y2="0">
           <stop id="ll-start" offset="0%" stopColor="#8ba0be" stopOpacity="0.7" />
           <stop id="ll-end" offset="100%" stopColor="#8ba0be" stopOpacity="0.95" />
         </linearGradient>
       </defs>
-      <path id="ll-path" d="M0 32 L800 32" fill="none" stroke="url(#llg)" strokeWidth="1.5" strokeLinecap="round" />
-      <path id="ll-fill" d="M0 32 L800 32 L800 36 L0 36Z" fill="url(#llg)" opacity=".06" />
+      <path id="ll-path" d="M0 40 L800 40" fill="none" stroke="url(#llg)" strokeWidth="1.5" strokeLinecap="round" />
+      <path id="ll-fill" d="M0 40 L800 40 L800 44 L0 44Z" fill="url(#llg)" opacity=".06" />
     </svg>
   )
 }
@@ -230,7 +230,7 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
 
   const W = 600, H = 120
-  const PXL = 46, PXR = 6, PYT = 14, PYB = 18
+  const PXL = 46, PXR = 6, PYT = 6, PYB = 18
   const DW = W - PXL - PXR, DH = H - PYT - PYB
   const LC = C.tx
   const LCfill = `${C.tx}0d`
