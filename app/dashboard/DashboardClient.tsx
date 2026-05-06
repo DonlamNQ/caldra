@@ -1185,7 +1185,7 @@ namespace CaldraBot
         [Parameter("Caldra API Key", DefaultValue = "${key}")]
         public string CaldraApiKey { get; set; }
 
-        private static readonly HttpClient Http = new HttpClient();
+        private static readonly new HttpClient Http = new HttpClient();
 
         protected override void OnStart()
         {
@@ -1201,9 +1201,12 @@ namespace CaldraBot
             var direction = pos.TradeType == TradeType.Buy ? "long" : "short";
             var entryTime = pos.EntryTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
             var exitTime  = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            var exitPrice = pos.ClosePrice.HasValue
-                ? pos.ClosePrice.Value.ToString(CultureInfo.InvariantCulture)
-                : pos.EntryPrice.ToString(CultureInfo.InvariantCulture);
+            // Prix de sortie calculé depuis le PnL brut et le volume
+            var pips      = pos.GrossProfit / (pos.Quantity * pos.Symbol.PipValue);
+            var exitPx    = pos.TradeType == TradeType.Buy
+                ? pos.EntryPrice + pips * pos.Symbol.PipSize
+                : pos.EntryPrice - pips * pos.Symbol.PipSize;
+            var exitPrice = exitPx.ToString(CultureInfo.InvariantCulture);
 
             var json = string.Format(
                 "{{\\"symbol\\":\\"{0}\\",\\"direction\\":\\"{1}\\",\\"size\\":{2},\\"entry_price\\":{3},\\"exit_price\\":{4},\\"entry_time\\":\\"{5}\\",\\"exit_time\\":\\"{6}\\",\\"pnl\\":{7}}}",
