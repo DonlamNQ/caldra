@@ -1169,7 +1169,7 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
   }
 
   function downloadBot() {
-    const key = newKey ?? (prefix ? `${prefix}... /* remplace par ta clé complète */` : 'cal_votre_clé_api')
+    const key = newKey ?? 'PASTE_YOUR_FULL_API_KEY_HERE'
     const cs = `using System;
 using System.Net.Http;
 using System.Text;
