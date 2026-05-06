@@ -1,0 +1,16 @@
+[app]
+name = "caldra-worker"
+primary_region = "cdg"
+
+[build]
+
+[env]
+NODE_ENV = "production"
+
+[processes]
+app = "node index.js"
+
+[[vm]]
+memory = "256mb"
+cpu_kind = "shared"
+cpus = 1
