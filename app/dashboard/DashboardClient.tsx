@@ -201,6 +201,10 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       document.getElementById('ll-start')?.setAttribute('stop-opacity', isNeutral ? '0.7' : '0.7')
       document.getElementById('ll-end')?.setAttribute('stop-color', c)
       document.getElementById('ll-end')?.setAttribute('stop-opacity', isNeutral ? '0.95' : '1')
+      const lp = livePts[livePts.length - 1]
+      document.getElementById('ll-cur')?.setAttribute('cx', String(lp[0]))
+      document.getElementById('ll-cur')?.setAttribute('cy', String(lp[1]))
+      document.getElementById('ll-cur')?.setAttribute('fill', c)
       rafId = requestAnimationFrame(animateLine)
     }
 
@@ -218,6 +222,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       </defs>
       <path id="ll-path" d="M0 40 L800 40" fill="none" stroke="url(#llg)" strokeWidth="1.5" strokeLinecap="round" />
       <path id="ll-fill" d="M0 40 L800 40 L800 44 L0 44Z" fill="url(#llg)" opacity=".06" />
+      <circle id="ll-cur" cx="800" cy="40" r="3.5" fill="#8ba0be" />
     </svg>
   )
 }
@@ -230,13 +235,10 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
 
   const W = 600, H = 120
-  const PXL = 46, PXR = 6, PYT = 6, PYB = 18
+  const PXL = 46, PXR = 10, PYT = 6, PYB = 18
   const DW = W - PXL - PXR, DH = H - PYT - PYB
-  const LC = C.tx
-  const LCfill = `${C.tx}0d`
   const axisColor = C.te
   const gridColor = C.b
-
   const fmtY = (v: number) => v === 0 ? '€0' : v > 0 ? `+€${Math.abs(v).toFixed(0)}` : `-€${Math.abs(v).toFixed(0)}`
 
   if (sorted.length === 0) {
@@ -256,54 +258,71 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
   for (const t of sorted) { cum += t.pnl ?? 0; pts.push({ t: fmtTime(t.entry_time), v: cum }) }
 
   const vals = pts.map(p => p.v)
-  const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals)
-  const range = maxV - minV || 1
+  const rawMin = Math.min(0, ...vals), rawMax = Math.max(0, ...vals)
+  const rawRange = rawMax - rawMin || 1
+  const grace = rawRange * 0.08
+  const minV = rawMin - grace, maxV = rawMax + grace
+  const range = maxV - minV
   const n = pts.length
+  const last = vals[n - 1]
+  const LC = last >= 0 ? '#3cc87a' : '#dc503c'
+
   const xOf = (i: number) => PXL + (i / Math.max(n - 1, 1)) * DW
   const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
   const y0 = yOf(0)
 
-  // Y axis ticks: min, 0, max (deduplicated)
-  const rawTicks = [minV, 0, maxV]
-  const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.12) === i)
+  function bezier(ps: [number, number][]): string {
+    if (ps.length < 2) return `M${ps[0][0]} ${ps[0][1]}`
+    const T = 0.4
+    let d = `M${ps[0][0]} ${ps[0][1]}`
+    for (let i = 1; i < ps.length; i++) {
+      const p0 = ps[Math.max(0, i - 2)], p1 = ps[i - 1], p2 = ps[i], p3 = ps[Math.min(ps.length - 1, i + 1)]
+      d += ` C${(p1[0] + (p2[0] - p0[0]) * T).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) * T).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) * T).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) * T).toFixed(1)} ${p2[0]} ${p2[1]}`
+    }
+    return d
+  }
 
-  // X axis labels: first, last + up to 3 in between
+  const xyPts = pts.map((p, i) => [xOf(i), yOf(p.v)] as [number, number])
+  const linePath = bezier(xyPts)
+  const fillPath = `${linePath} L${xOf(n - 1)} ${y0} L${xOf(0)} ${y0} Z`
+
+  const rawTicks = [rawMin, 0, rawMax]
+  const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < rawRange * 0.12) === i)
+
   const step = Math.max(1, Math.floor((n - 1) / 4))
   const xIdxSet = new Set([0, n - 1])
   for (let i = step; i < n - 1; i += step) xIdxSet.add(i)
   const xIdxs = [...xIdxSet].sort((a, b) => a - b)
 
-  const linePts = pts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
-  const last = vals[n - 1]
-  const fillPath = `M${xOf(0)},${y0} ${pts.map((p, i) => `L${xOf(i)},${yOf(p.v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
-
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-      {/* Axes */}
+      <defs>
+        <linearGradient id="pnl-grad" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={LC} stopOpacity="0.35"/>
+          <stop offset="65%" stopColor={LC} stopOpacity="0.06"/>
+          <stop offset="100%" stopColor={LC} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      {yTicks.map(v => (
+        <line key={`g${v}`} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={gridColor} strokeWidth={0.5} />
+      ))}
       <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
       <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-      <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={gridColor} strokeWidth={0.5} strokeDasharray="4 6" />
-      {/* Y labels */}
       {yTicks.map(v => (
-        <text key={v} x={PXL - 4} y={Math.max(PYT + 7, Math.min(H - PYB - 2, yOf(v) + 3))}
+        <text key={`t${v}`} x={PXL - 4} y={Math.max(PYT + 7, Math.min(H - PYB - 2, yOf(v) + 3))}
           textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
       ))}
-      {/* X labels */}
       {xIdxs.map(i => (
         <text key={i} x={Math.max(PXL + 14, Math.min(W - PXR - 14, xOf(i)))}
           y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="7.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
           {pts[i].t}
         </text>
       ))}
-      {/* Data */}
-      {n > 2 && <path d={fillPath} fill={LCfill} />}
-      {n > 2
-        ? <polyline points={linePts} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-        : pts.map((p, i) => <circle key={i} cx={xOf(i)} cy={yOf(p.v)} r={4} fill={LC} />)
+      {n > 2 && <path d={fillPath} fill="url(#pnl-grad)" />}
+      {n >= 2
+        ? <path d={linePath} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+        : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={4} fill={LC} />
       }
-      {n > 2 && pts.slice(1).map((p, i) => (
-        <circle key={i} cx={xOf(i + 1)} cy={yOf(p.v)} r={2} fill={C.bg} stroke={LC} strokeWidth={1} />
-      ))}
       <circle cx={xOf(n - 1)} cy={yOf(last)} r={3.5} fill={LC} />
     </svg>
   )
@@ -514,7 +533,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
-          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 7, height: 44, overflow: 'hidden', flexShrink: 0, paddingLeft: 46, paddingRight: 6 }}>
+          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
