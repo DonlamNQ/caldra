@@ -123,55 +123,6 @@ create policy "users read own trades"       on trades         for select using (
 create policy "users read own alerts"       on alerts         for select using (auth.uid() = user_id);
 create policy "users read own api keys"     on api_keys       for select using (auth.uid() = user_id);
 
--- ─── tradovate_connections ───────────────────────────────────────────────────
-
-create table if not exists tradovate_connections (
-  id                    uuid        primary key default gen_random_uuid(),
-  user_id               uuid        not null references auth.users (id) on delete cascade,
-  tradovate_username    text        not null,
-  tradovate_password_hash text      not null,   -- AES-256-GCM chiffré (réversible pour re-auth)
-  tradovate_api_key     text        not null,
-  caldra_api_key_enc    text        not null,   -- AES-256-GCM chiffré
-  account_id            bigint,
-  access_token          text,
-  token_expires_at      timestamptz,
-  is_demo               boolean     not null default true,
-  is_active             boolean     not null default true,
-  last_sync_at          timestamptz,
-  created_at            timestamptz not null default now(),
-  unique (user_id)
-);
-
-alter table tradovate_connections enable row level security;
-
-drop policy if exists "service role full access" on tradovate_connections;
-create policy "service role full access" on tradovate_connections
-  for all using (true) with check (true);
-
--- ─── ctrader_connections ─────────────────────────────────────────────────────
-
-CREATE TABLE IF NOT EXISTS ctrader_connections (
-  id            uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id       uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  account_id    text        NOT NULL,
-  account_name  text,
-  access_token  text        NOT NULL,
-  refresh_token text        NOT NULL,
-  expires_at    timestamptz NOT NULL,
-  caldra_api_key text       NOT NULL DEFAULT '',
-  is_active     boolean     DEFAULT false,
-  created_at    timestamptz DEFAULT now(),
-  UNIQUE(user_id, account_id)
-);
-
-ALTER TABLE ctrader_connections ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "service role full access" ON ctrader_connections;
-CREATE POLICY "service role full access" ON ctrader_connections
-  FOR ALL USING (true) WITH CHECK (true);
-
-CREATE POLICY "Users own their ctrader connections" ON ctrader_connections
-  FOR ALL USING (auth.uid() = user_id);
 
 -- Realtime : activer sur alerts + trades pour le dashboard live
 alter publication supabase_realtime add table alerts;
@@ -208,9 +159,3 @@ alter table user_profiles add constraint user_profiles_plan_check check (plan in
 update user_profiles set plan = 'pro' where plan in ('free', 'team');
 alter table user_profiles alter column plan set default 'pro';
 
--- v2.3 : déduplication cTrader (cron poll)
-alter table trades add column if not exists ctrader_deal_id text;
-create unique index if not exists trades_ctrader_deal_id_idx on trades (ctrader_deal_id) where ctrader_deal_id is not null;
-
--- v2.4 : tracking dernier poll cTrader
-alter table ctrader_connections add column if not exists last_polled_at timestamptz;
