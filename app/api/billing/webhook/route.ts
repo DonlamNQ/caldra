@@ -29,12 +29,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
     const userId = session.metadata?.user_id
     const plan = session.metadata?.plan as 'pro' | 'sentinel' | undefined
 
-    if (userId && plan) {
+    if (userId && UUID_RE.test(userId) && plan && ['pro', 'sentinel'].includes(plan)) {
       await service
         .from('user_profiles')
         .upsert(

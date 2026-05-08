@@ -244,7 +244,8 @@ const HTML = `
   <div class="ww" id="wf-hero">
     <div class="wf">
       <input id="wf-hero-email" type="email" placeholder="Ton adresse email" autocomplete="email"/>
-      <button id="wf-hero-btn" class="bp" onclick="joinWaitlist('wf-hero-email','wf-hero-msg','wf-hero-btn')">Rejoindre la liste &rarr;</button>
+      <input id="wf-hero-hp" type="text" name="website" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" autocomplete="off"/>
+      <button id="wf-hero-btn" class="bp" onclick="joinWaitlist('wf-hero-email','wf-hero-msg','wf-hero-btn','wf-hero-hp')">Rejoindre la liste &rarr;</button>
     </div>
     <div id="wf-hero-msg" class="sm">&#10003; Tu es sur la liste. On t&rsquo;envoie ton acc&egrave;s d&egrave;s l&rsquo;ouverture.</div>
     <div class="ff" style="margin-top:.75rem">
@@ -487,7 +488,8 @@ const HTML = `
   <div style="max-width:420px;margin:1.5rem auto 0">
     <div class="wf">
       <input id="wf-footer-email" type="email" placeholder="Ton adresse email" autocomplete="email"/>
-      <button id="wf-footer-btn" class="bp" onclick="joinWaitlist('wf-footer-email','wf-footer-msg','wf-footer-btn')">Rejoindre &rarr;</button>
+      <input id="wf-footer-hp" type="text" name="website" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" autocomplete="off"/>
+      <button id="wf-footer-btn" class="bp" onclick="joinWaitlist('wf-footer-email','wf-footer-msg','wf-footer-btn','wf-footer-hp')">Rejoindre &rarr;</button>
     </div>
     <div id="wf-footer-msg" class="sm">&#10003; Tu es sur la liste. On t&rsquo;envoie ton acc&egrave;s d&egrave;s l&rsquo;ouverture.</div>
     <div style="margin-top:.75rem"><a href="/login" style="font-size:12px;color:var(--td);text-decoration:none">D&eacute;j&agrave; un compte ? <span style="color:var(--red)">Connexion &rarr;</span></a></div>
@@ -616,13 +618,14 @@ async function sendContact(){
   }
 }
 window.sendContact=sendContact;
-async function joinWaitlist(emailId,msgId,btnId){
+async function joinWaitlist(emailId,msgId,btnId,hpId){
   var email=document.getElementById(emailId).value.trim();
   if(!email||!email.includes('@'))return;
+  var hp=hpId?(document.getElementById(hpId)||{value:''}).value:'';
   var btn=document.getElementById(btnId);
   btn.textContent='Envoi…';btn.disabled=true;
   try{
-    var res=await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+    var res=await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,website:hp})});
     if(res.ok){document.getElementById(msgId).style.display='block';}
     else{throw new Error();}
   }catch(e){btn.textContent='Rejoindre →';btn.disabled=false;}

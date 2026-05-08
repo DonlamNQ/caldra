@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server'
 
+// Simplified RFC 5322 — rejects disposable/garbage patterns
+const EMAIL_RE = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/
+
 export async function POST(req: Request) {
-  const { email } = await req.json().catch(() => ({}))
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
+  let body: Record<string, unknown>
+  try { body = await req.json() } catch { body = {} }
+
+  // Honeypot: bots fill hidden "website" field, humans don't
+  if (body.website) return NextResponse.json({ ok: true })
+
+  const email = body.email
+
+  if (
+    !email ||
+    typeof email !== 'string' ||
+    email.length > 320 ||
+    !EMAIL_RE.test(email)
+  ) {
     return NextResponse.json({ error: 'Email invalide' }, { status: 400 })
   }
 
@@ -13,7 +28,6 @@ export async function POST(req: Request) {
 
   const normalized = email.toLowerCase().trim()
 
-  // Créer le contact dans Brevo
   const contactRes = await fetch('https://api.brevo.com/v3/contacts', {
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
@@ -24,7 +38,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Brevo error' }, { status: 500 })
   }
 
-  // Email de bienvenue
   await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
