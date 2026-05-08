@@ -31,7 +31,14 @@
       "Bash(Remove-Item -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\app\\\\api\\\\test-trade\" -Force)",
       "Bash(Get-ChildItem C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\public *)",
       "Bash(npx web-push *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\bp8jwx05g.output\")",
+      "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\brl48aq2v.output\")",
+      "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\byrv3yicv.output\")",
+      "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\b15v8z6on.output\")",
+      "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\bektx1mub.output\")"
     ]
   },
   "hooks": {
