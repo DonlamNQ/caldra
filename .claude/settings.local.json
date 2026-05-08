@@ -40,7 +40,10 @@
       "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\b15v8z6on.output\")",
       "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\bektx1mub.output\")",
       "Bash(Get-Content *)",
-      "Bash(npm audit *)"
+      "Bash(npm audit *)",
+      "Bash(BASE_URL=https://getcaldra.com node scripts/test-e2e.mjs)",
+      "Bash(Start-Sleep -Seconds 45)",
+      "Bash(Write-Output \"done\")"
     ]
   },
   "hooks": {
