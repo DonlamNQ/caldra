@@ -1400,7 +1400,7 @@ namespace CaldraBot
               <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>CT</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>cTrader</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Pepperstone, IC Markets, Vantage, FxPro…</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Pepperstone, IC Markets, FxPro, Eightcap…</div>
               </div>
             </div>
 
@@ -1426,6 +1426,40 @@ namespace CaldraBot
             >
               {hasKey ? 'Télécharger CaldraBot.cs →' : 'Génère d\'abord ta clé API'}
             </button>
+          </IntCard>
+
+          {/* MetaTrader 5 EA */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>MT5</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>MetaTrader 5</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Vantage, Admirals, XM, FTMO…</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
+              {([
+                ['1', 'Génère ta clé API ci-dessus (si pas encore fait).'],
+                ['2', 'Télécharge CaldraMT5.mq5 ci-dessous.'],
+                ['3', 'Dans MT5 → Fichier → Ouvrir dossier → MQL5/Experts/ → colle le fichier.'],
+                ['4', 'Outils → Options → Expert Advisors → cocher "Autoriser WebRequest" → ajouter https://getcaldra.com'],
+                ['5', 'Rafraîchis le Navigateur → double-clic CaldraMT5 → colle ta clé API → Start.'],
+              ] as [string, string][]).map(([n, t]) => (
+                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                  <div style={{ fontSize: 11, color: C.td, lineHeight: 1.5 }}>{t}</div>
+                </div>
+              ))}
+            </div>
+
+            <a
+              href="/CaldraMT5.mq5"
+              download
+              style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
+            >
+              Télécharger CaldraMT5.mq5 →
+            </a>
           </IntCard>
 
           {/* API directe */}
