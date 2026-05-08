@@ -88,7 +88,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Inclut les routes /api/ pour que le rate limiting s'applique.
+  // L'auth guard est court-circuité plus haut pour /api/ (return NextResponse.next()).
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
