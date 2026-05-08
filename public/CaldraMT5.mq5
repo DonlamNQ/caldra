@@ -85,14 +85,11 @@ void SendToCaldra(string jsonBody) {
 
    int bodyLen = StringToCharArray(jsonBody, post, 0, WHOLE_ARRAY, CP_UTF8) - 1;
    if (bodyLen <= 0) {
-      Print("[Caldra] Corps vide — annulé (bodyLen=", bodyLen, ")");
+      Print("[Caldra] Corps vide — annulé");
       return;
    }
    ArrayResize(post, bodyLen);
 
-   Print("[Caldra] Envoi body[", bodyLen, "]: ", jsonBody);
-
-   string cookie = "";
    string headers =
       "Content-Type: application/json\r\n"
       "x-caldra-key: " + CaldraApiKey + "\r\n";
@@ -100,14 +97,12 @@ void SendToCaldra(string jsonBody) {
    int res = WebRequest(
       "POST",
       "https://getcaldra.com/api/ingest",
-      cookie, headers,
-      5000,
-      post, bodyLen,
-      result, resultHeaders
+      headers, 5000,
+      post, result, resultHeaders
    );
 
    if (res == 200 || res == 201) {
-      Print("[Caldra] Trade envoyé ✓ HTTP ", res);
+      Print("[Caldra] Trade envoyé ✓");
    } else {
       Print("[Caldra] Erreur HTTP ", res, " | Body: ", CharArrayToString(result));
    }
