@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Vérification de la clé API per-user
-  const rawKey = req.headers.get('x-caldra-key')
+  // Clé API : header ou query param (MT5 perd les headers sur redirect)
+  const rawKey = req.headers.get('x-caldra-key') ?? req.nextUrl.searchParams.get('key')
   if (!rawKey) {
     return NextResponse.json({ error: 'Missing x-caldra-key header' }, { status: 401, headers: CORS_HEADERS })
   }
@@ -44,8 +44,26 @@ export async function POST(req: NextRequest) {
 
   const user_id = apiKey.user_id
 
-  const body = await req.json()
-  const { symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl } = body
+  // Body JSON ou query params (fallback MT5 GET)
+  const q = req.nextUrl.searchParams
+  let symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl
+  if (q.get('symbol')) {
+    symbol      = q.get('symbol')
+    direction   = q.get('direction')
+    size        = parseFloat(q.get('size') ?? '0')
+    entry_price = parseFloat(q.get('entry_price') ?? '0')
+    exit_price  = parseFloat(q.get('exit_price') ?? '0') || undefined
+    entry_time  = q.get('entry_time')
+    exit_time   = q.get('exit_time') ?? undefined
+    pnl         = q.get('pnl') != null ? parseFloat(q.get('pnl')!) : undefined
+  } else {
+    try {
+      const body = await req.json()
+      ;({ symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl } = body)
+    } catch {
+      return NextResponse.json({ error: 'Invalid or empty body' }, { status: 400, headers: CORS_HEADERS })
+    }
+  }
 
   // Validation basique
   if (!symbol || !direction || !size || !entry_price || !entry_time) {

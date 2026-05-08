@@ -62,44 +62,39 @@ void OnTimer() {
       string direction = (dealType == DEAL_TYPE_BUY) ? "long" : "short";
       string exitTimeStr = FormatTime((long)(timeMs / 1000));
 
-      string body = StringFormat(
-         "{\"symbol\":\"%s\",\"direction\":\"%s\",\"size\":%.2f,"
-         "\"entry_price\":%.5f,\"exit_price\":%.5f,"
-         "\"entry_time\":\"%s\",\"exit_time\":\"%s\",\"pnl\":%.2f}",
-         symbol, direction, volume,
-         entryPrice, price,
-         entryTimeStr, exitTimeStr, profit
-      );
-
-      SendToCaldra(body);
+      SendToCaldra(symbol, direction, volume, entryPrice, price, entryTimeStr, exitTimeStr, profit);
    }
 
    lastDealsCount = total;
 }
 
 //+------------------------------------------------------------------+
-void SendToCaldra(string jsonBody) {
+string UrlEncode(string s) {
+   StringReplace(s, ":", "%3A");
+   StringReplace(s, "+", "%2B");
+   StringReplace(s, " ", "%20");
+   return s;
+}
+
+void SendToCaldra(string symbol, string direction, double volume,
+                  double entryPrice, double exitPrice,
+                  string entryTime, string exitTime, double profit) {
+
+   // Données dans l'URL — résiste aux redirects MT5 qui perdent le body
+   string url = StringFormat(
+      "https://getcaldra.com/api/ingest?key=%s&symbol=%s&direction=%s&size=%.2f"
+      "&entry_price=%.5f&exit_price=%.5f&entry_time=%s&exit_time=%s&pnl=%.2f",
+      CaldraApiKey, symbol, direction, volume,
+      entryPrice, exitPrice,
+      UrlEncode(entryTime), UrlEncode(exitTime), profit
+   );
+
    char   post[];
    char   result[];
    string resultHeaders;
+   string headers = "Content-Type: application/json\r\n";
 
-   int bodyLen = StringToCharArray(jsonBody, post, 0, WHOLE_ARRAY, CP_UTF8) - 1;
-   if (bodyLen <= 0) {
-      Print("[Caldra] Corps vide — annulé");
-      return;
-   }
-   ArrayResize(post, bodyLen);
-
-   string headers =
-      "Content-Type: application/json\r\n"
-      "x-caldra-key: " + CaldraApiKey + "\r\n";
-
-   int res = WebRequest(
-      "POST",
-      "https://getcaldra.com/api/ingest",
-      headers, 5000,
-      post, result, resultHeaders
-   );
+   int res = WebRequest("POST", url, headers, 5000, post, result, resultHeaders);
 
    if (res == 200 || res == 201) {
       Print("[Caldra] Trade envoyé ✓");
