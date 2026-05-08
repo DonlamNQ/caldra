@@ -38,7 +38,9 @@
       "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\brl48aq2v.output\")",
       "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\byrv3yicv.output\")",
       "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\b15v8z6on.output\")",
-      "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\bektx1mub.output\")"
+      "Bash(Get-Content \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Haby-Documents-caldra\\\\a76768b3-9d77-40e7-9473-47c8b8070913\\\\tasks\\\\bektx1mub.output\")",
+      "Bash(Get-Content *)",
+      "Bash(npm audit *)"
     ]
   },
   "hooks": {

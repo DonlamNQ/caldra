@@ -1,13 +1,44 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/ctrader/callback', '/api/ctrader/connect', '/api/billing/webhook', '/api/waitlist']
+const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/billing/webhook', '/api/waitlist']
+
+// ── Rate limiting in-memory (par IP) ─────────────────────────────────────────
+// Limites : /api/ingest 60 req/min | /api/waitlist 5 req/min | /api/sentinel 10 req/min
+const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
+  '/api/ingest':   { max: 60,  windowMs: 60_000 },
+  '/api/waitlist': { max: 5,   windowMs: 60_000 },
+  '/api/sentinel': { max: 10,  windowMs: 60_000 },
+  '/api/api-key':  { max: 10,  windowMs: 60_000 },
+}
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(key: string, max: number, windowMs: number): boolean {
+  const now = Date.now()
+  const entry = rateLimitStore.get(key)
+  if (!entry || now > entry.resetAt) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs })
+    return true
+  }
+  if (entry.count >= max) return false
+  entry.count++
+  return true
+}
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // Rate limiting sur les endpoints sensibles
+  const limit = RATE_LIMITS[pathname]
+  if (limit) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const key = `${pathname}:${ip}`
+    if (!checkRateLimit(key, limit.max, limit.windowMs)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
+  }
+
   // Toutes les routes /api/ gèrent leur propre auth — jamais de redirection middleware
-  // /api/billing/webhook doit rester accessible sans session pour les appels Stripe
   if (pathname.startsWith('/api/')) {
     return NextResponse.next()
   }

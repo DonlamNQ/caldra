@@ -65,9 +65,31 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Validation basique
+  // Validation stricte des champs
   if (!symbol || !direction || !size || !entry_price || !entry_time) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400, headers: CORS_HEADERS })
+  }
+  if (!/^[A-Za-z0-9./_-]{1,20}$/.test(String(symbol))) {
+    return NextResponse.json({ error: 'Invalid symbol' }, { status: 400, headers: CORS_HEADERS })
+  }
+  if (!['long', 'short'].includes(String(direction))) {
+    return NextResponse.json({ error: 'direction must be long or short' }, { status: 400, headers: CORS_HEADERS })
+  }
+  if (typeof size !== 'number' || !isFinite(size) || size <= 0 || size > 100000) {
+    return NextResponse.json({ error: 'Invalid size' }, { status: 400, headers: CORS_HEADERS })
+  }
+  if (typeof entry_price !== 'number' || !isFinite(entry_price) || entry_price <= 0) {
+    return NextResponse.json({ error: 'Invalid entry_price' }, { status: 400, headers: CORS_HEADERS })
+  }
+  if (exit_price !== undefined && (typeof exit_price !== 'number' || !isFinite(exit_price) || exit_price <= 0)) {
+    return NextResponse.json({ error: 'Invalid exit_price' }, { status: 400, headers: CORS_HEADERS })
+  }
+  if (pnl !== undefined && (typeof pnl !== 'number' || !isFinite(pnl) || Math.abs(pnl) > 10_000_000)) {
+    return NextResponse.json({ error: 'Invalid pnl' }, { status: 400, headers: CORS_HEADERS })
+  }
+  const entryTs = new Date(entry_time as string).getTime()
+  if (isNaN(entryTs)) {
+    return NextResponse.json({ error: 'Invalid entry_time' }, { status: 400, headers: CORS_HEADERS })
   }
 
   // Ignorer les positions encore ouvertes (pas d'exit_price = trade non clôturé)
