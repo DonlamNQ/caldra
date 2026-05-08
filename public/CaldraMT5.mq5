@@ -79,34 +79,37 @@ void OnTimer() {
 
 //+------------------------------------------------------------------+
 void SendToCaldra(string jsonBody) {
-   string headers =
-      "Content-Type: application/json\r\n"
-      "x-caldra-key: " + CaldraApiKey + "\r\n";
-
    char   post[];
    char   result[];
    string resultHeaders;
 
-   // CP_UTF8 obligatoire — sans ça, tableau vide sur certains systèmes
-   // et WebRequest envoie un GET au lieu d'un POST → 405
    int bodyLen = StringToCharArray(jsonBody, post, 0, WHOLE_ARRAY, CP_UTF8) - 1;
    if (bodyLen <= 0) {
-      Print("[Caldra] Corps vide — envoi annulé");
+      Print("[Caldra] Corps vide — annulé (bodyLen=", bodyLen, ")");
       return;
    }
    ArrayResize(post, bodyLen);
 
+   Print("[Caldra] Envoi body[", bodyLen, "]: ", jsonBody);
+
+   string cookie = "";
+   string headers =
+      "Content-Type: application/json\r\n"
+      "x-caldra-key: " + CaldraApiKey + "\r\n";
+
    int res = WebRequest(
       "POST",
       "https://getcaldra.com/api/ingest",
-      headers, 5000,
-      post, result, resultHeaders
+      cookie, headers,
+      5000,
+      post, bodyLen,
+      result, resultHeaders
    );
 
    if (res == 200 || res == 201) {
-      Print("[Caldra] Trade envoyé ✓");
+      Print("[Caldra] Trade envoyé ✓ HTTP ", res);
    } else {
-      Print("[Caldra] Erreur envoi — HTTP ", res, " | Body: ", CharArrayToString(result));
+      Print("[Caldra] Erreur HTTP ", res, " | Body: ", CharArrayToString(result));
    }
 }
 

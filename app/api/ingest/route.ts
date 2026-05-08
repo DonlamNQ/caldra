@@ -15,6 +15,10 @@ export async function OPTIONS() {
   return new Response(null, { status: 200, headers: CORS_HEADERS })
 }
 
+export async function GET() {
+  return NextResponse.json({ error: 'GET_RECEIVED — EA sends GET instead of POST. Update CaldraMT5.mq5.' }, { status: 405, headers: CORS_HEADERS })
+}
+
 export async function POST(req: NextRequest) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
