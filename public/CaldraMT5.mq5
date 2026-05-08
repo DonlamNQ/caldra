@@ -86,7 +86,15 @@ void SendToCaldra(string jsonBody) {
    char   post[];
    char   result[];
    string resultHeaders;
-   StringToCharArray(jsonBody, post, 0, StringLen(jsonBody));
+
+   // CP_UTF8 obligatoire — sans ça, tableau vide sur certains systèmes
+   // et WebRequest envoie un GET au lieu d'un POST → 405
+   int bodyLen = StringToCharArray(jsonBody, post, 0, WHOLE_ARRAY, CP_UTF8) - 1;
+   if (bodyLen <= 0) {
+      Print("[Caldra] Corps vide — envoi annulé");
+      return;
+   }
+   ArrayResize(post, bodyLen);
 
    int res = WebRequest(
       "POST",
