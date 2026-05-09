@@ -1412,7 +1412,7 @@ namespace CaldraBot
             </div>
             <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '10px 13px', marginBottom: 14 }}>
               <div style={{ fontSize: 9.5, fontFamily: MONO, color: C.te, marginBottom: 4 }}>POST https://getcaldra.com/api/ingest</div>
-              <div style={{ fontSize: 9.5, fontFamily: MONO, color: C.td }}>x-caldra-key: <span style={{ color: 'rgba(56,189,248,.6)' }}>{hasKey ? `${prefix}…` : 'cal_votre_clé'}</span></div>
+              <div style={{ fontSize: 9.5, fontFamily: MONO, color: C.td }}>x-caldra-key: <span style={{ color: 'rgba(56,189,248,.6)' }}>cal_••••••••••••••••••••</span></div>
             </div>
             <div style={{ fontSize: 11, color: C.te, lineHeight: 1.55 }}>
               Champs requis : <span style={{ color: C.tm, fontFamily: MONO }}>symbol</span>, <span style={{ color: C.tm, fontFamily: MONO }}>direction</span>, <span style={{ color: C.tm, fontFamily: MONO }}>size</span>, <span style={{ color: C.tm, fontFamily: MONO }}>entry_price</span>, <span style={{ color: C.tm, fontFamily: MONO }}>pnl</span>, <span style={{ color: C.tm, fontFamily: MONO }}>entry_time</span>
