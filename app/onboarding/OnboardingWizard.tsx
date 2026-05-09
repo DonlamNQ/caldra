@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { saveRulesAction } from './actions'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const RED  = '#7c3aed'
@@ -159,17 +159,9 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
 
   async function saveRules() {
     setSaving(true); setError('')
-    const { data: { session } } = await createClient().auth.getSession()
-    const res = await fetch('/api/rules', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token ?? ''}`,
-      },
-      body: JSON.stringify(rules),
-    })
+    const result = await saveRulesAction(rules as unknown as Record<string, unknown>)
     setSaving(false)
-    if (!res.ok) { setError('Erreur de sauvegarde — réessaie.'); return false }
+    if ('error' in result) { setError('Erreur de sauvegarde — réessaie.'); return false }
     return true
   }
 
@@ -216,8 +208,8 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
         <div style={{ marginBottom: 44, display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 2, height: 36, background: `linear-gradient(180deg, ${RED}, ${RED}30)`, borderRadius: 2 }} />
           <div>
-            <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: 8, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
-            <div style={{ fontSize: 8, letterSpacing: 8, textTransform: 'uppercase' as const, color: TE, marginTop: 4 }}>Session</div>
+            <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: 8, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
+            <div style={{ fontSize: 9, letterSpacing: 8, textTransform: 'uppercase' as const, color: TE, marginTop: 5 }}>Session</div>
           </div>
         </div>
 
