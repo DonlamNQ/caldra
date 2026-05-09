@@ -131,11 +131,10 @@ export default function MobileClient({ userId, initialScore, initialAlerts, tota
   async function subscribeIfNeeded() {
     try {
       const reg = await navigator.serviceWorker.ready
-      const existing = await reg.pushManager.getSubscription()
-      if (existing) return
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       if (!vapidKey) return
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey) })
+      let sub = await reg.pushManager.getSubscription()
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey) })
       const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
       await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth }) })
     } catch {}
