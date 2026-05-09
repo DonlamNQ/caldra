@@ -1422,7 +1422,7 @@ namespace CaldraBot
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, flexShrink: 0 }}>
               <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(88,101,242,.08)', border: `.5px solid rgba(88,101,242,.22)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'rgba(88,101,242,.9)', fontFamily: MONO }}>WH</div>
               <div>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Slack / Discord</div>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Slack</div>
                 <div style={{ fontSize: 10.5, color: C.td }}>Alertes L2/L3 dans ton channel</div>
               </div>
             </div>
@@ -1431,7 +1431,7 @@ namespace CaldraBot
                 type="url"
                 value={webhookUrl}
                 onChange={e => { setWebhookUrl(e.target.value); setWebhookSave('idle') }}
-                placeholder="https://hooks.slack.com/services/… ou https://discord.com/api/webhooks/…"
+                placeholder="https://hooks.slack.com/services/…"
                 style={{ flex: 1, background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b2}`, borderRadius: 7, padding: '9px 13px', color: C.tm, fontSize: 12, fontFamily: MONO, outline: 'none', boxSizing: 'border-box' as const, transition: 'border-color .2s' }}
               />
               <button
@@ -1808,7 +1808,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'pro', name: 'Pro', price: '19€',
       accent: C.g, accentAlpha: 'rgba(0,209,122,',
-      features: ['Trades illimités', 'Analytics avancées', 'Calendrier des sessions', 'Rapports exportables', 'Alertes Slack / Discord'],
+      features: ['Trades illimités', 'Analytics avancées', 'Calendrier des sessions', 'Rapports exportables', 'Alertes Slack'],
     },
     {
       id: 'sentinel', name: 'Sentinel', price: '39€',
