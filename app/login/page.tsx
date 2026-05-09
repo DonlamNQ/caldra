@@ -13,7 +13,7 @@ export default function LoginPage() {
     setLoading(true)
     const fd = new FormData(e.currentTarget)
     const result = await loginAction(fd)
-    if (result?.error) {
+    if (result && 'error' in result) {
       setError(result.error)
       setLoading(false)
     }
