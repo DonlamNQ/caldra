@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const RED  = '#7c3aed'
@@ -158,9 +159,13 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
 
   async function saveRules() {
     setSaving(true); setError('')
+    const { data: { session } } = await createClient().auth.getSession()
     const res = await fetch('/api/rules', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token ?? ''}`,
+      },
       body: JSON.stringify(rules),
     })
     setSaving(false)
@@ -208,15 +213,15 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
       <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
 
         {/* Logo */}
-        <div style={{ marginBottom: 40, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 2, height: 28, background: `linear-gradient(180deg, ${RED}, ${RED}30)`, borderRadius: 2 }} />
+        <div style={{ marginBottom: 44, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 2, height: 36, background: `linear-gradient(180deg, ${RED}, ${RED}30)`, borderRadius: 2 }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: 6, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
-            <div style={{ fontSize: 7, letterSpacing: 7, textTransform: 'uppercase' as const, color: TE, marginTop: 3 }}>Session</div>
+            <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: 8, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
+            <div style={{ fontSize: 8, letterSpacing: 8, textTransform: 'uppercase' as const, color: TE, marginTop: 4 }}>Session</div>
           </div>
         </div>
 
-        <div style={{ width: '100%', maxWidth: 900 }}>
+        <div style={{ width: '100%', maxWidth: 1060 }}>
           <StepBar step={step} />
 
           {/* ── Step 1 — Bienvenue ── */}

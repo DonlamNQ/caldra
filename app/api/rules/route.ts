@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,31 +15,30 @@ const DEFAULTS = {
   slack_webhook_url: null as string | null,
 }
 
-async function getUser() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
+async function getUser(req: NextRequest) {
+  const token = req.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token) return null
+
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll(s) { try { s.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {} },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
-  return supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser(token)
+  return user
 }
 
-export async function GET() {
-  const { data: { user } } = await getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const service = createClient(
+function service() {
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+}
 
-  const { data } = await service
+export async function GET(req: NextRequest) {
+  const user = await getUser(req)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data } = await service()
     .from('trading_rules')
     .select('*')
     .eq('user_id', user.id)
@@ -51,7 +48,7 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const { data: { user } } = await getUser()
+  const user = await getUser(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
@@ -69,12 +66,7 @@ export async function PUT(req: NextRequest) {
     slack_webhook_url: body.slack_webhook_url ? String(body.slack_webhook_url) : null,
   }
 
-  const service = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
-  const { data, error } = await service
+  const { data, error } = await service()
     .from('trading_rules')
     .upsert(rules, { onConflict: 'user_id' })
     .select()
@@ -82,7 +74,7 @@ export async function PUT(req: NextRequest) {
 
   if (error) {
     const { account_size, slack_webhook_url, ...baseRules } = rules
-    const { data: data2, error: error2 } = await service
+    const { data: data2, error: error2 } = await service()
       .from('trading_rules')
       .upsert(baseRules, { onConflict: 'user_id' })
       .select()
