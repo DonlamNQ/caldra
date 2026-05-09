@@ -537,7 +537,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
           <div style={{ height: 180, flexShrink: 0 }}>
-            <PnlChart trades={trades} drawdownAmt={tradingRules ? (tradingRules.max_daily_drawdown_pct / 100) * (tradingRules.account_size || 10000) : undefined} />
+            <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} />
           </div>
         </div>
 
