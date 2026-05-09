@@ -6,7 +6,9 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 export async function saveRulesAction(rules: Record<string, unknown>): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: 'Non authentifié — pas de session' }
+  // DEBUG temporaire
+  console.log('[saveRulesAction] user.id =', user.id, 'email =', user.email)
 
   const service = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,6 +32,6 @@ export async function saveRulesAction(rules: Record<string, unknown>): Promise<{
     .from('trading_rules')
     .upsert(row, { onConflict: 'user_id' })
 
-  if (error) return { error: error.message }
+  if (error) return { error: `FK error — user.id: ${user.id} — ${error.message}` }
   return { ok: true }
 }
