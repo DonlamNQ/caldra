@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
 import { analyzeTradeForAlerts } from '@/lib/engine'
+import webpush from 'web-push'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -122,6 +123,45 @@ if (error) {
 
   // Lance l'analyse comportementale
   const alerts = await analyzeTradeForAlerts(trade)
+
+  // Envoie les web push pour chaque alerte
+  if (alerts.length > 0) {
+    const vapidPublic  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    const vapidPrivate = process.env.VAPID_PRIVATE_KEY
+    const vapidEmail   = process.env.VAPID_EMAIL ?? 'contact@getcaldra.com'
+
+    if (vapidPublic && vapidPrivate) {
+      webpush.setVapidDetails(`mailto:${vapidEmail}`, vapidPublic, vapidPrivate)
+
+      const { data: subs } = await supabase
+        .from('push_subscriptions')
+        .select('endpoint, p256dh, auth')
+        .eq('user_id', user_id)
+
+      if (subs && subs.length > 0) {
+        for (const alert of alerts) {
+          const payload = JSON.stringify({
+            title: `Caldra — ${(alert.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
+            body: alert.message ?? '',
+            url: '/dashboard',
+            level: alert.level ?? 1,
+          })
+          for (const sub of subs) {
+            try {
+              await webpush.sendNotification(
+                { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                payload
+              )
+            } catch (e: any) {
+              if (e.statusCode === 410) {
+                await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   return NextResponse.json({
     success: true,
