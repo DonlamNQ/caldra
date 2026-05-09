@@ -234,7 +234,7 @@ const HTML = `
   </div>
   <div class="nr">
     <a href="/login" class="nc" style="text-decoration:none">Connexion</a>
-    <button onclick="scrollToWaitlist()" class="bp" style="padding:9px 20px;border-radius:4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif">Rejoindre &rarr;</button>
+    <a href="/signup" class="bp" style="padding:9px 20px;border-radius:4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif;text-decoration:none">Commencer &rarr;</a>
   </div>
 </nav>
 <div class="hero" id="hero">
@@ -242,16 +242,11 @@ const HTML = `
   <h1>Tu ne vois pas<br>quand tu d&eacute;railles.<br><em>Lui si.</em></h1>
   <p class="hs">Caldra analyse chaque trade en temps r&eacute;el et d&eacute;tecte les comportements qui d&eacute;truisent les sessions &mdash; <em>avant</em> que le tilt, le revenge trading ou l&rsquo;impulsion ne fasse les d&eacute;g&acirc;ts.</p>
   <div class="ww" id="wf-hero">
-    <div class="wf">
-      <input id="wf-hero-email" type="email" placeholder="Ton adresse email" autocomplete="email"/>
-      <input id="wf-hero-hp" type="text" name="website" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" autocomplete="off"/>
-      <button id="wf-hero-btn" class="bp" onclick="joinWaitlist('wf-hero-email','wf-hero-msg','wf-hero-btn','wf-hero-hp')">Rejoindre la liste &rarr;</button>
-    </div>
-    <div id="wf-hero-msg" class="sm">&#10003; Tu es sur la liste. On t&rsquo;envoie ton acc&egrave;s d&egrave;s l&rsquo;ouverture.</div>
-    <div class="ff" style="margin-top:.75rem">
-      <span class="fn">Lancement la semaine prochaine</span><div class="fs"></div>
-      <span class="fn">Acc&egrave;s prioritaire</span><div class="fs"></div>
-      <span class="fn">Gratuit pour commencer</span>
+    <a href="/signup" class="bp" style="display:block;width:100%;padding:14px;border-radius:8px;font-size:14px;font-weight:500;letter-spacing:.5px;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif">Commencer gratuitement &rarr;</a>
+    <div class="ff" style="margin-top:1rem">
+      <span class="fn">Acc&egrave;s imm&eacute;diat</span><div class="fs"></div>
+      <span class="fn">14 jours d&rsquo;essai</span><div class="fs"></div>
+      <span class="fn">Sans carte requise</span>
     </div>
     <div style="margin-top:.75rem"><a href="/login" style="font-size:12px;color:var(--td);text-decoration:none">D&eacute;j&agrave; un compte ? <span style="color:var(--red)">Connexion &rarr;</span></a></div>
   </div>
@@ -430,7 +425,7 @@ const HTML = `
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique &amp; analytics 30 jours</li>
         <li><div class="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Seuils configurables</li>
       </ul>
-      <button onclick="scrollToWaitlist()" class="plan-btn plan-btn-secondary" style="width:100%;padding:12px;border-radius:8px">Rejoindre la liste d&rsquo;attente &rarr;</button>
+      <a href="/signup" class="plan-btn plan-btn-secondary" style="display:block;width:100%;padding:12px;border-radius:8px;text-align:center;text-decoration:none">Commencer &mdash; 14 jours gratuits &rarr;</a>
     </div>
 
     <div class="plan-card plan-sentinel">
@@ -448,7 +443,7 @@ const HTML = `
         <li class="plan-highlight"><div class="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique &amp; analytics 180 jours</strong></li>
         <li class="plan-highlight"><div class="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Support prioritaire</strong></li>
       </ul>
-      <button onclick="scrollToWaitlist()" class="plan-btn plan-btn-primary" style="width:100%;padding:12px;border-radius:8px">Rejoindre la liste d&rsquo;attente &rarr;</button>
+      <a href="/signup" class="plan-btn plan-btn-primary" style="display:block;width:100%;padding:12px;border-radius:8px;text-align:center;text-decoration:none">Commencer &mdash; 14 jours gratuits &rarr;</a>
     </div>
 
   </div>
@@ -482,16 +477,11 @@ const HTML = `
 </section>
 
 <div class="fc2">
-  <div class="fcl">Lancement la semaine prochaine.</div>
+  <div class="fcl">Disponible maintenant.</div>
   <h2>Ton prochain tilt<br><em>peut &ecirc;tre le dernier.</em></h2>
-  <p>Inscris-toi maintenant pour recevoir ton acc&egrave;s en priorit&eacute;.</p>
-  <div style="max-width:420px;margin:1.5rem auto 0">
-    <div class="wf">
-      <input id="wf-footer-email" type="email" placeholder="Ton adresse email" autocomplete="email"/>
-      <input id="wf-footer-hp" type="text" name="website" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" autocomplete="off"/>
-      <button id="wf-footer-btn" class="bp" onclick="joinWaitlist('wf-footer-email','wf-footer-msg','wf-footer-btn','wf-footer-hp')">Rejoindre &rarr;</button>
-    </div>
-    <div id="wf-footer-msg" class="sm">&#10003; Tu es sur la liste. On t&rsquo;envoie ton acc&egrave;s d&egrave;s l&rsquo;ouverture.</div>
+  <p>14 jours d&rsquo;essai gratuit. Pas de carte requise.</p>
+  <div style="max-width:320px;margin:1.5rem auto 0">
+    <a href="/signup" class="bp" style="display:block;width:100%;padding:14px;border-radius:8px;font-size:14px;font-weight:500;letter-spacing:.5px;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif">Commencer gratuitement &rarr;</a>
     <div style="margin-top:.75rem"><a href="/login" style="font-size:12px;color:var(--td);text-decoration:none">D&eacute;j&agrave; un compte ? <span style="color:var(--red)">Connexion &rarr;</span></a></div>
   </div>
 </div>
@@ -618,24 +608,6 @@ async function sendContact(){
   }
 }
 window.sendContact=sendContact;
-async function joinWaitlist(emailId,msgId,btnId,hpId){
-  var email=document.getElementById(emailId).value.trim();
-  if(!email||!email.includes('@'))return;
-  var hp=hpId?(document.getElementById(hpId)||{value:''}).value:'';
-  var btn=document.getElementById(btnId);
-  btn.textContent='Envoi…';btn.disabled=true;
-  try{
-    var res=await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,website:hp})});
-    if(res.ok){document.getElementById(msgId).style.display='block';}
-    else{throw new Error();}
-  }catch(e){btn.textContent='Rejoindre →';btn.disabled=false;}
-}
-window.joinWaitlist=joinWaitlist;
-function scrollToWaitlist(){
-  var wf=document.getElementById('wf-hero');
-  if(wf){wf.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){var i=document.getElementById('wf-hero-email');if(i)i.focus();},500);}
-}
-window.scrollToWaitlist=scrollToWaitlist;
 var car=document.getElementById('pcarousel');
 if(car){
   var isDown=false,startX,scrollLeft;
