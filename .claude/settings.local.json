@@ -43,7 +43,8 @@
       "Bash(npm audit *)",
       "Bash(BASE_URL=https://getcaldra.com node scripts/test-e2e.mjs)",
       "Bash(Start-Sleep -Seconds 45)",
-      "Bash(Write-Output \"done\")"
+      "Bash(Write-Output \"done\")",
+      "WebFetch(domain:getcaldra.com)"
     ]
   },
   "hooks": {
