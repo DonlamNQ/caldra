@@ -125,13 +125,16 @@ if (error) {
   const alerts = await analyzeTradeForAlerts(trade)
 
   // Envoie les web push pour chaque alerte
+  console.log('[push] alerts:', alerts.length)
   if (alerts.length > 0) {
     const vapidPublic  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     const vapidPrivate = process.env.VAPID_PRIVATE_KEY
     const vapidEmail   = process.env.VAPID_EMAIL ?? 'contact@getcaldra.com'
+    console.log('[push] vapid public:', !!vapidPublic, 'private:', !!vapidPrivate)
 
     if (vapidPublic && vapidPrivate) {
-      webpush.setVapidDetails(`mailto:${vapidEmail}`, vapidPublic, vapidPrivate)
+      try { webpush.setVapidDetails(`mailto:${vapidEmail}`, vapidPublic, vapidPrivate) }
+      catch (e: any) { console.error('[push] setVapidDetails error:', e.message) }
 
       const { data: subs } = await supabase
         .from('push_subscriptions')
