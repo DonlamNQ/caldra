@@ -148,10 +148,10 @@ function MetricBar({ label, value }: { label: string; value: number }) {
 // ── SessionLine — score comportemental dans le temps ──────────────────────────
 const DAILY_RISK = 300
 
-function llColor(pnl: number): string {
-  if (pnl < -20) return '#7c3aed'
-  if (pnl >= 100)  return '#3cc87a'
-  return '#8ba0be'
+function llColor(score: number): string {
+  if (score >= 70) return '#3cc87a'
+  if (score >= 40) return '#f5a623'
+  return '#dc503c'
 }
 
 const LL_STATES: { pts: number[][]; idle?: boolean }[] = [
@@ -165,9 +165,11 @@ const LL_STATES: { pts: number[][]; idle?: boolean }[] = [
 
 function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number; pnl: number }) {
   const pnlRef = useRef(pnl)
+  const scoreRef = useRef(score)
   const llStateRef = useRef(0)
 
   useEffect(() => { pnlRef.current = pnl }, [pnl])
+  useEffect(() => { scoreRef.current = score }, [score])
 
   useEffect(() => {
     const stateIdx = Math.min(alerts.length, LL_STATES.length - 1)
@@ -202,12 +204,11 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       }
       document.getElementById('ll-path')?.setAttribute('d', ptsToPath(livePts))
       document.getElementById('ll-fill')?.setAttribute('d', ptsToFill(livePts))
-      const c = llColor(pnlRef.current)
-      const isNeutral = pnlRef.current >= 0 && pnlRef.current < DAILY_RISK
+      const c = llColor(scoreRef.current)
       document.getElementById('ll-start')?.setAttribute('stop-color', c)
-      document.getElementById('ll-start')?.setAttribute('stop-opacity', isNeutral ? '0.7' : '0.7')
+      document.getElementById('ll-start')?.setAttribute('stop-opacity', '0.7')
       document.getElementById('ll-end')?.setAttribute('stop-color', c)
-      document.getElementById('ll-end')?.setAttribute('stop-opacity', isNeutral ? '0.95' : '1')
+      document.getElementById('ll-end')?.setAttribute('stop-opacity', '0.95')
       const lp = livePts[livePts.length - 1]
       document.getElementById('ll-cur')?.setAttribute('cx', String(lp[0]))
       document.getElementById('ll-cur')?.setAttribute('cy', String(lp[1]))
@@ -235,7 +236,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
 }
 
 // ── PnlChart — cumulative SVG chart with Y/X axes ────────────────────────────
-function PnlChart({ trades }: { trades: TradeRow[] }) {
+function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: number }) {
   const C = useContext(ThemeCtx)
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
@@ -272,7 +273,7 @@ function PnlChart({ trades }: { trades: TradeRow[] }) {
   const range = maxV - minV
   const n = pts.length
   const last = vals[n - 1]
-  const LC = last >= 0 ? '#3cc87a' : '#dc503c'
+  const LC = last >= 0 ? '#3cc87a' : (drawdownAmt !== undefined && last <= -drawdownAmt) ? '#dc503c' : '#e2e8f0'
 
   const xOf = (i: number) => PXL + (i / Math.max(n - 1, 1)) * DW
   const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
@@ -536,7 +537,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
           <div style={{ height: 180, flexShrink: 0 }}>
-            <PnlChart trades={trades} />
+            <PnlChart trades={trades} drawdownAmt={tradingRules ? (tradingRules.max_daily_drawdown_pct / 100) * (tradingRules.account_size || 10000) : undefined} />
           </div>
         </div>
 
@@ -2150,8 +2151,8 @@ export default function DashboardClient({
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
-        if ((a.level ?? 1) >= 3) {
-          setSentinelPrompt(a)
+        if ((a.level ?? 1) >= 3) setSentinelPrompt(a)
+        if ((a.level ?? 1) >= 2) {
           showPushNotif(
             `Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
             a.message ?? '',
