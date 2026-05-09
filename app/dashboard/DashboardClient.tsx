@@ -1314,11 +1314,6 @@ namespace CaldraBot
           </div>
         )}
 
-        <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '8px 12px', marginTop: newKey ? 10 : 0 }}>
-          <code style={{ fontSize: 10, fontFamily: MONO, color: C.te }}>
-            x-caldra-key: <span style={{ color: 'rgba(56,189,248,.55)' }}>{prefix ? `${prefix}••••` : 'cal_votre_clé'}</span>
-          </code>
-        </div>
       </IntCard>
 
       {/* ── Plateformes ── */}
