@@ -159,10 +159,16 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
 
   async function saveRules() {
     setSaving(true); setError('')
-    const result = await saveRulesAction(rules as unknown as Record<string, unknown>)
-    setSaving(false)
-    if ('error' in result) { setError('Erreur de sauvegarde — réessaie.'); return false }
-    return true
+    try {
+      const result = await saveRulesAction(rules as unknown as Record<string, unknown>)
+      setSaving(false)
+      if ('error' in result) { setError(result.error); return false }
+      return true
+    } catch (e: unknown) {
+      setSaving(false)
+      setError(e instanceof Error ? e.message : 'Erreur inconnue')
+      return false
+    }
   }
 
   async function goToStep4() {
@@ -209,7 +215,9 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
           <div style={{ width: 2, height: 36, background: `linear-gradient(180deg, ${RED}, ${RED}30)`, borderRadius: 2 }} />
           <div>
             <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: 8, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
-            <div style={{ fontSize: 9, letterSpacing: 8, textTransform: 'uppercase' as const, color: TE, marginTop: 5 }}>Session</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, textTransform: 'uppercase' as const, color: TE, marginTop: 5, letterSpacing: 0 }}>
+              {'SESSION'.split('').map((c, i) => <span key={i}>{c}</span>)}
+            </div>
           </div>
         </div>
 
