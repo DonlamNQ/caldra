@@ -31,7 +31,11 @@ export async function middleware(request: NextRequest) {
   // Rate limiting sur les endpoints sensibles
   const limit = RATE_LIMITS[pathname]
   if (limit) {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const ip =
+      request.headers.get('cf-connecting-ip') ??
+      request.headers.get('x-real-ip') ??
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      'unknown'
     const key = `${pathname}:${ip}`
     if (!checkRateLimit(key, limit.max, limit.windowMs)) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
