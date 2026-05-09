@@ -2152,13 +2152,11 @@ export default function DashboardClient({
         setAlerts(prev => [a, ...prev])
         addToast(a)
         if ((a.level ?? 1) >= 3) setSentinelPrompt(a)
-        if ((a.level ?? 1) >= 2) {
-          showPushNotif(
-            `Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
-            a.message ?? '',
-            a.id ?? 'caldra-alert'
-          )
-        }
+        showPushNotif(
+          `Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
+          a.message ?? '',
+          a.id ?? 'caldra-alert'
+        )
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         if (pausedRef.current) return
