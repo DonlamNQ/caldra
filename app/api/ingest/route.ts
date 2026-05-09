@@ -152,7 +152,9 @@ if (error) {
                 { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
                 payload
               )
+              console.log('[push] sent to', sub.endpoint.slice(0, 50))
             } catch (e: any) {
+              console.error('[push] error', e.statusCode, e.message, sub.endpoint.slice(0, 50))
               if (e.statusCode === 410) {
                 await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
               }
