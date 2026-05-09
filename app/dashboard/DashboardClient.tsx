@@ -1386,31 +1386,6 @@ namespace CaldraBot
             </a>
           </IntCard>
 
-          {/* API directe */}
-          <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>API</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>API directe</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>POST /api/ingest</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)', flexShrink: 0 }} />
-                <span style={{ fontSize: 9, color: hasKey ? C.g : C.te }}>{hasKey ? 'ACTIVE' : 'INACTIF'}</span>
-              </div>
-            </div>
-            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 14 }}>
-              Envoie un POST à chaque clôture de trade depuis n&apos;importe quelle plateforme ou script custom.
-            </div>
-            <div style={{ background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 6, padding: '10px 13px', marginBottom: 14 }}>
-              <div style={{ fontSize: 9.5, fontFamily: MONO, color: C.te, marginBottom: 4 }}>POST https://getcaldra.com/api/ingest</div>
-              <div style={{ fontSize: 9.5, fontFamily: MONO, color: C.td }}>x-caldra-key: <span style={{ color: 'rgba(56,189,248,.6)' }}>cal_••••••••••••••••••••</span></div>
-            </div>
-            <div style={{ fontSize: 11, color: C.te, lineHeight: 1.55 }}>
-              Champs requis : <span style={{ color: C.tm, fontFamily: MONO }}>symbol</span>, <span style={{ color: C.tm, fontFamily: MONO }}>direction</span>, <span style={{ color: C.tm, fontFamily: MONO }}>size</span>, <span style={{ color: C.tm, fontFamily: MONO }}>entry_price</span>, <span style={{ color: C.tm, fontFamily: MONO }}>pnl</span>, <span style={{ color: C.tm, fontFamily: MONO }}>entry_time</span>
-            </div>
-          </IntCard>
-
         </div>
       </div>
 
