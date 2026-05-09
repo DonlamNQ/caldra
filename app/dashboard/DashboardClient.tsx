@@ -1332,11 +1332,11 @@ namespace CaldraBot
               {([
                 ['1', 'Génère ta clé API ci-dessus (si pas encore fait).'],
                 ['2', 'Télécharge le fichier CaldraBot.cs ci-dessous.'],
-                ['3', 'Ouvre cTrader → clique sur "cAlgo" dans la barre du haut → "New cBot".'],
-                ['4', 'Supprime tout le code existant, puis colle le contenu du fichier CaldraBot.cs téléchargé.'],
-                ['5', 'Clique sur "Build" (ou Ctrl+B) — attends "Build succeeded" en bas.'],
-                ['6', 'Va sur un graphique → clique sur le nom du bot dans le panel cAlgo → "Add to chart".'],
-                ['7', 'Dans la fenêtre qui s\'ouvre, vérifie que ta clé API est bien pré-remplie → clique "Start".'],
+                ['3', 'Ouvre cTrader → clique sur "Algo" dans la barre du haut → "New cBot".'],
+                ['4', 'Dans l\'assistant qui s\'ouvre, clique sur "Suivant" jusqu\'à la fin puis "Créer".'],
+                ['5', 'Supprime tout le code existant dans l\'éditeur, puis colle le contenu du fichier CaldraBot.cs.'],
+                ['6', 'Clique sur "Build" (ou Ctrl+B) — attends "Build succeeded" en bas.'],
+                ['7', 'L\'instance du bot apparaît dans le panel Algo → clique dessus → "Paramètres" → colle ta clé API → "Start".'],
                 ['8', 'Chaque position fermée apparaît automatiquement dans ton dashboard Caldra.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
