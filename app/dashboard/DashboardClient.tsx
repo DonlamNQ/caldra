@@ -1084,66 +1084,6 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
   )
 }
 
-function downloadReport(title: string) {
-  const win = window.open('', '_blank', 'width=860,height=780')
-  if (!win) return
-  win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title><style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Courier New',monospace;background:#fff;color:#111;padding:48px 64px;max-width:740px;margin:0 auto;font-size:13px}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;padding-bottom:20px;border-bottom:2px solid #111}
-    .brand{font-size:10px;letter-spacing:4px;color:#999;margin-bottom:8px}
-    h1{font-size:22px;font-weight:300;letter-spacing:-.5px;line-height:1.2}
-    .meta{font-size:11px;color:#777;text-align:right;line-height:1.8}
-    .accent{color:#7c3aed;font-weight:600}
-    .section{margin-bottom:30px}
-    .section-title{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#aaa;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #eee}
-    .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12.5px}
-    .val{font-weight:600}
-    .green{color:#006b45}.red{color:#b83225}.muted{color:#888}
-    .insight{font-size:12.5px;line-height:1.75;color:#444;padding:16px 18px;border:1px solid #e8e8e8;border-radius:4px;background:#fafafa;border-left:3px solid #7c3aed}
-    .footer{margin-top:48px;padding-top:18px;border-top:1px solid #eee;font-size:10.5px;color:#bbb;text-align:center;line-height:1.8}
-    .btn{margin-top:24px;padding:10px 22px;background:#7c3aed;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-family:inherit;letter-spacing:.5px}
-    @media print{.btn{display:none}body{padding:20px 32px}}
-  </style></head><body>
-  <div class="header">
-    <div><div class="brand">CALDRA</div><h1>${title}</h1></div>
-    <div class="meta">Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}<br/><span class="accent">● Rapport comportemental</span></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Résumé de la semaine</div>
-    <div class="row"><span>Score comportemental moyen</span><span class="val green">82 / 100</span></div>
-    <div class="row"><span>P&amp;L total</span><span class="val">+€ 312</span></div>
-    <div class="row"><span>Sessions tradées</span><span class="val">4 / 5</span></div>
-    <div class="row"><span>Win rate</span><span class="val">61%</span></div>
-    <div class="row"><span>Alertes déclenchées</span><span class="val">7</span></div>
-    <div class="row"><span>Sessions critiques (score &lt; 40)</span><span class="val red">1</span></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Détail par session</div>
-    <div class="row"><span>Lundi</span><span class="val green">Score 91 · +€ 124 · 0 alerte</span></div>
-    <div class="row"><span>Mardi</span><span class="val green">Score 88 · +€ 87 · 1 alerte</span></div>
-    <div class="row"><span>Mercredi</span><span class="val red">Score 34 · -€ 210 · 4 alertes</span></div>
-    <div class="row"><span>Jeudi</span><span class="val green">Score 79 · +€ 311 · 2 alertes</span></div>
-    <div class="row"><span>Vendredi</span><span class="val muted">—</span></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Patterns comportementaux détectés</div>
-    <div class="row"><span>immediate_reentry</span><span class="val">3 ×</span></div>
-    <div class="row"><span>revenge_sizing</span><span class="val red">2 ×</span></div>
-    <div class="row"><span>drawdown_alert</span><span class="val">1 ×</span></div>
-    <div class="row"><span>overtrading</span><span class="val">1 ×</span></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Recommandation Sentinel IA</div>
-    <div class="insight">Mercredi a été une session difficile avec une série de 3 re-entrées impulsives après la perte initiale. Le revenge sizing détecté (×2) indique une réponse émotionnelle aux pertes. Recommandation : appliquer une pause obligatoire de 15 minutes après 2 pertes consécutives. Le reste de la semaine montre une excellente discipline.</div>
-  </div>
-  <div class="footer">Rapport généré automatiquement par Caldra — getcaldra.com · Document confidentiel</div>
-  <br/><button class="btn" onclick="window.print()">↓ Imprimer / Sauvegarder en PDF</button>
-  </body></html>`)
-  win.document.close()
-  win.focus()
-}
-
 // ── RapportsPanel ──────────────────────────────────────────────────────────────
 function RapportsPanel() {
   const C = useContext(ThemeCtx)
@@ -1152,23 +1092,23 @@ function RapportsPanel() {
   const monthName = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
 
   const reports = [
-    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum} (actuelle)`, sub: 'En cours de génération — disponible vendredi', badge: 'En attente', badgeCol: C.td, badgeBg: 'rgba(255,255,255,.04)', badgeBorder: C.b, canDownload: false },
-    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum - 1}`, sub: 'Session précédente', badge: 'Généré', badgeCol: C.g, badgeBg: 'rgba(0,209,122,.07)', badgeBorder: 'rgba(0,209,122,.2)', canDownload: true },
-    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum - 2}`, sub: 'Il y a 2 semaines', badge: 'Généré', badgeCol: C.g, badgeBg: 'rgba(0,209,122,.07)', badgeBorder: 'rgba(0,209,122,.2)', canDownload: true },
-    { icon: '📊', title: `Rapport mensuel — ${monthName}`, sub: `Disponible le 1er du mois prochain`, badge: 'En attente', badgeCol: C.td, badgeBg: 'rgba(255,255,255,.04)', badgeBorder: C.b, canDownload: false },
+    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum} (actuelle)`, sub: 'En cours de génération — disponible vendredi' },
+    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum - 1}`, sub: 'Session précédente' },
+    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum - 2}`, sub: 'Il y a 2 semaines' },
+    { icon: '📊', title: `Rapport mensuel — ${monthName}`, sub: 'Disponible le 1er du mois prochain' },
   ]
 
   return (
     <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ marginBottom: 12 }}>
         <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.3, marginBottom: 5 }}>Rapports automatiques</div>
-        <div style={{ fontSize: 12.5, color: C.td }}>Générés chaque vendredi + 1er du mois. PDF téléchargeable.</div>
+        <div style={{ fontSize: 12.5, color: C.td }}>Générés chaque vendredi + 1er du mois — fonctionnalité en cours de déploiement.</div>
       </div>
       {reports.map((r, i) => (
         <div key={i} style={{
           background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20,
           display: 'flex', alignItems: 'center', gap: 16,
-          opacity: r.canDownload ? 1 : .45, cursor: r.canDownload ? 'pointer' : 'not-allowed',
+          opacity: .45,
           transition: 'all .18s',
         }}>
           <div style={{ width: 44, height: 44, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{r.icon}</div>
@@ -1176,10 +1116,7 @@ function RapportsPanel() {
             <div style={{ fontSize: 14, fontWeight: 400, color: C.tx, marginBottom: 4 }}>{r.title}</div>
             <div style={{ fontSize: 11.5, color: C.td }}>{r.sub}</div>
           </div>
-          <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: MONO, whiteSpace: 'nowrap' as const, background: r.badgeBg, border: `.5px solid ${r.badgeBorder}`, color: r.badgeCol }}>{r.badge}</span>
-          {r.canDownload && (
-            <button onClick={() => downloadReport(r.title)} style={{ fontSize: 12, padding: '7px 16px', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, background: 'transparent', cursor: 'pointer', transition: 'all .2s', fontFamily: SANS, whiteSpace: 'nowrap' as const }}>↓ PDF</button>
-          )}
+          <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: MONO, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
         </div>
       ))}
     </div>
