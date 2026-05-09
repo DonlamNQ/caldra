@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
 import type { DaySession } from './page'
-import PushNotifSetup from '@/components/PushNotifSetup'
 
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
@@ -463,15 +462,11 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>Notifications actives</span>
           </div>
         ) : notifPerm === 'denied' ? (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc3218' }} />
-              <span style={{ fontSize: 10.5, color: '#dc3218', fontFamily: MONO }}>Notifs bloquées</span>
-            </div>
-            <div style={{ fontSize: 10.5, color: C.te, lineHeight: 1.55 }}>
-              Autorise dans les paramètres du navigateur :<br />
-              <span style={{ color: C.td }}>Paramètres → Confidentialité → Notifications → getcaldra.com → Autoriser</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569', flexShrink: 0 }} />
+            <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO, lineHeight: 1.4 }}>
+              Notifications désactivées dans le navigateur
+            </span>
           </div>
         ) : (
           <button
@@ -2242,12 +2237,14 @@ export default function DashboardClient({
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
-        if ((a.level ?? 1) >= 3) setSentinelPrompt(a)
-        showPushNotif(
-          `Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
-          a.message ?? '',
-          a.id ?? 'caldra-alert'
-        )
+        if ((a.level ?? 1) >= 3) {
+          setSentinelPrompt(a)
+          showPushNotif(
+            `Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
+            a.message ?? '',
+            a.id ?? 'caldra-alert'
+          )
+        }
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         if (pausedRef.current) return
@@ -2384,7 +2381,6 @@ export default function DashboardClient({
         .c-row:hover{background:rgba(255,255,255,.025)!important}
       `}</style>
 
-      <PushNotifSetup />
 
       {sentinelPrompt && (
         <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(255,90,61,.45)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 8px 40px rgba(255,90,61,.18)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
@@ -2430,17 +2426,6 @@ export default function DashboardClient({
               onMouseEnter={e => (e.currentTarget.style.color = C.tm)}
               onMouseLeave={e => (e.currentTarget.style.color = C.td)}
             >{theme === 'dark' ? '☀' : '◐'}</button>
-            {notifPerm !== 'granted' && notifPerm !== 'denied' && (
-              <button
-                onClick={requestNotifPermission}
-                title="Activer les notifications d'alertes"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: C.red, fontFamily: MONO, background: C.rd, border: `.5px solid ${C.rb}`, padding: '4px 11px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3, animation: 'pulse 2s infinite' }}
-                onMouseEnter={e => { e.currentTarget.style.background = C.rg; e.currentTarget.style.animation = 'none' }}
-                onMouseLeave={e => { e.currentTarget.style.background = C.rd; e.currentTarget.style.animation = 'pulse 2s infinite' }}
-              >
-                <span style={{ fontSize: 11 }}>🔔</span> Activer les alertes
-              </button>
-            )}
             {installPrompt && (
               <button
                 onClick={triggerInstall}
