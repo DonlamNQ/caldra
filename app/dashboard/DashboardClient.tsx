@@ -1337,7 +1337,6 @@ namespace CaldraBot
                 ['5', 'Supprime tout le code existant dans l\'éditeur, puis colle le contenu du fichier CaldraBot.cs.'],
                 ['6', 'Clique sur "Build" (ou Ctrl+B) — attends "Build succeeded" en bas.'],
                 ['7', 'L\'instance du bot apparaît dans le panel Algo → clique dessus → "Paramètres" → colle ta clé API → "Start".'],
-                ['8', 'Chaque position fermée apparaît automatiquement dans ton dashboard Caldra.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
