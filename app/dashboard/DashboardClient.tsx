@@ -1414,43 +1414,6 @@ namespace CaldraBot
         </div>
       </div>
 
-      {/* ── Notifications ── */}
-      <div>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 12 }}>Notifications</div>
-        <IntCard>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 13, flexShrink: 0 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: 'rgba(88,101,242,.08)', border: `.5px solid rgba(88,101,242,.22)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'rgba(88,101,242,.9)', fontFamily: MONO }}>WH</div>
-              <div>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Slack</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Alertes L2/L3 dans ton channel</div>
-              </div>
-            </div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input
-                type="url"
-                value={webhookUrl}
-                onChange={e => { setWebhookUrl(e.target.value); setWebhookSave('idle') }}
-                placeholder="https://hooks.slack.com/services/…"
-                style={{ flex: 1, background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b2}`, borderRadius: 7, padding: '9px 13px', color: C.tm, fontSize: 12, fontFamily: MONO, outline: 'none', boxSizing: 'border-box' as const, transition: 'border-color .2s' }}
-              />
-              <button
-                onClick={saveWebhook}
-                disabled={webhookSave === 'saving'}
-                style={{ padding: '9px 18px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', opacity: webhookSave === 'saving' ? .6 : 1, whiteSpace: 'nowrap' as const, flexShrink: 0 }}
-              >
-                {webhookSave === 'saving' ? 'Enregistrement…' : 'Sauvegarder'}
-              </button>
-              {webhookSave === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO, whiteSpace: 'nowrap' as const }}>✓ Actif</span>}
-              {webhookSave === 'error' && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: webhookUrl ? C.g : 'rgba(255,255,255,.18)' }} />
-                <span style={{ fontSize: 9, color: webhookUrl ? C.g : C.te, letterSpacing: .5 }}>{webhookUrl ? 'ACTIF' : 'INACTIF'}</span>
-              </div>
-            </div>
-          </div>
-        </IntCard>
-      </div>
     </div>
   )
 }
@@ -1808,7 +1771,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'pro', name: 'Pro', price: '19€',
       accent: C.g, accentAlpha: 'rgba(0,209,122,',
-      features: ['Trades illimités', 'Analytics avancées', 'Calendrier des sessions', 'Rapports exportables', 'Alertes Slack'],
+      features: ['Trades illimités', 'Analytics avancées', 'Calendrier des sessions', 'Rapports exportables'],
     },
     {
       id: 'sentinel', name: 'Sentinel', price: '39€',
