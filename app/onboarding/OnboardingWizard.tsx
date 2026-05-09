@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
 const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type Platform = 'ctrader' | 'api'
+type Platform = 'ctrader' | 'mt5'
 type Level    = 'beginner' | 'confirmed' | 'expert'
 
 interface Rules {
@@ -136,7 +136,7 @@ function Pills<T extends string>({ options, value, onChange }: {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
+export default function OnboardingWizard({ userName }: { userName: string }) {
   const router = useRouter()
   const [step, setStep]         = useState(1)
   const [platform, setPlatform] = useState<Platform>('ctrader')
@@ -148,8 +148,6 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
   const [keyRevealed, setKeyRevealed] = useState(false)
   const [copied, setCopied]     = useState(false)
   const [genError, setGenError] = useState('')
-
-  const name = userEmail.split('@')[0]
 
   function setRule(k: keyof Rules, v: string) { setRules(p => ({ ...p, [k]: v })) }
 
@@ -174,7 +172,6 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
     const ok = await saveRules()
     if (!ok) return
     setStep(4)
-    // Auto-generate API key
     try {
       const res = await fetch('/api/api-key', { method: 'POST' })
       const data = await res.json()
@@ -192,14 +189,6 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const curlSnippet = `curl -X POST https://getcaldra.com/api/ingest \\
-  -H "x-caldra-key: ${apiKey ?? '<votre-clé>'}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"symbol":"ES","direction":"long","size":1,
-       "entry_price":5200,"exit_price":5195,
-       "entry_time":"${new Date().toISOString()}",
-       "pnl":-25}'`
-
   return (
     <>
       <style>{`
@@ -216,7 +205,7 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
         .ob-step{animation:fadeUp .3s ease}
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 20px' }}>
+      <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
 
         {/* Logo */}
         <div style={{ marginBottom: 40, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -227,21 +216,18 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
           </div>
         </div>
 
-        <div style={{ width: '100%', maxWidth: 740 }}>
+        <div style={{ width: '100%', maxWidth: 900 }}>
           <StepBar step={step} />
 
           {/* ── Step 1 — Bienvenue ── */}
           {step === 1 && (
             <div className="ob-step">
               <div style={{ marginBottom: 28 }}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: RED, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 12, opacity: .75 }}>Bienvenue, {name}</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: RED, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 12, opacity: .75 }}>Bienvenue, {userName}</div>
                 <h1 style={{ fontSize: 32, fontWeight: 200, letterSpacing: -1, lineHeight: 1.15, color: TX, marginBottom: 14 }}>
                   Tu ne vois pas<br />quand tu dérailles.
                   <span style={{ color: RED }}> Lui si.</span>
                 </h1>
-                <p style={{ fontSize: 14, color: TD, lineHeight: 1.75, maxWidth: 460 }}>
-                  Caldra analyse chaque trade en temps réel et détecte les patterns comportementaux dangereux avant qu'ils ne coûtent cher.
-                </p>
               </div>
 
               {/* Fake live alert */}
@@ -250,16 +236,11 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                 <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 10 }}>Exemple — Alerte en temps réel</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
-                    { lvl: 3, type: 'revenge_sizing',   msg: 'Sizing ×2.8 après une perte. Pattern de revenge trading détecté.', col: RED },
-                    { lvl: 2, type: 'drawdown_alert',   msg: 'Drawdown journalier à 78% du seuil. Ralentis.',                    col: O   },
-                    { lvl: 1, type: 'immediate_reentry',msg: 'Re-entrée 40s après la clôture. Délai minimum : 2 min.',           col: O   },
+                    { lvl: 3, type: 'revenge_sizing',    msg: 'Sizing ×2.8 après une perte. Pattern de revenge trading détecté.', col: RED },
+                    { lvl: 2, type: 'drawdown_alert',    msg: 'Drawdown journalier à 78% du seuil. Ralentis.',                    col: O   },
+                    { lvl: 1, type: 'immediate_reentry', msg: 'Re-entrée 40s après la clôture. Délai minimum : 2 min.',           col: O   },
                   ].map((a, i) => (
-                    <div key={i} style={{
-                      padding: '9px 10px 9px 12px',
-                      borderLeft: `2px solid ${a.col}`,
-                      background: `${a.col}08`,
-                      borderRadius: '0 6px 6px 0',
-                    }}>
+                    <div key={i} style={{ padding: '9px 10px 9px 12px', borderLeft: `2px solid ${a.col}`, background: `${a.col}08`, borderRadius: '0 6px 6px 0' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                         <span style={{ fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 3, background: `${a.col}15`, border: `.5px solid ${a.col}40`, color: a.col }}>L{a.lvl}</span>
                         <span style={{ fontSize: 10, color: TE, fontFamily: MONO, letterSpacing: .3 }}>{a.type.replace(/_/g, ' ')}</span>
@@ -274,9 +255,9 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
               {/* Features */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 28 }}>
                 {[
-                  { n: '6', label: 'patterns détectés', sub: 'revenge, drawdown, overtrading…' },
-                  { n: '<1s', label: 'temps de réaction', sub: 'alerte dès la clôture du trade' },
-                  { n: '100', label: 'score de session', sub: 'ton état comportemental en live' },
+                  { n: '6',   label: 'patterns détectés',  sub: 'revenge, drawdown, overtrading…' },
+                  { n: '<1s', label: 'temps de réaction',   sub: 'alerte dès la clôture du trade' },
+                  { n: '100', label: 'score de session',    sub: 'ton état comportemental en live' },
                 ].map(f => (
                   <div key={f.label} style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 9, padding: '13px 14px' }}>
                     <div style={{ fontSize: 22, fontWeight: 200, letterSpacing: -1, color: TX, fontFamily: MONO, marginBottom: 3 }}>{f.n}</div>
@@ -302,13 +283,13 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
             <div className="ob-step">
               <div style={{ marginBottom: 28 }}>
                 <h2 style={{ fontSize: 24, fontWeight: 200, letterSpacing: -.5, color: TX, marginBottom: 8 }}>Ton profil de trading</h2>
-                <p style={{ fontSize: 13, color: TD }}>Caldra adapte les seuils par défaut à ton niveau et ta taille de compte.</p>
+                <p style={{ fontSize: 13, color: TD }}>Ces informations servent à pré-configurer tes règles. Tu pourras tout modifier ensuite.</p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
 
                 {/* Account size */}
-                <Field label="Taille du compte" hint="Sert à calculer le drawdown en % réel" suffix="€">
+                <Field label="Taille du compte" hint="Sert à calculer le drawdown en valeur réelle" suffix="€">
                   <input
                     type="number" min={100} max={10000000} step={100}
                     value={rules.account_size}
@@ -318,26 +299,38 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                 </Field>
 
                 {/* Plateforme */}
-                <Field label="Plateforme de trading">
-                  <Pills<Platform>
-                    value={platform}
-                    onChange={setPlatform}
-                    options={[
-                      { value: 'ctrader', label: 'cTrader', sub: 'OAuth2 — 1 clic' },
-                      { value: 'api',     label: 'API directe', sub: 'Tout broker' },
-                    ]}
-                  />
-                </Field>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 11, letterSpacing: .8, textTransform: 'uppercase' as const, color: TD, fontFamily: SANS }}>Plateforme de trading</label>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                    {([
+                      { value: 'ctrader' as Platform, label: 'cTrader', sub: 'Via cBot' },
+                      { value: 'mt5'     as Platform, label: 'MetaTrader 5', sub: 'Via EA' },
+                    ] as { value: Platform; label: string; sub: string }[]).map(o => {
+                      const active = platform === o.value
+                      return (
+                        <button key={o.value} onClick={() => setPlatform(o.value)} style={{ padding: '9px 18px', borderRadius: 8, cursor: 'pointer', background: active ? RD : 'transparent', border: `.5px solid ${active ? RB : B}`, color: active ? RED : TD, fontFamily: SANS, fontSize: 13, transition: 'all .18s', textAlign: 'left' as const, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ fontWeight: active ? 500 : 400 }}>{o.label}</span>
+                          <span style={{ fontSize: 10, color: active ? `${RED}aa` : TE }}>{o.sub}</span>
+                        </button>
+                      )
+                    })}
+                    {/* Tradovate — prochainement */}
+                    <div style={{ padding: '9px 18px', borderRadius: 8, background: 'transparent', border: `.5px solid ${B}`, color: TE, fontFamily: SANS, fontSize: 13, display: 'flex', flexDirection: 'column', gap: 2, opacity: .5, cursor: 'not-allowed' }}>
+                      <span>Tradovate</span>
+                      <span style={{ fontSize: 10, color: TE }}>Prochainement</span>
+                    </div>
+                  </div>
+                </div>
 
-                {/* Niveau */}
-                <Field label="Ton niveau" hint="Pré-configure les règles — tu pourras les affiner ensuite">
+                {/* Expérience */}
+                <Field label="Expérience" hint="Pré-configure les règles — ajustables à tout moment dans Paramètres">
                   <Pills<Level>
                     value={level}
                     onChange={applyLevel}
                     options={[
-                      { value: 'beginner',  label: 'Débutant',  sub: '< 1 an' },
-                      { value: 'confirmed', label: 'Confirmé',  sub: '1–3 ans' },
-                      { value: 'expert',    label: 'Expert',    sub: '3+ ans' },
+                      { value: 'beginner',  label: 'Conservateur', sub: 'Règles strictes' },
+                      { value: 'confirmed', label: 'Standard',     sub: 'Règles équilibrées' },
+                      { value: 'expert',    label: 'Flexible',     sub: 'Règles souples' },
                     ]}
                   />
                 </Field>
@@ -371,12 +364,11 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
             <div className="ob-step">
               <div style={{ marginBottom: 24 }}>
                 <h2 style={{ fontSize: 24, fontWeight: 200, letterSpacing: -.5, color: TX, marginBottom: 8 }}>Tes garde-fous</h2>
-                <p style={{ fontSize: 13, color: TD }}>Pré-configurés pour ton niveau. Modifiables à tout moment dans Règles.</p>
+                <p style={{ fontSize: 13, color: TD }}>Pré-configurés selon ton profil. Modifiables à tout moment dans Paramètres.</p>
               </div>
 
               <div style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 12, overflow: 'hidden' }}>
 
-                {/* Risk */}
                 <div style={{ padding: '20px 24px', borderBottom: `.5px solid ${B}` }}>
                   <div style={{ fontSize: 10, letterSpacing: 1.2, color: TE, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 16 }}>Risk management</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -389,7 +381,6 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                   </div>
                 </div>
 
-                {/* Discipline */}
                 <div style={{ padding: '20px 24px', borderBottom: `.5px solid ${B}` }}>
                   <div style={{ fontSize: 10, letterSpacing: 1.2, color: TE, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 16 }}>Discipline</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
@@ -405,10 +396,9 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                   </div>
                 </div>
 
-                {/* Preview */}
                 <div style={{ padding: '14px 24px', background: `${RED}05` }}>
                   <div style={{ fontSize: 11, color: TD, fontFamily: MONO }}>
-                    Drawdown max = <span style={{ color: TX }}>{rules.max_daily_drawdown_pct}%</span> de <span style={{ color: TX }}>{Number(rules.account_size).toLocaleString('fr-FR')}€</span> = <span style={{ color: RED, fontWeight: 500 }}>−{((Number(rules.max_daily_drawdown_pct) / 100) * Number(rules.account_size)).toFixed(0)}€</span> de perte max / jour
+                    Drawdown max = <span style={{ color: TX }}>{rules.max_daily_drawdown_pct}%</span> de <span style={{ color: TX }}>{Number(rules.account_size).toLocaleString('fr-FR')}€</span> = <span style={{ color: RED, fontWeight: 500 }}>−{((Number(rules.max_daily_drawdown_pct) / 100) * Number(rules.account_size)).toFixed(0)}€</span> / jour
                   </div>
                 </div>
               </div>
@@ -450,24 +440,14 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                       <div
                         onClick={() => setKeyRevealed(true)}
-                        style={{
-                          flex: 1, fontFamily: MONO, fontSize: 13, color: TX,
-                          background: SF2, border: `.5px solid ${B2}`, borderRadius: 7, padding: '10px 14px',
-                          filter: keyRevealed ? 'none' : 'blur(7px)',
-                          cursor: keyRevealed ? 'default' : 'pointer',
-                          userSelect: keyRevealed ? 'all' : 'none',
-                          transition: 'filter .25s',
-                          letterSpacing: .5,
-                        }}
+                        style={{ flex: 1, fontFamily: MONO, fontSize: 13, color: TX, background: SF2, border: `.5px solid ${B2}`, borderRadius: 7, padding: '10px 14px', filter: keyRevealed ? 'none' : 'blur(7px)', cursor: keyRevealed ? 'default' : 'pointer', userSelect: keyRevealed ? 'all' : 'none', transition: 'filter .25s', letterSpacing: .5 }}
                       >{apiKey}</div>
                       <button
                         onClick={copyKey}
                         style={{ padding: '10px 14px', background: copied ? `${G}12` : RD, border: `.5px solid ${copied ? `${G}40` : RB}`, borderRadius: 7, color: copied ? G : RED, cursor: 'pointer', fontSize: 11, fontFamily: MONO, flexShrink: 0, transition: 'all .2s', whiteSpace: 'nowrap' as const }}
                       >{copied ? '✓ Copié' : 'Copier'}</button>
                     </div>
-                    {!keyRevealed && (
-                      <div style={{ fontSize: 11, color: TE, fontFamily: MONO }}>Clique pour révéler · affichée une seule fois</div>
-                    )}
+                    {!keyRevealed && <div style={{ fontSize: 11, color: TE, fontFamily: MONO }}>Clique pour révéler · affichée une seule fois</div>}
                     <div style={{ fontSize: 11, color: TE, marginTop: 6 }}>Cette clé ne sera plus affichée. Copie-la maintenant.</div>
                   </>
                 ) : genError ? (
@@ -480,15 +460,15 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
               {/* Platform instructions */}
               <div style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 12, padding: '18px 20px', marginBottom: 20 }}>
                 <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 14 }}>
-                  {platform === 'ctrader' ? 'Connexion cTrader' : 'Connexion API directe'}
+                  {platform === 'ctrader' ? 'Connexion cTrader cBot' : 'Connexion MetaTrader 5 EA'}
                 </div>
 
                 {platform === 'ctrader' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {[
-                      ['1', 'Depuis le dashboard, onglet Intégrations, clique sur "Connecter cTrader".'],
-                      ['2', 'Autorise Caldra sur la page Spotware — aucune installation requise.'],
-                      ['3', 'Chaque position fermée est détectée et analysée automatiquement.'],
+                      ['1', 'Dans le dashboard, onglet Intégrations, télécharge le fichier .algo.'],
+                      ['2', 'Dans cTrader, va dans Automate → Manage cBots → Import, et importe le fichier.'],
+                      ['3', 'Ouvre les paramètres du cBot, colle ta clé API, et active-le sur ton compte.'],
                     ].map(([n, t]) => (
                       <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                         <div style={{ width: 22, height: 22, borderRadius: '50%', background: RD, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: RED, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
@@ -496,16 +476,25 @@ export default function OnboardingWizard({ userEmail }: { userEmail: string }) {
                       </div>
                     ))}
                     <div style={{ marginTop: 4, padding: '9px 12px', background: `${RED}08`, border: `.5px solid ${RED}30`, borderRadius: 7, fontSize: 11, color: TD }}>
-                      Fonctionne avec tous les brokers cTrader : Pepperstone, IC Markets, Vantage, FP Markets…
+                      Compatible avec tous les brokers cTrader : Pepperstone, IC Markets, Vantage, FP Markets…
                     </div>
                   </div>
                 )}
 
-                {platform === 'api' && (
-                  <div>
-                    <div style={{ fontSize: 12, color: TD, marginBottom: 12 }}>Envoie un POST à chaque clôture de trade :</div>
-                    <div style={{ background: BG, border: `.5px solid ${B}`, borderRadius: 8, padding: '14px 16px', fontFamily: MONO, fontSize: 11, color: TD, lineHeight: 1.7, whiteSpace: 'pre' as const, overflowX: 'auto' as const }}>
-                      {curlSnippet}
+                {platform === 'mt5' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                      ['1', 'Dans le dashboard, onglet Intégrations, télécharge CaldraMT5.mq5.'],
+                      ['2', 'Dans MetaEditor (F4), place le fichier dans Experts/ et compile (F7).'],
+                      ['3', 'Glisse l\'EA sur un chart, colle ta clé API dans les paramètres, et active AutoTrading.'],
+                    ].map(([n, t]) => (
+                      <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: RD, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: RED, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                        <div style={{ fontSize: 12.5, color: TD, lineHeight: 1.55 }}>{t}</div>
+                      </div>
+                    ))}
+                    <div style={{ marginTop: 4, padding: '9px 12px', background: `${RED}08`, border: `.5px solid ${RED}30`, borderRadius: 7, fontSize: 11, color: TD }}>
+                      Compatible avec tous les brokers MT5 : Vantage, IC Markets, Pepperstone, XM…
                     </div>
                   </div>
                 )}

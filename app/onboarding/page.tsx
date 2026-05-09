@@ -23,5 +23,8 @@ export default async function OnboardingPage({ searchParams }: { searchParams: {
     if (rules) redirect('/dashboard')
   }
 
-  return <OnboardingWizard userEmail={user.email ?? ''} />
+  const firstName = (user.user_metadata?.first_name as string | undefined)
+    ?? user.email?.split('@')[0]
+    ?? ''
+  return <OnboardingWizard userName={firstName} />
 }

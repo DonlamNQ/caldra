@@ -3,6 +3,8 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
+export const dynamic = 'force-dynamic'
+
 const DEFAULTS = {
   max_daily_drawdown_pct: 3,
   max_consecutive_losses: 3,
@@ -16,7 +18,7 @@ const DEFAULTS = {
 }
 
 async function getUser() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -54,7 +56,6 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json()
 
-  // Validation basique
   const rules = {
     user_id: user.id,
     max_daily_drawdown_pct: Number(body.max_daily_drawdown_pct),
@@ -80,8 +81,6 @@ export async function PUT(req: NextRequest) {
     .single()
 
   if (error) {
-    // Fallback: retry without v2.1 columns (account_size, slack_webhook_url) if migration not yet applied
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { account_size, slack_webhook_url, ...baseRules } = rules
     const { data: data2, error: error2 } = await service
       .from('trading_rules')
