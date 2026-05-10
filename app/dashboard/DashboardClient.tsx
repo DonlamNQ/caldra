@@ -1371,8 +1371,8 @@ namespace CaldraBot
                 ['2', 'Télécharge CaldraMT5.mq5 ci-dessous.'],
                 ['3', 'MT5 → Fichier → Ouvrir le dossier des données → MQL5/Experts → colle le fichier.'],
                 ['4', 'Outils → Options → Consultants Experts → coche WebRequest → + → https://getcaldra.com → OK.'],
-                ['5', 'Ctrl+N → Consultants Experts → clic droit → Actualiser.'],
-                ['6', 'Si CaldraMT5 absent : F4 → ouvre le fichier → F7 (compiler) → ferme → répète étape 5.'],
+                ['5', 'F4 → ouvre CaldraMT5.mq5 dans MetaEditor → F7 pour compiler → ferme MetaEditor.'],
+                ['6', 'Ctrl+N → Consultants Experts → clic droit → Actualiser → CaldraMT5 apparaît.'],
                 ['7', 'Double-clique CaldraMT5 → Inputs → colle ta clé API → OK.'],
                 ['8', 'Bouton EA vert en haut → prêt.'],
               ] as [string, string][]).map(([n, t]) => (
