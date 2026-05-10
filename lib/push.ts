@@ -34,9 +34,10 @@ export async function sendPushToUser(
     subs.map(sub =>
       webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-        payload
+        payload,
+        { TTL: 86400 }
       ).catch(async (err: { statusCode?: number }) => {
-        if (err.statusCode === 410) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
           await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
         }
       })
