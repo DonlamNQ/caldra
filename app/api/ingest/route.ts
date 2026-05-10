@@ -155,8 +155,9 @@ if (error) {
               console.log('[push] sent to', sub.endpoint.slice(0, 50))
             } catch (e: any) {
               console.error('[push] error', e.statusCode, e.message, sub.endpoint.slice(0, 50))
-              if (e.statusCode === 410) {
+              if (e.statusCode === 410 || e.statusCode === 404 || (e.statusCode === 400 && sub.endpoint.includes('apple.com'))) {
                 await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+                console.log('[push] removed stale sub', sub.endpoint.slice(0, 50))
               }
             }
           }

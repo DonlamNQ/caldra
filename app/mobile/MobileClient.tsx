@@ -133,8 +133,10 @@ export default function MobileClient({ userId, initialScore, initialAlerts, tota
       const reg = await navigator.serviceWorker.ready
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       if (!vapidKey) return
-      let sub = await reg.pushManager.getSubscription()
-      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey) })
+      // Always unsubscribe and resubscribe to get a fresh endpoint (handles expired Apple APNs tokens)
+      const existing = await reg.pushManager.getSubscription()
+      if (existing) await existing.unsubscribe()
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey) })
       const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
       await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth }) })
     } catch {}
