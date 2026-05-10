@@ -429,9 +429,9 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
         {alerts.length === 0 ? null : (
           alerts.slice(0, 8).map((a, i) => {
             const lvl = a.level ?? 1
-            const aCol = lvl >= 2 ? C.red : C.o
-            const aBorder = lvl >= 3 ? `${C.red}` : lvl >= 2 ? `${C.red}bb` : `${C.o}99`
-            const aBg = lvl >= 3 ? `${C.red}0a` : lvl >= 2 ? `${C.red}06` : 'rgba(255,171,0,.04)'
+            const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
+            const aBorder = lvl >= 3 ? '#dc3218' : lvl >= 2 ? `${C.red}bb` : `${C.o}99`
+            const aBg = lvl >= 3 ? 'rgba(220,50,24,.08)' : lvl >= 2 ? `${C.red}06` : 'rgba(255,171,0,.04)'
             return (
               <div key={a.id ?? i} style={{
                 padding: '9px 9px 9px 11px',
@@ -443,8 +443,8 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <span style={{
                     fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 99,
-                    background: lvl >= 2 ? C.rd : 'rgba(255,171,0,.09)',
-                    border: `.5px solid ${lvl >= 2 ? C.rb : 'rgba(255,171,0,.22)'}`,
+                    background: lvl >= 3 ? 'rgba(220,50,24,.08)' : lvl >= 2 ? C.rd : 'rgba(255,171,0,.09)',
+                    border: `.5px solid ${lvl >= 3 ? 'rgba(220,50,24,.25)' : lvl >= 2 ? C.rb : 'rgba(255,171,0,.22)'}`,
                     color: aCol, letterSpacing: .3,
                   }}>L{lvl}</span>
                   <span style={{ fontSize: 10.5, color: C.td, letterSpacing: .3 }}>{(a.type ?? '').replace(/_/g, ' ')}</span>
@@ -816,8 +816,8 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                 </div>
               ))}
               {selectedSession.alerts.slice(0, 2).map((a, i) => (
-                <div key={i} style={{ padding: '8px 10px', borderRadius: 7, marginTop: 8, border: `.5px solid ${a.level >= 2 ? C.rb : 'rgba(255,171,0,.18)'}`, background: a.level >= 2 ? C.rd : 'rgba(255,171,0,.06)' }}>
-                  <div style={{ fontSize: 10, fontFamily: MONO, marginBottom: 3, color: a.level >= 2 ? C.red : C.o }}>L{a.level} · {a.type}</div>
+                <div key={i} style={{ padding: '8px 10px', borderRadius: 7, marginTop: 8, border: `.5px solid ${a.level >= 3 ? 'rgba(220,50,24,.25)' : a.level >= 2 ? C.rb : 'rgba(255,171,0,.18)'}`, background: a.level >= 3 ? 'rgba(220,50,24,.08)' : a.level >= 2 ? C.rd : 'rgba(255,171,0,.06)' }}>
+                  <div style={{ fontSize: 10, fontFamily: MONO, marginBottom: 3, color: a.level >= 3 ? '#dc3218' : a.level >= 2 ? C.red : C.o }}>L{a.level} · {a.type}</div>
                   <div style={{ fontSize: 11.5, color: C.tm, lineHeight: 1.4, fontWeight: 300 }}>{a.message}</div>
                 </div>
               ))}
