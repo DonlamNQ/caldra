@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,15 +17,9 @@ const DEFAULTS = {
   tz_offset_hours: 0,
 }
 
-async function getUser(req: NextRequest) {
-  const token = req.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token) return null
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  const { data: { user } } = await supabase.auth.getUser(token)
+async function getUser() {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
   return user
 }
 
@@ -35,8 +30,8 @@ function service() {
   )
 }
 
-export async function GET(req: NextRequest) {
-  const user = await getUser(req)
+export async function GET(_req: NextRequest) {
+  const user = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data } = await service()
@@ -49,7 +44,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const user = await getUser(req)
+  const user = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
