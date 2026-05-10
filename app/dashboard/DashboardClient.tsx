@@ -2431,15 +2431,14 @@ export default function DashboardClient({
           if (vapidKey) {
             try {
               const reg = await navigator.serviceWorker.ready
-              let sub = await reg.pushManager.getSubscription()
-              if (!sub) {
-                const padding = '='.repeat((4 - vapidKey.length % 4) % 4)
-                const b64 = (vapidKey + padding).replace(/-/g, '+').replace(/_/g, '/')
-                const raw = window.atob(b64)
-                const bytes = new Uint8Array(raw.length)
-                for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
-                sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes.buffer })
-              }
+              const padding = '='.repeat((4 - vapidKey.length % 4) % 4)
+              const b64 = (vapidKey + padding).replace(/-/g, '+').replace(/_/g, '/')
+              const raw = window.atob(b64)
+              const bytes = new Uint8Array(raw.length)
+              for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
+              const existingSub = await reg.pushManager.getSubscription()
+              if (existingSub) await existingSub.unsubscribe()
+              const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes.buffer })
               if (sub) {
                 const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
                 await fetch('/api/push/subscribe', {
