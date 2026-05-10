@@ -86,7 +86,7 @@ function buildPushContent(a: Alert): { title: string; body: string } {
     case 'outside_session':
       return {
         title: '🕐 Hors session',
-        body: `Trade à ${d.entry_time}. Fenêtre : ${d.session_start}–${d.session_end}.`,
+        body: `Trade à ${String(d.entry_time).slice(0, 5)}. Fenêtre : ${String(d.session_start).slice(0, 5)}–${String(d.session_end).slice(0, 5)}.`,
       }
     case 'overtrading':
       return a.level === 2
