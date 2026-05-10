@@ -110,7 +110,7 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      sender: { name: 'Caldra SESSION', email: 'noreply@getcaldra.com' },
+      sender: { name: 'Caldra', email: 'noreply@getcaldra.com' },
       to: [{ email: opts.to }],
       subject,
       htmlContent: `<!DOCTYPE html>
