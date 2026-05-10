@@ -32,8 +32,11 @@ export default async function BillingPage({
       <div style={{ width: '100%', maxWidth: 400, margin: '0 auto', padding: '0 24px' }}>
 
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 36, fontSize: 13, fontWeight: 600, letterSpacing: 8, textTransform: 'uppercase', color: TX }}>
-          Cald<span style={{ color: VIO }}>ra</span>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 8, textTransform: 'uppercase', color: TX }}>
+            Cald<span style={{ color: VIO }}>ra</span>
+          </div>
+          <div style={{ fontSize: 7, letterSpacing: 3, textTransform: 'uppercase', color: TE, marginTop: 3 }}>Session</div>
         </div>
 
         {/* Card */}
