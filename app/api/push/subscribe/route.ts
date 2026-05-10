@@ -16,14 +16,15 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-  // If new Apple endpoint, remove stale Apple subs for this user (avoid accumulation)
-  if (endpoint.includes('apple.com')) {
+  // Remove stale subs from the same push provider to avoid accumulation
+  try {
+    const providerHost = new URL(endpoint).hostname
     await supabase.from('push_subscriptions')
       .delete()
       .eq('user_id', user.id)
-      .like('endpoint', '%apple.com%')
+      .like('endpoint', `%${providerHost}%`)
       .neq('endpoint', endpoint)
-  }
+  } catch {}
 
   await supabase.from('push_subscriptions').upsert(
     { user_id: user.id, endpoint, p256dh, auth },
