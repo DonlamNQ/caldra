@@ -104,76 +104,43 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
   if (!apiKey || !opts.to) return
 
   const typeFmt = opts.alertType.replace(/_/g, ' ')
-  const levelLabel = opts.level >= 3 ? 'Alerte critique' : opts.level >= 2 ? 'Alerte importante' : 'Alerte'
-  const levelColor = opts.level >= 3 ? '#dc3218' : opts.level >= 2 ? '#e07b00' : '#7c3aed'
-  const subject = opts.level >= 3
-    ? `⛔ Caldra — Arrêt immédiat requis`
-    : `Caldra — ${levelLabel} détectée`
+  const subject = `⛔ Alerte Caldra — ${opts.message}`
 
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      sender: { name: 'Caldra', email: 'noreply@getcaldra.com' },
+      sender: { name: 'Caldra SESSION', email: 'noreply@getcaldra.com' },
       to: [{ email: opts.to }],
       subject,
       htmlContent: `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>body{margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}</style>
-</head>
-<body>
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f6f6;padding:40px 16px">
-    <tr><td align="center">
-      <table width="100%" style="max-width:520px;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#111827;font-size:15px;line-height:1.6">
+  <div style="max-width:560px;margin:0 auto;padding:40px 24px">
 
-        <!-- Header -->
-        <tr><td style="padding:24px 32px;border-bottom:1px solid #f0f0f0">
-          <span style="font-size:13px;font-weight:700;letter-spacing:8px;color:#7c3aed;text-transform:uppercase">CALDRA</span><span style="font-size:7px;font-weight:600;letter-spacing:3px;color:#475569;text-transform:uppercase;margin-left:8px;vertical-align:middle">SESSION</span>
-        </td></tr>
+    <p style="margin:0 0 32px;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#7c3aed;font-weight:700">CALDRA <span style="font-size:8px;letter-spacing:2px;color:#9ca3af;font-weight:500">SESSION</span></p>
 
-        <!-- Body -->
-        <tr><td style="padding:32px 32px 24px">
-          <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:${levelColor};font-weight:600">${levelLabel}</p>
-          <p style="margin:0 0 20px;font-size:20px;font-weight:400;color:#111827;line-height:1.45">${opts.message}</p>
+    <p style="margin:0 0 16px">Bonjour,</p>
 
-          <table cellpadding="0" cellspacing="0" style="margin-bottom:24px">
-            <tr>
-              <td style="padding:3px 0;font-size:13px;color:#6b7280;width:110px">Détecteur</td>
-              <td style="padding:3px 0;font-size:13px;color:#111827;font-weight:500;text-transform:capitalize">${typeFmt}</td>
-            </tr>
-            <tr>
-              <td style="padding:3px 0;font-size:13px;color:#6b7280">Niveau</td>
-              <td style="padding:3px 0;font-size:13px;color:${levelColor};font-weight:600">L${opts.level} / 3</td>
-            </tr>
-            <tr>
-              <td style="padding:3px 0;font-size:13px;color:#6b7280">Session</td>
-              <td style="padding:3px 0;font-size:13px;color:#111827">${opts.sessionDate}</td>
-            </tr>
-          </table>
+    <p style="margin:0 0 16px">Une alerte critique vient d'être détectée sur ta session du <strong>${opts.sessionDate}</strong>.</p>
 
-          ${opts.level >= 3 ? `<p style="margin:0 0 24px;font-size:13px;color:#dc3218;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px 16px;line-height:1.5">Ton drawdown maximum a été atteint. Arrête de trader pour cette session.</p>` : ''}
+    <p style="margin:0 0 24px"><strong>${opts.message}</strong> (${typeFmt}, niveau ${opts.level}/3)</p>
 
-          ${opts.extraAlerts && opts.extraAlerts.length > 0 ? `
-          <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:24px;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
-            <tr><td style="padding:8px 14px;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Autres alertes cette session</td></tr>
-            ${opts.extraAlerts.map(a => `<tr><td style="padding:8px 14px;border-bottom:1px solid #f3f4f6;font-size:12px;color:#374151"><span style="color:${a.level >= 3 ? '#dc3218' : '#e07b00'};font-weight:600;margin-right:8px">L${a.level}</span>${a.message}</td></tr>`).join('')}
-          </table>` : ''}
+    <p style="margin:0 0 16px">C'est le signal de t'arrêter pour aujourd'hui. Continuer dans cet état augmente le risque de prises de décisions impulsives et de pertes supplémentaires.</p>
 
-          <a href="https://getcaldra.com/dashboard" style="display:inline-block;padding:11px 22px;background:#7c3aed;color:#ffffff;text-decoration:none;border-radius:6px;font-size:13px;font-weight:500">Voir le dashboard</a>
-        </td></tr>
+    <p style="margin:0 0 32px">Consulte ton dashboard pour le détail complet de ta session : <a href="https://getcaldra.com/dashboard" style="color:#7c3aed;text-decoration:none;font-weight:500">getcaldra.com/dashboard</a></p>
 
-        <!-- Footer -->
-        <tr><td style="padding:16px 32px;border-top:1px solid #f0f0f0;background:#fafafa">
-          <p style="margin:0;font-size:11px;color:#9ca3af">
-            Caldra · <a href="https://getcaldra.com" style="color:#9ca3af">getcaldra.com</a>
-            &nbsp;·&nbsp; <a href="https://getcaldra.com/settings/rules" style="color:#9ca3af">Gérer les alertes</a>
-          </p>
-        </td></tr>
+    <p style="margin:0 0 4px">Bonne discipline,</p>
+    <p style="margin:0 0 40px;color:#6b7280">L'équipe Caldra</p>
 
-      </table>
-    </td></tr>
-  </table>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px">
+    <p style="margin:0;font-size:11px;color:#9ca3af">
+      Caldra · <a href="https://getcaldra.com" style="color:#9ca3af;text-decoration:none">getcaldra.com</a>
+      &nbsp;·&nbsp; <a href="https://getcaldra.com/settings/rules" style="color:#9ca3af;text-decoration:none">Gérer les alertes</a>
+    </p>
+
+  </div>
 </body>
 </html>`,
     }),
