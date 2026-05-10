@@ -1649,17 +1649,78 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
 }
 
 // ── SentinelPanel ──────────────────────────────────────────────────────────────
-interface ChatMsg { role: 'user' | 'assistant'; content: string; time: string }
+interface ChatMsg { role: 'user' | 'assistant'; content: string; time: string; isDebrief?: boolean }
+interface CoachingCard { id: string; alertType: string; alertLevel: number; alertMessage: string; coaching: string; time: string }
 
-function SentinelPanel({ stats, alerts, score, rules }: {
+function renderDebriefText(text: string, C: Palette) {
+  return text.split('\n').map((line, i) => {
+    if (!line.trim()) return <div key={i} style={{ height: 5 }} />
+    const parts = line.split(/\*\*(.*?)\*\*/g)
+    return (
+      <div key={i} style={{ fontSize: 12, color: C.tm, lineHeight: 1.6, fontWeight: 300, marginBottom: 1 }}>
+        {parts.map((part, j) => j % 2 === 1
+          ? <span key={j} style={{ fontWeight: 600, color: C.tx }}>{part}</span>
+          : part
+        )}
+      </div>
+    )
+  })
+}
+
+function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
   stats: SessionStats; alerts: AlertRow[]; score: number; rules: TradingRules | null
+  plan: string; coachingCards: CoachingCard[]
 }) {
   const C = useContext(ThemeCtx)
+  const isSentinel = plan === 'sentinel'
+
   const [msgs, setMsgs] = useState<ChatMsg[]>([{
     role: 'assistant',
     content: `Bonjour. Session ouverte. Score comportemental actuel : ${score}/100. ${alerts.length === 0 ? 'Aucune alerte — continuez comme ça.' : `${alerts.length} alerte(s) active(s) — je surveille.`}`,
     time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
   }])
+
+  // Session end timer pour le debrief proactif
+  const [sessionEnded, setSessionEnded] = useState(false)
+  const [debriefLoading, setDebriefLoading] = useState(false)
+  const [debriefDone, setDebriefDone] = useState(false)
+
+  useEffect(() => {
+    if (!rules?.session_end || !isSentinel || stats.total_trades === 0) return
+    const [h, m] = rules.session_end.split(':').map(Number)
+    function check() {
+      const now = new Date()
+      const endTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0)
+      if (now >= endTime && !debriefDone) setSessionEnded(true)
+    }
+    check()
+    const id = setInterval(check, 30000)
+    return () => clearInterval(id)
+  }, [rules, isSentinel, stats.total_trades, debriefDone])
+
+  async function triggerDebrief() {
+    setDebriefLoading(true)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const res = await fetch('/api/debrief', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: today }),
+      })
+      const data = await res.json()
+      if (data.debrief) {
+        const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        setMsgs(prev => [...prev, { role: 'assistant', content: data.debrief, time, isDebrief: true }])
+        setDebriefDone(true)
+        setSessionEnded(false)
+      } else {
+        setMsgs(prev => [...prev, { role: 'assistant', content: data.error ?? 'Erreur lors du debrief.', time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }])
+      }
+    } catch {
+      setMsgs(prev => [...prev, { role: 'assistant', content: 'Erreur réseau lors du debrief.', time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }])
+    } finally {
+      setDebriefLoading(false)
+    }
+  }
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const msgsRef = useRef<HTMLDivElement>(null)
@@ -1710,8 +1771,19 @@ function SentinelPanel({ stats, alerts, score, rules }: {
 
           <div ref={msgsRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 16, minHeight: 0 }}>
             {msgs.map((m, i) => m.role === 'assistant' ? (
-              <div key={i} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: '10px 10px 10px 2px', padding: '12px 14px', maxWidth: '85%' }}>
-                <div style={{ fontSize: 12.5, color: C.tm, lineHeight: 1.55, fontWeight: 300 }}>{m.content}</div>
+              <div key={i} style={{
+                background: m.isDebrief ? 'rgba(124,58,237,.07)' : C.sf2,
+                border: `.5px solid ${m.isDebrief ? C.rb : C.b}`,
+                borderLeft: m.isDebrief ? `3px solid ${C.red}` : undefined,
+                borderRadius: '10px 10px 10px 2px', padding: '12px 14px', maxWidth: '90%',
+              }}>
+                {m.isDebrief && (
+                  <div style={{ fontSize: 8.5, color: C.red, letterSpacing: 1.8, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 8 }}>Debrief Sentinel</div>
+                )}
+                {m.isDebrief
+                  ? renderDebriefText(m.content, C)
+                  : <div style={{ fontSize: 12.5, color: C.tm, lineHeight: 1.55, fontWeight: 300 }}>{m.content}</div>
+                }
                 <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 5 }}>{m.time}</div>
               </div>
             ) : (
@@ -1761,6 +1833,54 @@ function SentinelPanel({ stats, alerts, score, rules }: {
             <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontWeight: 300 }}>Aucun pattern problématique détecté.</div>
           ) : null}
         </div>
+
+        {/* Coaching automatique — cartes générées sur L2+ */}
+        {isSentinel && coachingCards.length > 0 && (
+          <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.b}` }}>
+            <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Coaching automatique</div>
+            {coachingCards.slice(0, 3).map(card => {
+              const lvlCol = card.alertLevel >= 3 ? '#dc3218' : C.o
+              return (
+                <div key={card.id} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 8, padding: 11, marginBottom: 8, borderLeft: `3px solid ${lvlCol}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                    <span style={{ fontSize: 9, fontFamily: MONO, color: lvlCol, letterSpacing: .5 }}>
+                      L{card.alertLevel} · {card.alertType.replace(/_/g, ' ').toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: 9, color: C.te, fontFamily: MONO }}>{card.time}</span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: C.tm, lineHeight: 1.55, fontWeight: 300 }}>{card.coaching}</div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Debrief proactif — fin de session */}
+        {isSentinel && (sessionEnded || debriefDone) && (
+          <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.b}` }}>
+            <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Debrief de session</div>
+            {debriefDone ? (
+              <div style={{ fontSize: 11.5, color: C.g, fontWeight: 400 }}>✓ Debrief généré — voir le chat</div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 11, color: C.td, marginBottom: 9 }}>
+                  Session terminée — analyse comportementale disponible.
+                </div>
+                <button
+                  onClick={triggerDebrief}
+                  disabled={debriefLoading}
+                  style={{
+                    width: '100%', padding: '9px 14px', background: C.rd, border: `.5px solid ${C.rb}`,
+                    borderRadius: 8, color: C.red, fontSize: 12, fontFamily: SANS, cursor: debriefLoading ? 'default' : 'pointer',
+                    fontWeight: 500, transition: 'all .2s', opacity: debriefLoading ? .6 : 1, textAlign: 'center' as const,
+                  }}
+                >
+                  {debriefLoading ? 'Analyse en cours…' : 'Générer le debrief Sentinel'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <div style={{ padding: '16px 0', borderBottom: `.5px solid ${C.b}` }}>
           <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Session actuelle</div>
@@ -2171,6 +2291,7 @@ export default function DashboardClient({
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [paused, setPaused] = useState(false)
   const [sentinelPrompt, setSentinelPrompt] = useState<AlertRow | null>(null)
+  const [coachingCards, setCoachingCards] = useState<CoachingCard[]>([])
 
   // Redirection automatique vers /mobile sur petit écran
   useEffect(() => {
@@ -2181,6 +2302,10 @@ export default function DashboardClient({
   const notifReset = useRef<ReturnType<typeof setTimeout> | null>(null)
   const channelRef = useRef<any>(null)
   const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const statsRef = useRef(stats)
+  const alertsRef = useRef(alerts)
+  useEffect(() => { statsRef.current = stats }, [stats])
+  useEffect(() => { alertsRef.current = alerts }, [alerts])
 
   const initials = userMeta.first_name
     ? `${userMeta.first_name[0]}${userMeta.last_name?.[0] ?? ''}`.toUpperCase()
@@ -2230,6 +2355,38 @@ export default function DashboardClient({
     const timer = setTimeout(() => dismissToast(id), 5000)
     toastTimers.current.set(id, timer)
   }, [dismissToast])
+
+  const fetchAlertCoaching = useCallback(async (alert: AlertRow) => {
+    if (plan !== 'sentinel') return
+    const currentAlerts = alertsRef.current
+    const currentStats = statsRef.current
+    const currentScore = computeScore(currentAlerts)
+    const recentTypes = [...new Set(currentAlerts.slice(0, 10).map((a: AlertRow) => a.type ?? '').filter(Boolean))]
+    const typeFmt = (alert.type ?? '').replace(/_/g, ' ')
+    const prompt = `L${alert.level} ${typeFmt} : "${alert.message}". Que faire maintenant ?`
+    try {
+      const res = await fetch('/api/sentinel', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          context: { score: currentScore, pnl: currentStats.total_pnl, totalTrades: currentStats.total_trades, alertCount: currentAlerts.length, alertTypes: recentTypes, rules: tradingRules },
+        }),
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      if (data.content) {
+        setCoachingCards(prev => [{
+          id: `c-${Date.now()}`,
+          alertType: alert.type ?? '',
+          alertLevel: alert.level ?? 2,
+          alertMessage: alert.message,
+          coaching: data.content,
+          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        }, ...prev].slice(0, 5))
+      }
+    } catch {}
+  }, [plan, tradingRules])
+
   const score = computeScore(alerts)
 
   const _yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
@@ -2249,6 +2406,7 @@ export default function DashboardClient({
         setAlerts(prev => [a, ...prev])
         addToast(a)
         if ((a.level ?? 1) >= 3) setSentinelPrompt(a)
+        if ((a.level ?? 1) >= 2) fetchAlertCoaching(a)
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         if (pausedRef.current) return
@@ -2263,7 +2421,7 @@ export default function DashboardClient({
       })
       .subscribe(s => setConnected(s === 'SUBSCRIBED'))
     return () => { channelRef.current?.unsubscribe() }
-  }, [userId, today, addToast])
+  }, [userId, today, addToast, fetchAlertCoaching])
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -2567,7 +2725,7 @@ export default function DashboardClient({
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
             {activeTab === 'sentinel' && (
-              <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} />
+              <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} plan={plan} coachingCards={coachingCards} />
             )}
           </div>
         </div>
