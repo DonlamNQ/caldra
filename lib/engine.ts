@@ -248,10 +248,10 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
     const userEmail = authData?.user?.email ?? null
     const webhookUrl: string | null = rules.slack_webhook_url ?? null
 
-    const topAlert = hotAlerts.reduce((a, b) => b.level > a.level ? b : a)
+    const criticalAlerts = alerts.filter(a => a.level >= 3)
     await Promise.all([
-      userEmail
-        ? sendAlertEmail({ to: userEmail, alertType: topAlert.type, level: topAlert.level, message: topAlert.message, sessionDate: today, detail: topAlert.detail, extraAlerts: hotAlerts.filter(a => a !== topAlert) })
+      userEmail && criticalAlerts.length > 0
+        ? sendAlertEmail({ to: userEmail, alertType: criticalAlerts[0].type, level: criticalAlerts[0].level, message: criticalAlerts[0].message, sessionDate: today, detail: criticalAlerts[0].detail })
         : Promise.resolve(),
       ...hotAlerts.map(a => webhookUrl
         ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
