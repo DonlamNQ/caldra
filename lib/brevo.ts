@@ -129,7 +129,7 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
 
         <!-- Header -->
         <tr><td style="padding:24px 32px;border-bottom:1px solid #f0f0f0">
-          <span style="font-size:13px;font-weight:700;letter-spacing:3px;color:#7c3aed;text-transform:uppercase">CALDRA</span>
+          <span style="font-size:13px;font-weight:700;letter-spacing:8px;color:#7c3aed;text-transform:uppercase">CALDRA</span><span style="font-size:7px;font-weight:600;letter-spacing:3px;color:#475569;text-transform:uppercase;margin-left:8px;vertical-align:middle">SESSION</span>
         </td></tr>
 
         <!-- Body -->
