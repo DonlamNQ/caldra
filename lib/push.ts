@@ -7,6 +7,7 @@ export async function sendPushToUser(
 ): Promise<void> {
   const appId = process.env.ONESIGNAL_APP_ID
   const apiKey = process.env.ONESIGNAL_REST_API_KEY
+  console.log('[onesignal] push called, appId=', appId ? 'ok' : 'MISSING', 'apiKey=', apiKey ? 'ok' : 'MISSING', 'userId=', userId)
   if (!appId || !apiKey) return
 
   const res = await fetch('https://onesignal.com/api/v1/notifications', {
