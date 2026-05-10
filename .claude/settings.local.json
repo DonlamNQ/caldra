@@ -45,7 +45,10 @@
       "Bash(Start-Sleep -Seconds 45)",
       "Bash(Write-Output \"done\")",
       "WebFetch(domain:getcaldra.com)",
-      "Bash(findstr \"web-push\")"
+      "Bash(findstr \"web-push\")",
+      "Bash(dir app\\\\settings /s /b)",
+      "Bash(Get-ChildItem -Path app -Recurse -Filter \"*.tsx\")",
+      "Bash(Select-Object FullName)"
     ]
   },
   "hooks": {
