@@ -9,7 +9,7 @@ export async function sendPushToUser(
   const apiKey = process.env.ONESIGNAL_REST_API_KEY
   if (!appId || !apiKey) return
 
-  await fetch('https://onesignal.com/api/v1/notifications', {
+  const res = await fetch('https://onesignal.com/api/v1/notifications', {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${apiKey}`,
@@ -24,5 +24,10 @@ export async function sendPushToUser(
       url: `https://getcaldra.com${url}`,
       priority: level >= 3 ? 10 : 7,
     }),
-  }).catch(err => console.error('[onesignal] push error:', err))
+  }).catch(err => { console.error('[onesignal] push error:', err); return null })
+
+  if (res) {
+    const data = await res.json().catch(() => ({}))
+    console.log('[onesignal] response status:', res.status, JSON.stringify(data))
+  }
 }
