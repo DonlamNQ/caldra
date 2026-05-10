@@ -29,18 +29,20 @@ export default async function BillingPage({
         body{background:${BG};font-family:var(--font-geist-sans),'Geist',sans-serif;color:${TX};min-height:100vh;display:flex;align-items:center;justify-content:center}
       `}</style>
 
-      <div style={{ width: '100%', maxWidth: 400, margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', padding: '0 24px' }}>
 
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 8, textTransform: 'uppercase', color: TX }}>
+        <div style={{ textAlign: 'center', marginBottom: 44 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 8, textTransform: 'uppercase', color: TX, display: 'inline-block' }}>
             Cald<span style={{ color: VIO }}>ra</span>
           </div>
-          <div style={{ fontSize: 7, letterSpacing: 3, textTransform: 'uppercase', color: TE, marginTop: 3 }}>Session</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, textTransform: 'uppercase', color: TE, marginTop: 4, letterSpacing: 0 }}>
+            {'SESSION'.split('').map((c, i) => <span key={i}>{c}</span>)}
+          </div>
         </div>
 
         {/* Card */}
-        <div style={{ background: SF, border: `1px solid ${BORD}`, borderRadius: 16, padding: '40px 32px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: SF, border: `1px solid ${BORD}`, borderRadius: 16, padding: '52px 44px', position: 'relative', overflow: 'hidden' }}>
 
           {/* Top accent bar */}
           <div style={{
