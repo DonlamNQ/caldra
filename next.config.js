@@ -25,6 +25,7 @@ const nextConfig = {
               "font-src 'self' data: https://fonts.gstatic.com",
               "img-src 'self' data: blob:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://onesignal.com https://*.onesignal.com",
+              "worker-src 'self' https://cdn.onesignal.com",
               "frame-ancestors 'none'",
             ].join('; '),
           },
