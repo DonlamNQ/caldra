@@ -116,29 +116,38 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
       htmlContent: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#111827;font-size:15px;line-height:1.6">
-  <div style="max-width:560px;margin:0 auto;padding:40px 24px">
+<body style="margin:0;padding:0;background:#f6f6f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#111827;font-size:15px;line-height:1.6">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px">
 
-    <p style="margin:0 0 32px;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#7c3aed;font-weight:700">CALDRA <span style="font-size:8px;letter-spacing:2px;color:#9ca3af;font-weight:500">SESSION</span></p>
+    <!-- Header -->
+    <div style="background:#ffffff;border-radius:8px 8px 0 0;border:1px solid #e5e7eb;border-bottom:none;padding:20px 28px">
+      <span style="font-size:13px;font-weight:700;letter-spacing:8px;color:#7c3aed;text-transform:uppercase">CALDRA</span>
+      <span style="font-size:7px;font-weight:600;letter-spacing:3px;color:#9ca3af;text-transform:uppercase;margin-left:8px;vertical-align:middle">SESSION</span>
+    </div>
 
-    <p style="margin:0 0 16px">Bonjour,</p>
+    <!-- Body -->
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-top:2px solid #dc3218;border-bottom:none;padding:28px 28px 24px">
+      <p style="margin:0 0 16px">Bonjour,</p>
 
-    <p style="margin:0 0 16px">Une alerte critique vient d'être détectée sur ta session du <strong>${opts.sessionDate}</strong>.</p>
+      <p style="margin:0 0 16px">Une alerte critique vient d'être détectée sur ta session du <strong>${opts.sessionDate}</strong>.</p>
 
-    <p style="margin:0 0 24px"><strong>${opts.message}</strong> (${typeFmt}, niveau ${opts.level}/3)</p>
+      <p style="margin:0 0 16px"><strong>${opts.message}</strong> — ${typeFmt} (niveau ${opts.level}/3).</p>
 
-    <p style="margin:0 0 16px">C'est le signal de t'arrêter pour aujourd'hui. Continuer dans cet état augmente le risque de prises de décisions impulsives et de pertes supplémentaires.</p>
+      <p style="margin:0 0 16px">C'est le signal de t'arrêter pour aujourd'hui. Continuer dans cet état augmente le risque de prises de décisions impulsives et de pertes supplémentaires.</p>
 
-    <p style="margin:0 0 32px">Consulte ton dashboard pour le détail complet de ta session : <a href="https://getcaldra.com/dashboard" style="color:#7c3aed;text-decoration:none;font-weight:500">getcaldra.com/dashboard</a></p>
+      <p style="margin:0 0 28px">Consulte ton dashboard pour le détail complet de ta session : <a href="https://getcaldra.com/dashboard" style="color:#7c3aed;text-decoration:none;font-weight:500">getcaldra.com/dashboard</a></p>
 
-    <p style="margin:0 0 4px">Bonne discipline,</p>
-    <p style="margin:0 0 40px;color:#6b7280">L'équipe Caldra</p>
+      <p style="margin:0 0 4px">Bonne discipline,</p>
+      <p style="margin:0;color:#6b7280">L'équipe Caldra</p>
+    </div>
 
-    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px">
-    <p style="margin:0;font-size:11px;color:#9ca3af">
-      Caldra · <a href="https://getcaldra.com" style="color:#9ca3af;text-decoration:none">getcaldra.com</a>
-      &nbsp;·&nbsp; <a href="https://getcaldra.com/settings/rules" style="color:#9ca3af;text-decoration:none">Gérer les alertes</a>
-    </p>
+    <!-- Footer -->
+    <div style="background:#fafafa;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;padding:14px 28px">
+      <p style="margin:0;font-size:11px;color:#9ca3af">
+        Caldra · <a href="https://getcaldra.com" style="color:#9ca3af;text-decoration:none">getcaldra.com</a>
+        &nbsp;·&nbsp; <a href="https://getcaldra.com/settings/rules" style="color:#9ca3af;text-decoration:none">Gérer les alertes</a>
+      </p>
+    </div>
 
   </div>
 </body>
