@@ -263,7 +263,7 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   // Push notification — 1 seule par trade (alerte la plus grave)
   if (alerts.length > 0) {
     const topPush = alerts.reduce((a, b) => b.level > a.level ? b : a)
-    void import('./push').then(({ sendPushToUser }) => {
+    await import('./push').then(({ sendPushToUser }) => {
       const { title, body } = buildPushContent(topPush)
       return sendPushToUser(trade.user_id, title, body, topPush.level)
     }).catch(() => {})
