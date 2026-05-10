@@ -1374,7 +1374,7 @@ namespace CaldraBot
                 ['5', 'Appuie sur F4 pour ouvrir MetaEditor. Ouvre CaldraMT5.mq5 puis F7 pour compiler. Ferme MetaEditor quand c\'est bon.'],
                 ['6', 'Affiche le Navigateur (Ctrl+N) → "Expert Consultants" → clic droit → "Actualiser". CaldraMT5 apparaît dans la liste.'],
                 ['7', 'Double-clique sur CaldraMT5, va dans l\'onglet "Données d\'entrées" et colle ta clé API dans le champ prévu → OK.'],
-                ['8', 'Vérifie que le bouton "EA" en haut de MT5 est vert. Chaque trade fermé est automatiquement envoyé à Caldra.'],
+                ['8', 'Vérifie que le bouton "Trading Algo" en haut de MT5 est vert. Chaque trade fermé est automatiquement envoyé à Caldra.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
