@@ -1089,38 +1089,124 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
 // ── RapportsPanel ──────────────────────────────────────────────────────────────
 function RapportsPanel() {
   const C = useContext(ThemeCtx)
-  const now = new Date()
-  const weekNum = Math.ceil(now.getDate() / 7)
-  const monthName = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
+  const [loading, setLoading] = useState<string | null>(null)
 
-  const reports = [
-    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum} (actuelle)`, sub: 'En cours de génération — disponible vendredi' },
-    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum - 1}`, sub: 'Session précédente' },
-    { icon: '📋', title: `Rapport hebdomadaire — Sem. ${weekNum - 2}`, sub: 'Il y a 2 semaines' },
-    { icon: '📊', title: `Rapport mensuel — ${monthName}`, sub: 'Disponible le 1er du mois prochain' },
+  function getWeekMonday(offsetWeeks: number = 0): Date {
+    const now = new Date()
+    const dow = now.getDay()
+    const diff = dow === 0 ? -6 : 1 - dow
+    const monday = new Date(now)
+    monday.setDate(now.getDate() + diff + offsetWeeks * 7)
+    monday.setHours(0, 0, 0, 0)
+    return monday
+  }
+
+  function toISODate(d: Date): string {
+    return d.toISOString().split('T')[0]
+  }
+
+  function frWeekLabel(monday: Date): string {
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    const fmtStart = monday.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+    const fmtEnd = sunday.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    return `${fmtStart} – ${fmtEnd}`
+  }
+
+  async function downloadPdf(weekStart: string) {
+    setLoading(weekStart)
+    try {
+      const res = await fetch(`/api/report/weekly?week_start=${weekStart}`)
+      if (!res.ok) throw new Error('Erreur génération PDF')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `caldra-rapport-${weekStart}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      // silent — user can retry
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const currentMonday = getWeekMonday(0)
+  const weeks = [
+    { monday: getWeekMonday(-1), isCurrent: false },
+    { monday: getWeekMonday(-2), isCurrent: false },
+    { monday: getWeekMonday(-3), isCurrent: false },
+    { monday: getWeekMonday(-4), isCurrent: false },
   ]
 
   return (
-    <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.3, marginBottom: 5 }}>Rapports automatiques</div>
-        <div style={{ fontSize: 12.5, color: C.td }}>Générés chaque vendredi + 1er du mois — fonctionnalité en cours de déploiement.</div>
+    <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.3, marginBottom: 5 }}>Rapports hebdomadaires</div>
+        <div style={{ fontSize: 12.5, color: C.td }}>PDF généré à la demande — score, PnL, alertes comportementales, journal des trades.</div>
       </div>
-      {reports.map((r, i) => (
-        <div key={i} style={{
-          background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20,
-          display: 'flex', alignItems: 'center', gap: 16,
-          opacity: .45,
-          transition: 'all .18s',
-        }}>
-          <div style={{ width: 44, height: 44, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{r.icon}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 400, color: C.tx, marginBottom: 4 }}>{r.title}</div>
-            <div style={{ fontSize: 11.5, color: C.td }}>{r.sub}</div>
-          </div>
-          <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: MONO, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
+
+      {/* Semaine en cours — non disponible */}
+      <div style={{
+        background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20,
+        display: 'flex', alignItems: 'center', gap: 16, opacity: .5,
+      }}>
+        <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+          📋
         </div>
-      ))}
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 400, color: C.tx, marginBottom: 3 }}>
+            {frWeekLabel(currentMonday)}
+          </div>
+          <div style={{ fontSize: 11, color: C.td }}>Semaine en cours — disponible lundi prochain</div>
+        </div>
+        <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: MONO, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>
+          En cours
+        </span>
+      </div>
+
+      {/* Semaines passées */}
+      {weeks.map(({ monday }, i) => {
+        const weekStart = toISODate(monday)
+        const isLoading = loading === weekStart
+        return (
+          <div key={i} style={{
+            background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20,
+            display: 'flex', alignItems: 'center', gap: 16,
+            transition: 'border-color .18s',
+          }}>
+            <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+              📋
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 400, color: C.tx, marginBottom: 3 }}>
+                {frWeekLabel(monday)}
+              </div>
+              <div style={{ fontSize: 11, color: C.td }}>
+                {i === 0 ? 'Semaine précédente' : `Il y a ${i + 1} semaines`}
+              </div>
+            </div>
+            <button
+              onClick={() => downloadPdf(weekStart)}
+              disabled={isLoading}
+              style={{
+                fontSize: 11, padding: '7px 16px', borderRadius: 8, fontFamily: MONO,
+                whiteSpace: 'nowrap' as const, cursor: isLoading ? 'default' : 'pointer',
+                background: isLoading ? 'rgba(124,58,237,.05)' : C.rd,
+                border: `.5px solid ${C.rb}`,
+                color: isLoading ? C.td : C.red,
+                transition: 'all .18s',
+                opacity: isLoading ? .6 : 1,
+              }}
+            >
+              {isLoading ? 'Génération…' : 'Télécharger PDF'}
+            </button>
+          </div>
+        )
+      })}
     </div>
   )
 }
