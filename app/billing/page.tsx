@@ -33,11 +33,13 @@ export default async function BillingPage({
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 44 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 8, textTransform: 'uppercase', color: TX, display: 'inline-block' }}>
-            Cald<span style={{ color: VIO }}>ra</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, textTransform: 'uppercase', color: TE, marginTop: 4, letterSpacing: 0 }}>
-            {'SESSION'.split('').map((c, i) => <span key={i}>{c}</span>)}
+          <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 8, textTransform: 'uppercase', color: TX }}>
+              Cald<span style={{ color: VIO }}>ra</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, textTransform: 'uppercase', color: TE, marginTop: 4 }}>
+              {'SESSION'.split('').map((c, i) => <span key={i}>{c}</span>)}
+            </div>
           </div>
         </div>
 
