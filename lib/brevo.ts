@@ -96,6 +96,7 @@ interface AlertEmailOpts {
   message: string
   sessionDate: string
   detail?: Record<string, unknown>
+  extraAlerts?: { type: string; level: number; message: string }[]
 }
 
 export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
@@ -152,6 +153,12 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
           </table>
 
           ${opts.level >= 3 ? `<p style="margin:0 0 24px;font-size:13px;color:#dc3218;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px 16px;line-height:1.5">Ton drawdown maximum a été atteint. Arrête de trader pour cette session.</p>` : ''}
+
+          ${opts.extraAlerts && opts.extraAlerts.length > 0 ? `
+          <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:24px;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+            <tr><td style="padding:8px 14px;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Autres alertes cette session</td></tr>
+            ${opts.extraAlerts.map(a => `<tr><td style="padding:8px 14px;border-bottom:1px solid #f3f4f6;font-size:12px;color:#374151"><span style="color:${a.level >= 3 ? '#dc3218' : '#e07b00'};font-weight:600;margin-right:8px">L${a.level}</span>${a.message}</td></tr>`).join('')}
+          </table>` : ''}
 
           <a href="https://getcaldra.com/dashboard" style="display:inline-block;padding:11px 22px;background:#7c3aed;color:#ffffff;text-decoration:none;border-radius:6px;font-size:13px;font-weight:500">Voir le dashboard</a>
         </td></tr>

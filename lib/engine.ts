@@ -248,14 +248,16 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
     const userEmail = authData?.user?.email ?? null
     const webhookUrl: string | null = rules.slack_webhook_url ?? null
 
-    await Promise.all(hotAlerts.map(a => Promise.all([
+    const topAlert = hotAlerts.reduce((a, b) => b.level > a.level ? b : a)
+    await Promise.all([
       userEmail
-        ? sendAlertEmail({ to: userEmail, alertType: a.type, level: a.level, message: a.message, sessionDate: today, detail: a.detail })
+        ? sendAlertEmail({ to: userEmail, alertType: topAlert.type, level: topAlert.level, message: topAlert.message, sessionDate: today, detail: topAlert.detail, extraAlerts: hotAlerts.filter(a => a !== topAlert) })
         : Promise.resolve(),
-      webhookUrl
+      ...hotAlerts.map(a => webhookUrl
         ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
-        : Promise.resolve(),
-    ])))
+        : Promise.resolve()
+      ),
+    ])
   }
 
   // Push notifications pour tous les niveaux (non-bloquant)
