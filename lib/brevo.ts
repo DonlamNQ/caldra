@@ -110,7 +110,7 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
     ? `STOP — ${typeFmt} · Caldra`
     : `L${opts.level} · ${typeFmt} · Caldra`
 
-  await fetch('https://api.brevo.com/v3/smtp/email', {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -155,7 +155,11 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
 </body>
 </html>`,
     }),
-  }).catch(() => {})
+  }).catch(err => console.error('[brevo] sendAlertEmail fetch error:', err))
+  if (res && !res.ok) {
+    const body = await res.text().catch(() => '')
+    console.error(`[brevo] sendAlertEmail HTTP ${res.status}:`, body)
+  }
 }
 
 export async function sendWebhookAlert(
