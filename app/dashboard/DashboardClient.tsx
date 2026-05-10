@@ -1368,14 +1368,14 @@ namespace CaldraBot
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
               {([
                 ['1', 'Génère ta clé API ci-dessus (si pas encore fait).'],
-                ['2', 'Télécharge le fichier CaldraMT5.mq5 ci-dessous.'],
-                ['3', 'Dans MT5 → clique sur "Fichier" en haut à gauche → "Ouvrir le dossier des données".'],
-                ['4', 'Dans le dossier qui s\'ouvre, navigue vers MQL5 → Experts → colle le fichier CaldraMT5.mq5.'],
-                ['5', 'Retourne dans MT5 → "Outils" → "Options" → onglet "Expert Advisors".'],
-                ['6', 'Coche "Autoriser les requêtes WebRequest" → clique "+" → tape https://getcaldra.com → OK.'],
-                ['7', 'Dans le panel "Navigateur" à gauche (F4 pour l\'afficher) → "Expert Advisors" → fais un clic droit → "Actualiser".'],
-                ['8', 'Double-clique sur CaldraMT5 → onglet "Inputs" → colle ta clé API dans le champ prévu → OK.'],
-                ['9', 'Assure-toi que le bouton "EA" en haut de MT5 est vert → chaque trade fermé arrive dans Caldra.'],
+                ['2', 'Télécharge CaldraMT5.mq5 ci-dessous.'],
+                ['3', 'Dans MT5 → "Fichier" → "Ouvrir le dossier des données" → MQL5 → Experts → colle CaldraMT5.mq5.'],
+                ['4', 'Dans MT5 → "Outils" → "Options" → onglet "Consultants Experts".'],
+                ['5', 'Coche "Autoriser les requêtes WebRequest" → "+" → tape https://getcaldra.com → OK.'],
+                ['6', 'Affiche le Navigateur si besoin (Ctrl+N) → "Consultants Experts" → clic droit → "Actualiser".'],
+                ['7', 'Si CaldraMT5 n\'apparaît pas : F4 pour ouvrir MetaEditor → ouvre CaldraMT5.mq5 → F7 pour compiler → ferme MetaEditor → retour étape 6.'],
+                ['8', 'Double-clique sur CaldraMT5 → onglet "Inputs" → colle ta clé API → OK.'],
+                ['9', 'Vérifie que le bouton "EA" en haut de MT5 est vert → chaque trade fermé arrive dans Caldra.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
