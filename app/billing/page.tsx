@@ -24,12 +24,10 @@ export default async function BillingPage({
 
   return (
     <>
-      <style>{`
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{background:${BG};font-family:var(--font-geist-sans),'Geist',sans-serif;color:${TX};min-height:100vh;display:flex;align-items:center;justify-content:center}
-      `}</style>
+      <style>{`*{box-sizing:border-box;margin:0;padding:0}`}</style>
 
-      <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-geist-sans),'Geist',sans-serif", color: TX }}>
+      <div style={{ width: '100%', maxWidth: 480, padding: '0 24px' }}>
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 44 }}>
@@ -103,6 +101,7 @@ export default async function BillingPage({
         <div style={{ textAlign: 'center', marginTop: 16, fontSize: 10.5, color: TE, letterSpacing: 0.3 }}>
           {isSuccess ? 'Un email de confirmation Stripe a été envoyé.' : ''}
         </div>
+      </div>
       </div>
     </>
   )
