@@ -2152,11 +2152,6 @@ export default function DashboardClient({
         setAlerts(prev => [a, ...prev])
         addToast(a)
         if ((a.level ?? 1) >= 3) setSentinelPrompt(a)
-        showPushNotif(
-          `Caldra — ${(a.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
-          a.message ?? '',
-          a.id ?? 'caldra-alert'
-        )
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         if (pausedRef.current) return
@@ -2241,7 +2236,7 @@ export default function DashboardClient({
     if (notifReset.current) clearTimeout(notifReset.current)
     notifReset.current = setTimeout(() => { notifDelay.current = 0 }, delay + 1500)
     setTimeout(() => {
-      try { new Notification(title, { body, icon: '/icon.svg', tag }) } catch {}
+      try { new Notification(title, { body, icon: '/icon-192.png', tag }) } catch {}
     }, delay)
   }
 
