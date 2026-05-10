@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
 import type { DaySession } from './page'
+import OneSignalProvider from '@/components/OneSignalProvider'
 
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
@@ -2424,35 +2425,6 @@ export default function DashboardClient({
   }, [userId, today, addToast, fetchAlertCoaching])
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(async () => {
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-          if (vapidKey) {
-            try {
-              const reg = await navigator.serviceWorker.ready
-              const padding = '='.repeat((4 - vapidKey.length % 4) % 4)
-              const b64 = (vapidKey + padding).replace(/-/g, '+').replace(/_/g, '/')
-              const raw = window.atob(b64)
-              const bytes = new Uint8Array(raw.length)
-              for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
-              let sub = await reg.pushManager.getSubscription()
-              if (!sub) {
-                sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes.buffer })
-              }
-              if (sub) {
-                const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
-                await fetch('/api/push/subscribe', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth }),
-                })
-              }
-            } catch {}
-          }
-        }
-      }).catch(() => {})
-    }
     if (typeof Notification !== 'undefined') {
       setNotifPerm(Notification.permission)
     }
@@ -2543,6 +2515,7 @@ export default function DashboardClient({
   return (
     <ThemeCtx.Provider value={C}>
     <>
+      <OneSignalProvider userId={userId} />
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0;text-decoration:none}
         a{text-decoration:none!important}
