@@ -1331,13 +1331,13 @@ namespace CaldraBot
 
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
               {([
-                ['1', 'Génère ta clé API ci-dessus (si pas encore fait).'],
-                ['2', 'Télécharge le fichier CaldraBot.cs ci-dessous.'],
-                ['3', 'Ouvre cTrader → clique sur "Algo" dans la barre du haut → "New cBot".'],
-                ['4', 'Dans l\'assistant qui s\'ouvre, clique sur "Suivant" jusqu\'à la fin puis "Créer".'],
-                ['5', 'Supprime tout le code existant dans l\'éditeur, puis colle le contenu du fichier CaldraBot.cs.'],
-                ['6', 'Clique sur "Build" (ou Ctrl+B) — attends "Build succeeded" en bas.'],
-                ['7', 'L\'instance du bot apparaît dans le panel Algo → clique dessus → "Paramètres" → colle ta clé API → "Start".'],
+                ['1', 'Génère ta clé API (section ci-dessus).'],
+                ['2', 'Télécharge CaldraBot.cs ci-dessous.'],
+                ['3', 'cTrader → Algo → New cBot.'],
+                ['4', 'Suivant jusqu\'à la fin → Créer.'],
+                ['5', 'Supprime le code existant → colle le contenu de CaldraBot.cs.'],
+                ['6', 'Build (Ctrl+B) → attends "Build succeeded".'],
+                ['7', 'Panel Algo → clique sur le bot → Paramètres → colle ta clé API → Start.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
@@ -1367,15 +1367,14 @@ namespace CaldraBot
 
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
               {([
-                ['1', 'Génère ta clé API ci-dessus (si pas encore fait).'],
+                ['1', 'Génère ta clé API (section ci-dessus).'],
                 ['2', 'Télécharge CaldraMT5.mq5 ci-dessous.'],
-                ['3', 'Dans MT5 → "Fichier" → "Ouvrir le dossier des données" → MQL5 → Experts → colle CaldraMT5.mq5.'],
-                ['4', 'Dans MT5 → "Outils" → "Options" → onglet "Consultants Experts".'],
-                ['5', 'Coche "Autoriser les requêtes WebRequest" → "+" → tape https://getcaldra.com → OK.'],
-                ['6', 'Affiche le Navigateur si besoin (Ctrl+N) → "Consultants Experts" → clic droit → "Actualiser".'],
-                ['7', 'Si CaldraMT5 n\'apparaît pas : F4 pour ouvrir MetaEditor → ouvre CaldraMT5.mq5 → F7 pour compiler → ferme MetaEditor → retour étape 6.'],
-                ['8', 'Double-clique sur CaldraMT5 → onglet "Inputs" → colle ta clé API → OK.'],
-                ['9', 'Vérifie que le bouton "EA" en haut de MT5 est vert → chaque trade fermé arrive dans Caldra.'],
+                ['3', 'MT5 → Fichier → Ouvrir le dossier des données → MQL5/Experts → colle le fichier.'],
+                ['4', 'Outils → Options → Consultants Experts → coche WebRequest → + → https://getcaldra.com → OK.'],
+                ['5', 'Ctrl+N → Consultants Experts → clic droit → Actualiser.'],
+                ['6', 'Si CaldraMT5 absent : F4 → ouvre le fichier → F7 (compiler) → ferme → répète étape 5.'],
+                ['7', 'Double-clique CaldraMT5 → Inputs → colle ta clé API → OK.'],
+                ['8', 'Bouton EA vert en haut → prêt.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
