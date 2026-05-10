@@ -1534,12 +1534,12 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
             </div>
             <RuleField label="Fuseau horaire (UTC+)">
               <select
-                style={{ ...inputStyle, width: 88, textAlign: 'center', cursor: 'pointer' }}
+                style={{ ...inputStyle, width: 88, textAlign: 'center', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundColor: 'rgba(255,255,255,.05)', color: C.tx }}
                 value={rules.tz_offset_hours ?? 0}
                 onChange={e => set('tz_offset_hours', e.target.value)}
               >
                 {[-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
-                  <option key={h} value={h}>{h >= 0 ? `+${h}` : h}</option>
+                  <option key={h} value={h} style={{ background: '#12121c', color: '#eae8f5' }}>{h >= 0 ? `+${h}` : h}</option>
                 ))}
               </select>
             </RuleField>

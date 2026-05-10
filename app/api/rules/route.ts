@@ -75,7 +75,8 @@ export async function PUT(req: NextRequest) {
     .single()
 
   if (error) {
-    const { account_size, slack_webhook_url, ...baseRules } = rules
+    // Retry without optional columns that may not exist yet in older DB schemas
+    const { account_size, slack_webhook_url, tz_offset_hours, ...baseRules } = rules
     const { data: data2, error: error2 } = await service()
       .from('trading_rules')
       .upsert(baseRules, { onConflict: 'user_id' })
