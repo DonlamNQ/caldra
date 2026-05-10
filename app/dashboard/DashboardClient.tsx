@@ -1085,6 +1085,122 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
   )
 }
 
+// ── AlertesPanel ───────────────────────────────────────────────────────────────
+const LVL_META: Record<number, { label: string; color: string; bg: string; border: string }> = {
+  3: { label: 'Critique', color: '#ff5a3d', bg: 'rgba(255,90,61,.08)',  border: '#ff5a3d44' },
+  2: { label: 'Attention', color: '#ffab00', bg: 'rgba(255,171,0,.07)', border: '#ffab0044' },
+  1: { label: 'Info',      color: '#7c3aed', bg: 'rgba(124,58,237,.06)', border: '#7c3aed33' },
+}
+function AlertesPanel({ userId }: { userId: string }) {
+  const C = useContext(ThemeCtx)
+  const [rows, setRows] = useState<AlertRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [lvl, setLvl] = useState<number | null>(null)
+  const [page, setPage] = useState(0)
+  const PER = 30
+
+  useEffect(() => {
+    void (async () => {
+      setLoading(true)
+      const sb = createClient()
+      const { data } = await sb.from('alerts').select('*')
+        .order('created_at', { ascending: false }).limit(500)
+      setRows(data ?? [])
+      setLoading(false)
+    })()
+  }, [userId])
+
+  const filtered = rows.filter(a => {
+    if (lvl !== null && (a.level ?? 1) !== lvl) return false
+    if (search && !a.message?.toLowerCase().includes(search.toLowerCase()) && !(a.type ?? '').toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+  const pages = Math.max(1, Math.ceil(filtered.length / PER))
+  const visible = filtered.slice(page * PER, (page + 1) * PER)
+
+  function exportCSV() {
+    const header = 'Date,Niveau,Type,Message'
+    const body = filtered.map(a => {
+      const date = new Date(a.created_at).toLocaleString('fr-FR')
+      const lvlLabel = LVL_META[a.level ?? 1]?.label ?? 'Info'
+      const type = (a.type ?? '').replace(/,/g, ' ')
+      const msg = (a.message ?? '').replace(/,/g, ' ')
+      return `${date},${lvlLabel},${type},${msg}`
+    }).join('\n')
+    const blob = new Blob([header + '\n' + body], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = 'caldra_alertes.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: '20px 24px', gap: 16, overflowY: 'auto' }}>
+      {/* Toolbar */}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' as const }}>
+        <input
+          value={search} onChange={e => { setSearch(e.target.value); setPage(0) }}
+          placeholder="Rechercher…"
+          style={{ flex: 1, minWidth: 160, background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 7, padding: '7px 12px', fontSize: 12, color: C.tx, outline: 'none', fontFamily: 'inherit' }}
+        />
+        {([null, 3, 2, 1] as (number | null)[]).map(l => (
+          <button key={l ?? 'all'} onClick={() => { setLvl(l); setPage(0) }}
+            style={{ padding: '6px 12px', borderRadius: 7, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
+              background: lvl === l ? (l ? LVL_META[l].bg : C.rd) : C.sf2,
+              border: `.5px solid ${lvl === l ? (l ? LVL_META[l].border : C.rb) : C.b}`,
+              color: lvl === l ? (l ? LVL_META[l].color : C.red) : C.td }}>
+            {l === null ? 'Tous' : LVL_META[l].label}
+          </button>
+        ))}
+        <button onClick={exportCSV}
+          style={{ padding: '6px 14px', borderRadius: 7, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', background: C.sf2, border: `.5px solid ${C.b}`, color: C.td }}>
+          Export CSV
+        </button>
+      </div>
+
+      {/* Count */}
+      <div style={{ fontSize: 11, color: C.te, fontFamily: 'var(--font-geist-mono)' }}>
+        {loading ? 'Chargement…' : `${filtered.length} alerte${filtered.length !== 1 ? 's' : ''}`}
+      </div>
+
+      {/* List */}
+      {loading ? null : visible.length === 0 ? (
+        <div style={{ textAlign: 'center', color: C.te, fontSize: 13, padding: '40px 0' }}>Aucune alerte</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {visible.map((a, i) => {
+            const meta = LVL_META[a.level ?? 1] ?? LVL_META[1]
+            const date = new Date(a.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+            return (
+              <div key={a.id ?? i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', background: meta.bg, border: `.5px solid ${meta.border}`, borderRadius: 10 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color, flexShrink: 0, marginTop: 5 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: C.tx, fontWeight: 500, lineHeight: 1.4 }}>{a.message}</div>
+                  <div style={{ fontSize: 11, color: C.te, marginTop: 3, fontFamily: 'var(--font-geist-mono)' }}>{meta.label} · {a.type ?? ''} · {date}</div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pages > 1 && (
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', paddingBottom: 8 }}>
+          {Array.from({ length: pages }, (_, i) => (
+            <button key={i} onClick={() => setPage(i)}
+              style={{ width: 28, height: 28, borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
+                background: page === i ? C.rd : C.sf2, border: `.5px solid ${page === i ? C.rb : C.b}`,
+                color: page === i ? C.red : C.td }}>
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── RapportsPanel ──────────────────────────────────────────────────────────────
 function RapportsPanel() {
   const C = useContext(ThemeCtx)
@@ -2034,6 +2150,7 @@ const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
   { id: 'session',     label: 'Session live' },
   { id: 'calendrier', label: 'Calendrier' },
   { id: 'analytics',  label: 'Analytics' },
+  { id: 'alertes',    label: 'Alertes' },
   { id: 'rapports',   label: 'Rapports' },
   { id: 'sentinel',   label: 'Sentinel IA', sentinel: true },
 ]
@@ -2045,7 +2162,7 @@ const SETTINGS_ITEMS = [
   { id: 'billing',       label: 'Billing' },
 ]
 
-type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'sentinel'
+type TabId = 'session' | 'calendrier' | 'analytics' | 'alertes' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'sentinel'
 
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
@@ -2463,6 +2580,7 @@ export default function DashboardClient({
             {activeTab === 'analytics' && (
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} />
             )}
+            {activeTab === 'alertes' && <AlertesPanel userId={userId} />}
             {activeTab === 'rapports' && <RapportsPanel />}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
