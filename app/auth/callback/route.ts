@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  const type = searchParams.get('type')
+
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`)
   }
@@ -50,6 +52,10 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+  }
+
+  if (type === 'recovery') {
+    return NextResponse.redirect(`${origin}/reset-password`)
   }
 
   return NextResponse.redirect(`${origin}${await getDestination(user.id, supabase)}`)

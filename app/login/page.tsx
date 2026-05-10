@@ -108,6 +108,10 @@ export default function LoginPage() {
                 {loading ? 'Connexion…' : 'Se connecter →'}
               </button>
 
+              <div style={{ textAlign: 'right', marginTop: 2 }}>
+                <a href="/forgot-password" className="lg-link" style={{ fontSize: 12 }}>Mot de passe oublié ?</a>
+              </div>
+
             </form>
 
             <div style={{ marginTop: 20, paddingTop: 18, borderTop: '0.5px solid #1e1e35', textAlign: 'center', fontSize: 13, color: '#475569' }}>

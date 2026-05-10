@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/billing/webhook', '/api/waitlist']
+const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/billing/webhook', '/api/waitlist', '/forgot-password', '/reset-password']
 
 // ── Rate limiting in-memory (par IP) ─────────────────────────────────────────
 // Limites : /api/ingest 60 req/min | /api/waitlist 5 req/min | /api/sentinel 10 req/min
