@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
 import { analyzeTradeForAlerts } from '@/lib/engine'
-import webpush from 'web-push'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -121,50 +120,8 @@ if (error) {
     return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })
   }
 
-  // Lance l'analyse comportementale
+  // Lance l'analyse comportementale (inclut l'envoi des web push via lib/push.ts)
   const alerts = await analyzeTradeForAlerts(trade)
-
-  // Envoie les web push pour chaque alerte
-  if (alerts.length > 0) {
-    const vapidPublic  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    const vapidPrivate = process.env.VAPID_PRIVATE_KEY
-    const vapidEmail   = process.env.VAPID_EMAIL ?? 'contact@getcaldra.com'
-
-    if (vapidPublic && vapidPrivate) {
-      webpush.setVapidDetails(`mailto:${vapidEmail}`, vapidPublic, vapidPrivate)
-
-      const { data: subs } = await supabase
-        .from('push_subscriptions')
-        .select('endpoint, p256dh, auth')
-        .eq('user_id', user_id)
-
-      if (subs && subs.length > 0) {
-        for (const alert of alerts) {
-          const payload = JSON.stringify({
-            title: `Caldra — ${(alert.type ?? '').replace(/_/g, ' ').toUpperCase()}`,
-            body: alert.message ?? '',
-            url: '/dashboard',
-            level: alert.level ?? 1,
-          })
-          for (const sub of subs) {
-            try {
-              await webpush.sendNotification(
-                { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-                payload
-              )
-              console.log('[push] sent to', sub.endpoint.slice(0, 50))
-            } catch (e: any) {
-              console.error('[push] error', e.statusCode, e.message, sub.endpoint.slice(0, 50))
-              if (e.statusCode === 410 || e.statusCode === 404 || (e.statusCode === 400 && sub.endpoint.includes('apple.com'))) {
-                await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
-                console.log('[push] removed stale sub', sub.endpoint.slice(0, 50))
-              }
-            }
-          }
-        }
-      }
-    }
-  }
 
   return NextResponse.json({
     success: true,
