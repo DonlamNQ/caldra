@@ -61,6 +61,42 @@ async function generateCoachingForAlert(
   }
 }
 
+function buildPushContent(a: Alert): { title: string; body: string } {
+  const d = a.detail
+  switch (a.type) {
+    case 'revenge_sizing':
+      return {
+        title: '⚠️ Revenge sizing',
+        body: `Sizing ×${d.ratio} après une perte — ${d.current_size} lots vs ${d.previous_size}`,
+      }
+    case 'immediate_reentry':
+      return {
+        title: '⚡ Re-entrée rapide',
+        body: `${d.seconds_since_exit}s après la clôture. Délai minimum : ${d.minimum_required}s.`,
+      }
+    case 'consecutive_losses':
+      return {
+        title: `📉 ${d.count} pertes d'affilée`,
+        body: 'Pause ou analyse avant de continuer.',
+      }
+    case 'drawdown_alert':
+      return a.level === 3
+        ? { title: '🔴 Drawdown max atteint', body: `STOP. PnL session : ${Math.round(Number(d.current_pnl))}€ (−${d.drawdown_pct}%)` }
+        : { title: `⚠️ Drawdown à ${d.drawdown_pct}% du seuil`, body: `Ralentis — limite journalière : ${d.max_allowed}%` }
+    case 'outside_session':
+      return {
+        title: '🕐 Hors session',
+        body: `Trade à ${d.entry_time}. Fenêtre : ${d.session_start}–${d.session_end}.`,
+      }
+    case 'overtrading':
+      return a.level === 2
+        ? { title: '🚫 Limite de trades atteinte', body: `${d.current}/${d.max} trades — stop pour aujourd'hui.` }
+        : { title: `📊 ${d.current}/${d.max} trades`, body: "Tu approches ta limite de session." }
+    default:
+      return { title: a.message, body: '' }
+  }
+}
+
 export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   const alerts: Alert[] = []
   const today = new Date().toISOString().split('T')[0]
@@ -221,8 +257,10 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   // Push notifications pour tous les niveaux (non-bloquant)
   if (alerts.length > 0) {
     void import('./push').then(({ sendPushToUser }) => {
-      const label = (a: { level: number }) => a.level === 3 ? '🔴 Critique' : a.level === 2 ? '🟠 Attention' : '🔵 Info'
-      return Promise.all(alerts.map(a => sendPushToUser(trade.user_id, `${label(a)} — Caldra`, a.message, a.level)))
+      return Promise.all(alerts.map(a => {
+        const { title, body } = buildPushContent(a)
+        return sendPushToUser(trade.user_id, title, body, a.level)
+      }))
     }).catch(() => {})
   }
 
