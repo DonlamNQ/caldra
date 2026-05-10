@@ -50,7 +50,9 @@
       "Bash(Get-ChildItem -Path app -Recurse -Filter \"*.tsx\")",
       "Bash(Select-Object FullName)",
       "Bash(npm list *)",
-      "Bash(node_modules/.bin/tsc --noEmit)"
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(python3 -c ' *)"
     ]
   },
   "hooks": {
