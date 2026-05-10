@@ -1367,14 +1367,14 @@ namespace CaldraBot
 
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
               {([
-                ['1', 'Génère ta clé API (section ci-dessus).'],
-                ['2', 'Télécharge CaldraMT5.mq5 ci-dessous.'],
-                ['3', 'MT5 → Fichier → Ouvrir le dossier des données → MQL5/Experts → colle le fichier.'],
-                ['4', 'Outils → Options → Consultants Experts → coche WebRequest → + → https://getcaldra.com → OK.'],
-                ['5', 'F4 → ouvre CaldraMT5.mq5 dans MetaEditor → F7 pour compiler → ferme MetaEditor.'],
-                ['6', 'Ctrl+N → Consultants Experts → clic droit → Actualiser → CaldraMT5 apparaît.'],
-                ['7', 'Double-clique CaldraMT5 → Inputs → colle ta clé API → OK.'],
-                ['8', 'Bouton EA vert en haut → prêt.'],
+                ['1', 'Génère ta clé API dans la section ci-dessus si ce n\'est pas encore fait.'],
+                ['2', 'Télécharge le fichier CaldraMT5.mq5 ci-dessous.'],
+                ['3', 'Dans MT5, clique sur "Fichier" → "Ouvrir le dossier des données". Navigue dans MQL5/Experts et colle le fichier.'],
+                ['4', 'Toujours dans MT5 → "Outils" → "Options" → onglet "Expert Consultants". Coche "Autoriser les requêtes WebRequest", clique "+" et entre https://getcaldra.com → OK.'],
+                ['5', 'Appuie sur F4 pour ouvrir MetaEditor. Ouvre CaldraMT5.mq5 puis F7 pour compiler. Ferme MetaEditor quand c\'est bon.'],
+                ['6', 'Affiche le Navigateur (Ctrl+N) → "Expert Consultants" → clic droit → "Actualiser". CaldraMT5 apparaît dans la liste.'],
+                ['7', 'Double-clique sur CaldraMT5, va dans l\'onglet "Inputs" et colle ta clé API dans le champ prévu → OK.'],
+                ['8', 'Vérifie que le bouton "EA" en haut de MT5 est vert. Chaque trade fermé est automatiquement envoyé à Caldra.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
