@@ -356,7 +356,6 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Produits : Pro 19€/mois (`STRIPE_PRO_PRICE_ID`) + Sentinel 39€/mois (`STRIPE_SENTINEL_PRICE_ID`)
 - Webhook : `https://getcaldra.com/api/billing/webhook` — secret dans `STRIPE_WEBHOOK_SECRET`
 
-### 🔜 Prochaines features possibles
-- Export PDF rapport hebdomadaire
-- Dashboard consolidé multi-traders
-- IA coaching Anthropic étendu (alertes level 2 + coaching proactif)
+### ✅ Toutes les features prévues sont terminées
+- Export PDF rapport hebdomadaire ✅
+- IA coaching Anthropic étendu (alertes level 2 + coaching proactif) ✅
