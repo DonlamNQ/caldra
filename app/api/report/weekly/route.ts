@@ -206,7 +206,7 @@ export async function GET(req: NextRequest) {
     trades: tradeItems,
   }
 
-  const pdfBuffer = await renderToBuffer(React.createElement(WeeklyReport, { data }))
+  const pdfBuffer = await renderToBuffer(React.createElement(WeeklyReport, { data }) as any)
 
   const filename = `caldra-rapport-${weekStartStr}.pdf`
   return new Response(pdfBuffer, {
