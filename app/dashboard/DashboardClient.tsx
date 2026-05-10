@@ -37,6 +37,7 @@ interface TradingRules {
   max_risk_per_trade_pct: number
   account_size: number
   slack_webhook_url: string | null
+  tz_offset_hours: number
 }
 
 interface SessionStats { total_trades: number; total_pnl: number; wins: number; losses: number }
@@ -1562,7 +1563,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
     max_daily_drawdown_pct: 3, max_consecutive_losses: 3,
     min_time_between_entries_sec: 120, session_start: '09:30',
     session_end: '16:00', max_trades_per_session: 10, max_risk_per_trade_pct: 1,
-    account_size: 10000, slack_webhook_url: null,
+    account_size: 10000, slack_webhook_url: null, tz_offset_hours: 0,
   }
   const [rules, setRules] = useState<TradingRules>(initial ?? defaults)
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -1647,6 +1648,17 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
                 <input style={{ ...inputStyle, width: 88, textAlign: 'center' }} type="time" value={rules.session_end} onChange={e => set('session_end', e.target.value)} />
               </RuleField>
             </div>
+            <RuleField label="Fuseau horaire (UTC+)">
+              <select
+                style={{ ...inputStyle, width: 88, textAlign: 'center', cursor: 'pointer' }}
+                value={rules.tz_offset_hours ?? 0}
+                onChange={e => set('tz_offset_hours', e.target.value)}
+              >
+                {[-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                  <option key={h} value={h}>{h >= 0 ? `+${h}` : h}</option>
+                ))}
+              </select>
+            </RuleField>
           </RuleGroup>
         </div>
 

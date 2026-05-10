@@ -106,7 +106,7 @@ void SendToCaldra(string symbol, string direction, double volume,
 //+------------------------------------------------------------------+
 string FormatTime(long unixSeconds) {
    MqlDateTime dt;
-   TimeToStruct((datetime)unixSeconds, dt);
+   TimeToStruct((datetime)unixSeconds, dt, false);  // false = UTC (not broker local)
    return StringFormat("%04d-%02d-%02dT%02d:%02d:%02dZ",
       dt.year, dt.mon, dt.day, dt.hour, dt.min, dt.sec);
 }

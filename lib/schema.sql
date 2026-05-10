@@ -159,3 +159,6 @@ alter table user_profiles add constraint user_profiles_plan_check check (plan in
 update user_profiles set plan = 'pro' where plan in ('free', 'team');
 alter table user_profiles alter column plan set default 'pro';
 
+-- v2.3 : fuseau horaire pour la détection hors-session
+alter table trading_rules add column if not exists tz_offset_hours smallint not null default 0;
+

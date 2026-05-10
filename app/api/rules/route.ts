@@ -13,6 +13,7 @@ const DEFAULTS = {
   max_risk_per_trade_pct: 1,
   account_size: 10000,
   slack_webhook_url: null as string | null,
+  tz_offset_hours: 0,
 }
 
 async function getUser(req: NextRequest) {
@@ -64,6 +65,7 @@ export async function PUT(req: NextRequest) {
     max_risk_per_trade_pct: Number(body.max_risk_per_trade_pct),
     account_size: Number(body.account_size) || 10000,
     slack_webhook_url: body.slack_webhook_url ? String(body.slack_webhook_url) : null,
+    tz_offset_hours: Math.round(Number(body.tz_offset_hours ?? 0)),
   }
 
   const { data, error } = await service()

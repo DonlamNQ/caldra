@@ -190,8 +190,12 @@ export async function analyzeTradeForAlerts(trade: Trade): Promise<Alert[]> {
   }
 
   // ── 5. HORS HORAIRES ──────────────────────────────────────────────────────
-  // Utilise UTC pour être cohérent avec le format ISO des trades entrants
-  const entryHour = new Date(trade.entry_time).toISOString().slice(11, 16)
+  // entry_time est en UTC. tz_offset_hours convertit en heure locale du trader
+  // pour comparer avec session_start/session_end (entrées en heure locale).
+  const utcMins = new Date(trade.entry_time).getUTCHours() * 60 + new Date(trade.entry_time).getUTCMinutes()
+  const tzOffset = Number(rules.tz_offset_hours ?? 0)
+  const localMins = ((utcMins + tzOffset * 60) % 1440 + 1440) % 1440
+  const entryHour = `${String(Math.floor(localMins / 60)).padStart(2, '0')}:${String(localMins % 60).padStart(2, '0')}`
   if (entryHour < rules.session_start || entryHour > rules.session_end) {
     alerts.push({
       type: 'outside_session',
