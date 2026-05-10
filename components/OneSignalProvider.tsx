@@ -15,8 +15,11 @@ export default function OneSignalProvider({ userId }: { userId: string }) {
 
     window.OneSignalDeferred = window.OneSignalDeferred || []
     window.OneSignalDeferred.push(async function (OneSignal: OneSignalType) {
+      console.log('[OneSignal] init start, appId=', appId)
       await OneSignal.init({ appId, serviceWorkerPath: '/OneSignalSDKWorker.js' })
+      console.log('[OneSignal] init done, logging in userId=', userId)
       await OneSignal.login(userId)
+      console.log('[OneSignal] login done')
     })
 
     return () => { document.head.removeChild(script) }
