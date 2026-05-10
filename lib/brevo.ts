@@ -27,7 +27,7 @@ export async function sendWeeklyReportEmail(opts: WeeklyReportEmailOpts): Promis
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      sender: { name: 'Caldra', email: 'alerts@getcaldra.com' },
+      sender: { name: 'Caldra', email: 'alhamkone@gmail.com' },
       to: [{ email: opts.to }],
       subject: `Rapport hebdomadaire · ${opts.weekLabel}`,
       attachment: [{ content: opts.pdfBase64, name: filename }],
@@ -114,7 +114,7 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      sender: { name: 'Caldra', email: 'alerts@getcaldra.com' },
+      sender: { name: 'Caldra', email: 'alhamkone@gmail.com' },
       to: [{ email: opts.to }],
       subject,
       htmlContent: `
