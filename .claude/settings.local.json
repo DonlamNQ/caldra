@@ -48,7 +48,9 @@
       "Bash(findstr \"web-push\")",
       "Bash(dir app\\\\settings /s /b)",
       "Bash(Get-ChildItem -Path app -Recurse -Filter \"*.tsx\")",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(npm list *)",
+      "Bash(node_modules/.bin/tsc --noEmit)"
     ]
   },
   "hooks": {
