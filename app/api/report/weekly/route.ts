@@ -209,7 +209,7 @@ export async function GET(req: NextRequest) {
   const pdfBuffer = await renderToBuffer(React.createElement(WeeklyReport, { data }) as any)
 
   const filename = `caldra-rapport-${weekStartStr}.pdf`
-  return new Response(pdfBuffer, {
+  return new Response(new Uint8Array(pdfBuffer), {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${filename}"`,
