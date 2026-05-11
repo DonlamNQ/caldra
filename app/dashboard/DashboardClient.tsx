@@ -2431,6 +2431,11 @@ export default function DashboardClient({
 
     // Register SW + re-subscribe if permission already granted (e.g. returning user)
     if ('serviceWorker' in navigator) {
+      // Unregister stale service workers (e.g. OneSignal SW left over from a previous integration)
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => { if (!r.active?.scriptURL?.endsWith('/sw.js')) r.unregister() })
+      }).catch(() => {})
+
       navigator.serviceWorker.register('/sw.js').then(async () => {
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
           const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
@@ -2442,8 +2447,10 @@ export default function DashboardClient({
             const raw = window.atob(b64)
             const bytes = new Uint8Array(raw.length)
             for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
-            let sub = await reg.pushManager.getSubscription()
-            if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes.buffer })
+            // Force re-subscribe to ensure the subscription matches current VAPID key
+            const existingSub = await reg.pushManager.getSubscription()
+            if (existingSub) await existingSub.unsubscribe()
+            const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes.buffer })
             if (sub) {
               const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
               await fetch('/api/push/subscribe', {
