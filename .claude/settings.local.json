@@ -59,7 +59,8 @@
       "Bash(curl -sf https://getcaldra.com/api/test-push)",
       "Read(//tmp/**)",
       "Bash(npm init *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(python3 -m json.tool)"
     ]
   },
   "hooks": {
