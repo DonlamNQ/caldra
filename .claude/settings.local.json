@@ -57,7 +57,9 @@
       "Bash(date -u -v-15M +\"%Y-%m-%dT%H:%M:%SZ\")",
       "Bash(date -u -v-2M +\"%Y-%m-%dT%H:%M:%SZ\")",
       "Bash(curl -sf https://getcaldra.com/api/test-push)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(npm init *)",
+      "Bash(npm install *)"
     ]
   },
   "hooks": {
