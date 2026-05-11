@@ -130,18 +130,59 @@ function ScoreRingSvg({ score }: { score: number }) {
   )
 }
 
-// ── MetricBar ──────────────────────────────────────────────────────────────────
-function MetricBar({ label, value }: { label: string; value: number }) {
+// ── BehavioralRadar ────────────────────────────────────────────────────────────
+function BehavioralRadar({ sizing, risk, reentry, drawdown, discipline }: {
+  sizing: number; risk: number; reentry: number; drawdown: number; discipline: number
+}) {
   const C = useContext(ThemeCtx)
-  const col = scoreColor(value, C)
+  const labels = ['Sizing', 'Risk', 'Re-entrée', 'Drawdown', 'Horaires']
+  const values = [sizing, risk, reentry, drawdown, discipline]
+  const n = 5, W = 168, H = 168, cx = 84, cy = 78, r = 54
+
+  function axisAngle(i: number) { return (i * 2 * Math.PI / n) - Math.PI / 2 }
+  function pt(i: number, radius: number): [number, number] {
+    return [cx + radius * Math.cos(axisAngle(i)), cy + radius * Math.sin(axisAngle(i))]
+  }
+  function polyPath(radius: number) {
+    return Array.from({ length: n }, (_, i) => {
+      const [x, y] = pt(i, radius)
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`
+    }).join(' ') + 'Z'
+  }
+
+  const dataPts = values.map((v, i) => pt(i, r * Math.max(v, 4) / 100))
+  const dataPath = dataPts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ') + 'Z'
+  const avg = Math.round(values.reduce((a, b) => a + b) / n)
+  const col = scoreColor(avg, C)
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 8 }}>
-      <span style={{ fontSize: 12, color: C.td, width: 80, flexShrink: 0 }}>{label}</span>
-      <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,.09)', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${value}%`, background: col, borderRadius: 3, transition: 'width .6s, background .4s', boxShadow: `0 0 5px ${col}70` }} />
-      </div>
-      <span style={{ fontSize: 12, color: C.td, fontFamily: MONO, width: 26, textAlign: 'right' as const }}>{value}</span>
-    </div>
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
+      {[0.25, 0.5, 0.75, 1].map((lv, k) => (
+        <path key={k} d={polyPath(r * lv)} fill="none"
+          stroke={lv === 1 ? C.b2 : C.b} strokeWidth={lv === 1 ? 0.8 : 0.5} />
+      ))}
+      {Array.from({ length: n }, (_, i) => {
+        const [x, y] = pt(i, r)
+        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke={C.b} strokeWidth={0.5} />
+      })}
+      <path d={dataPath} fill={col} fillOpacity={0.14}
+        stroke={col} strokeWidth={1.5} strokeLinejoin="round"
+        style={{ filter: `drop-shadow(0 0 7px ${col}44)` }} />
+      {dataPts.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={2.5} fill={col} />
+      ))}
+      {values.map((v, i) => {
+        const [x, y] = pt(i, r + 19)
+        const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
+        const vc = v >= 70 ? C.g : v >= 40 ? C.o : C.red
+        return (
+          <g key={i}>
+            <text x={x} y={y - 3} textAnchor={anchor} fontSize={8} fill={C.td} fontFamily={MONO}>{labels[i]}</text>
+            <text x={x} y={y + 8} textAnchor={anchor} fontSize={9} fill={vc} fontFamily={MONO}>{v}</text>
+          </g>
+        )
+      })}
+    </svg>
   )
 }
 
@@ -384,14 +425,10 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
         </div>
       </div>
 
-      {/* Métriques */}
-      <div style={{ padding: '20px 20px', flexShrink: 0, background: 'rgba(255,255,255,.012)' }}>
-        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 11, textTransform: 'uppercase' as const, fontFamily: MONO }}>Métriques</span>
-        <MetricBar label="Sizing"     value={mSizing} />
-        <MetricBar label="Risk/trade" value={mRisk} />
-        <MetricBar label="Re-entrées" value={mReentry} />
-        <MetricBar label="Drawdown"   value={mDrawdown} />
-        <MetricBar label="Horaires"   value={mDiscipline} />
+      {/* Profil comportemental */}
+      <div style={{ padding: '14px 20px 8px', flexShrink: 0, background: 'rgba(255,255,255,.012)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, fontFamily: MONO, alignSelf: 'flex-start' }}>Profil comportemental</span>
+        <BehavioralRadar sizing={mSizing} risk={mRisk} reentry={mReentry} drawdown={mDrawdown} discipline={mDiscipline} />
       </div>
 
       {/* Règles du jour */}
@@ -514,34 +551,37 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
 
-      {/* Row 1: PnL card | Session line | 4 mini stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 12, alignItems: 'start' }}>
+      {/* Row 1: terminal stats + chart */}
+      <div style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
 
-        {/* PnL + Win rate cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          <div className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 22px', minWidth: 160, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
-            <div style={{ fontSize: 10, letterSpacing: 1.2, color: C.td, marginBottom: 10, textTransform: 'uppercase' as const, fontFamily: MONO }}>P&L session</div>
-            <div style={{ fontSize: 36, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
+        {/* Stats terminal */}
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 18px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
+          <div>
+            <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 5 }}>P&L</div>
+            <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
               {fmtEur(stats.total_pnl)}
             </div>
-            <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>en cours</div>
           </div>
-
-          <div className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 22px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
-            <div style={{ fontSize: 10, letterSpacing: 1.2, color: C.td, marginBottom: 10, textTransform: 'uppercase' as const, fontFamily: MONO }}>Win rate</div>
-            <div style={{ fontSize: 36, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
-              {stats.total_trades > 0 ? `${Math.round(stats.wins / stats.total_trades * 100)}%` : '—'}
+          <div style={{ height: .5, background: C.b }} />
+          {([
+            { k: 'Win rate', v: stats.total_trades > 0 ? `${Math.round(stats.wins / stats.total_trades * 100)}%` : '—', sub: stats.total_trades > 0 ? `${stats.wins}W ${stats.losses}L` : '' },
+            { k: 'Trades', v: String(stats.total_trades), sub: `/ ${rules?.max_trades_per_session ?? '?'}` },
+            { k: 'Drawdown', v: `${drawdownPct}%`, warn: drawdownPct > 80 },
+            { k: 'Consécutives', v: String(streak), warn: streak >= 2 },
+          ] as { k: string; v: string; sub?: string; warn?: boolean }[]).map(({ k, v, sub, warn }) => (
+            <div key={k}>
+              <div style={{ fontSize: 8.5, color: C.te, fontFamily: MONO, letterSpacing: .8, marginBottom: 2 }}>{k}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                <span style={{ fontSize: 15, fontFamily: MONO, color: warn ? C.o : C.td }}>{v}</span>
+                {sub && <span style={{ fontSize: 9.5, color: C.te, fontFamily: MONO }}>{sub}</span>}
+              </div>
             </div>
-            <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>
-              {stats.total_trades > 0 ? `${stats.wins}W · ${stats.losses}L` : 'session'}
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Chart card — session line + PnL chart empilés */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+        {/* Chart card */}
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
           <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
@@ -549,25 +589,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
-          <div style={{ height: 180, flexShrink: 0 }}>
+          <div style={{ flex: 1, minHeight: 120 }}>
             <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} />
           </div>
-        </div>
-
-        {/* 4 mini stat cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: 110 }}>
-          {[
-            { val: String(stats.total_trades), lbl: 'Trades', accent: C.b3 },
-            { val: `${drawdownPct}%`, lbl: 'Drawdown', accent: drawdownPct > 80 ? C.red : drawdownPct > 50 ? C.o : C.b3 },
-            { val: String(alerts.length), lbl: 'Alertes', accent: alerts.length > 0 ? C.red : C.b3 },
-            { val: String(streak), lbl: streak <= 1 ? 'Perte consec.' : 'Pertes consec.', accent: streak >= 3 ? C.red : streak >= 2 ? C.o : C.b3 },
-          ].map((item, i) => (
-            <div key={i} className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '8px 13px', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 2, background: item.accent, borderRadius: '9px 0 0 9px' }} />
-              <div style={{ fontSize: 17, fontWeight: 300, letterSpacing: -.5, color: C.tx, fontFamily: MONO }}>{item.val}</div>
-              <div style={{ fontSize: 8, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 1 }}>{item.lbl}</div>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -596,11 +620,11 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         )}
       </div>
 
-      {/* Row 3: Trade feed */}
+      {/* Session tape — timeline */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 10 }}>
-          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Flux de trades</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 12 }}>
+          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Session tape</span>
           {trades.length > 0 && <span style={{ fontSize: 9, fontFamily: MONO, color: C.te }}>{trades.length} trade{trades.length > 1 ? 's' : ''}</span>}
         </div>
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
@@ -609,84 +633,107 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
               Aucun trade aujourd'hui — connectez votre plateforme via l'onglet Intégrations.
             </div>
           ) : (
-            sortedTrades.map((t, i) => {
-              const tradeAlerts = alerts.filter(a =>
-                a.trade_id ? a.trade_id === t.id
-                : a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000
-              )
-              const topAlert = tradeAlerts.sort((a, b) => (b.level ?? b.severity ?? 1) - (a.level ?? a.severity ?? 1))[0]
-              const lvl = topAlert ? (topAlert.level ?? topAlert.severity ?? 1) : 0
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {sortedTrades.map((t, i) => {
+                const tradeAlerts = alerts.filter(a =>
+                  a.trade_id ? a.trade_id === t.id
+                  : a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000
+                )
+                const topAlert = tradeAlerts.sort((a, b) => (b.level ?? b.severity ?? 1) - (a.level ?? a.severity ?? 1))[0]
+                const lvl = topAlert ? (topAlert.level ?? topAlert.severity ?? 1) : 0
+                const LVL_STYLE: Record<number, { bg: string; border: string; dot: string }> = {
+                  1: { bg: 'rgba(245,166,35,.05)', border: 'rgba(245,166,35,.3)', dot: '#f5a623' },
+                  2: { bg: C.rd, border: `${C.red}70`, dot: C.red },
+                  3: { bg: 'rgba(220,50,24,.08)', border: 'rgba(220,50,24,.45)', dot: '#dc3218' },
+                }
+                const ls = lvl > 0 ? LVL_STYLE[lvl] : null
+                const dotColor = ls ? ls.dot : 'rgba(255,255,255,.16)'
+                const isOpen = t.status === 'open' || t.exit_price == null
+                const tradeKey = String(t.id ?? i)
+                const isExpanded = expandedTrade === tradeKey
 
-              const LVL_STYLE: Record<number, { bg: string; border: string; badge: string; dot: string }> = {
-                1: { bg: 'rgba(245,166,35,.05)', border: 'rgba(245,166,35,.35)', badge: '#f5a623', dot: 'rgba(245,166,35,.9)' },
-                2: { bg: C.rd, border: `${C.red}80`, badge: C.red, dot: C.red },
-                3: { bg: 'rgba(220,50,24,.08)', border: 'rgba(220,50,24,.5)', badge: '#dc3218', dot: '#dc3218' },
-              }
-              const ls = lvl > 0 ? LVL_STYLE[lvl] ?? LVL_STYLE[1] : null
-
-              const tradeKey = String(t.id ?? i)
-              const isExpanded = expandedTrade === tradeKey
-              return (
-                <div key={tradeKey}>
-                  <div className="c-row" onClick={() => setExpandedTrade(isExpanded ? null : tradeKey)} style={{
-                    display: 'grid', gridTemplateColumns: '60px 1fr auto auto', alignItems: 'center',
-                    minHeight: 32, borderBottom: `.5px solid ${C.b}`,
-                    background: ls ? ls.bg : 'transparent',
-                    borderLeft: `2px solid ${ls ? ls.border : C.b}`,
-                    padding: '0 8px 0 10px',
-                    borderRadius: '0 5px 5px 0',
-                    transition: 'background .12s',
-                    cursor: 'pointer',
-                  }}>
-                    <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>{fmtTime(t.entry_time)}</span>
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                      <span style={{ fontSize: 13.5, color: C.tm, fontWeight: 400 }}>
-                        {t.symbol} {t.direction === 'long' ? 'Long' : 'Short'} ×{t.size}
-                      </span>
-                      {ls && (
-                        <span style={{
-                          fontSize: 8, padding: '1px 5px', fontFamily: MONO, letterSpacing: '.16em',
-                          background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.badge,
-                          fontWeight: 600, borderRadius: 99,
-                        }}>
-                          L{lvl}
+                return (
+                  <div key={tradeKey}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                      {/* Time + connector line */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, width: 44 }}>
+                        <span style={{ fontSize: 9, color: C.te, fontFamily: MONO, paddingTop: 8, lineHeight: 1 }}>
+                          {fmtTime(t.entry_time)}
                         </span>
-                      )}
-                    </span>
-                    <span />
-                    <span style={{ fontSize: 13, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const }}>
-                      {fmtEur(t.pnl ?? 0)}
-                    </span>
-                  </div>
-                  {isExpanded && (
-                    <div style={{
-                      background: 'rgba(255,255,255,.04)',
-                      border: '.5px solid rgba(255,255,255,.08)',
-                      borderRadius: 8,
-                      padding: '10px 14px',
-                      margin: '2px 0 4px',
-                      display: 'flex',
-                      gap: 24,
-                      flexWrap: 'wrap' as const,
-                      animation: 'fadeIn .15s',
-                    }}>
-                      {[
-                        { label: 'Entrée',  val: t.entry_price != null ? String(t.entry_price) : '—' },
-                        { label: 'Sortie',  val: t.exit_price  != null ? String(t.exit_price)  : '—' },
-                        { label: 'Durée',   val: fmtDuration(t.entry_time, t.exit_time) },
-                        { label: 'Taille',  val: `${t.size} lot` },
-                        { label: 'Symbole', val: t.symbol },
-                      ].map(({ label, val }) => (
-                        <div key={label}>
-                          <div style={{ fontSize: 11, color: 'rgba(234,232,245,.4)', fontFamily: MONO, marginBottom: 2 }}>{label}</div>
-                          <div style={{ fontSize: 11, color: 'rgba(234,232,245,.95)', fontFamily: MONO }}>{val}</div>
+                        {i < sortedTrades.length - 1 && (
+                          <div style={{ width: 1, height: 18, background: `linear-gradient(to bottom, ${C.b2}, transparent)`, margin: '3px auto 0' }} />
+                        )}
+                      </div>
+                      {/* Timeline dot */}
+                      <div style={{
+                        width: 8, height: 8, borderRadius: '50%', marginTop: 8, flexShrink: 0,
+                        background: dotColor,
+                        boxShadow: ls ? `0 0 8px ${dotColor}55` : 'none',
+                        border: ls ? `1px solid ${ls.border}` : '1px solid rgba(255,255,255,.1)',
+                      }} />
+                      {/* Trade content */}
+                      <div
+                        onClick={() => setExpandedTrade(isExpanded ? null : tradeKey)}
+                        style={{
+                          flex: 1, padding: '4px 8px 4px 0', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between',
+                          borderRadius: 6, background: isExpanded ? 'rgba(255,255,255,.03)' : 'transparent',
+                          transition: 'background .12s',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, color: C.tm, fontWeight: 400 }}>{t.symbol}</span>
+                          <span style={{ fontSize: 10.5, color: C.td }}>
+                            {t.direction === 'long' ? '▲' : '▼'} ×{t.size}
+                          </span>
+                          {isOpen && (
+                            <span style={{ fontSize: 8, padding: '1px 5px', background: 'rgba(255,171,0,.08)', border: '.5px solid rgba(255,171,0,.22)', color: C.o, borderRadius: 99, fontFamily: MONO }}>
+                              live
+                            </span>
+                          )}
+                          {ls && (
+                            <span style={{ fontSize: 8, padding: '1px 5px', fontFamily: MONO, background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.dot, borderRadius: 99 }}>
+                              L{lvl}
+                            </span>
+                          )}
                         </div>
-                      ))}
+                        <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const, flexShrink: 0 }}>
+                          {isOpen ? '—' : fmtEur(t.pnl ?? 0)}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )
-            })
+                    {isExpanded && (
+                      <div style={{
+                        marginLeft: 60, marginBottom: 6,
+                        background: 'rgba(255,255,255,.04)', border: '.5px solid rgba(255,255,255,.07)',
+                        borderRadius: 7, padding: '8px 12px',
+                        display: 'flex', gap: 18, flexWrap: 'wrap' as const, animation: 'fadeIn .15s',
+                      }}>
+                        {[
+                          { label: 'Entrée', val: t.entry_price != null ? String(t.entry_price) : '—' },
+                          { label: 'Sortie', val: t.exit_price != null ? String(t.exit_price) : '—' },
+                          { label: 'Durée', val: fmtDuration(t.entry_time, t.exit_time) },
+                          { label: 'Taille', val: `${t.size} lot` },
+                        ].map(({ label, val }) => (
+                          <div key={label}>
+                            <div style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, marginBottom: 1 }}>{label}</div>
+                            <div style={{ fontSize: 11, color: C.tm, fontFamily: MONO }}>{val}</div>
+                          </div>
+                        ))}
+                        {tradeAlerts.slice(0, 2).map((a, ai) => (
+                          <div key={ai}>
+                            <div style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, marginBottom: 1 }}>Alerte</div>
+                            <div style={{ fontSize: 10.5, fontFamily: MONO, color: (a.level ?? 1) >= 3 ? '#dc3218' : (a.level ?? 1) >= 2 ? C.red : C.o }}>
+                              L{a.level ?? 1} — {(a.type ?? '').replace(/_/g, ' ')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
       </div>
