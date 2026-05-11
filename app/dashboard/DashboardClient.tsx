@@ -545,6 +545,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: 110 }}>
           {[
             { val: String(stats.total_trades), lbl: 'Trades', accent: C.b3 },
+            { val: stats.total_trades > 0 ? `${Math.round(stats.wins / stats.total_trades * 100)}%` : '—', lbl: 'Win rate', accent: stats.total_trades > 0 && stats.wins / stats.total_trades >= 0.5 ? C.g : C.b3 },
             { val: `${drawdownPct}%`, lbl: 'Drawdown', accent: drawdownPct > 80 ? C.red : drawdownPct > 50 ? C.o : C.b3 },
             { val: String(alerts.length), lbl: 'Alertes', accent: alerts.length > 0 ? C.red : C.b3 },
             { val: String(streak), lbl: streak <= 1 ? 'Perte consec.' : 'Pertes consec.', accent: streak >= 3 ? C.red : streak >= 2 ? C.o : C.b3 },
