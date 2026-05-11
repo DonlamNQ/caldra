@@ -524,7 +524,12 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div style={{ fontSize: 36, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
             {fmtEur(stats.total_pnl)}
           </div>
-          <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>en cours</div>
+          <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>
+            {stats.total_trades > 0
+              ? <span>Win rate <span style={{ color: stats.wins / stats.total_trades >= 0.5 ? C.g : C.red }}>{Math.round(stats.wins / stats.total_trades * 100)}%</span></span>
+              : <span>en cours</span>
+            }
+          </div>
         </div>
 
         {/* Chart card — session line + PnL chart empilés */}
@@ -545,7 +550,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: 110 }}>
           {[
             { val: String(stats.total_trades), lbl: 'Trades', accent: C.b3 },
-            { val: stats.total_trades > 0 ? `${Math.round(stats.wins / stats.total_trades * 100)}%` : '—', lbl: 'Win rate', accent: stats.total_trades > 0 && stats.wins / stats.total_trades >= 0.5 ? C.g : C.b3 },
             { val: `${drawdownPct}%`, lbl: 'Drawdown', accent: drawdownPct > 80 ? C.red : drawdownPct > 50 ? C.o : C.b3 },
             { val: String(alerts.length), lbl: 'Alertes', accent: alerts.length > 0 ? C.red : C.b3 },
             { val: String(streak), lbl: streak <= 1 ? 'Perte consec.' : 'Pertes consec.', accent: streak >= 3 ? C.red : streak >= 2 ? C.o : C.b3 },
