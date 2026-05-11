@@ -52,7 +52,8 @@
       "Bash(npm list *)",
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(./node_modules/.bin/tsc --noEmit)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(npx vercel *)"
     ]
   },
   "hooks": {
