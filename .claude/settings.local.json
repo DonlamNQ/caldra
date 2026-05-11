@@ -53,7 +53,9 @@
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(./node_modules/.bin/tsc --noEmit)",
       "Bash(python3 -c ' *)",
-      "Bash(npx vercel *)"
+      "Bash(npx vercel *)",
+      "Bash(date -u -v-15M +\"%Y-%m-%dT%H:%M:%SZ\")",
+      "Bash(date -u -v-2M +\"%Y-%m-%dT%H:%M:%SZ\")"
     ]
   },
   "hooks": {
