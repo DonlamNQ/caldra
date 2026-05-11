@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
-import { analyzeTradeForAlerts } from '@/lib/engine'
+import { analyzeOpenTrade, analyzeClosedTrade } from '@/lib/engine'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -92,36 +92,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid entry_time' }, { status: 400, headers: CORS_HEADERS })
   }
 
-  // Ignorer les positions encore ouvertes (pas d'exit_price = trade non clôturé)
-  if (!exit_price || pnl == null) {
-    return NextResponse.json({ ignored: true, reason: 'Position still open — no exit_price or pnl' }, { status: 200, headers: CORS_HEADERS })
+  const isClosing = exit_price != null && pnl != null
+
+  let trade
+  if (isClosing) {
+    // Cherche un trade ouvert existant pour le mettre à jour (match par symbol + direction + entry_time)
+    const { data: existing } = await supabase
+      .from('trades')
+      .select('id')
+      .eq('user_id', user_id)
+      .eq('symbol', symbol as string)
+      .eq('direction', direction as string)
+      .eq('entry_time', entry_time as string)
+      .eq('status', 'open')
+      .single()
+
+    if (existing) {
+      const { data: updated, error } = await supabase
+        .from('trades')
+        .update({ exit_price, exit_time, pnl, status: 'closed' })
+        .eq('id', existing.id)
+        .select()
+        .single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })
+      trade = updated
+    } else {
+      const { data: inserted, error } = await supabase
+        .from('trades')
+        .insert({ user_id, symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl, status: 'closed' })
+        .select()
+        .single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })
+      trade = inserted
+    }
+  } else {
+    // Trade ouvert — insertion avec status open
+    const { data: inserted, error } = await supabase
+      .from('trades')
+      .insert({ user_id, symbol, direction, size, entry_price, entry_time, status: 'open' })
+      .select()
+      .single()
+    if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })
+    trade = inserted
   }
 
-  // Sauvegarde le trade
-  const { data: trade, error } = await supabase
-    .from('trades')
-    .insert({
-      user_id,
-      symbol,
-      direction,
-      size,
-      entry_price,
-      exit_price,
-      entry_time,
-      exit_time,
-      pnl,
-      status: exit_time ? 'closed' : 'open'
-    })
-    .select()
-    .single()
-
-if (error) {
-    console.error('SUPABASE ERROR:', error)
-    return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })
-  }
-
-  // Lance l'analyse comportementale (inclut l'envoi des web push via lib/push.ts)
-  const alerts = await analyzeTradeForAlerts(trade)
+  const alerts = await (isClosing ? analyzeClosedTrade(trade) : analyzeOpenTrade(trade))
 
   return NextResponse.json({
     success: true,
