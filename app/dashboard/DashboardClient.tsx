@@ -404,6 +404,16 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
+        {score < 70 && (
+          <div style={{
+            position: 'absolute', bottom: -4, right: -6, pointerEvents: 'none', userSelect: 'none',
+            fontSize: 54, fontWeight: 900, letterSpacing: 3, lineHeight: 1,
+            color: score < 40 ? 'rgba(124,58,237,.09)' : 'rgba(255,171,0,.07)',
+            fontFamily: MONO,
+          }}>
+            {score < 40 ? 'STOP' : 'WATCH'}
+          </div>
+        )}
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ScoreRingSvg score={score} />
@@ -452,9 +462,9 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
         </div>
       )}
 
-      {/* Alertes */}
-      <div style={{ padding: '15px 20px', flex: 1, overflowY: 'auto', minHeight: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 11 }}>
+      {/* Alertes — heatmap */}
+      <div style={{ padding: '14px 20px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Alertes</span>
           {alerts.length > 0 && (
             <span style={{ fontSize: 9, fontFamily: MONO, padding: '2px 9px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, animation: 'pulse 2s infinite' }}>
@@ -462,34 +472,51 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             </span>
           )}
         </div>
-        {alerts.length === 0 ? null : (
-          alerts.slice(0, 8).map((a, i) => {
-            const lvl = a.level ?? 1
-            const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
-            const aBorder = lvl >= 3 ? '#dc3218' : lvl >= 2 ? `${C.red}bb` : `${C.o}99`
-            const aBg = lvl >= 3 ? 'rgba(220,50,24,.08)' : lvl >= 2 ? `${C.red}06` : 'rgba(255,171,0,.04)'
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 5 }}>
+          {([
+            { type: 'revenge_sizing',     label: 'Revenge' },
+            { type: 'immediate_reentry',  label: 'Re-entrée' },
+            { type: 'consecutive_losses', label: 'Pertes' },
+            { type: 'drawdown_alert',     label: 'Drawdown' },
+            { type: 'outside_session',    label: 'Horaires' },
+            { type: 'overtrading',        label: 'Overtrade' },
+          ] as { type: string; label: string }[]).map(({ type, label }) => {
+            const ta = alerts.filter(a => (a.type ?? '') === type)
+            const count = ta.length
+            const maxLvl = count > 0 ? Math.max(...ta.map(a => a.level ?? 1)) : 0
+            const col = maxLvl >= 3 ? '#dc3218' : maxLvl >= 2 ? C.red : maxLvl >= 1 ? C.o : null
+            const glow = count > 1 ? Math.min(1, 0.3 + count * 0.2) : 0.25
             return (
-              <div key={a.id ?? i} style={{
-                padding: '9px 9px 9px 11px',
-                borderBottom: i < Math.min(alerts.length, 8) - 1 ? `.5px solid ${C.b}` : 'none',
-                borderLeft: `2px solid ${aBorder}`,
-                background: aBg,
-                animation: 'fadeUp .25s ease',
+              <div key={type} style={{
+                padding: '8px 5px', borderRadius: 9, textAlign: 'center' as const,
+                background: count === 0 ? 'rgba(255,255,255,.02)' : `${col}16`,
+                border: count === 0 ? `.5px solid rgba(255,255,255,.04)` : `.5px solid ${col}55`,
+                boxShadow: count > 0 ? `0 0 ${glow * 12}px ${col}45` : 'none',
+                transition: 'all .4s',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <span style={{
-                    fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 99,
-                    background: lvl >= 3 ? 'rgba(220,50,24,.08)' : lvl >= 2 ? C.rd : 'rgba(255,171,0,.09)',
-                    border: `.5px solid ${lvl >= 3 ? 'rgba(220,50,24,.25)' : lvl >= 2 ? C.rb : 'rgba(255,171,0,.22)'}`,
-                    color: aCol, letterSpacing: .3,
-                  }}>L{lvl}</span>
-                  <span style={{ fontSize: 10.5, color: C.td, letterSpacing: .3 }}>{(a.type ?? '').replace(/_/g, ' ')}</span>
+                <div style={{ fontSize: 16, fontFamily: MONO, lineHeight: 1.1, color: count === 0 ? 'rgba(255,255,255,.13)' : col!, fontWeight: count > 0 ? 600 : 300 }}>
+                  {count}
                 </div>
-                <div style={{ fontSize: 12, color: C.tm, lineHeight: 1.45, fontWeight: 300 }}>{a.message}</div>
+                <div style={{ fontSize: 7.5, fontFamily: MONO, marginTop: 2, letterSpacing: .3, color: count === 0 ? 'rgba(255,255,255,.18)' : col! }}>
+                  {label}
+                </div>
               </div>
             )
-          })
-        )}
+          })}
+        </div>
+        {alerts.length > 0 && (() => {
+          const latest = alerts[0]
+          const lvl = latest.level ?? 1
+          const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
+          return (
+            <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 7, background: `${aCol}07`, borderLeft: `2px solid ${aCol}80` }}>
+              <div style={{ fontSize: 8.5, color: aCol, fontFamily: MONO, marginBottom: 3 }}>
+                L{lvl} · {(latest.type ?? '').replace(/_/g, ' ')}
+              </div>
+              <div style={{ fontSize: 11.5, color: C.tm, fontWeight: 300, lineHeight: 1.4 }}>{latest.message}</div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Notifications status */}
@@ -595,28 +622,70 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         </div>
       </div>
 
-      {/* Row 2: J-1 */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 18px', display: 'flex', gap: 22, alignItems: 'center', flexShrink: 0, borderLeft: `3px solid ${yesterdayStats ? `${scoreColor(yesterdayStats.score, C)}70` : C.b}` }}>
-        <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, fontFamily: MONO, textTransform: 'uppercase' as const }}>J−1</div>
-        {yesterdayStats ? (
-          <>
+      {/* Session DNA */}
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 18px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, textTransform: 'uppercase' as const }}>Session DNA</span>
+          {yesterdayStats && (
+            <span style={{ fontSize: 8.5, color: C.te, fontFamily: MONO }}>
+              J−1 · {fmtEur(yesterdayStats.pnl)} · score {yesterdayStats.score}
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 3, height: 34 }}>
+          {(() => {
+            const chron = [...sortedTrades].reverse()
+            const slots = rules?.max_trades_per_session ?? Math.max(10, chron.length + 2)
+            return (
+              <>
+                {chron.map((t, i) => {
+                  const ta = alerts.filter(a =>
+                    a.trade_id ? a.trade_id === t.id
+                    : a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000
+                  )
+                  const topLvl = ta.reduce((m, a) => Math.max(m, a.level ?? 1), 0)
+                  const isOpen = !t.exit_price
+                  const pnl = t.pnl ?? 0
+                  const col = isOpen ? '#ffab00' : pnl > 0 ? '#00d17a' : '#7c3aed'
+                  return (
+                    <div key={String(t.id ?? i)} style={{
+                      flex: 1, borderRadius: 5,
+                      background: `${col}1e`,
+                      border: `.5px solid ${col}${topLvl >= 2 ? 'cc' : '66'}`,
+                      boxShadow: topLvl >= 2 ? `0 0 10px ${col}80` : topLvl >= 1 ? `0 0 5px ${col}44` : 'none',
+                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                      padding: '3px 4px', position: 'relative', overflow: 'hidden',
+                      transition: 'box-shadow .3s',
+                    }}>
+                      {topLvl >= 2 && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: col, opacity: .7 }} />}
+                      <span style={{ fontSize: 8, color: col, lineHeight: 1 }}>{t.direction === 'long' ? '▲' : '▼'}</span>
+                      <span style={{ fontSize: 7, color: col, fontFamily: MONO, lineHeight: 1 }}>
+                        {isOpen ? '●' : pnl > 0 ? `+${Math.round(Math.abs(pnl))}` : `-${Math.round(Math.abs(pnl))}`}
+                      </span>
+                    </div>
+                  )
+                })}
+                {Array.from({ length: Math.max(0, slots - chron.length) }, (_, i) => (
+                  <div key={`g${i}`} style={{ flex: 1, borderRadius: 5, background: 'rgba(255,255,255,.015)', border: '.5px dashed rgba(255,255,255,.05)' }} />
+                ))}
+              </>
+            )
+          })()}
+        </div>
+        {sortedTrades.length > 0 && (
+          <div style={{ display: 'flex', gap: 14, marginTop: 7 }}>
             {[
-              { val: fmtEur(yesterdayStats.pnl), lbl: 'P&L', col: C.tm },
-              { val: String(yesterdayStats.score), lbl: 'Score', col: C.tm },
-              { val: String(yesterdayStats.alerts), lbl: 'Alertes', col: C.tm },
-              ...(yesterdayTrend !== null ? [{ val: `${yesterdayTrend > 0 ? '+' : ''}${yesterdayTrend}`, lbl: 'Tendance', col: yesterdayTrend > 0 ? C.g : yesterdayTrend < 0 ? C.red : C.tm }] : []),
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
-                {i > 0 && <div style={{ width: .5, height: 18, background: C.b2 }} />}
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: -.3, color: item.col }}>{item.val}</div>
-                  <div style={{ fontSize: 9.5, color: C.te, letterSpacing: .4 }}>{item.lbl}</div>
-                </div>
+              { dot: '#00d17a', lbl: `${stats.wins}W` },
+              { dot: '#7c3aed', lbl: `${stats.losses}L` },
+              ...(alerts.length > 0 ? [{ dot: '#ffab00', lbl: `${alerts.length} alerte${alerts.length > 1 ? 's' : ''}` }] : []),
+            ].map(({ dot, lbl }) => (
+              <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 5, height: 5, borderRadius: 2, background: dot, flexShrink: 0 }} />
+                <span style={{ fontSize: 8.5, color: C.te, fontFamily: MONO }}>{lbl}</span>
               </div>
             ))}
-          </>
-        ) : (
-          <span style={{ fontSize: 11, color: C.te }}>Aucune session hier</span>
+          </div>
         )}
       </div>
 
