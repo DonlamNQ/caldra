@@ -1,3 +1,6 @@
+import webpush from 'web-push'
+import { createClient } from '@supabase/supabase-js'
+
 export async function sendPushToUser(
   userId: string,
   title: string,
@@ -5,25 +8,39 @@ export async function sendPushToUser(
   level: number,
   url = '/dashboard'
 ): Promise<void> {
-  const appId = process.env.ONESIGNAL_APP_ID
-  const apiKey = process.env.ONESIGNAL_REST_API_KEY
-  if (!appId || !apiKey) return
+  if (!process.env.VAPID_PRIVATE_KEY) return
 
-  const res = await fetch('https://onesignal.com/api/v1/notifications', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      app_id: appId,
-      include_aliases: { external_id: [userId] },
-      target_channel: 'push',
-      headings: { en: title, fr: title },
-      contents: { en: body, fr: body },
-      url: `https://getcaldra.com${url}`,
-      priority: level >= 3 ? 10 : 7,
-    }),
-  }).catch(err => { console.error('[onesignal] push error:', err); return null })
+  webpush.setVapidDetails(
+    `mailto:${process.env.VAPID_EMAIL || 'contact@getcaldra.com'}`,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY
+  )
 
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: subs } = await supabase
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth')
+    .eq('user_id', userId)
+
+  if (!subs?.length) return
+
+  const payload = JSON.stringify({ title, body, level, url })
+
+  await Promise.allSettled(
+    subs.map(sub =>
+      webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        payload,
+        { TTL: 86400 }
+      ).catch(async (err: { statusCode?: number }) => {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+        }
+      })
+    )
+  )
 }
