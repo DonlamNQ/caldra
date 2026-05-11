@@ -531,7 +531,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div className="c-card" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 22px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
             <div style={{ fontSize: 10, letterSpacing: 1.2, color: C.td, marginBottom: 10, textTransform: 'uppercase' as const, fontFamily: MONO }}>Win rate</div>
-            <div style={{ fontSize: 36, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: stats.total_trades > 0 ? (stats.wins / stats.total_trades >= 0.5 ? C.g : C.red) : C.tx }}>
+            <div style={{ fontSize: 36, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
               {stats.total_trades > 0 ? `${Math.round(stats.wins / stats.total_trades * 100)}%` : '—'}
             </div>
             <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 6, letterSpacing: .5 }}>
