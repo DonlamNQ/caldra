@@ -165,9 +165,8 @@ function BehavioralRadar({ sizing, risk, reentry, drawdown, discipline }: {
         const [x, y] = pt(i, r)
         return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke={C.b} strokeWidth={0.5} />
       })}
-      <path d={dataPath} fill={col} fillOpacity={0.14}
-        stroke={col} strokeWidth={1.5} strokeLinejoin="round"
-        style={{ filter: `drop-shadow(0 0 7px ${col}44)` }} />
+      <path d={dataPath} fill={col} fillOpacity={0.11}
+        stroke={col} strokeWidth={1.2} strokeLinejoin="round" />
       {dataPts.map(([x, y], i) => (
         <circle key={i} cx={x} cy={y} r={2.5} fill={col} />
       ))}
@@ -353,18 +352,18 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
       <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
       {yTicks.map(v => (
         <text key={`t${v}`} x={PXL - 4} y={Math.max(PYT + 7, Math.min(H - PYB - 2, yOf(v) + 3))}
-          textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
+          textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
       ))}
       {xIdxs.map(i => (
         <text key={i} x={Math.max(PXL + 14, Math.min(W - PXR - 14, xOf(i)))}
-          y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="7.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
+          y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="6" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
           {pts[i].t}
         </text>
       ))}
       {n > 2 && <path d={fillPath} fill="url(#pnl-grad)" />}
       {n >= 2
-        ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-        : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={4} fill={LC} />
+        ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="round" />
+        : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={LC} />
       }
     </svg>
   )
@@ -491,7 +490,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
                 padding: '8px 5px', borderRadius: 9, textAlign: 'center' as const,
                 background: count === 0 ? 'rgba(255,255,255,.02)' : `${col}16`,
                 border: count === 0 ? `.5px solid rgba(255,255,255,.04)` : `.5px solid ${col}55`,
-                boxShadow: count > 0 ? `0 0 ${glow * 12}px ${col}45` : 'none',
+                boxShadow: 'none',
                 transition: 'all .4s',
               }}>
                 <div style={{ fontSize: 16, fontFamily: MONO, lineHeight: 1.1, color: count === 0 ? 'rgba(255,255,255,.13)' : col!, fontWeight: count > 0 ? 600 : 300 }}>
@@ -653,7 +652,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                       flex: 1, borderRadius: 5,
                       background: `${col}1e`,
                       border: `.5px solid ${col}${topLvl >= 2 ? 'cc' : '66'}`,
-                      boxShadow: topLvl >= 2 ? `0 0 10px ${col}80` : topLvl >= 1 ? `0 0 5px ${col}44` : 'none',
+                      boxShadow: 'none',
                       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                       padding: '3px 4px', position: 'relative', overflow: 'hidden',
                       transition: 'box-shadow .3s',
@@ -737,7 +736,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                       <div style={{
                         width: 8, height: 8, borderRadius: '50%', marginTop: 8, flexShrink: 0,
                         background: dotColor,
-                        boxShadow: ls ? `0 0 8px ${dotColor}55` : 'none',
+                        boxShadow: 'none',
                         border: ls ? `1px solid ${ls.border}` : '1px solid rgba(255,255,255,.1)',
                       }} />
                       {/* Trade content */}
@@ -2687,11 +2686,10 @@ export default function DashboardClient({
         @keyframes sli{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
         @keyframes toastIn{from{opacity:0;transform:translateX(28px) scale(.97)}to{opacity:1;transform:translateX(0) scale(1)}}
         @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
-        @keyframes shimmerLine{0%{opacity:.4}50%{opacity:.85}100%{opacity:.4}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .tab-btn{padding:11px 0;font-size:11px;letter-spacing:.5px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex:1;text-align:center;font-weight:400}
-        .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.02)}
+        .tab-btn{display:inline-flex;align-items:center;padding:0 13px;height:46px;font-size:11px;letter-spacing:.4px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;font-weight:400}
+        .tab-btn:hover{color:${C.tm}}
         .tab-btn.active{color:${C.tx};border-bottom-color:${C.red};font-weight:500}
         .tab-sentinel{color:rgba(124,58,237,.45)!important}
         .tab-sentinel.active{color:${C.red}!important;border-bottom-color:${C.red}}
@@ -2721,23 +2719,28 @@ export default function DashboardClient({
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
-        {/* ── Top accent ── */}
-        <div style={{ height: 2, background: `linear-gradient(90deg, transparent 0%, ${C.red}bb 28%, ${C.red}bb 72%, transparent 100%)`, flexShrink: 0, animation: 'shimmerLine 4s ease-in-out infinite' }} />
-
-        {/* ── Header ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 26px', borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 2, height: 30, background: `linear-gradient(180deg, ${C.red} 0%, ${C.red}30 100%)`, borderRadius: 2, flexShrink: 0 }} />
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: 6, textTransform: 'uppercase' as const, color: C.tx }}>
-                Cald<span style={{ color: C.red }}>ra</span>
-              </div>
-              <div style={{ fontSize: 7, letterSpacing: 8, textTransform: 'uppercase' as const, color: C.td, display: 'block', marginTop: 3 }}>Session</div>
-            </div>
+        {/* ── Top bar ── */}
+        <div style={{ display: 'flex', alignItems: 'center', height: 46, borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0 }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 18px 0 20px', borderRight: `.5px solid ${C.b}`, alignSelf: 'stretch', flexShrink: 0 }}>
+            <div style={{ width: 2, height: 17, background: C.red, borderRadius: 1 }} />
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
-          <div style={{ fontSize: 11, color: C.td, fontFamily: MONO, letterSpacing: .3 }}>{displayDate}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 11px', background: connected ? 'rgba(0,209,122,.06)' : C.rg, border: `.5px solid ${connected ? 'rgba(0,209,122,.18)' : C.rb}`, borderRadius: 99 }}>
+          {/* Tabs */}
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              className={`tab-btn${tab.sentinel ? ' tab-sentinel' : ''}${activeTab === tab.id ? ' active' : ''}`}
+              onClick={() => { setActiveTab(tab.id as TabId); setSettingsOpen(false) }}
+            >
+              {tab.label}
+              {tab.sentinel && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: C.red, marginLeft: 5, verticalAlign: 'middle', animation: 'pulse 2s infinite' }} />}
+            </button>
+          ))}
+          {/* Right controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto', paddingRight: 12, flexShrink: 0 }}>
+            <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{displayDate}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', background: connected ? 'rgba(0,209,122,.06)' : C.rg, border: `.5px solid ${connected ? 'rgba(0,209,122,.18)' : C.rb}`, borderRadius: 99 }}>
               <div style={{ width: 5, height: 5, borderRadius: '50%', background: connected ? C.g : C.red, animation: 'pulse 1.8s infinite' }} />
               <span style={{ fontSize: 9, color: connected ? C.g : C.red, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: MONO }}>{connected ? 'Live' : 'Sync'}</span>
             </div>
@@ -2761,23 +2764,8 @@ export default function DashboardClient({
               </button>
             )}
           </div>
-        </div>
-
-        {/* ── Tab nav ── */}
-        <div style={{ display: 'flex', alignItems: 'center', borderBottom: `.5px solid ${C.b}`, background: `linear-gradient(180deg, ${C.sf} 0%, ${C.sf2} 100%)`, padding: 0, flexShrink: 0 }}>
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              className={`tab-btn${tab.sentinel ? ' tab-sentinel' : ''}${activeTab === tab.id ? ' active' : ''}`}
-              onClick={() => { setActiveTab(tab.id as TabId); setSettingsOpen(false) }}
-            >
-              {tab.label}
-              {tab.sentinel && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: C.red, marginLeft: 5, verticalAlign: 'middle', animation: 'pulse 2s infinite' }} />}
-            </button>
-          ))}
-
-          {/* ── Avatar / settings ── */}
-          <div ref={settingsRef} style={{ position: 'relative', marginLeft: 'auto', padding: '0 14px', flexShrink: 0 }}>
+          {/* Avatar / settings */}
+          <div ref={settingsRef} style={{ position: 'relative', flexShrink: 0, paddingRight: 14 }}>
             <button
               onClick={() => setSettingsOpen(o => !o)}
               style={{
