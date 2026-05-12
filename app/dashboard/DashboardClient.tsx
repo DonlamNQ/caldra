@@ -278,7 +278,6 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
 // ── PnlChart — cumulative SVG chart with Y/X axes ────────────────────────────
 function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: number }) {
   const C = useContext(ThemeCtx)
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null)
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
@@ -301,12 +300,9 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     )
   }
 
-  const pts: { t: string; v: number; sym?: string }[] = [{ t: '—', v: 0 }]
+  const pts: { t: string; v: number }[] = [{ t: '—', v: 0 }]
   let cum = 0
-  for (const t of sorted) {
-    cum += t.pnl ?? 0
-    pts.push({ t: fmtTime(t.entry_time), v: cum, sym: t.symbol })
-  }
+  for (const t of sorted) { cum += t.pnl ?? 0; pts.push({ t: fmtTime(t.entry_time), v: cum }) }
 
   const vals = pts.map(p => p.v)
   const rawMin = Math.min(0, ...vals), rawMax = Math.max(0, ...vals)
@@ -346,20 +342,8 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   for (let i = step; i < n - 1; i += step) xIdxSet.add(i)
   const xIdxs = [...xIdxSet].sort((a, b) => a - b)
 
-  function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const svgX = ((e.clientX - rect.left) / rect.width) * W
-    let best = 0, bestDist = Infinity
-    xyPts.forEach(([x], i) => { const d = Math.abs(x - svgX); if (d < bestDist) { bestDist = d; best = i } })
-    setHoverIdx(best)
-  }
-
-  const hov = hoverIdx !== null ? hoverIdx : null
-  const hovPt = hov !== null ? xyPts[hov] : null
-
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', cursor: 'crosshair' }} preserveAspectRatio="none"
-      onMouseMove={handleMouseMove} onMouseLeave={() => setHoverIdx(null)}>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
       <defs>
         <linearGradient id="pnl-grad" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={LC} stopOpacity="0.35"/>
@@ -387,24 +371,6 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
         ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="round" />
         : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={LC} />
       }
-      {hovPt && hov !== null && (() => {
-        const [hx, hy] = hovPt
-        const p = pts[hov]
-        const sym = p.sym ?? '—'
-        const val = fmtY(p.v)
-        const left = hx > W * 0.55
-        const tx = left ? hx - 90 : hx + 8
-        const ty = Math.max(PYT + 2, Math.min(H - PYB - 38, hy - 18))
-        return (
-          <>
-            <line x1={hx} y1={PYT} x2={hx} y2={H - PYB} stroke="rgba(255,255,255,.14)" strokeWidth={1} />
-            <circle cx={hx} cy={hy} r={4} fill={LC} stroke="#0c0c15" strokeWidth={1.5} />
-            <rect x={tx} y={ty} width={82} height={34} rx={4} fill="#12121e" stroke="rgba(255,255,255,.1)" strokeWidth={.5} />
-            <text x={tx + 8} y={ty + 13} fontSize="8.5" fill="rgba(234,232,245,.55)" fontFamily="var(--font-geist-mono),monospace">{sym} · {p.t}</text>
-            <text x={tx + 8} y={ty + 27} fontSize="10" fill={LC} fontWeight="600" fontFamily="var(--font-geist-mono),monospace">{val}</text>
-          </>
-        )
-      })()}
     </svg>
   )
 }
@@ -490,8 +456,8 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
         </div>
       )}
 
-      {/* Alertes — heatmap */}
-      <div style={{ padding: '14px 20px', flexShrink: 0 }}>
+      {/* Alertes — heatmap + feed (flex:1 pour remplir l'espace) */}
+      <div style={{ padding: '14px 20px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Alertes</span>
           {alerts.length > 0 && (
@@ -533,7 +499,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
           })}
         </div>
         {alerts.length > 0 && (
-          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 180, overflowY: 'auto' }}>
+          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {alerts.map((a, i) => {
               const lvl = a.level ?? 1
               const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
@@ -550,8 +516,11 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
           </div>
         )}
 
-        {/* Notifications status */}
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: `.5px solid ${C.b}` }}>
+      </div>
+
+      {/* ── Bas de sidebar : Notif + Pause ── */}
+      <div style={{ padding: '12px 20px 16px', flexShrink: 0, borderTop: `.5px solid ${C.b}` }}>
+        <div style={{ marginBottom: 8 }}>
           {notifPerm === 'granted' ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
@@ -560,14 +529,12 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
           ) : notifPerm === 'denied' ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569', flexShrink: 0 }} />
-              <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO, lineHeight: 1.4 }}>
-                Notifications désactivées dans le navigateur
-              </span>
+              <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO, lineHeight: 1.4 }}>Notifications désactivées</span>
             </div>
           ) : (
             <button
               onClick={onRequestNotif}
-              style={{ width: '100%', padding: 9, background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, transition: 'all .2s', animation: 'pulse 2s infinite' }}
+              style={{ width: '100%', padding: 8, background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, transition: 'all .2s', animation: 'pulse 2s infinite' }}
               onMouseEnter={e => { e.currentTarget.style.background = C.rg; e.currentTarget.style.animation = 'none' }}
               onMouseLeave={e => { e.currentTarget.style.background = C.rd; e.currentTarget.style.animation = 'pulse 2s infinite' }}
             >
@@ -575,18 +542,14 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             </button>
           )}
         </div>
-
-        {/* Pause */}
-        <div style={{ marginTop: 8 }}>
-          <button
-            onClick={onTogglePause}
-            style={{ width: '100%', padding: 9, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
-            onMouseEnter={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.13)' : C.rd)}
-            onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
-          >
-            {paused ? '⏸ Alertes suspendues · Reprendre' : '⏸ Pause session'}
-          </button>
-        </div>
+        <button
+          onClick={onTogglePause}
+          style={{ width: '100%', padding: 8, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
+          onMouseEnter={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.13)' : C.rd)}
+          onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
+        >
+          {paused ? '⏸ Alertes suspendues · Reprendre' : '⏸ Pause session'}
+        </button>
       </div>
     </div>
   )
@@ -637,6 +600,18 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
               </div>
             </div>
           ))}
+          {yesterdayStats && (
+            <div style={{ borderTop: `.5px solid ${C.b}`, paddingTop: 8 }}>
+              <div style={{ fontSize: 8.5, color: C.te, fontFamily: MONO, letterSpacing: .8, marginBottom: 4 }}>J−1</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+                <span style={{ fontSize: 14, fontFamily: MONO, color: '#e2e8f0' }}>{fmtEur(yesterdayStats.pnl)}</span>
+                <span style={{ fontSize: 11, fontFamily: MONO, color: scoreColor(yesterdayStats.score, C) }}>{yesterdayStats.score} pts</span>
+              </div>
+              {yesterdayStats.alerts > 0 && (
+                <div style={{ fontSize: 9, color: C.te, fontFamily: MONO, marginTop: 2 }}>{yesterdayStats.alerts} alerte{yesterdayStats.alerts > 1 ? 's' : ''}</div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Chart card */}
