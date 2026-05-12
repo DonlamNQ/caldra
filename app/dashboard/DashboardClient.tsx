@@ -278,6 +278,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
 // ── PnlChart — cumulative SVG chart with Y/X axes ────────────────────────────
 function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: number }) {
   const C = useContext(ThemeCtx)
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null)
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
@@ -295,15 +296,17 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-        <line x1={PXL} y1={yMid} x2={W - PXR} y2={yMid} stroke={gridColor} strokeWidth={0.5} strokeDasharray="4 6" />
         <text x={PXL - 4} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>€0</text>
       </svg>
     )
   }
 
-  const pts: { t: string; v: number }[] = [{ t: 'open', v: 0 }]
+  const pts: { t: string; v: number; sym?: string }[] = [{ t: '—', v: 0 }]
   let cum = 0
-  for (const t of sorted) { cum += t.pnl ?? 0; pts.push({ t: fmtTime(t.entry_time), v: cum }) }
+  for (const t of sorted) {
+    cum += t.pnl ?? 0
+    pts.push({ t: fmtTime(t.entry_time), v: cum, sym: t.symbol })
+  }
 
   const vals = pts.map(p => p.v)
   const rawMin = Math.min(0, ...vals), rawMax = Math.max(0, ...vals)
@@ -322,17 +325,18 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   const xyPts = pts.map((p, i) => [xOf(i), yOf(p.v)] as [number, number])
   const polyPoints = xyPts.map(([x, y]) => `${x},${y}`).join(' ')
   const fillPath = `M${xyPts[0][0]} ${xyPts[0][1]} ${xyPts.slice(1).map(([x, y]) => `L${x} ${y}`).join(' ')} L${xOf(n - 1)} ${y0} L${xOf(0)} ${y0} Z`
-  const gridStepY = (H - PYB - PYT) / 5
-  const gridYs = [1, 2, 3, 4].map(k => PYT + k * gridStepY)
 
+  // Nice round Y ticks
   const rawTicks = (() => {
+    if (rawRange < 1) return [0]
     const roughStep = rawRange / 4
-    const magnitude = Math.pow(10, Math.floor(Math.log10(Math.max(1, roughStep))))
-    const nice = [1, 2, 5, 10].map(s => s * magnitude).find(s => s >= roughStep) ?? magnitude * 10
-    const start = Math.floor(rawMin / nice) * nice
-    const end = Math.ceil(rawMax / nice) * nice
+    const mag = Math.pow(10, Math.floor(Math.log10(roughStep)))
+    const norm = roughStep / mag
+    const step = norm < 1.5 ? mag : norm < 3.5 ? 2 * mag : norm < 7.5 ? 5 * mag : 10 * mag
+    const start = Math.floor(rawMin / step) * step
+    const end = Math.ceil(rawMax / step) * step
     const ticks: number[] = []
-    for (let v = start; v <= end + nice * 0.01; v += nice) ticks.push(Math.round(v * 100) / 100)
+    for (let v = start; v <= end + step * 0.001; v += step) ticks.push(Math.round(v * 1000) / 1000)
     return ticks
   })()
   const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < 0.01) === i)
@@ -342,8 +346,20 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   for (let i = step; i < n - 1; i += step) xIdxSet.add(i)
   const xIdxs = [...xIdxSet].sort((a, b) => a - b)
 
+  function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const svgX = ((e.clientX - rect.left) / rect.width) * W
+    let best = 0, bestDist = Infinity
+    xyPts.forEach(([x], i) => { const d = Math.abs(x - svgX); if (d < bestDist) { bestDist = d; best = i } })
+    setHoverIdx(best)
+  }
+
+  const hov = hoverIdx !== null ? hoverIdx : null
+  const hovPt = hov !== null ? xyPts[hov] : null
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', cursor: 'crosshair' }} preserveAspectRatio="none"
+      onMouseMove={handleMouseMove} onMouseLeave={() => setHoverIdx(null)}>
       <defs>
         <linearGradient id="pnl-grad" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={LC} stopOpacity="0.35"/>
@@ -351,9 +367,6 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
           <stop offset="100%" stopColor={LC} stopOpacity="0"/>
         </linearGradient>
       </defs>
-      {gridYs.map((gy, k) => (
-        <line key={`dg${k}`} x1={PXL} y1={gy} x2={W - PXR} y2={gy} stroke="rgba(255,255,255,.06)" strokeWidth={0.5} strokeDasharray="4 6" />
-      ))}
       {yTicks.map(v => (
         <line key={`g${v}`} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={gridColor} strokeWidth={0.5} />
       ))}
@@ -374,6 +387,24 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
         ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="round" />
         : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={LC} />
       }
+      {hovPt && hov !== null && (() => {
+        const [hx, hy] = hovPt
+        const p = pts[hov]
+        const sym = p.sym ?? '—'
+        const val = fmtY(p.v)
+        const left = hx > W * 0.55
+        const tx = left ? hx - 90 : hx + 8
+        const ty = Math.max(PYT + 2, Math.min(H - PYB - 38, hy - 18))
+        return (
+          <>
+            <line x1={hx} y1={PYT} x2={hx} y2={H - PYB} stroke="rgba(255,255,255,.14)" strokeWidth={1} />
+            <circle cx={hx} cy={hy} r={4} fill={LC} stroke="#0c0c15" strokeWidth={1.5} />
+            <rect x={tx} y={ty} width={82} height={34} rx={4} fill="#12121e" stroke="rgba(255,255,255,.1)" strokeWidth={.5} />
+            <text x={tx + 8} y={ty + 13} fontSize="8.5" fill="rgba(234,232,245,.55)" fontFamily="var(--font-geist-mono),monospace">{sym} · {p.t}</text>
+            <text x={tx + 8} y={ty + 27} fontSize="10" fill={LC} fontWeight="600" fontFamily="var(--font-geist-mono),monospace">{val}</text>
+          </>
+        )
+      })()}
     </svg>
   )
 }
@@ -412,16 +443,6 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
-        {score < 70 && (
-          <div style={{
-            position: 'absolute', bottom: -4, right: -6, pointerEvents: 'none', userSelect: 'none',
-            fontSize: 54, fontWeight: 900, letterSpacing: 3, lineHeight: 1,
-            color: score < 40 ? 'rgba(124,58,237,.09)' : 'rgba(255,171,0,.07)',
-            fontFamily: MONO,
-          }}>
-            {score < 40 ? 'STOP' : 'WATCH'}
-          </div>
-        )}
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: MONO }}>Profil comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ScoreRingSvg score={score} />
@@ -511,19 +532,23 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             )
           })}
         </div>
-        {alerts.length > 0 && (() => {
-          const latest = alerts[0]
-          const lvl = latest.level ?? 1
-          const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
-          return (
-            <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 7, background: `${aCol}07`, borderLeft: `2px solid ${aCol}80` }}>
-              <div style={{ fontSize: 8.5, color: aCol, fontFamily: MONO, marginBottom: 3 }}>
-                L{lvl} · {(latest.type ?? '').replace(/_/g, ' ')}
-              </div>
-              <div style={{ fontSize: 11.5, color: C.tm, fontWeight: 300, lineHeight: 1.4 }}>{latest.message}</div>
-            </div>
-          )
-        })()}
+        {alerts.length > 0 && (
+          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 180, overflowY: 'auto' }}>
+            {alerts.map((a, i) => {
+              const lvl = a.level ?? 1
+              const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
+              return (
+                <div key={(a as any).id ?? i} style={{ padding: '6px 8px', borderRadius: 6, background: `${aCol}07`, borderLeft: `2px solid ${aCol}55`, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                    <span style={{ fontSize: 8, color: aCol, fontFamily: MONO, letterSpacing: .3 }}>L{lvl} · {(a.type ?? '').replace(/_/g, ' ')}</span>
+                    {(a as any).created_at && <span style={{ fontSize: 7.5, color: C.te, fontFamily: MONO }}>{fmtTime((a as any).created_at)}</span>}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Notifications status */}
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: `.5px solid ${C.b}` }}>
@@ -626,73 +651,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} />
           </div>
         </div>
-      </div>
-
-      {/* Session DNA */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 18px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, textTransform: 'uppercase' as const }}>Séquence</span>
-          {yesterdayStats && (
-            <span style={{ fontSize: 8.5, color: C.te, fontFamily: MONO }}>
-              J−1 · {fmtEur(yesterdayStats.pnl)} · score {yesterdayStats.score}
-            </span>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: 3, height: 42 }}>
-          {(() => {
-            const chron = [...sortedTrades].reverse()
-            const slots = rules?.max_trades_per_session ?? Math.max(10, chron.length + 2)
-            return (
-              <>
-                {chron.map((t, i) => {
-                  const ta = alerts.filter(a =>
-                    a.trade_id ? a.trade_id === t.id
-                    : a.created_at && t.entry_time && Math.abs(new Date(a.created_at).getTime() - new Date(t.entry_time).getTime()) < 90000
-                  )
-                  const topLvl = ta.reduce((m, a) => Math.max(m, a.level ?? 1), 0)
-                  const isOpen = !t.exit_price
-                  const pnl = t.pnl ?? 0
-                  const col = isOpen ? '#ffab00' : pnl > 0 ? '#00d17a' : '#7c3aed'
-                  return (
-                    <div key={String(t.id ?? i)} style={{
-                      flex: 1, borderRadius: 5,
-                      background: `${col}1e`,
-                      border: `.5px solid ${col}${topLvl >= 2 ? 'cc' : '66'}`,
-                      boxShadow: 'none',
-                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                      padding: '3px 4px', position: 'relative', overflow: 'hidden',
-                      transition: 'box-shadow .3s',
-                    }}>
-                      {topLvl >= 2 && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: col, opacity: .7 }} />}
-                      <span style={{ fontSize: 11, color: col, lineHeight: 1 }}>{t.direction === 'long' ? '▲' : '▼'}</span>
-                      <span style={{ fontSize: 9, color: col, fontFamily: MONO, lineHeight: 1 }}>
-                        {isOpen ? '●' : pnl > 0 ? `+${Math.round(Math.abs(pnl))}` : `-${Math.round(Math.abs(pnl))}`}
-                      </span>
-                    </div>
-                  )
-                })}
-                {Array.from({ length: Math.max(0, slots - chron.length) }, (_, i) => (
-                  <div key={`g${i}`} style={{ flex: 1, borderRadius: 5, background: 'rgba(255,255,255,.015)', border: '.5px dashed rgba(255,255,255,.05)' }} />
-                ))}
-              </>
-            )
-          })()}
-        </div>
-        {sortedTrades.length > 0 && (
-          <div style={{ display: 'flex', gap: 14, marginTop: 7 }}>
-            {[
-              { dot: '#00d17a', lbl: `${stats.wins}W` },
-              { dot: '#7c3aed', lbl: `${stats.losses}L` },
-              ...(alerts.length > 0 ? [{ dot: '#ffab00', lbl: `${alerts.length} alerte${alerts.length > 1 ? 's' : ''}` }] : []),
-            ].map(({ dot, lbl }) => (
-              <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 5, height: 5, borderRadius: 2, background: dot, flexShrink: 0 }} />
-                <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{lbl}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Session tape — timeline */}
