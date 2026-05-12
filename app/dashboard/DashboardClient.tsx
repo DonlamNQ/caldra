@@ -326,13 +326,16 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   const gridYs = [1, 2, 3, 4].map(k => PYT + k * gridStepY)
 
   const rawTicks = (() => {
-    const NUM = 5
-    const step = (rawMax - rawMin) / (NUM - 1)
-    const base = Array.from({ length: NUM }, (_, i) => rawMin + i * step)
-    if (!base.some(v => Math.abs(v) < rawRange * 0.08)) base.push(0)
-    return base.sort((a, b) => a - b)
+    const roughStep = rawRange / 4
+    const magnitude = Math.pow(10, Math.floor(Math.log10(Math.max(1, roughStep))))
+    const nice = [1, 2, 5, 10].map(s => s * magnitude).find(s => s >= roughStep) ?? magnitude * 10
+    const start = Math.floor(rawMin / nice) * nice
+    const end = Math.ceil(rawMax / nice) * nice
+    const ticks: number[] = []
+    for (let v = start; v <= end + nice * 0.01; v += nice) ticks.push(Math.round(v * 100) / 100)
+    return ticks
   })()
-  const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < rawRange * 0.09) === i)
+  const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < 0.01) === i)
 
   const step = Math.max(1, Math.floor((n - 1) / 4))
   const xIdxSet = new Set([0, n - 1])
@@ -419,7 +422,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             {score < 40 ? 'STOP' : 'WATCH'}
           </div>
         )}
-        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</span>
+        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: MONO }}>Profil comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ScoreRingSvg score={score} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -440,9 +443,8 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
         </div>
       </div>
 
-      {/* Profil comportemental */}
-      <div style={{ padding: '14px 20px 8px', flexShrink: 0, background: 'rgba(255,255,255,.012)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, fontFamily: MONO, alignSelf: 'flex-start' }}>Profil comportemental</span>
+      {/* Radar */}
+      <div style={{ padding: '10px 20px 8px', flexShrink: 0, background: 'rgba(255,255,255,.012)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <BehavioralRadar sizing={mSizing} risk={mRisk} reentry={mReentry} drawdown={mDrawdown} discipline={mDiscipline} />
       </div>
 
@@ -615,7 +617,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         {/* Chart card */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
-          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Profil comportemental</div>
           <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
           </div>
@@ -755,25 +756,24 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                           transition: 'background .12s',
                         }}
                       >
-                        {/* Left: badges */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                          {isOpen && (
-                            <span style={{ fontSize: 8, padding: '1px 5px', background: 'rgba(255,171,0,.08)', border: '.5px solid rgba(255,171,0,.22)', color: C.o, borderRadius: 99, fontFamily: MONO }}>
-                              live
-                            </span>
-                          )}
-                          {ls && (
-                            <span style={{ fontSize: 8, padding: '1px 5px', fontFamily: MONO, background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.dot, borderRadius: 99 }}>
-                              L{lvl}
-                            </span>
-                          )}
-                        </div>
-                        {/* Center: symbol + direction */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                        {/* Left: empty spacer */}
+                        <div />
+                        {/* Center: symbol + direction + badges */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center', flexWrap: 'nowrap' as const }}>
                           <span style={{ fontSize: 13, color: C.tm, fontWeight: 500 }}>{t.symbol}</span>
                           <span style={{ fontSize: 10.5, color: C.td, flexShrink: 0 }}>
                             {t.direction === 'long' ? '▲' : '▼'} ×{t.size}
                           </span>
+                          {isOpen && (
+                            <span style={{ fontSize: 8, padding: '1px 5px', background: 'rgba(255,171,0,.08)', border: '.5px solid rgba(255,171,0,.22)', color: C.o, borderRadius: 99, fontFamily: MONO, flexShrink: 0 }}>
+                              live
+                            </span>
+                          )}
+                          {ls && (
+                            <span style={{ fontSize: 8, padding: '1px 5px', fontFamily: MONO, background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.dot, borderRadius: 99, flexShrink: 0 }}>
+                              L{lvl}
+                            </span>
+                          )}
                         </div>
                         {/* Right: PnL */}
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -2708,9 +2708,9 @@ export default function DashboardClient({
         @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .tab-btn{display:inline-flex;align-items:center;padding:0 13px;height:46px;font-size:11px;letter-spacing:.4px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;font-weight:400}
-        .tab-btn:hover{color:${C.tm}}
-        .tab-btn.active{color:${C.tx};border-bottom-color:${C.red};font-weight:500}
+        .tab-btn{display:flex;flex:1;align-items:center;justify-content:center;padding:0 6px;height:46px;font-size:11px;letter-spacing:.4px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;font-weight:400}
+        .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.02)}
+        .tab-btn.active{color:${C.tx};border-bottom-color:${C.red};font-weight:500;background:rgba(255,255,255,.025)}
         .tab-sentinel{color:rgba(124,58,237,.45)!important}
         .tab-sentinel.active{color:${C.red}!important;border-bottom-color:${C.red}}
         textarea,input{box-sizing:border-box}
@@ -2746,33 +2746,21 @@ export default function DashboardClient({
             <div style={{ width: 2, height: 17, background: C.red, borderRadius: 1 }} />
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
-          {/* Score pill */}
-          {(() => {
-            const scoreCol = scoreColor(score, C)
-            const statusTxt = score >= 70 ? 'Contrôlé' : score >= 40 ? 'Attention' : 'STOP'
-            return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRight: `.5px solid ${C.b}`, alignSelf: 'stretch', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 99, background: `${scoreCol}10`, border: `.5px solid ${scoreCol}38`, transition: 'all .5s' }}>
-                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: scoreCol, animation: score < 70 ? 'pulse 1.6s infinite' : 'none', transition: 'background .5s' }} />
-                  <span style={{ fontSize: 12, fontFamily: MONO, color: scoreCol, fontWeight: 700, letterSpacing: -.3, transition: 'color .5s' }}>{score}</span>
-                  <span style={{ fontSize: 9, fontFamily: MONO, color: C.te, letterSpacing: .5 }}>{statusTxt}</span>
-                </div>
-              </div>
-            )
-          })()}
-          {/* Tabs */}
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              className={`tab-btn${tab.sentinel ? ' tab-sentinel' : ''}${activeTab === tab.id ? ' active' : ''}`}
-              onClick={() => { setActiveTab(tab.id as TabId); setSettingsOpen(false) }}
-            >
-              {tab.label}
-              {tab.sentinel && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: C.red, marginLeft: 5, verticalAlign: 'middle', animation: 'pulse 2s infinite' }} />}
-            </button>
-          ))}
+          {/* Tabs — flex:1 fill all available space */}
+          <div style={{ flex: 1, display: 'flex', alignSelf: 'stretch' }}>
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                className={`tab-btn${tab.sentinel ? ' tab-sentinel' : ''}${activeTab === tab.id ? ' active' : ''}`}
+                onClick={() => { setActiveTab(tab.id as TabId); setSettingsOpen(false) }}
+              >
+                {tab.label}
+                {tab.sentinel && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: C.red, marginLeft: 5, verticalAlign: 'middle', animation: 'pulse 2s infinite' }} />}
+              </button>
+            ))}
+          </div>
           {/* Right controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto', paddingRight: 12, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, flexShrink: 0 }}>
             <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{displayDate}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', background: connected ? 'rgba(0,209,122,.06)' : C.rg, border: `.5px solid ${connected ? 'rgba(0,209,122,.18)' : C.rb}`, borderRadius: 99 }}>
               <div style={{ width: 5, height: 5, borderRadius: '50%', background: connected ? C.g : C.red, animation: 'pulse 1.8s infinite' }} />
