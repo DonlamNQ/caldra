@@ -806,23 +806,33 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflowY: 'auto' }}>
+
+      {/* Header */}
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Historique</div>
+          <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Calendrier des sessions</div>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {[['rgba(0,209,122,.7)', '≥ 70'], ['rgba(255,171,0,.7)', '40–69'], ['rgba(255,90,61,.7)', '< 40']].map(([bg, lbl]) => (
+            <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: C.td }}>
+              <div style={{ width: 7, height: 7, borderRadius: 2, background: bg }} />{lbl}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Calendar grid */}
       <div style={{ padding: '20px 26px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.3, textTransform: 'capitalize' as const }}>{monthName}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ display: 'flex', gap: 14 }}>
-              {[['rgba(0,209,122,.7)', '≥ 70'], ['rgba(255,171,0,.7)', '40–69'], ['rgba(255,90,61,.7)', '< 40']].map(([bg, lbl]) => (
-                <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: C.td }}>
-                  <div style={{ width: 7, height: 7, borderRadius: 2, background: bg }} />
-                  {lbl}
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 5 }}>
-              <button onClick={() => setCalOffset(o => o - 1)} style={{ background: 'transparent', border: `.5px solid ${C.b}`, borderRadius: 6, color: C.td, cursor: 'pointer', width: 28, height: 28, fontSize: 14 }}>‹</button>
-              <button onClick={() => setCalOffset(o => o + 1)} style={{ background: 'transparent', border: `.5px solid ${C.b}`, borderRadius: 6, color: C.td, cursor: 'pointer', width: 28, height: 28, fontSize: 14 }}>›</button>
-            </div>
+          <div style={{ display: 'flex', gap: 5 }}>
+            <button onClick={() => setCalOffset(o => o - 1)} style={{ background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b}`, borderRadius: 7, color: C.td, cursor: 'pointer', width: 30, height: 30, fontSize: 16, transition: 'background .15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.06)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,.03)')}>‹</button>
+            <button onClick={() => setCalOffset(o => o + 1)} style={{ background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b}`, borderRadius: 7, color: C.td, cursor: 'pointer', width: 30, height: 30, fontSize: 16, transition: 'background .15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.06)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,.03)')}>›</button>
           </div>
         </div>
 
@@ -1014,13 +1024,23 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
   }, [])
 
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+
+      {/* Header */}
+      <div style={{ padding: '18px 24px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Performance</div>
+        <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Analytics</div>
+        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Données sur les {sessions.length} dernières sessions</div>
+      </div>
+
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
 
       {/* Row 1: 3 KPI cards */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
 
         {/* P&L cumulé */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px' }}>
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>P&L cumulé — {sessions.length}j</div>
           <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: '#e2e8f0' }}>{fmtEur(totalPnl)}</div>
           <div style={{ fontSize: 12, color: C.td }}>Sur {sessions.length} sessions tradées</div>
@@ -1060,7 +1080,8 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
         </div>
 
         {/* Score moyen */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px' }}>
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Score moyen</div>
           <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: scoreColor(avgScore, C) }}>{avgScore}</div>
           <div style={{ fontSize: 12, color: C.td, marginBottom: 14 }}>Sur {sessions.length} sessions</div>
@@ -1077,7 +1098,8 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
         </div>
 
         {/* Performance par jour */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px' }}>
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Performance par jour</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginTop: 8 }}>
             {dayNames.map((name, i) => {
@@ -1111,7 +1133,8 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flex: 1 }}>
 
         {/* Patterns */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px' }}>
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Patterns déclenchés ce mois</div>
           {patterns.length === 0 ? (
             <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun pattern détecté — excellent travail.</div>
@@ -1135,7 +1158,8 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
         </div>
 
         {/* Stats détaillées */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px' }}>
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Stats détaillées</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
             {[
@@ -1162,6 +1186,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
           ))}
         </div>
       </div>
+    </div>
     </div>
   )
 }
@@ -1223,11 +1248,14 @@ function RapportsPanel() {
   ]
 
   return (
-    <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.3, marginBottom: 5 }}>Rapports hebdomadaires</div>
-        <div style={{ fontSize: 12.5, color: C.td }}>PDF généré à la demande — score, PnL, alertes comportementales, journal des trades.</div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Hebdomadaire</div>
+        <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Rapports PDF</div>
+        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Score, PnL, alertes comportementales, journal des trades — généré à la demande.</div>
       </div>
+    <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
 
       {/* Semaine en cours — non disponible */}
       <div style={{
@@ -1256,8 +1284,9 @@ function RapportsPanel() {
           <div key={i} style={{
             background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20,
             display: 'flex', alignItems: 'center', gap: 16,
-            transition: 'border-color .18s',
+            transition: 'border-color .18s', position: 'relative', overflow: 'hidden',
           }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
             <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
               📋
             </div>
@@ -1287,6 +1316,7 @@ function RapportsPanel() {
           </div>
         )
       })}
+    </div>
     </div>
   )
 }
@@ -1425,12 +1455,14 @@ namespace CaldraBot
   }
 
   return (
-    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
-      <div style={{ marginBottom: 22 }}>
-        <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Connecteurs</div>
-        <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3, marginBottom: 4 }}>Intégrations</div>
-        <div style={{ fontSize: 12.5, color: C.td }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Connecteurs</div>
+        <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Intégrations</div>
+        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
       </div>
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
 
       {/* ── Clé API ── */}
       <IntCard style={{ marginBottom: 16 }}>
@@ -1603,6 +1635,7 @@ namespace CaldraBot
       </div>
 
     </div>
+    </div>
   )
 }
 
@@ -1656,11 +1689,14 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
   }
 
   return (
-    <div style={{ padding: '26px 28px', overflowY: 'auto', height: '100%' }}>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.3, color: C.tx, marginBottom: 5 }}>Règles de session</div>
-        <div style={{ fontSize: 12.5, color: C.td }}>Ces seuils définissent quand Caldra déclenche une alerte. Modifiables à tout moment.</div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '18px 28px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Configuration</div>
+        <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Règles de session</div>
+        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Ces seuils définissent quand Caldra déclenche une alerte. Modifiables à tout moment.</div>
       </div>
+    <div style={{ padding: '22px 28px', overflowY: 'auto', flex: 1 }}>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <RuleGroup title="Risk management" desc="Niveau 2 si seuil dépassé" accent="rgba(124,58,237,.5)">
@@ -1724,6 +1760,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
           {save === 'error' && <span style={{ color: C.red, fontSize: 11, fontFamily: MONO }}>Erreur — réessayez</span>}
         </div>
       </form>
+    </div>
     </div>
   )
 }
@@ -1837,17 +1874,23 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
   const dominant = Object.entries(alertsByType).sort((a, b) => b[1] - a[1])[0]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', flex: 1, height: '100%', minHeight: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Intelligence artificielle</div>
+          <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Sentinel IA</div>
+          <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Analyse comportementale en temps réel · Debriefing automatique · Coaching personnalisé</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99 }}>
+          <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.red, animation: 'pulse 2s infinite' }} />
+          <span style={{ fontSize: 9.5, color: C.red, fontFamily: MONO, letterSpacing: 1 }}>IA ACTIVE</span>
+        </div>
+      </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <div style={{ padding: 26, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ flex: 1, background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: 400 }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.3),transparent)' }} />
-          <div style={{ paddingBottom: 14, borderBottom: `.5px solid ${C.b}`, marginBottom: 14 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 500, color: C.tx, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 9 }}>
-              Sentinel
-              <span style={{ fontSize: 9, padding: '3px 9px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, letterSpacing: .5 }}>IA Active</span>
-            </div>
-            <div style={{ fontSize: 11.5, color: C.td }}>Analyse en temps réel · Répond à tes questions · Debriefing automatique</div>
-          </div>
 
           <div ref={msgsRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 16, minHeight: 0 }}>
             {msgs.map((m, i) => m.role === 'assistant' ? (
@@ -1994,6 +2037,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
         )}
       </div>
     </div>
+    </div>
   )
 }
 
@@ -2100,26 +2144,28 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
   ]
 
   return (
-    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Abonnement</div>
-        <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3, marginBottom: 4 }}>Billing</div>
-        <div style={{ fontSize: 12.5, color: C.td }}>
-          Plan actuel : <span style={{ color: C.tm, fontWeight: 500, textTransform: 'capitalize' }}>{plan}</span>
-          {isPaid && (
-            <button onClick={portal} disabled={loading === 'portal'} style={{ marginLeft: 14, padding: '4px 12px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 6, color: C.td, fontSize: 10, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5 }}>
-              {loading === 'portal' ? 'Chargement…' : 'Gérer l\'abonnement →'}
-            </button>
-          )}
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Abonnement</div>
+          <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Billing</div>
+          <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Plan actuel : <span style={{ color: C.tm, fontWeight: 500, textTransform: 'capitalize' }}>{plan}</span></div>
         </div>
+        {isPaid && (
+          <button onClick={portal} disabled={loading === 'portal'} style={{ padding: '8px 16px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 8, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .3, transition: 'all .18s' }}>
+            {loading === 'portal' ? 'Chargement…' : 'Gérer l\'abonnement →'}
+          </button>
+        )}
       </div>
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 780 }}>
         {plans.map(p => {
           const isCurrent = plan === p.id
           return (
             <div key={p.id} style={{ background: C.sf, border: `.5px solid ${isCurrent ? p.accent : C.b}`, borderRadius: 12, padding: 24, position: 'relative', overflow: 'hidden' }}>
-              {isCurrent && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${p.accent},transparent)` }} />}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${isCurrent ? p.accent : C.b3},transparent)` }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 500, color: C.tx, marginBottom: 6 }}>{p.name}</div>
@@ -2160,6 +2206,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
           14 jours d'essai gratuit inclus sur Pro et Sentinel — aucune carte requise pour commencer.
         </div>
       )}
+    </div>
     </div>
   )
 }
@@ -2246,11 +2293,19 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
   )
 
   return (
-    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
-      <div style={{ marginBottom: 24, maxWidth: 520 }}>
-        <div style={{ fontSize: 10, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, marginBottom: 6 }}>Compte</div>
-        <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.3 }}>Profil</div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Compte</div>
+          <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Profil</div>
+          <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>{userEmail}</div>
+        </div>
+        <button onClick={logout} style={{ padding: '8px 16px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 8, color: C.te, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .3, transition: 'all .18s' }}>
+          Se déconnecter
+        </button>
       </div>
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
 
       <div style={{ maxWidth: 520 }}>
         <Sec title="Informations personnelles">
@@ -2323,6 +2378,7 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
           </div>
         </div>
       </div>
+    </div>
     </div>
   )
 }
@@ -2641,12 +2697,12 @@ export default function DashboardClient({
         @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .tab-nav{display:flex;align-items:center;background:rgba(255,255,255,.022);border:.5px solid rgba(255,255,255,.05);border-radius:10px;padding:3px;gap:2px}
-        .tab-btn{display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:7px;font-size:11px;letter-spacing:.4px;color:${C.td};cursor:pointer;border:none;background:none;white-space:nowrap;font-weight:400;font-family:${SANS};transition:color .15s,background .15s,box-shadow .15s}
-        .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.04)}
-        .tab-btn.active{color:${C.tx};background:rgba(255,255,255,.08);font-weight:500;box-shadow:0 1px 6px rgba(0,0,0,.28),inset 0 .5px 0 rgba(255,255,255,.08)}
-        .tab-sentinel{color:rgba(124,58,237,.5)!important}
-        .tab-sentinel.active{color:${C.red}!important;background:rgba(124,58,237,.13)!important;box-shadow:0 0 0 .5px rgba(124,58,237,.24),0 1px 6px rgba(0,0,0,.2)!important}
+        .tab-nav{display:flex;align-items:center;background:rgba(255,255,255,.024);border:.5px solid rgba(255,255,255,.06);border-radius:13px;padding:4px 5px;gap:3px}
+        .tab-btn{display:flex;align-items:center;gap:6px;padding:8px 22px;border-radius:9px;font-size:12.5px;letter-spacing:.3px;color:${C.td};cursor:pointer;border:none;background:none;white-space:nowrap;font-weight:400;font-family:${SANS};transition:color .15s,background .15s,box-shadow .15s}
+        .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.045)}
+        .tab-btn.active{color:${C.tx};background:rgba(255,255,255,.09);font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 .5px 0 rgba(255,255,255,.09)}
+        .tab-sentinel{color:rgba(124,58,237,.55)!important}
+        .tab-sentinel.active{color:${C.red}!important;background:rgba(124,58,237,.14)!important;box-shadow:0 0 0 .5px rgba(124,58,237,.26),0 2px 8px rgba(0,0,0,.22)!important}
         textarea,input{box-sizing:border-box}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
@@ -2681,7 +2737,7 @@ export default function DashboardClient({
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
           {/* Tabs — pill nav */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', paddingLeft: 14 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div className="tab-nav">
               {TABS.map(tab => (
                 <button
