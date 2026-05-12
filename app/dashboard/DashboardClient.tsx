@@ -171,13 +171,13 @@ function BehavioralRadar({ sizing, risk, reentry, drawdown, discipline }: {
         <circle key={i} cx={x} cy={y} r={2.5} fill={col} />
       ))}
       {values.map((v, i) => {
-        const [x, y] = pt(i, r + 19)
+        const [x, y] = pt(i, r + 23)
         const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
         const vc = v >= 70 ? C.g : v >= 40 ? C.o : C.red
         return (
           <g key={i}>
-            <text x={x} y={y - 3} textAnchor={anchor} fontSize={8} fill={C.td} fontFamily={MONO}>{labels[i]}</text>
-            <text x={x} y={y + 8} textAnchor={anchor} fontSize={9} fill={vc} fontFamily={MONO}>{v}</text>
+            <text x={x} y={y - 3} textAnchor={anchor} fontSize={10} fill={C.td} fontFamily={MONO}>{labels[i]}</text>
+            <text x={x} y={y + 10} textAnchor={anchor} fontSize={11} fill={vc} fontWeight="600" fontFamily={MONO}>{v}</text>
           </g>
         )
       })}
@@ -325,8 +325,14 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   const gridStepY = (H - PYB - PYT) / 5
   const gridYs = [1, 2, 3, 4].map(k => PYT + k * gridStepY)
 
-  const rawTicks = [rawMin, 0, rawMax]
-  const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < rawRange * 0.12) === i)
+  const rawTicks = (() => {
+    const NUM = 5
+    const step = (rawMax - rawMin) / (NUM - 1)
+    const base = Array.from({ length: NUM }, (_, i) => rawMin + i * step)
+    if (!base.some(v => Math.abs(v) < rawRange * 0.08)) base.push(0)
+    return base.sort((a, b) => a - b)
+  })()
+  const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < rawRange * 0.09) === i)
 
   const step = Math.max(1, Math.floor((n - 1) / 4))
   const xIdxSet = new Set([0, n - 1])
@@ -356,7 +362,7 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
       ))}
       {xIdxs.map(i => (
         <text key={i} x={Math.max(PXL + 14, Math.min(W - PXR - 14, xOf(i)))}
-          y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="6" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
+          y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
           {pts[i].t}
         </text>
       ))}
@@ -516,44 +522,44 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             </div>
           )
         })()}
-      </div>
 
-      {/* Notifications status */}
-      <div style={{ padding: '12px 20px', borderTop: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        {notifPerm === 'granted' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
-            <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>Notifications actives</span>
-          </div>
-        ) : notifPerm === 'denied' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569', flexShrink: 0 }} />
-            <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO, lineHeight: 1.4 }}>
-              Notifications désactivées dans le navigateur
-            </span>
-          </div>
-        ) : (
+        {/* Notifications status */}
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: `.5px solid ${C.b}` }}>
+          {notifPerm === 'granted' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
+              <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>Notifications actives</span>
+            </div>
+          ) : notifPerm === 'denied' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569', flexShrink: 0 }} />
+              <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO, lineHeight: 1.4 }}>
+                Notifications désactivées dans le navigateur
+              </span>
+            </div>
+          ) : (
+            <button
+              onClick={onRequestNotif}
+              style={{ width: '100%', padding: 9, background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, transition: 'all .2s', animation: 'pulse 2s infinite' }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.rg; e.currentTarget.style.animation = 'none' }}
+              onMouseLeave={e => { e.currentTarget.style.background = C.rd; e.currentTarget.style.animation = 'pulse 2s infinite' }}
+            >
+              🔔 Activer les notifications
+            </button>
+          )}
+        </div>
+
+        {/* Pause */}
+        <div style={{ marginTop: 8 }}>
           <button
-            onClick={onRequestNotif}
-            style={{ width: '100%', padding: 10, background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, transition: 'all .2s', animation: 'pulse 2s infinite' }}
-            onMouseEnter={e => { e.currentTarget.style.background = C.rg; e.currentTarget.style.animation = 'none' }}
-            onMouseLeave={e => { e.currentTarget.style.background = C.rd; e.currentTarget.style.animation = 'pulse 2s infinite' }}
+            onClick={onTogglePause}
+            style={{ width: '100%', padding: 9, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
+            onMouseEnter={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.13)' : C.rd)}
+            onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
           >
-            🔔 Activer les notifications
+            {paused ? '⏸ Alertes suspendues · Reprendre' : '⏸ Pause session'}
           </button>
-        )}
-      </div>
-
-      {/* Pause */}
-      <div style={{ padding: '8px 20px 14px', flexShrink: 0 }}>
-        <button
-          onClick={onTogglePause}
-          style={{ width: '100%', padding: 10, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
-          onMouseEnter={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.13)' : C.rd)}
-          onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
-        >
-          {paused ? '⏸ Alertes suspendues · Reprendre' : '⏸ Pause session'}
-        </button>
+        </div>
       </div>
     </div>
   )
@@ -599,8 +605,8 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             <div key={k}>
               <div style={{ fontSize: 8.5, color: C.te, fontFamily: MONO, letterSpacing: .8, marginBottom: 2 }}>{k}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                <span style={{ fontSize: 15, fontFamily: MONO, color: warn ? C.o : C.td }}>{v}</span>
-                {sub && <span style={{ fontSize: 9.5, color: C.te, fontFamily: MONO }}>{sub}</span>}
+                <span style={{ fontSize: 18, fontFamily: MONO, color: warn ? C.o : C.td }}>{v}</span>
+                {sub && <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>{sub}</span>}
               </div>
             </div>
           ))}
@@ -609,7 +615,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         {/* Chart card */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
-          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Score comportemental</div>
+          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Profil comportemental</div>
           <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
           </div>
@@ -625,14 +631,14 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '12px 18px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, textTransform: 'uppercase' as const }}>Session DNA</span>
+          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, textTransform: 'uppercase' as const }}>Séquence</span>
           {yesterdayStats && (
             <span style={{ fontSize: 8.5, color: C.te, fontFamily: MONO }}>
               J−1 · {fmtEur(yesterdayStats.pnl)} · score {yesterdayStats.score}
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 3, height: 34 }}>
+        <div style={{ display: 'flex', gap: 3, height: 42 }}>
           {(() => {
             const chron = [...sortedTrades].reverse()
             const slots = rules?.max_trades_per_session ?? Math.max(10, chron.length + 2)
@@ -658,8 +664,8 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                       transition: 'box-shadow .3s',
                     }}>
                       {topLvl >= 2 && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: col, opacity: .7 }} />}
-                      <span style={{ fontSize: 8, color: col, lineHeight: 1 }}>{t.direction === 'long' ? '▲' : '▼'}</span>
-                      <span style={{ fontSize: 7, color: col, fontFamily: MONO, lineHeight: 1 }}>
+                      <span style={{ fontSize: 11, color: col, lineHeight: 1 }}>{t.direction === 'long' ? '▲' : '▼'}</span>
+                      <span style={{ fontSize: 9, color: col, fontFamily: MONO, lineHeight: 1 }}>
                         {isOpen ? '●' : pnl > 0 ? `+${Math.round(Math.abs(pnl))}` : `-${Math.round(Math.abs(pnl))}`}
                       </span>
                     </div>
@@ -681,7 +687,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             ].map(({ dot, lbl }) => (
               <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 5, height: 5, borderRadius: 2, background: dot, flexShrink: 0 }} />
-                <span style={{ fontSize: 8.5, color: C.te, fontFamily: MONO }}>{lbl}</span>
+                <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{lbl}</span>
               </div>
             ))}
           </div>
@@ -744,16 +750,13 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                         onClick={() => setExpandedTrade(isExpanded ? null : tradeKey)}
                         style={{
                           flex: 1, padding: '4px 8px 4px 0', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between',
+                          display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center',
                           borderRadius: 6, background: isExpanded ? 'rgba(255,255,255,.03)' : 'transparent',
                           transition: 'background .12s',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                          <span style={{ fontSize: 13, color: C.tm, fontWeight: 400 }}>{t.symbol}</span>
-                          <span style={{ fontSize: 10.5, color: C.td }}>
-                            {t.direction === 'long' ? '▲' : '▼'} ×{t.size}
-                          </span>
+                        {/* Left: badges */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                           {isOpen && (
                             <span style={{ fontSize: 8, padding: '1px 5px', background: 'rgba(255,171,0,.08)', border: '.5px solid rgba(255,171,0,.22)', color: C.o, borderRadius: 99, fontFamily: MONO }}>
                               live
@@ -765,9 +768,19 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                             </span>
                           )}
                         </div>
-                        <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const, flexShrink: 0 }}>
-                          {isOpen ? '—' : fmtEur(t.pnl ?? 0)}
-                        </span>
+                        {/* Center: symbol + direction */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                          <span style={{ fontSize: 13, color: C.tm, fontWeight: 500 }}>{t.symbol}</span>
+                          <span style={{ fontSize: 10.5, color: C.td, flexShrink: 0 }}>
+                            {t.direction === 'long' ? '▲' : '▼'} ×{t.size}
+                          </span>
+                        </div>
+                        {/* Right: PnL */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tx, whiteSpace: 'nowrap' as const }}>
+                            {isOpen ? '—' : fmtEur(t.pnl ?? 0)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     {isExpanded && (
@@ -777,12 +790,19 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                         borderRadius: 7, padding: '8px 12px',
                         display: 'flex', gap: 18, flexWrap: 'wrap' as const, animation: 'fadeIn .15s',
                       }}>
-                        {[
-                          { label: 'Entrée', val: t.entry_price != null ? String(t.entry_price) : '—' },
-                          { label: 'Sortie', val: t.exit_price != null ? String(t.exit_price) : '—' },
-                          { label: 'Durée', val: fmtDuration(t.entry_time, t.exit_time) },
-                          { label: 'Taille', val: `${t.size} lot` },
-                        ].map(({ label, val }) => (
+                        {(() => {
+                          const pts = t.entry_price && t.exit_price
+                            ? (t.direction === 'long' ? t.exit_price - t.entry_price : t.entry_price - t.exit_price)
+                            : null
+                          const fields: { label: string; val: string }[] = [
+                            { label: 'Entrée', val: t.entry_price != null ? String(t.entry_price) : '—' },
+                            { label: 'Sortie', val: t.exit_price != null ? String(t.exit_price) : '—' },
+                            { label: 'Durée', val: fmtDuration(t.entry_time, t.exit_time) },
+                            { label: 'Taille', val: `${t.size} lot` },
+                          ]
+                          if (pts !== null) fields.push({ label: 'Pts / pips', val: `${pts >= 0 ? '+' : ''}${pts.toFixed(2)}` })
+                          return fields
+                        })().map(({ label, val }) => (
                           <div key={label}>
                             <div style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, marginBottom: 1 }}>{label}</div>
                             <div style={{ fontSize: 11, color: C.tm, fontFamily: MONO }}>{val}</div>
@@ -2726,6 +2746,20 @@ export default function DashboardClient({
             <div style={{ width: 2, height: 17, background: C.red, borderRadius: 1 }} />
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
+          {/* Score pill */}
+          {(() => {
+            const scoreCol = scoreColor(score, C)
+            const statusTxt = score >= 70 ? 'Contrôlé' : score >= 40 ? 'Attention' : 'STOP'
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRight: `.5px solid ${C.b}`, alignSelf: 'stretch', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 99, background: `${scoreCol}10`, border: `.5px solid ${scoreCol}38`, transition: 'all .5s' }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: scoreCol, animation: score < 70 ? 'pulse 1.6s infinite' : 'none', transition: 'background .5s' }} />
+                  <span style={{ fontSize: 12, fontFamily: MONO, color: scoreCol, fontWeight: 700, letterSpacing: -.3, transition: 'color .5s' }}>{score}</span>
+                  <span style={{ fontSize: 9, fontFamily: MONO, color: C.te, letterSpacing: .5 }}>{statusTxt}</span>
+                </div>
+              </div>
+            )
+          })()}
           {/* Tabs */}
           {TABS.map(tab => (
             <button
