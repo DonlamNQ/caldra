@@ -574,7 +574,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
 
       {/* Row 1: terminal stats + chart */}
-      <div style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
+      <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
 
         {/* Stats terminal */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 18px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1036,7 +1036,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
 
       {/* Row 1: 3 KPI cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
 
         {/* P&L cumulé */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -1130,7 +1130,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
       </div>
 
       {/* Row 2: Patterns + Stats détaillées */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flex: 1 }}>
+      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flex: 1 }}>
 
         {/* Patterns */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -1698,7 +1698,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
       </div>
     <div style={{ padding: '22px 28px', overflowY: 'auto', flex: 1 }}>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="rules-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <RuleGroup title="Risk management" desc="Niveau 2 si seuil dépassé" accent="rgba(124,58,237,.5)">
             <RuleField label="Taille du compte" unit="€">
               <input style={{ ...inputStyle, width: 100 }} type="number" min={100} max={10000000} step={100} value={rules.account_size ?? 10000} onChange={e => set('account_size', e.target.value)} />
@@ -1887,7 +1887,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
           <span style={{ fontSize: 9.5, color: C.red, fontFamily: MONO, letterSpacing: 1 }}>IA ACTIVE</span>
         </div>
       </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+    <div className="sentinel-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <div style={{ padding: 26, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ flex: 1, background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: 400 }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.3),transparent)' }} />
@@ -1938,7 +1938,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
       </div>
 
       {/* Sentinel sidebar */}
-      <div style={{ borderLeft: `.5px solid ${C.b}`, padding: 20, display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', background: C.sf }}>
+      <div className="sentinel-sidebar" style={{ borderLeft: `.5px solid ${C.b}`, padding: 20, display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', background: C.sf }}>
         <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.b}` }}>
           <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Insights de session</div>
           {score >= 70 && (
@@ -2160,7 +2160,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
       </div>
     <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 780 }}>
+      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 780 }}>
         {plans.map(p => {
           const isCurrent = plan === p.id
           return (
@@ -2310,7 +2310,7 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
       <div style={{ maxWidth: 520 }}>
         <Sec title="Informations personnelles">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>PRÉNOM</div>
                 <input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Prénom" />
@@ -2429,10 +2429,6 @@ export default function DashboardClient({
   const [sentinelPrompt, setSentinelPrompt] = useState<AlertRow | null>(null)
   const [coachingCards, setCoachingCards] = useState<CoachingCard[]>([])
 
-  // Redirection automatique vers /mobile sur petit écran
-  useEffect(() => {
-    if (window.innerWidth < 768) window.location.replace('/mobile')
-  }, [])
   const pausedRef = useRef(false)
   const notifDelay = useRef(0)
   const notifReset = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -2710,6 +2706,22 @@ export default function DashboardClient({
         .c-card{transition:border-color .18s,box-shadow .18s}
         .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
         .c-row:hover{background:rgba(255,255,255,.025)!important}
+        @media(max-width:768px){
+          .topbar{flex-wrap:wrap;height:auto!important;min-height:46px}
+          .nav-wrap{position:static!important;left:auto!important;transform:none!important;order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:5px 8px;border-top:.5px solid rgba(255,255,255,.055)}
+          .nav-wrap::-webkit-scrollbar{display:none}
+          .tab-nav{border-radius:10px;width:max-content}
+          .tab-btn{padding:6px 14px;font-size:11.5px}
+          .date-lbl{display:none!important}
+          .resp-grid-2{grid-template-columns:1fr!important}
+          .resp-grid-3{grid-template-columns:1fr!important}
+          .session-main-grid{grid-template-columns:1fr!important}
+          .sentinel-grid{grid-template-columns:1fr!important}
+          .sentinel-sidebar{display:none!important}
+          .panel-header-row{flex-direction:column;align-items:flex-start!important;gap:8px}
+          .panel-hdr-actions{align-self:flex-end}
+          .rules-grid{grid-template-columns:1fr!important}
+        }
       `}</style>
 
 
@@ -2730,14 +2742,14 @@ export default function DashboardClient({
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
         {/* ── Top bar ── */}
-        <div style={{ display: 'flex', alignItems: 'center', height: 46, borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0, position: 'relative' }}>
+        <div className="topbar" style={{ display: 'flex', alignItems: 'center', height: 46, borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0, position: 'relative' }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 18px 0 20px', borderRight: `.5px solid ${C.b}`, alignSelf: 'stretch', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 18px 0 20px', borderRight: `.5px solid ${C.b}`, alignSelf: 'stretch', flexShrink: 0, height: 46, minHeight: 46 }}>
             <div style={{ width: 2, height: 17, background: C.red, borderRadius: 1 }} />
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
           {/* Tabs — pill nav, centered absolutely */}
-          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center' }}>
+          <div className="nav-wrap" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center' }}>
             <div className="tab-nav">
               {TABS.map(tab => (
                 <button
@@ -2752,8 +2764,8 @@ export default function DashboardClient({
             </div>
           </div>
           {/* Right controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, marginLeft: 'auto', flexShrink: 0 }}>
-            <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{displayDate}</span>
+          <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, marginLeft: 'auto', flexShrink: 0, height: 46 }}>
+            <span className="date-lbl" style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{displayDate}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', background: connected ? 'rgba(0,209,122,.06)' : C.rg, border: `.5px solid ${connected ? 'rgba(0,209,122,.18)' : C.rb}`, borderRadius: 99 }}>
               <div style={{ width: 5, height: 5, borderRadius: '50%', background: connected ? C.g : C.red, animation: 'pulse 1.8s infinite' }} />
               <span style={{ fontSize: 9, color: connected ? C.g : C.red, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: MONO }}>{connected ? 'Live' : 'Sync'}</span>

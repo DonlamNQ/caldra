@@ -273,6 +273,35 @@ footer{padding:1.75rem 3.5rem;display:flex;justify-content:space-between;align-i
   .laptop-screen{width:280px;height:175px}.laptop-base{width:310px}
   h1{letter-spacing:-1.5px}
 }
+@media(max-width:480px){
+  html{font-size:14px}
+  h1{font-size:clamp(2rem,10vw,3rem);letter-spacing:-1px;line-height:1.1}
+  .hero-top{padding:5rem 1.25rem 0}
+  .hero-sub{font-size:14px}
+  .wf{flex-direction:column;padding:6px;gap:6px;border-radius:8px}
+  .wf-btn{width:100%;border-radius:6px;padding:12px}
+  .wf input{width:100%;padding:12px}
+  .cta-wf{flex-direction:column;padding:6px;gap:6px}
+  .cta-wf input{width:100%}
+  .cta-wf button{width:100%;padding:12px;border-radius:6px}
+  .sec,.split-sec,.story-sec,.cta-sec{padding:3rem 1.25rem}
+  .sec-in{padding:0}
+  .det-wrap{grid-template-columns:1fr!important}
+  .steps-grid{grid-template-columns:1fr!important}
+  .pricing-grid{grid-template-columns:1fr!important}
+  .testi-grid{grid-template-columns:1fr!important}
+  .stats-bar{grid-template-columns:1fr!important}
+  .sb-item{border-right:none!important;border-top:.5px solid var(--b1)}
+  .sb-item:first-child{border-top:none}
+  nav{padding:1rem 1.25rem}
+  .hero-devices{display:none}
+  footer{padding:1.25rem;font-size:12px}
+  .ls-app{padding:1rem}
+  .n-r a{font-size:12px;padding:6px 12px}
+  .eyebrow{font-size:11px}
+  .story-in{padding:0}
+  .sec-d{font-size:14px}
+}
 `
 
 const DETECTORS = [

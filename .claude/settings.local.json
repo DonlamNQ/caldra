@@ -60,7 +60,8 @@
       "Read(//tmp/**)",
       "Bash(npm init *)",
       "Bash(npm install *)",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(Remove-Item *)"
     ]
   },
   "hooks": {
