@@ -504,12 +504,12 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
               const lvl = a.level ?? 1
               const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
               return (
-                <div key={(a as any).id ?? i} style={{ padding: '6px 8px', borderRadius: 6, background: `${aCol}07`, borderLeft: `2px solid ${aCol}55`, flexShrink: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                    <span style={{ fontSize: 8, color: aCol, fontFamily: MONO, letterSpacing: .3 }}>L{lvl} · {(a.type ?? '').replace(/_/g, ' ')}</span>
-                    {(a as any).created_at && <span style={{ fontSize: 7.5, color: C.te, fontFamily: MONO }}>{fmtTime((a as any).created_at)}</span>}
+                <div key={(a as any).id ?? i} style={{ padding: '8px 10px', borderRadius: 6, background: `${aCol}07`, borderLeft: `2px solid ${aCol}55`, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                    <span style={{ fontSize: 10, color: aCol, fontFamily: MONO, letterSpacing: .3 }}>L{lvl} · {(a.type ?? '').replace(/_/g, ' ')}</span>
+                    {(a as any).created_at && <span style={{ fontSize: 9.5, color: C.te, fontFamily: MONO }}>{fmtTime((a as any).created_at)}</span>}
                   </div>
-                  <div style={{ fontSize: 10.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
+                  <div style={{ fontSize: 12.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
                 </div>
               )
             })}
@@ -665,7 +665,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                       {/* Time + connector line */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, width: 44 }}>
-                        <span style={{ fontSize: 9, color: C.te, fontFamily: MONO, paddingTop: 8, lineHeight: 1 }}>
+                        <span style={{ fontSize: 11, color: C.te, fontFamily: MONO, paddingTop: 8, lineHeight: 1 }}>
                           {fmtTime(t.entry_time)}
                         </span>
                         {i < sortedTrades.length - 1 && (
@@ -2641,11 +2641,12 @@ export default function DashboardClient({
         @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .tab-btn{display:flex;flex:1;align-items:center;justify-content:center;padding:0 6px;height:46px;font-size:11px;letter-spacing:.4px;color:${C.td};cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;font-family:${SANS};background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;font-weight:400}
-        .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.02)}
-        .tab-btn.active{color:${C.tx};border-bottom-color:${C.red};font-weight:500;background:rgba(255,255,255,.025)}
-        .tab-sentinel{color:rgba(124,58,237,.45)!important}
-        .tab-sentinel.active{color:${C.red}!important;border-bottom-color:${C.red}}
+        .tab-nav{display:flex;align-items:center;background:rgba(255,255,255,.022);border:.5px solid rgba(255,255,255,.05);border-radius:10px;padding:3px;gap:2px}
+        .tab-btn{display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:7px;font-size:11px;letter-spacing:.4px;color:${C.td};cursor:pointer;border:none;background:none;white-space:nowrap;font-weight:400;font-family:${SANS};transition:color .15s,background .15s,box-shadow .15s}
+        .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.04)}
+        .tab-btn.active{color:${C.tx};background:rgba(255,255,255,.08);font-weight:500;box-shadow:0 1px 6px rgba(0,0,0,.28),inset 0 .5px 0 rgba(255,255,255,.08)}
+        .tab-sentinel{color:rgba(124,58,237,.5)!important}
+        .tab-sentinel.active{color:${C.red}!important;background:rgba(124,58,237,.13)!important;box-shadow:0 0 0 .5px rgba(124,58,237,.24),0 1px 6px rgba(0,0,0,.2)!important}
         textarea,input{box-sizing:border-box}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
@@ -2679,18 +2680,20 @@ export default function DashboardClient({
             <div style={{ width: 2, height: 17, background: C.red, borderRadius: 1 }} />
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
-          {/* Tabs — flex:1 fill all available space */}
-          <div style={{ flex: 1, display: 'flex', alignSelf: 'stretch' }}>
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                className={`tab-btn${tab.sentinel ? ' tab-sentinel' : ''}${activeTab === tab.id ? ' active' : ''}`}
-                onClick={() => { setActiveTab(tab.id as TabId); setSettingsOpen(false) }}
-              >
-                {tab.label}
-                {tab.sentinel && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: C.red, marginLeft: 5, verticalAlign: 'middle', animation: 'pulse 2s infinite' }} />}
-              </button>
-            ))}
+          {/* Tabs — pill nav */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', paddingLeft: 14 }}>
+            <div className="tab-nav">
+              {TABS.map(tab => (
+                <button
+                  key={tab.id}
+                  className={`tab-btn${tab.sentinel ? ' tab-sentinel' : ''}${activeTab === tab.id ? ' active' : ''}`}
+                  onClick={() => { setActiveTab(tab.id as TabId); setSettingsOpen(false) }}
+                >
+                  {tab.label}
+                  {tab.sentinel && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: C.red, marginLeft: 4, verticalAlign: 'middle', animation: 'pulse 2s infinite' }} />}
+                </button>
+              ))}
+            </div>
           </div>
           {/* Right controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, flexShrink: 0 }}>

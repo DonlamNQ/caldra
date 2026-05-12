@@ -6,14 +6,14 @@ import { saveRulesAction } from './actions'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const RED  = '#7c3aed'
-const BG   = '#08080d'
-const SF   = '#0d0d1a'
-const SF2  = '#12121f'
-const B    = 'rgba(255,255,255,.07)'
-const B2   = 'rgba(255,255,255,.12)'
-const TX   = '#e2e8f0'
-const TD   = 'rgba(226,232,240,.55)'
-const TE   = 'rgba(226,232,240,.3)'
+const BG   = '#0c0c15'
+const SF   = '#12121c'
+const SF2  = '#181826'
+const B    = 'rgba(255,255,255,.055)'
+const B2   = 'rgba(255,255,255,.10)'
+const TX   = '#eae8f5'
+const TD   = 'rgba(234,232,245,.65)'
+const TE   = 'rgba(234,232,245,.35)'
 const RD   = 'rgba(124,58,237,.09)'
 const RB   = 'rgba(124,58,237,.25)'
 const G    = '#00d17a'
@@ -54,27 +54,34 @@ const DEFAULTS: Rules = {
 function StepBar({ step }: { step: number }) {
   const labels = ['Bienvenue', 'Profil', 'Règles', 'Connexion']
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, marginBottom: 44 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, marginBottom: 48 }}>
       {labels.map((label, i) => {
         const n = i + 1
         const isActive = n === step
         const isDone = n < step
+        const dotBg = isDone ? `${G}18` : isActive ? RD : 'rgba(255,255,255,.025)'
+        const dotBorder = isDone ? `${G}55` : isActive ? RB : B
+        const dotColor = isDone ? G : isActive ? RED : TE
         return (
           <div key={n} style={{ display: 'flex', alignItems: 'flex-start', flex: i < labels.length - 1 ? 1 : 0 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               <div style={{
-                width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                background: isDone ? `${G}14` : isActive ? RD : 'transparent',
-                border: `.5px solid ${isDone ? `${G}55` : isActive ? RB : B}`,
+                width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                background: dotBg,
+                border: `.5px solid ${dotBorder}`,
+                boxShadow: isActive ? `0 0 0 3px ${RED}22` : isDone ? `0 0 0 3px ${G}14` : 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontFamily: MONO,
-                color: isDone ? G : isActive ? RED : TE,
+                fontSize: 12, fontFamily: MONO,
+                color: dotColor,
                 transition: 'all .35s',
               }}>{isDone ? '✓' : n}</div>
-              <span style={{ fontSize: 8.5, letterSpacing: 1.2, textTransform: 'uppercase' as const, color: isActive ? TD : TE, whiteSpace: 'nowrap' as const, fontFamily: MONO }}>{label}</span>
+              <span style={{ fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase' as const, color: isActive ? TD : TE, whiteSpace: 'nowrap' as const, fontFamily: MONO, fontWeight: isActive ? 500 : 400 }}>{label}</span>
             </div>
             {i < labels.length - 1 && (
-              <div style={{ flex: 1, height: .5, background: isDone ? `${RED}55` : B, marginTop: 15, marginLeft: 8, marginRight: 8, transition: 'background .35s' }} />
+              <div style={{ flex: 1, position: 'relative', marginTop: 17, marginLeft: 10, marginRight: 10 }}>
+                <div style={{ height: .5, background: B }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, height: .5, width: isDone ? '100%' : '0%', background: `linear-gradient(90deg,${RED}80,${RED}30)`, transition: 'width .5s ease' }} />
+              </div>
             )}
           </div>
         )
@@ -98,10 +105,10 @@ function Field({ label, hint, suffix, children }: { label: string; hint?: string
 }
 
 const numInput: React.CSSProperties = {
-  background: SF2, border: `.5px solid ${B2}`, borderRadius: 7,
-  padding: '9px 12px', color: TX, fontSize: 14, fontFamily: MONO,
-  outline: 'none', width: '100%', boxSizing: 'border-box',
-  transition: 'border-color .2s',
+  background: 'rgba(255,255,255,.035)', border: `.5px solid ${B2}`, borderRadius: 8,
+  padding: '10px 13px', color: TX, fontSize: 13.5, fontFamily: MONO,
+  outline: 'none', width: '100%', boxSizing: 'border-box' as const,
+  transition: 'border-color .2s, background .2s',
 }
 
 // ── Pill selector ──────────────────────────────────────────────────────────────
@@ -196,8 +203,8 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
     <>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
-        body{background:${BG};font-family:${SANS};color:${TX}}
-        input:focus{border-color:${RB}!important}
+        html,body{background:${BG};font-family:${SANS};color:${TX}}
+        input:focus{border-color:${RB}!important;background:rgba(124,58,237,.03)!important}
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
@@ -206,22 +213,25 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         @keyframes shimmer{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
         .ob-step{animation:fadeUp .3s ease}
+        .ob-pill-btn{transition:all .18s;border-radius:9px!important}
+        .ob-pill-btn:hover{box-shadow:0 2px 12px rgba(0,0,0,.2)}
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+      <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', overflow: 'hidden' }}>
+        {/* Grid background */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${B} 1px,transparent 1px),linear-gradient(90deg,${B} 1px,transparent 1px)`, backgroundSize: '52px 52px', opacity: .22, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', width: 900, height: 900, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,.045) 0%, transparent 55%)', pointerEvents: 'none' }} />
 
         {/* Logo */}
-        <div style={{ marginBottom: 44, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 2, height: 36, background: `linear-gradient(180deg, ${RED}, ${RED}30)`, borderRadius: 2 }} />
+        <div style={{ marginBottom: 44, display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
+          <div style={{ width: 2.5, height: 38, background: `linear-gradient(180deg, ${RED}, ${RED}20)`, borderRadius: 2 }} />
           <div>
-            <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: 8, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, textTransform: 'uppercase' as const, color: TE, marginTop: 5, letterSpacing: 0 }}>
-              {'SESSION'.split('').map((c, i) => <span key={i}>{c}</span>)}
-            </div>
+            <div style={{ fontSize: 21, fontWeight: 500, letterSpacing: 8, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
+            <div style={{ fontSize: 8.5, letterSpacing: 3.5, textTransform: 'uppercase' as const, color: TE, marginTop: 4, fontFamily: MONO }}>Session Monitor</div>
           </div>
         </div>
 
-        <div style={{ width: '100%', maxWidth: 1060 }}>
+        <div style={{ width: '100%', maxWidth: 1060, position: 'relative', zIndex: 1 }}>
           <StepBar step={step} />
 
           {/* ── Step 1 — Bienvenue ── */}
