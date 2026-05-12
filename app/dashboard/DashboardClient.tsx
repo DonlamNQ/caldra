@@ -2730,14 +2730,14 @@ export default function DashboardClient({
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
         {/* ── Top bar ── */}
-        <div style={{ display: 'flex', alignItems: 'center', height: 46, borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', height: 46, borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0, position: 'relative' }}>
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 18px 0 20px', borderRight: `.5px solid ${C.b}`, alignSelf: 'stretch', flexShrink: 0 }}>
             <div style={{ width: 2, height: 17, background: C.red, borderRadius: 1 }} />
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
-          {/* Tabs — pill nav */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Tabs — pill nav, centered absolutely */}
+          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center' }}>
             <div className="tab-nav">
               {TABS.map(tab => (
                 <button
@@ -2752,13 +2752,12 @@ export default function DashboardClient({
             </div>
           </div>
           {/* Right controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, marginLeft: 'auto', flexShrink: 0 }}>
             <span style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{displayDate}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', background: connected ? 'rgba(0,209,122,.06)' : C.rg, border: `.5px solid ${connected ? 'rgba(0,209,122,.18)' : C.rb}`, borderRadius: 99 }}>
               <div style={{ width: 5, height: 5, borderRadius: '50%', background: connected ? C.g : C.red, animation: 'pulse 1.8s infinite' }} />
               <span style={{ fontSize: 9, color: connected ? C.g : C.red, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: MONO }}>{connected ? 'Live' : 'Sync'}</span>
             </div>
-            <LiveClock />
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
