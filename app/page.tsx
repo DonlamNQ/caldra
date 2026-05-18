@@ -15,6 +15,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .n-lk{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);text-decoration:none;transition:color .15s}.n-lk:hover{color:#fff}
 .n-r{display:flex;gap:.625rem;align-items:center}
 .n-login{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);text-decoration:none;padding:7px 14px;border:.5px solid var(--b1);border-radius:3px;transition:all .15s}.n-login:hover{color:#fff;border-color:var(--b2)}
+.n-signup{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-decoration:none;padding:7px 14px;border:.5px solid rgba(124,58,237,.4);border-radius:3px;background:rgba(124,58,237,.1);transition:all .15s}.n-signup:hover{background:rgba(124,58,237,.22);border-color:rgba(124,58,237,.6)}
 
 /* HERO — centered headline + devices below */
 .hero{min-height:100vh;position:relative;z-index:1;border-bottom:.5px solid var(--b1);overflow:hidden;display:flex;flex-direction:column;align-items:center}
@@ -32,6 +33,9 @@ h1 em{font-style:normal;color:var(--v)}
 .wf-sm{display:none;margin-top:6px;padding:10px 14px;background:rgba(30,180,100,.07);border:.5px solid rgba(30,180,100,.2);border-radius:6px;color:rgba(80,220,140,.9);font-size:12px;text-align:center;width:100%;max-width:380px}
 .hero-fn{display:flex;align-items:center;gap:1rem;margin-top:.875rem}
 .hfn{font-size:11px;color:var(--t3)}.hfs{width:1px;height:10px;background:var(--b2)}
+.hero-ctas{display:flex;gap:10px;align-items:center;width:100%;max-width:380px}
+.cta-main-btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 24px;background:var(--v);border-radius:5px;color:#fff;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:opacity .15s;text-decoration:none;flex:1}.cta-main-btn:hover{opacity:.85}
+.cta-login-lk{font-size:12px;color:var(--t3);text-decoration:none;padding:8px 12px;border:.5px solid var(--b1);border-radius:4px;white-space:nowrap;transition:all .15s;flex-shrink:0}.cta-login-lk:hover{color:#fff;border-color:var(--b2)}
 
 /* PHONE MOCKUP */
 .phone-scene{position:relative;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
@@ -278,12 +282,9 @@ footer{padding:1.75rem 3.5rem;display:flex;justify-content:space-between;align-i
   h1{font-size:clamp(2rem,10vw,3rem);letter-spacing:-1px;line-height:1.1}
   .hero-top{padding:5rem 1.25rem 0}
   .hero-sub{font-size:14px}
-  .wf{flex-direction:column;padding:6px;gap:6px;border-radius:8px}
-  .wf-btn{width:100%;border-radius:6px;padding:12px}
-  .wf input{width:100%;padding:12px}
-  .cta-wf{flex-direction:column;padding:6px;gap:6px}
-  .cta-wf input{width:100%}
-  .cta-wf button{width:100%;padding:12px;border-radius:6px}
+  .hero-ctas{flex-direction:column;max-width:100%}
+  .cta-main-btn{width:100%;border-radius:6px;padding:14px}
+  .cta-login-lk{text-align:center;padding:10px}
   .sec,.split-sec,.story-sec,.cta-sec{padding:3rem 1.25rem}
   .sec-in{padding:0}
   .det-wrap{grid-template-columns:1fr!important}
@@ -329,6 +330,7 @@ const HTML = `
   </div>
   <div class="n-r">
     <a href="/login" class="n-login">Connexion</a>
+    <a href="/signup" class="n-signup">S'inscrire</a>
   </div>
 </nav>
 
@@ -338,15 +340,14 @@ const HTML = `
     <div class="eyebrow"><div class="eydot"></div>Intelligence comportementale &mdash; Temps réel</div>
     <h1>Tu ne vois pas<br>quand tu dérailles.<br><em>Lui si.</em></h1>
     <p class="hero-sub">Caldra analyse chaque trade et détecte les comportements qui détruisent les sessions &mdash; avant que le tilt, le revenge trading ou l'impulsion ne fasse les dégâts.</p>
-    <div class="wf">
-      <input type="email" id="wf-email" placeholder="ton@email.com" />
-      <button class="wf-btn" onclick="joinWaitlist('wf-email','wf-sm')">Rejoindre →</button>
+    <div class="hero-ctas">
+      <a href="/signup" class="cta-main-btn">Commencer gratuitement →</a>
+      <a href="/login" class="cta-login-lk">Connexion</a>
     </div>
-    <div class="wf-sm" id="wf-sm">Place réservée. On te contacte à l'ouverture.</div>
     <div class="hero-fn">
-      <span class="hfn">Lancement 13/05</span><div class="hfs"></div>
       <span class="hfn">14 jours d'essai</span><div class="hfs"></div>
-      <span class="hfn">Sans carte</span>
+      <span class="hfn">Sans carte</span><div class="hfs"></div>
+      <span class="hfn">Disponible maintenant</span>
     </div>
   </div>
 
@@ -599,8 +600,8 @@ const HTML = `
     <div class="sec-tag">Tarifs</div>
     <div class="sec-h" style="text-align:center">Simple.<br>Rentabilisé au premier trade évité.</div>
     <div class="pricing-grid">
-      <div class="plan plan-pro"><div class="plan-shine plan-sw"></div><div class="plan-lab">Pro</div><div class="plan-price"><sup>€</sup>19<sub>/mois</sub></div><div class="plan-note">14 jours gratuits · Sans carte requise</div><div class="plan-tag">Surveillance comportementale complète. Alertes immédiates dès qu'un pattern dangereux est détecté.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>8 détections comportementales</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Alertes temps réel (push + desktop)</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard comportemental</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Connexion cTrader &amp; MT5</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Analytics 30 jours</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Seuils configurables</li></ul><button class="plan-btn plan-btn-sec" onclick="joinWaitlistPlan()">Rejoindre la liste →</button></div>
-      <div class="plan plan-sent"><div class="plan-shine plan-sv"></div><div class="plan-lab plan-lab-v">Sentinel</div><div class="plan-price"><sup>€</sup>39<sub>/mois</sub></div><div class="plan-note">14 jours gratuits · Sans carte requise</div><div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:rgba(240,237,232,.3)">Tout le plan Pro, plus :</span></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>9e détection : Trade pendant les news</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Coach IA pendant la session</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Debriefing automatique post-session</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Analyse des patterns récurrents</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Analytics 180 jours</strong></li></ul><button class="plan-btn plan-btn-pri" onclick="joinWaitlistPlan()">Rejoindre la liste →</button></div>
+      <div class="plan plan-pro"><div class="plan-shine plan-sw"></div><div class="plan-lab">Pro</div><div class="plan-price"><sup>€</sup>19<sub>/mois</sub></div><div class="plan-note">14 jours gratuits · Sans carte requise</div><div class="plan-tag">Surveillance comportementale complète. Alertes immédiates dès qu'un pattern dangereux est détecté.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>8 détections comportementales</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Alertes temps réel (push + desktop)</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard comportemental</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Connexion cTrader &amp; MT5</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Analytics 30 jours</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Seuils configurables</li></ul><a href="/signup" class="plan-btn plan-btn-sec">Commencer gratuitement →</a></div>
+      <div class="plan plan-sent"><div class="plan-shine plan-sv"></div><div class="plan-lab plan-lab-v">Sentinel</div><div class="plan-price"><sup>€</sup>39<sub>/mois</sub></div><div class="plan-note">14 jours gratuits · Sans carte requise</div><div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:rgba(240,237,232,.3)">Tout le plan Pro, plus :</span></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>9e détection : Trade pendant les news</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Coach IA pendant la session</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Debriefing automatique post-session</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Analyse des patterns récurrents</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Analytics 180 jours</strong></li></ul><a href="/signup" class="plan-btn plan-btn-pri">Commencer gratuitement →</a></div>
     </div>
     <p style="text-align:center;margin-top:2rem;font-size:13px;color:var(--t3);font-style:italic">14 jours d'essai gratuit · Pas de carte · Annulable à tout moment</p>
   </div>
@@ -623,15 +624,11 @@ const HTML = `
 <!-- CTA -->
 <div class="cta-sec">
   <div style="max-width:640px;margin:0 auto">
-    <div class="sec-tag" style="justify-content:center;max-width:none">Disponible le 13 mai 2026</div>
+    <div class="sec-tag" style="justify-content:center;max-width:none">Disponible maintenant</div>
     <div class="cta-h">Ton prochain tilt<br><em>peut être le dernier.</em></div>
     <p class="cta-sub">14 jours d'essai gratuit. Pas de carte requise.</p>
-    <div class="cta-wf">
-      <input type="email" id="cta-email" placeholder="ton@email.com" style="flex:1;padding:11px 14px;background:transparent;border:none;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;outline:none" />
-      <button class="wf-btn" onclick="joinWaitlist('cta-email','cta-sm')">Rejoindre →</button>
-    </div>
-    <div class="wf-sm" id="cta-sm" style="max-width:380px;margin:6px auto 0">Place réservée. On te contacte à l'ouverture.</div>
-    <p style="margin-top:1.25rem;font-size:12px;color:var(--t3)"><a href="/login" style="color:var(--t3);text-decoration:none">Déjà un compte ? <span style="color:var(--v)">Connexion →</span></a></p>
+    <a href="/signup" class="cta-main-btn" style="display:inline-flex;max-width:340px;padding:14px 32px;font-size:14px;border-radius:7px;letter-spacing:.3px;margin-bottom:14px">Commencer gratuitement — 14 jours →</a>
+    <p style="margin-top:.25rem;font-size:12px;color:var(--t3)"><a href="/login" style="color:var(--t3);text-decoration:none">Déjà un compte ? <span style="color:var(--v)">Connexion →</span></a></p>
   </div>
 </div>
 
@@ -644,15 +641,6 @@ const HTML = `
 <script id="caldra-main-js">
 (function(){
 var DETS=${JSON.stringify(DETECTORS)};
-async function joinWaitlist(inputId,smId){
-  var email=document.getElementById(inputId).value.trim();
-  if(!email||!email.includes('@'))return;
-  try{await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});}catch(e){}
-  document.getElementById(smId).style.display='block';
-  document.getElementById(inputId).value='';
-}
-window.joinWaitlist=joinWaitlist;
-window.joinWaitlistPlan=function(){var el=document.getElementById('wf-email');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}};
 function lvClass(l){return l===1?'dd-l1':l===2?'dd-l2':'dd-l3';}
 function lvLabel(l){return l===1?'Niveau 1 — Info':l===2?'Niveau 2 — Alerte':'Niveau 3 — Critique';}
 function renderDets(){

@@ -79,12 +79,20 @@ export default function SignupPage() {
           <div className="sg-wrap" style={{ width: '100%', maxWidth: 400, background: SF, border: `.5px solid ${B}`, borderRadius: 14, padding: '44px 36px', position: 'relative', overflow: 'hidden', textAlign: 'center' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${RED}60,transparent)` }} />
             <div style={{ fontSize: 20, fontWeight: 500, letterSpacing: 8, textTransform: 'uppercase' as const, color: TX, marginBottom: 28 }}>Cald<span style={{ color: RED }}>ra</span></div>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(34,197,94,.1)', border: '.5px solid rgba(34,197,94,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', fontSize: 22 }}>✓</div>
-            <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.5, color: TX, marginBottom: 10 }}>Vérifiez votre email</div>
-            <p style={{ color: TE, fontSize: 13, lineHeight: 1.7, fontWeight: 300 }}>
-              Un lien de confirmation a été envoyé à{' '}<span style={{ color: TX }}>{email}</span>.{' '}Cliquez sur le lien pour activer votre compte.
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: `${RD}`, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 22 }}>✓</div>
+            <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.5, color: TX, marginBottom: 8 }}>
+              {firstName ? `Bienvenue, ${firstName} !` : 'Bienvenue sur Caldra !'}
+            </div>
+            <p style={{ color: TE, fontSize: 13, lineHeight: 1.75, fontWeight: 300, marginBottom: 16 }}>
+              Un email de confirmation a été envoyé à{' '}<span style={{ color: TX }}>{email}</span>.{' '}
+              Clique sur le lien pour activer ton compte et démarrer ton essai de 14 jours.
             </p>
-            <div style={{ marginTop: 24, paddingTop: 20, borderTop: `.5px solid ${B}`, fontSize: 13, color: TE }}>
+            <div style={{ padding: '12px 14px', background: `${RD}`, border: `.5px solid ${RB}`, borderRadius: 8, marginBottom: 4 }}>
+              <p style={{ fontSize: 12, color: TX, lineHeight: 1.6, fontWeight: 300 }}>
+                Caldra surveillera chaque trade en temps réel, dès la première connexion de ta plateforme.
+              </p>
+            </div>
+            <div style={{ marginTop: 20, paddingTop: 18, borderTop: `.5px solid ${B}`, fontSize: 13, color: TE }}>
               <Link href="/login" style={{ color: RED, textDecoration: 'none' }}>← Retour à la connexion</Link>
             </div>
           </div>

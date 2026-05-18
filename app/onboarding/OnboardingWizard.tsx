@@ -238,7 +238,12 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
           {step === 1 && (
             <div className="ob-step">
               <div style={{ marginBottom: 28 }}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: RED, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 12, opacity: .75 }}>Bienvenue, {userName}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: G, display: 'inline-block', flexShrink: 0, boxShadow: `0 0 8px ${G}` }} />
+                  <span style={{ fontSize: 10, letterSpacing: 2, color: TE, textTransform: 'uppercase' as const, fontFamily: MONO }}>
+                    {userName ? `Bienvenue, ${userName} — compte activé` : 'Compte activé'}
+                  </span>
+                </div>
                 <h1 style={{ fontSize: 32, fontWeight: 200, letterSpacing: -1, lineHeight: 1.15, color: TX, marginBottom: 14 }}>
                   Tu ne vois pas<br />quand tu dérailles.
                   <span style={{ color: RED }}> Lui si.</span>
@@ -288,7 +293,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                 onMouseEnter={e => (e.currentTarget.style.opacity = '.88')}
                 onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
               >
-                Configurer mon compte →
+                Démarrer la configuration → <span style={{ opacity: .6, fontSize: 12 }}>2 min</span>
               </button>
             </div>
           )}
