@@ -2707,19 +2707,22 @@ export default function DashboardClient({
         .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
         .c-row:hover{background:rgba(255,255,255,.025)!important}
         @media(max-width:768px){
+          .app-root{height:auto!important;min-height:100dvh}
           .topbar{flex-wrap:wrap;height:auto!important;min-height:46px}
           .nav-wrap{position:static!important;left:auto!important;transform:none!important;order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:5px 8px;border-top:.5px solid rgba(255,255,255,.055)}
           .nav-wrap::-webkit-scrollbar{display:none}
           .tab-nav{border-radius:10px;width:max-content}
           .tab-btn{padding:6px 14px;font-size:11.5px}
           .date-lbl{display:none!important}
+          .sidebar-col{display:none!important}
+          .main-layout{grid-template-columns:1fr!important;overflow:visible!important;height:auto!important;flex:none!important}
+          .panel-container{overflow:visible!important;height:auto!important;min-height:0!important;flex:none!important;display:block!important}
+          .panel-container>*{height:auto!important;min-height:0!important;overflow:visible!important;flex:none!important}
           .resp-grid-2{grid-template-columns:1fr!important}
           .resp-grid-3{grid-template-columns:1fr!important}
           .session-main-grid{grid-template-columns:1fr!important}
           .sentinel-grid{grid-template-columns:1fr!important}
           .sentinel-sidebar{display:none!important}
-          .panel-header-row{flex-direction:column;align-items:flex-start!important;gap:8px}
-          .panel-hdr-actions{align-self:flex-end}
           .rules-grid{grid-template-columns:1fr!important}
         }
       `}</style>
