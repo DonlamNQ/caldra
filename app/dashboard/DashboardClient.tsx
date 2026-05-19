@@ -2724,6 +2724,9 @@ export default function DashboardClient({
           .sentinel-grid{grid-template-columns:1fr!important}
           .sentinel-sidebar{display:none!important}
           .rules-grid{grid-template-columns:1fr!important}
+          .main-layout>*:first-child{overflow:visible!important;height:auto!important;border-radius:12px!important;margin:10px!important}
+          .main-layout>*:first-child>div{height:auto!important;overflow:visible!important}
+          .main-layout>*:first-child>div>div{flex:none!important;min-height:0!important}
         }
       `}</style>
 
@@ -2857,10 +2860,10 @@ export default function DashboardClient({
         </div>
 
         {/* ── Main layout ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '20% 1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
+        <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: '20% 1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
           <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} />
 
-          <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
               <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} />
             )}
