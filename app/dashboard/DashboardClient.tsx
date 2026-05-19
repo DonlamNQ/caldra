@@ -1516,7 +1516,7 @@ namespace CaldraBot
       {/* ── Plateformes ── */}
       <div style={{ marginBottom: 8 }}>
         <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 12 }}>Plateformes</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+        <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
 
           {/* cTrader cBot */}
           <IntCard>
@@ -2860,8 +2860,8 @@ export default function DashboardClient({
         </div>
 
         {/* ── Main layout ── */}
-        <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: '20% 1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
-          <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} />
+        <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
+          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} />}
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
