@@ -50,6 +50,7 @@ export default async function DashboardPage() {
     { data: yesterdayAlerts },
     { data: yesterdayTrades },
     { data: profile },
+    { data: ctraderAccount },
   ] = await Promise.all([
     service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
       .order('level', { ascending: false }).order('created_at', { ascending: false }),
@@ -61,11 +62,12 @@ export default async function DashboardPage() {
     service.from('alerts').select('session_date,level,type,message')
       .eq('user_id', user.id).gte('session_date', thirtyDaysAgo).lt('session_date', today),
     service.from('trading_rules').select('*').eq('user_id', user.id).single(),
-    service.from('api_keys').select('key_prefix,created_at').eq('user_id', user.id).limit(1).single(),
+    service.from('api_keys').select('key_prefix,created_at').eq('user_id', user.id).eq('label', 'main').limit(1).single(),
     service.from('alerts').select('level').eq('user_id', user.id).eq('session_date', yesterday),
     service.from('trades').select('pnl').eq('user_id', user.id)
       .gte('entry_time', yesterday).lt('entry_time', today),
     service.from('user_profiles').select('plan').eq('user_id', user.id).single(),
+    service.from('ctrader_accounts').select('id').eq('user_id', user.id).limit(1),
   ])
 
   // Today
@@ -133,6 +135,7 @@ export default async function DashboardPage() {
       historicalSessions={historicalSessions}
       plan={profile?.plan ?? 'free'}
       userMeta={{ first_name: meta.first_name, last_name: meta.last_name, phone: meta.phone }}
+      ctraderConnected={!!(ctraderAccount && ctraderAccount.length > 0)}
     />
   )
 }

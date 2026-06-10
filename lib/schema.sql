@@ -53,10 +53,11 @@ create table if not exists api_keys (
   user_id     uuid        not null references auth.users (id) on delete cascade,
   key_hash    text        not null unique,   -- SHA-256 of the raw key
   key_prefix  text        not null,          -- first 14 chars for display
+  label       text        not null default 'main', -- 'main' | 'cTrader'
   created_at  timestamptz not null default now()
 );
 
-create unique index if not exists api_keys_user_id_idx on api_keys (user_id);
+create unique index if not exists api_keys_user_label_idx on api_keys (user_id, label);
 
 -- ─── trades ──────────────────────────────────────────────────────────────────
 
@@ -161,4 +162,25 @@ alter table user_profiles alter column plan set default 'pro';
 
 -- v2.3 : fuseau horaire pour la détection hors-session
 alter table trading_rules add column if not exists tz_offset_hours smallint not null default 0;
+
+-- v2.4 : cTrader OAuth — label sur api_keys + nouvelle table ctrader_accounts
+alter table api_keys add column if not exists label text not null default 'main';
+drop index if exists api_keys_user_id_idx;
+create unique index if not exists api_keys_user_label_idx on api_keys (user_id, label);
+
+create table if not exists ctrader_accounts (
+  id                       uuid        primary key default gen_random_uuid(),
+  user_id                  uuid        not null references auth.users(id) on delete cascade,
+  environment              text        not null default 'live',
+  ctid_trader_account_id   bigint,
+  access_token             text        not null,
+  refresh_token            text,
+  token_expires_at         timestamptz,
+  ingest_key               text        not null,
+  created_at               timestamptz default now(),
+  unique (user_id, ctid_trader_account_id)
+);
+alter table ctrader_accounts enable row level security;
+drop policy if exists "service role full access" on ctrader_accounts;
+create policy "service role full access" on ctrader_accounts for all using (true) with check (true);
 

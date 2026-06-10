@@ -54,6 +54,7 @@ interface DashboardClientProps {
   historicalSessions: DaySession[]
   plan: string
   userMeta: { first_name?: string; last_name?: string; phone?: string }
+  ctraderConnected: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -1322,7 +1323,7 @@ function RapportsPanel() {
 }
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
-function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: string | null; initialWebhook: string | null }) {
+function IntegrationsPanel({ apiKeyPrefix, initialWebhook, initialCtraderConnected }: { apiKeyPrefix: string | null; initialWebhook: string | null; initialCtraderConnected: boolean }) {
   const C = useContext(ThemeCtx)
   const [prefix, setPrefix]     = useState(apiKeyPrefix)
   const [newKey, setNewKey]     = useState<string|null>(null)
@@ -1333,6 +1334,16 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook }: { apiKeyPrefix: str
   const [webhookUrl, setWebhookUrl] = useState(initialWebhook ?? '')
 
   const [webhookSave, setWebhookSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  const [ctraderConn, setCtraderConn]         = useState(initialCtraderConnected)
+  const [ctDisconnecting, setCtDisconnecting] = useState(false)
+
+  async function disconnectCtrader() {
+    setCtDisconnecting(true)
+    await fetch('/api/ctrader/disconnect', { method: 'POST' })
+    setCtraderConn(false)
+    setCtDisconnecting(false)
+  }
 
   async function genKey() {
     setKeyLoading(true); setNewKey(null); setKeyConfirm(false)
@@ -1518,7 +1529,7 @@ namespace CaldraBot
         <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 12 }}>Plateformes</div>
         <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
 
-          {/* cTrader cBot */}
+          {/* cTrader OAuth */}
           <IntCard>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>CT</div>
@@ -1526,32 +1537,34 @@ namespace CaldraBot
                 <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>cTrader</div>
                 <div style={{ fontSize: 10.5, color: C.td }}>Pepperstone, IC Markets, FxPro, Eightcap…</div>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: ctraderConn ? C.g : 'rgba(255,255,255,.18)' }} />
+                <span style={{ fontSize: 10, color: ctraderConn ? C.g : C.td, letterSpacing: .5 }}>{ctraderConn ? 'CONNECTÉ' : 'NON CONNECTÉ'}</span>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
-              {([
-                ['1', 'Génère ta clé API dans la section ci-dessus si ce n\'est pas encore fait.'],
-                ['2', 'Télécharge le fichier CaldraBot.cs ci-dessous.'],
-                ['3', 'Dans cTrader, clique sur "Algo" dans la barre du haut → "New cBot".'],
-                ['4', 'Dans l\'assistant qui s\'ouvre, clique sur "Suivant" jusqu\'à la fin puis "Créer".'],
-                ['5', 'Supprime tout le code existant dans l\'éditeur, puis colle le contenu du fichier CaldraBot.cs.'],
-                ['6', 'Clique sur "Build" (Ctrl+B) et attends que "Build succeeded" apparaisse en bas.'],
-                ['7', 'Le bot apparaît dans le panel Algo. Clique dessus → "Paramètres" → colle ta clé API → "Start".'],
-              ] as [string, string][]).map(([n, t]) => (
-                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                  <div style={{ fontSize: 11, color: C.td, lineHeight: 1.5 }}>{t}</div>
-                </div>
-              ))}
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
+              {ctraderConn
+                ? 'Tes trades cTrader remontent automatiquement via OAuth. Aucun bot à maintenir.'
+                : 'Connexion OAuth one-click — les trades remontent automatiquement, sans bot à installer.'}
             </div>
 
-            <button
-              onClick={downloadBot}
-              disabled={!hasKey}
-              style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: hasKey ? 'pointer' : 'not-allowed', background: C.rd, border: `.5px solid ${C.rb}`, color: hasKey ? C.red : C.te, transition: 'all .2s', opacity: hasKey ? 1 : .5 }}
-            >
-              {hasKey ? 'Télécharger CaldraBot.cs →' : 'Génère d\'abord ta clé API'}
-            </button>
+            {ctraderConn ? (
+              <button
+                onClick={disconnectCtrader}
+                disabled={ctDisconnecting}
+                style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: ctDisconnecting ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: ctDisconnecting ? .5 : 1 }}
+              >
+                {ctDisconnecting ? 'Déconnexion…' : 'Déconnecter →'}
+              </button>
+            ) : (
+              <a
+                href="/api/ctrader/connect"
+                style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
+              >
+                Se connecter →
+              </a>
+            )}
           </IntCard>
 
           {/* MetaTrader 5 EA */}
@@ -2404,6 +2417,7 @@ type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
   yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, plan, userMeta,
+  ctraderConnected,
 }: DashboardClientProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     typeof window !== 'undefined' ? (localStorage.getItem('caldra-theme') as 'dark' | 'light') ?? 'dark' : 'dark'
@@ -2417,6 +2431,15 @@ export default function DashboardClient({
 
   const [activeTab, setActiveTab] = useState<TabId>('session')
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Auto-switch to integrations tab after cTrader OAuth callback
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('ctrader') === 'connected' || p.get('ctrader') === 'error') {
+      setActiveTab('integrations')
+      window.history.replaceState({}, '', '/dashboard')
+    }
+  }, [])
   const settingsRef = useRef<HTMLDivElement>(null)
   const [alerts, setAlerts] = useState<AlertRow[]>(initialAlerts)
   const [trades, setTrades] = useState<TradeRow[]>(initialTrades)
@@ -2874,7 +2897,7 @@ export default function DashboardClient({
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} />
             )}
             {activeTab === 'rapports' && <RapportsPanel />}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} initialCtraderConnected={ctraderConnected} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}

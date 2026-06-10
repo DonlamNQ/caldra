@@ -33,6 +33,7 @@ export async function GET() {
     .from('api_keys')
     .select('key_prefix, created_at')
     .eq('user_id', user.id)
+    .eq('label', 'main')
     .single()
 
   return NextResponse.json(data ?? null)
@@ -51,10 +52,11 @@ export async function POST() {
     .from('api_keys')
     .delete()
     .eq('user_id', user.id)
+    .eq('label', 'main')
 
   await service()
     .from('api_keys')
-    .insert({ user_id: user.id, key_hash: keyHash, key_prefix: keyPrefix })
+    .insert({ user_id: user.id, key_hash: keyHash, key_prefix: keyPrefix, label: 'main' })
 
   return NextResponse.json({ key: rawKey, key_prefix: keyPrefix })
 }
@@ -64,6 +66,6 @@ export async function DELETE() {
   const { data: { user } } = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await service().from('api_keys').delete().eq('user_id', user.id)
+  await service().from('api_keys').delete().eq('user_id', user.id).eq('label', 'main')
   return NextResponse.json({ success: true })
 }

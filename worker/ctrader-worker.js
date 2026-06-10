@@ -1,0 +1,200 @@
+'use strict'
+
+const { CTraderConnection } = require('@reiryoku/ctrader-layer')
+const { createClient }      = require('@supabase/supabase-js')
+
+// Charge .env si présent (exécution locale)
+try {
+  require('fs').readFileSync('.env', 'utf8').split('\n').forEach(l => {
+    const eq = l.indexOf('=')
+    if (eq > 0) process.env[l.slice(0, eq).trim()] = l.slice(eq + 1).trim()
+  })
+} catch {}
+
+const {
+  CTRADER_CLIENT_ID,
+  CTRADER_CLIENT_SECRET,
+  CTRADER_ENV           = 'live',
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY,
+  CALDRA_INGEST_URL     = 'https://getcaldra.com/api/ingest',
+} = process.env
+
+const HOST         = CTRADER_ENV === 'demo' ? 'demo.ctraderapi.com' : 'live.ctraderapi.com'
+const PORT         = 5035
+const HEARTBEAT_MS = 10_000
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+})
+
+let connection     = null
+const authed       = new Map()   // ctid -> { userId, ingestKey }
+const symbolNames  = new Map()   // `${ctid}:${symbolId}` -> 'EURUSD'
+const openPositions = new Map()  // positionId -> { entry_time }
+
+async function loadSymbols(ctid) {
+  const res = await connection.sendCommand('ProtoOASymbolsListReq', {
+    ctidTraderAccountId: ctid, includeArchivedSymbols: false,
+  })
+  for (const s of res.symbol || []) {
+    symbolNames.set(`${ctid}:${s.symbolId}`, s.symbolName)
+  }
+}
+
+async function resolveAndAuth(row) {
+  const res = await connection.sendCommand('ProtoOAGetAccountListByAccessTokenReq', {
+    accessToken: row.access_token,
+  })
+
+  for (const acc of res.ctidTraderAccount || []) {
+    if (CTRADER_ENV === 'live'  && acc.isLive === false) continue
+    if (CTRADER_ENV === 'demo'  && acc.isLive === true)  continue
+
+    const ctid = Number(acc.ctidTraderAccountId)
+    if (authed.has(ctid)) continue
+
+    await connection.sendCommand('ProtoOAAccountAuthReq', {
+      accessToken: row.access_token, ctidTraderAccountId: ctid,
+    })
+    authed.set(ctid, { userId: row.user_id, ingestKey: row.ingest_key })
+    await loadSymbols(ctid)
+
+    // Persist resolved ctid — remove placeholder NULL row after first resolution
+    await supabase.from('ctrader_accounts').upsert({
+      user_id:                  row.user_id,
+      environment:              CTRADER_ENV,
+      ctid_trader_account_id:   ctid,
+      access_token:             row.access_token,
+      refresh_token:            row.refresh_token ?? null,
+      ingest_key:               row.ingest_key,
+    }, { onConflict: 'user_id,ctid_trader_account_id' })
+
+    console.log(`[ctrader] compte ${ctid} (user ${row.user_id.slice(0, 8)}) authentifié`)
+  }
+
+  // Clean up placeholder NULL-ctid row created by callback
+  await supabase.from('ctrader_accounts')
+    .delete()
+    .eq('user_id', row.user_id)
+    .is('ctid_trader_account_id', null)
+}
+
+async function refreshAccounts() {
+  const { data, error } = await supabase
+    .from('ctrader_accounts')
+    .select('user_id, access_token, refresh_token, ingest_key, ctid_trader_account_id')
+    .eq('environment', CTRADER_ENV)
+  if (error) { console.error('[supabase]', error.message); return }
+
+  const seen = new Set()
+  for (const row of data || []) {
+    if (seen.has(row.access_token)) continue
+    seen.add(row.access_token)
+    try { await resolveAndAuth(row) } catch (e) { console.error('[auth]', e?.message) }
+  }
+}
+
+async function handleExecution(event) {
+  const ctid = Number(event.ctidTraderAccountId)
+  const ctx  = authed.get(ctid)
+  if (!ctx) return
+
+  const deal = event.deal
+  if (!deal) return
+
+  // Opening/increasing deal — memorise entry timestamp for later
+  if (!deal.closePositionDetail) {
+    if (deal.positionId) {
+      openPositions.set(Number(deal.positionId), {
+        entry_time: deal.executionTimestamp
+          ? new Date(Number(deal.executionTimestamp)).toISOString()
+          : new Date().toISOString(),
+      })
+    }
+    return
+  }
+
+  // Closing deal — build the closed-trade payload
+  const cpd       = deal.closePositionDetail
+  const symbol    = symbolNames.get(`${ctid}:${deal.symbolId}`) || String(deal.symbolId)
+  // SELL closes a long, BUY closes a short
+  const direction = deal.tradeSide === 'SELL' ? 'long' : 'short'
+  // grossProfit + swap + commission are in cents (moneyDigits=2) → divide by 100
+  const pnl       = ((+cpd.grossProfit || 0) + (+cpd.swap || 0) + (+cpd.commission || 0)) / 100
+  // volume is in lots×100 in cTrader protobuf (1 standard lot = 100)
+  const size      = (+deal.volume || 0) / 100
+
+  const exit_time = deal.executionTimestamp
+    ? new Date(Number(deal.executionTimestamp)).toISOString()
+    : new Date().toISOString()
+  const op          = openPositions.get(Number(deal.positionId))
+  const entry_time  = op?.entry_time || exit_time
+  openPositions.delete(Number(deal.positionId))
+
+  const payload = {
+    symbol,
+    direction,
+    size,
+    entry_price:  +cpd.entryPrice    || null,
+    exit_price:   +deal.executionPrice || null,
+    entry_time,
+    exit_time,
+    pnl,
+  }
+
+  try {
+    const r = await fetch(CALDRA_INGEST_URL, {
+      method:  'POST',
+      headers: { 'content-type': 'application/json', 'x-caldra-key': ctx.ingestKey },
+      body:    JSON.stringify(payload),
+    })
+    if (!r.ok) {
+      console.error('[ingest] échec', r.status, await r.text())
+    } else {
+      console.log(`[ingest] ${symbol} ${direction} pnl=${pnl.toFixed(2)}`)
+    }
+  } catch (e) {
+    console.error('[ingest] erreur réseau', e?.message)
+  }
+}
+
+async function start() {
+  authed.clear()
+  symbolNames.clear()
+
+  connection = new CTraderConnection({ host: HOST, port: PORT })
+
+  connection.on('ProtoOAExecutionEvent', (e) =>
+    handleExecution(e).catch(console.error)
+  )
+  connection.on('ProtoOAAccountsTokenInvalidatedEvent', (e) =>
+    console.warn('[ctrader] token invalidé', e?.ctidTraderAccountIds)
+  )
+  connection.on('close', () => {
+    console.warn('[ctrader] connexion fermée — reconnexion dans 5s')
+    setTimeout(start, 5_000)
+  })
+
+  await connection.open()
+  console.log(`[ctrader] connecté ${HOST}:${PORT}`)
+
+  // Heartbeat pour maintenir la connexion ouverte
+  const hb = setInterval(() => {
+    try { connection.sendHeartbeat() } catch { clearInterval(hb) }
+  }, HEARTBEAT_MS)
+
+  await connection.sendCommand('ProtoOAApplicationAuthReq', {
+    clientId: CTRADER_CLIENT_ID, clientSecret: CTRADER_CLIENT_SECRET,
+  })
+  console.log('[ctrader] application authentifiée')
+
+  await refreshAccounts()
+  // Capte les nouveaux utilisateurs OAuth sans redémarrer le worker
+  setInterval(refreshAccounts, 30_000)
+}
+
+start().catch((e) => {
+  console.error('[fatal]', e)
+  setTimeout(start, 5_000)
+})
