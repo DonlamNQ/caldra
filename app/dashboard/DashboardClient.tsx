@@ -1579,11 +1579,11 @@ namespace CaldraBot
 
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
               {([
-                ['1', 'Clique sur "Télécharger mon EA" ci-dessous — ta clé API est déjà intégrée dans le fichier, rien à copier.'],
+                ['1', 'Clique sur "Télécharger mon EA" ci-dessous — ta clé API est déjà intégrée, rien à copier.'],
                 ['2', 'Dans MT5 : "Fichier" → "Ouvrir le dossier des données" → ouvre le dossier MQL5/Experts et colle CaldraMT5.mq5 dedans.'],
-                ['3', 'MT5 → "Outils" → "Options" → onglet "Expert Advisors". Coche "Autoriser les WebRequest" et ajoute l\'URL ci-dessous, puis OK.'],
-                ['4', 'Navigateur (Ctrl+N) → "Expert Advisors" → clic droit → "Actualiser". CaldraMT5 apparaît. (S\'il n\'apparaît pas : ouvre-le avec F4 dans MetaEditor puis F7 pour compiler.)'],
-                ['5', 'Glisse CaldraMT5 sur n\'importe quel graphique et vérifie que le bouton "Algo Trading" en haut est vert.'],
+                ['3', 'Ouvre MetaEditor (touche F4), ouvre CaldraMT5.mq5 et appuie sur F7 pour le compiler (tu dois voir "0 errors"). C\'est cette étape qui le fait apparaître dans le Navigateur.'],
+                ['4', 'MT5 → "Outils" → "Options" → onglet "Expert Advisors" : coche "Autoriser les WebRequest" et ajoute l\'URL ci-dessous, puis OK.'],
+                ['5', 'Dans le Navigateur (Ctrl+N), glisse CaldraMT5 sur un graphique et vérifie que le bouton "Algo Trading" en haut est vert.'],
                 ['6', 'C\'est fini. Chaque trade fermé remonte automatiquement dans Caldra — aucune clé à saisir.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
