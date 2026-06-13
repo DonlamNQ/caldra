@@ -29,22 +29,22 @@ const service = () => createClient(
 // Source de l'EA avec la clé injectée. String.raw pour préserver les \r\n littéraux du MQL5.
 function buildEa(apiKey: string): string {
   return String.raw`//+------------------------------------------------------------------+
-//| CaldraMT5.mq5 — Caldra Trade Reporter v2                        |
-//| Clé API déjà intégrée — aucune saisie manuelle nécessaire.      |
+//| CaldraMT5.mq5 - Caldra Trade Reporter v2                         |
+//| Cle API deja integree - aucune saisie manuelle necessaire.      |
 //| Envoie l'ouverture ET la fermeture de chaque trade              |
 //+------------------------------------------------------------------+
 #property copyright "Caldra"
 #property version   "2.0"
 #property strict
 
-input string CaldraApiKey = "${apiKey}";  // Caldra API Key (déjà renseignée)
+input string CaldraApiKey = "${apiKey}";  // Caldra API Key (deja renseignee)
 
 int lastDealsCount = 0;
 
 //+------------------------------------------------------------------+
 int OnInit() {
    lastDealsCount = (int)HistoryDealsTotal();
-   Print("[Caldra] EA initialisé v2. Deals connus : ", lastDealsCount);
+   Print("[Caldra] EA initialise v2. Deals connus : ", lastDealsCount);
    EventSetTimer(5);
    return INIT_SUCCEEDED;
 }
@@ -123,7 +123,7 @@ void SendOpen(string symbol, string direction, double volume,
 
    char post[]; char result[]; string resultHeaders;
    int res = WebRequest("POST", url, "Content-Type: application/json\r\n", 5000, post, result, resultHeaders);
-   if (res == 200 || res == 201) Print("[Caldra] Ouverture envoyée ✓ ", symbol);
+   if (res == 200 || res == 201) Print("[Caldra] Ouverture envoyee OK ", symbol);
    else Print("[Caldra] Erreur ouverture HTTP ", res);
 }
 
@@ -140,7 +140,7 @@ void SendClose(string symbol, string direction, double volume,
 
    char post[]; char result[]; string resultHeaders;
    int res = WebRequest("POST", url, "Content-Type: application/json\r\n", 5000, post, result, resultHeaders);
-   if (res == 200 || res == 201) Print("[Caldra] Fermeture envoyée ✓ ", symbol);
+   if (res == 200 || res == 201) Print("[Caldra] Fermeture envoyee OK ", symbol);
    else Print("[Caldra] Erreur fermeture HTTP ", res);
 }
 
