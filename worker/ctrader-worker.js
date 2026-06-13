@@ -54,13 +54,14 @@ async function resolveAndAuth(row) {
   const accounts = res.ctidTraderAccount || []
   console.log(`[ctrader] token user ${row.user_id.slice(0, 8)} → ${accounts.length} compte(s) ; env worker=${CTRADER_ENV}`)
 
+  let resolvedAny = false
   for (const acc of accounts) {
     console.log(`[ctrader]   compte ${acc.ctidTraderAccountId} isLive=${acc.isLive}`)
     if (CTRADER_ENV === 'live'  && acc.isLive === false) { console.log('   → ignoré (compte démo, worker en live)'); continue }
     if (CTRADER_ENV === 'demo'  && acc.isLive === true)  { console.log('   → ignoré (compte live, worker en démo)'); continue }
 
     const ctid = Number(acc.ctidTraderAccountId)
-    if (authed.has(ctid)) continue
+    if (authed.has(ctid)) { resolvedAny = true; continue }
 
     await connection.sendCommand('ProtoOAAccountAuthReq', {
       accessToken: row.access_token, ctidTraderAccountId: ctid,
@@ -79,14 +80,18 @@ async function resolveAndAuth(row) {
       ingest_key:               row.ingest_key,
     }, { onConflict: 'user_id,ctid_trader_account_id' })
 
+    resolvedAny = true
     console.log(`[ctrader] compte ${ctid} (user ${row.user_id.slice(0, 8)}) authentifié`)
   }
 
-  // Clean up placeholder NULL-ctid row created by callback
-  await supabase.from('ctrader_accounts')
-    .delete()
-    .eq('user_id', row.user_id)
-    .is('ctid_trader_account_id', null)
+  // Supprime la ligne placeholder (ctid null) du callback UNIQUEMENT si ce worker a
+  // résolu au moins un compte → évite qu'un worker de l'autre env efface le token.
+  if (resolvedAny) {
+    await supabase.from('ctrader_accounts')
+      .delete()
+      .eq('user_id', row.user_id)
+      .is('ctid_trader_account_id', null)
+  }
 }
 
 // Échange le refresh_token contre un nouvel access_token et le persiste.
@@ -114,7 +119,7 @@ async function refreshToken(row) {
   }
 
   const tokenExpiresAt = new Date(Date.now() + (expiresIn ?? 3600) * 1000).toISOString()
-  // Persiste sur toutes les lignes du user (placeholder + comptes résolus partagent le token)
+  // Persiste sur toutes les lignes du user (un seul token OAuth couvre démo + live)
   await supabase.from('ctrader_accounts')
     .update({
       access_token:     accessToken,
@@ -122,7 +127,6 @@ async function refreshToken(row) {
       token_expires_at: tokenExpiresAt,
     })
     .eq('user_id', row.user_id)
-    .eq('environment', CTRADER_ENV)
 
   console.log(`[ctrader] token rafraîchi (user ${row.user_id.slice(0, 8)}, expire ${tokenExpiresAt})`)
   return { access_token: accessToken, refresh_token: refreshToken ?? row.refresh_token, token_expires_at: tokenExpiresAt }
@@ -138,13 +142,14 @@ async function ensureFreshToken(row, force) {
 }
 
 async function refreshAccounts() {
+  // Pas de filtre sur `environment` : chaque worker voit TOUS les tokens et
+  // n'authentifie que les comptes correspondant à son env (filtre isLive plus bas).
   const { data, error } = await supabase
     .from('ctrader_accounts')
     .select('user_id, access_token, refresh_token, ingest_key, ctid_trader_account_id, token_expires_at')
-    .eq('environment', CTRADER_ENV)
   if (error) { console.error('[supabase]', error.message); return }
 
-  if ((data || []).length === 0) console.log(`[ctrader] aucune ligne ctrader_accounts pour env=${CTRADER_ENV}`)
+  if ((data || []).length === 0) console.log('[ctrader] aucune ligne ctrader_accounts en base')
 
   const seen = new Set()
   for (let row of data || []) {
