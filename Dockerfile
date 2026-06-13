@@ -3,4 +3,4 @@ WORKDIR /app
 COPY worker/package*.json ./
 RUN npm install --production
 COPY worker/ ./
-CMD ["node", "index.js"]
+CMD ["node", "ctrader-worker.js"]
