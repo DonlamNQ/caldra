@@ -51,9 +51,13 @@ async function resolveAndAuth(row) {
     accessToken: row.access_token,
   })
 
-  for (const acc of res.ctidTraderAccount || []) {
-    if (CTRADER_ENV === 'live'  && acc.isLive === false) continue
-    if (CTRADER_ENV === 'demo'  && acc.isLive === true)  continue
+  const accounts = res.ctidTraderAccount || []
+  console.log(`[ctrader] token user ${row.user_id.slice(0, 8)} → ${accounts.length} compte(s) ; env worker=${CTRADER_ENV}`)
+
+  for (const acc of accounts) {
+    console.log(`[ctrader]   compte ${acc.ctidTraderAccountId} isLive=${acc.isLive}`)
+    if (CTRADER_ENV === 'live'  && acc.isLive === false) { console.log('   → ignoré (compte démo, worker en live)'); continue }
+    if (CTRADER_ENV === 'demo'  && acc.isLive === true)  { console.log('   → ignoré (compte live, worker en démo)'); continue }
 
     const ctid = Number(acc.ctidTraderAccountId)
     if (authed.has(ctid)) continue
@@ -139,6 +143,8 @@ async function refreshAccounts() {
     .select('user_id, access_token, refresh_token, ingest_key, ctid_trader_account_id, token_expires_at')
     .eq('environment', CTRADER_ENV)
   if (error) { console.error('[supabase]', error.message); return }
+
+  if ((data || []).length === 0) console.log(`[ctrader] aucune ligne ctrader_accounts pour env=${CTRADER_ENV}`)
 
   const seen = new Set()
   for (let row of data || []) {
