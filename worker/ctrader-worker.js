@@ -34,8 +34,10 @@ const authed       = new Map()   // ctid -> { userId, ingestKey }
 const symbolNames  = new Map()   // `${ctid}:${symbolId}` -> 'EURUSD'
 const openPositions = new Map()  // positionId -> { entry_time }
 const forceRefreshUsers = new Set() // user_id dont le token doit être rafraîchi de force (après invalidation)
+const loggedAccounts = new Set() // ctid déjà logués (auth/ignoré) — évite la répétition toutes les 30s
 let   timers       = []          // intervals actifs — purgés à chaque (re)connexion
 let   restarting   = false       // empêche les reconnexions concurrentes
+let   noAccountsLogged = false   // ne logger "aucune ligne" qu'une fois
 
 async function loadSymbols(ctid) {
   const res = await connection.sendCommand('ProtoOASymbolsListReq', {
@@ -52,15 +54,20 @@ async function resolveAndAuth(row) {
   })
 
   const accounts = res.ctidTraderAccount || []
-  console.log(`[ctrader] token user ${row.user_id.slice(0, 8)} → ${accounts.length} compte(s) ; env worker=${CTRADER_ENV}`)
 
   let resolvedAny = false
   for (const acc of accounts) {
-    console.log(`[ctrader]   compte ${acc.ctidTraderAccountId} isLive=${acc.isLive}`)
-    if (CTRADER_ENV === 'live'  && acc.isLive === false) { console.log('   → ignoré (compte démo, worker en live)'); continue }
-    if (CTRADER_ENV === 'demo'  && acc.isLive === true)  { console.log('   → ignoré (compte live, worker en démo)'); continue }
-
     const ctid = Number(acc.ctidTraderAccountId)
+
+    // Compte d'un autre environnement → ignoré (logué une seule fois)
+    if ((CTRADER_ENV === 'live' && acc.isLive === false) || (CTRADER_ENV === 'demo' && acc.isLive === true)) {
+      if (!loggedAccounts.has(ctid)) {
+        console.log(`[ctrader] compte ${ctid} ignoré (compte ${acc.isLive ? 'live' : 'démo'}, worker en ${CTRADER_ENV})`)
+        loggedAccounts.add(ctid)
+      }
+      continue
+    }
+
     if (authed.has(ctid)) { resolvedAny = true; continue }
 
     try {
@@ -86,6 +93,7 @@ async function resolveAndAuth(row) {
     }, { onConflict: 'user_id,ctid_trader_account_id' })
 
     resolvedAny = true
+    loggedAccounts.add(ctid)
     console.log(`[ctrader] compte ${ctid} (user ${row.user_id.slice(0, 8)}) authentifié`)
   }
 
@@ -154,7 +162,11 @@ async function refreshAccounts() {
     .select('user_id, access_token, refresh_token, ingest_key, ctid_trader_account_id, token_expires_at')
   if (error) { console.error('[supabase]', error.message); return }
 
-  if ((data || []).length === 0) console.log('[ctrader] aucune ligne ctrader_accounts en base')
+  if ((data || []).length === 0) {
+    if (!noAccountsLogged) { console.log('[ctrader] aucune ligne ctrader_accounts en base — en attente de connexion OAuth'); noAccountsLogged = true }
+    return
+  }
+  noAccountsLogged = false
 
   const seen = new Set()
   for (let row of data || []) {
@@ -263,6 +275,7 @@ async function start() {
   clearTimers()
   authed.clear()
   symbolNames.clear()
+  loggedAccounts.clear()
 
   connection = new CTraderConnection({ host: HOST, port: PORT })
 
