@@ -34,6 +34,8 @@ const authed       = new Map()   // ctid -> { userId, ingestKey }
 const symbolNames  = new Map()   // `${ctid}:${symbolId}` -> 'EURUSD'
 const openPositions = new Map()  // positionId -> { entry_time }
 const forceRefreshUsers = new Set() // user_id dont le token doit être rafraîchi de force (après invalidation)
+let   timers       = []          // intervals actifs — purgés à chaque (re)connexion
+let   restarting   = false       // empêche les reconnexions concurrentes
 
 async function loadSymbols(ctid) {
   const res = await connection.sendCommand('ProtoOASymbolsListReq', {
@@ -217,7 +219,32 @@ async function handleExecution(event) {
   }
 }
 
+// La lib n'expose AUCUN événement de déconnexion (socket onClose vide) et ses
+// commandes n'ont pas de timeout : une connexion morte « hang » sans rien signaler.
+// withTimeout permet de détecter ces blocages.
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error(`${label} timeout`)), ms)),
+  ])
+}
+
+function clearTimers() {
+  for (const t of timers) clearInterval(t)
+  timers = []
+}
+
+function scheduleRestart(reason) {
+  if (restarting) return
+  restarting = true
+  console.warn(`[ctrader] reconnexion dans 5s (${reason})`)
+  clearTimers()
+  try { connection?.close() } catch {}
+  setTimeout(() => { restarting = false; start() }, 5_000)
+}
+
 async function start() {
+  clearTimers()
   authed.clear()
   symbolNames.clear()
 
@@ -237,30 +264,36 @@ async function start() {
     }
     refreshAccounts().catch((err) => console.error('[refresh]', err?.message))
   })
-  connection.on('close', () => {
-    console.warn('[ctrader] connexion fermée — reconnexion dans 5s')
-    setTimeout(start, 5_000)
-  })
 
-  await connection.open()
-  console.log(`[ctrader] connecté ${HOST}:${PORT}`)
+  try {
+    await withTimeout(connection.open(), 15_000, 'open')
+    console.log(`[ctrader] connecté ${HOST}:${PORT}`)
 
-  // Heartbeat pour maintenir la connexion ouverte
-  const hb = setInterval(() => {
-    try { connection.sendHeartbeat() } catch { clearInterval(hb) }
-  }, HEARTBEAT_MS)
+    // Heartbeat pour maintenir la connexion ouverte côté serveur
+    timers.push(setInterval(() => {
+      try { connection.sendHeartbeat() } catch (e) { scheduleRestart('heartbeat: ' + e?.message) }
+    }, HEARTBEAT_MS))
 
-  await connection.sendCommand('ProtoOAApplicationAuthReq', {
-    clientId: CTRADER_CLIENT_ID, clientSecret: CTRADER_CLIENT_SECRET,
-  })
-  console.log('[ctrader] application authentifiée')
+    await withTimeout(connection.sendCommand('ProtoOAApplicationAuthReq', {
+      clientId: CTRADER_CLIENT_ID, clientSecret: CTRADER_CLIENT_SECRET,
+    }), 15_000, 'app auth')
+    console.log('[ctrader] application authentifiée')
 
-  await refreshAccounts()
-  // Capte les nouveaux utilisateurs OAuth sans redémarrer le worker
-  setInterval(refreshAccounts, 30_000)
+    await refreshAccounts()
+    // Capte les nouveaux utilisateurs OAuth sans redémarrer le worker
+    timers.push(setInterval(refreshAccounts, 30_000))
+
+    // Watchdog : ProtoOAVersionReq doit répondre. Sinon la connexion est morte → reconnexion.
+    timers.push(setInterval(async () => {
+      try {
+        await withTimeout(connection.sendCommand('ProtoOAVersionReq', {}), 10_000, 'ping')
+      } catch (e) {
+        scheduleRestart('watchdog: ' + (e?.message || 'ping échoué'))
+      }
+    }, 30_000))
+  } catch (e) {
+    scheduleRestart('démarrage: ' + (e?.message || e))
+  }
 }
 
-start().catch((e) => {
-  console.error('[fatal]', e)
-  setTimeout(start, 5_000)
-})
+start().catch((e) => scheduleRestart('fatal: ' + (e?.message || e)))
