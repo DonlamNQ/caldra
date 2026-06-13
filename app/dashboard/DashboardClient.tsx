@@ -1579,14 +1579,12 @@ namespace CaldraBot
 
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
               {([
-                ['1', 'Génère ta clé API dans la section ci-dessus si ce n\'est pas encore fait.'],
-                ['2', 'Télécharge le fichier CaldraMT5.mq5 ci-dessous.'],
-                ['3', 'Dans MT5, clique sur "Fichier" → "Ouvrir le dossier des données". Navigue dans MQL5/Experts et colle le fichier.'],
-                ['4', 'Toujours dans MT5 → "Outils" → "Options" → onglet "Expert Consultants". Coche "Autoriser les requêtes WebRequest", clique "+" et entre https://getcaldra.com → OK.'],
-                ['5', 'Appuie sur F4 pour ouvrir MetaEditor. Ouvre CaldraMT5.mq5 puis F7 pour compiler. Ferme MetaEditor quand c\'est bon.'],
-                ['6', 'Affiche le Navigateur (Ctrl+N) → "Expert Consultants" → clic droit → "Actualiser". CaldraMT5 apparaît dans la liste.'],
-                ['7', 'Double-clique sur CaldraMT5, va dans l\'onglet "Données d\'entrées" et colle ta clé API dans le champ prévu → OK.'],
-                ['8', 'Vérifie que le bouton "Trading Algo" en haut de MT5 est vert. Chaque trade fermé est automatiquement envoyé à Caldra.'],
+                ['1', 'Clique sur "Télécharger mon EA" ci-dessous — ta clé API est déjà intégrée dans le fichier, rien à copier.'],
+                ['2', 'Dans MT5 : "Fichier" → "Ouvrir le dossier des données" → ouvre le dossier MQL5/Experts et colle CaldraMT5.mq5 dedans.'],
+                ['3', 'MT5 → "Outils" → "Options" → onglet "Expert Advisors". Coche "Autoriser les WebRequest" et ajoute l\'URL ci-dessous, puis OK.'],
+                ['4', 'Navigateur (Ctrl+N) → "Expert Advisors" → clic droit → "Actualiser". CaldraMT5 apparaît. (S\'il n\'apparaît pas : ouvre-le avec F4 dans MetaEditor puis F7 pour compiler.)'],
+                ['5', 'Glisse CaldraMT5 sur n\'importe quel graphique et vérifie que le bouton "Algo Trading" en haut est vert.'],
+                ['6', 'C\'est fini. Chaque trade fermé remonte automatiquement dans Caldra — aucune clé à saisir.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
@@ -1595,13 +1593,30 @@ namespace CaldraBot
               ))}
             </div>
 
+            {/* URL WebRequest à autoriser (étape 3) — la seule valeur à copier */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 9, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, marginBottom: 5 }}>URL à autoriser (étape 3)</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 7, padding: '8px 11px' }}>
+                <code style={{ fontSize: 11.5, color: C.tx, fontFamily: MONO }}>https://getcaldra.com</code>
+                <button
+                  onClick={() => navigator.clipboard?.writeText('https://getcaldra.com')}
+                  style={{ fontSize: 10, fontFamily: SANS, background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0 }}
+                >
+                  Copier
+                </button>
+              </div>
+            </div>
+
             <a
-              href="/CaldraMT5.mq5"
+              href="/api/mt5-ea"
               download
               style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
             >
-              Télécharger CaldraMT5.mq5 →
+              Télécharger mon EA (clé intégrée) →
             </a>
+            <div style={{ fontSize: 9.5, color: C.te, lineHeight: 1.5, marginTop: 7, textAlign: 'center' as const }}>
+              Chaque téléchargement régénère ta clé. Si tu retélécharges l'EA, réinstalle-le.
+            </div>
           </IntCard>
 
           {/* TradingView */}
