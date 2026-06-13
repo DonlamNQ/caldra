@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createSessionClient } from '@/lib/supabase/server'
 import { createHash, randomBytes } from 'crypto'
 
 const service = () =>
@@ -12,13 +13,20 @@ const service = () =>
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
-  const code   = searchParams.get('code')
-  const userId = searchParams.get('state')
+  const code = searchParams.get('code')
 
   const appUrl        = process.env.NEXT_PUBLIC_APP_URL!
   const errorRedirect = `${appUrl}/dashboard?ctrader=error`
 
-  if (!code || !userId) return NextResponse.redirect(`${errorRedirect}&reason=missing_code_or_state`)
+  if (!code) return NextResponse.redirect(`${errorRedirect}&reason=missing_code`)
+
+  // cTrader ne renvoie PAS le paramètre `state`. On identifie le user via sa session
+  // Supabase : le callback est appelé dans son navigateur, les cookies d'auth sont présents.
+  const sessionClient = await createSessionClient()
+  const { data: { user } } = await sessionClient.auth.getUser()
+  const userId = user?.id ?? searchParams.get('state')
+
+  if (!userId) return NextResponse.redirect(`${errorRedirect}&reason=no_session`)
 
   try {
     // Exchange auth code for tokens
