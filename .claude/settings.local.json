@@ -61,7 +61,8 @@
       "Bash(npm init *)",
       "Bash(npm install *)",
       "Bash(python3 -m json.tool)",
-      "Bash(Remove-Item *)"
+      "Bash(Remove-Item *)",
+      "WebSearch"
     ]
   },
   "hooks": {
