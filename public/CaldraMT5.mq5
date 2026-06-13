@@ -123,7 +123,7 @@ void SendClose(string symbol, string direction, double volume,
 //+------------------------------------------------------------------+
 string FormatTime(long unixSeconds) {
    MqlDateTime dt;
-   TimeToStruct((datetime)unixSeconds, dt, false);  // false = UTC
+   TimeToStruct((datetime)unixSeconds, dt);  // MQL5 : 2 parametres uniquement
    return StringFormat("%04d-%02d-%02dT%02d:%02d:%02dZ",
       dt.year, dt.mon, dt.day, dt.hour, dt.min, dt.sec);
 }
