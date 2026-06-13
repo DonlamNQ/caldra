@@ -62,7 +62,8 @@
       "Bash(npm install *)",
       "Bash(python3 -m json.tool)",
       "Bash(Remove-Item *)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:metaapi.cloud)"
     ]
   },
   "hooks": {
