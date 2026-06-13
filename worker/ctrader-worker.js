@@ -63,9 +63,14 @@ async function resolveAndAuth(row) {
     const ctid = Number(acc.ctidTraderAccountId)
     if (authed.has(ctid)) { resolvedAny = true; continue }
 
-    await connection.sendCommand('ProtoOAAccountAuthReq', {
-      accessToken: row.access_token, ctidTraderAccountId: ctid,
-    })
+    try {
+      await withTimeout(connection.sendCommand('ProtoOAAccountAuthReq', {
+        accessToken: row.access_token, ctidTraderAccountId: ctid,
+      }), 10_000, 'account auth')
+    } catch (e) {
+      console.error(`[ctrader] échec ProtoOAAccountAuthReq compte ${ctid}:`, JSON.stringify(e))
+      continue
+    }
     authed.set(ctid, { userId: row.user_id, ingestKey: row.ingest_key })
     await loadSymbols(ctid)
 
@@ -162,7 +167,7 @@ async function refreshAccounts() {
     forceRefreshUsers.delete(row.user_id)
     seen.add(row.access_token)   // marque aussi le nouveau token comme vu
 
-    try { await resolveAndAuth(row) } catch (e) { console.error('[auth]', e?.message) }
+    try { await resolveAndAuth(row) } catch (e) { console.error('[auth]', e?.message || JSON.stringify(e)) }
   }
 }
 
