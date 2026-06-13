@@ -1611,7 +1611,7 @@ namespace CaldraBot
               download
               style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
             >
-              Télécharger mon EA (clé intégrée) →
+              Télécharger mon EA →
             </a>
             <div style={{ fontSize: 9.5, color: C.te, lineHeight: 1.5, marginTop: 7, textAlign: 'center' as const }}>
               Chaque téléchargement régénère ta clé. Si tu retélécharges l'EA, réinstalle-le.
