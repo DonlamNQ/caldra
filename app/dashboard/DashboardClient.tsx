@@ -1579,12 +1579,11 @@ namespace CaldraBot
 
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
               {([
-                ['1', 'Clique sur "Télécharger mon EA" ci-dessous — ta clé API est déjà intégrée, rien à copier.'],
+                ['1', 'Clique sur "Télécharger mon EA" ci-dessous.'],
                 ['2', 'Dans MT5 : "Fichier" → "Ouvrir le dossier des données" → ouvre le dossier MQL5/Experts et colle CaldraMT5.mq5 dedans.'],
-                ['3', 'Ouvre MetaEditor (touche F4), ouvre CaldraMT5.mq5 et appuie sur F7 pour le compiler (tu dois voir "0 errors"). C\'est cette étape qui le fait apparaître dans le Navigateur.'],
+                ['3', 'Ouvre MetaEditor (F4), ouvre CaldraMT5.mq5 et appuie sur F7 pour le compiler.'],
                 ['4', 'MT5 → "Outils" → "Options" → onglet "Expert Advisors" : coche "Autoriser les WebRequest" et ajoute l\'URL ci-dessous, puis OK.'],
                 ['5', 'Dans le Navigateur (Ctrl+N), glisse CaldraMT5 sur un graphique et vérifie que le bouton "Algo Trading" en haut est vert.'],
-                ['6', 'C\'est fini. Chaque trade fermé remonte automatiquement dans Caldra — aucune clé à saisir.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
@@ -1595,7 +1594,7 @@ namespace CaldraBot
 
             {/* URL WebRequest à autoriser (étape 3) — la seule valeur à copier */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, marginBottom: 5 }}>URL à autoriser (étape 3)</div>
+              <div style={{ fontSize: 9, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, marginBottom: 5 }}>URL à autoriser (étape 4)</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 7, padding: '8px 11px' }}>
                 <code style={{ fontSize: 11.5, color: C.tx, fontFamily: MONO }}>https://getcaldra.com</code>
                 <button
@@ -2416,14 +2415,14 @@ const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
   { id: 'session',     label: 'Session live' },
   { id: 'calendrier', label: 'Calendrier' },
   { id: 'analytics',  label: 'Analytics' },
-  { id: 'rapports',   label: 'Rapports' },
+  { id: 'integrations',  label: 'Intégrations' },
   { id: 'sentinel',   label: 'Sentinel IA', sentinel: true },
 ]
 
 const SETTINGS_ITEMS = [
   { id: 'profil',        label: 'Profil' },
   { id: 'regles',        label: 'Règles' },
-  { id: 'integrations',  label: 'Intégrations' },
+  { id: 'rapports',   label: 'Rapports' },
   { id: 'billing',       label: 'Billing' },
 ]
 
@@ -2499,7 +2498,7 @@ export default function DashboardClient({
   // Keyboard shortcuts: Alt+1…5 for main tabs
   useEffect(() => {
     const map: Record<string, TabId> = {
-      '1': 'session', '2': 'calendrier', '3': 'analytics', '4': 'rapports', '5': 'sentinel'
+      '1': 'session', '2': 'calendrier', '3': 'analytics', '4': 'integrations', '5': 'sentinel'
     }
     function onKey(e: KeyboardEvent) {
       if (e.altKey && map[e.key]) { e.preventDefault(); setActiveTab(map[e.key]); setSettingsOpen(false) }
