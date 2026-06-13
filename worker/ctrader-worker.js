@@ -23,6 +23,7 @@ const {
 const HOST         = CTRADER_ENV === 'demo' ? 'demo.ctraderapi.com' : 'live.ctraderapi.com'
 const PORT         = 5035
 const HEARTBEAT_MS = 10_000
+const TOKEN_REFRESH_BUFFER_MS = 10 * 60_000   // rafraîchit le token 10 min avant expiration
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
@@ -32,6 +33,7 @@ let connection     = null
 const authed       = new Map()   // ctid -> { userId, ingestKey }
 const symbolNames  = new Map()   // `${ctid}:${symbolId}` -> 'EURUSD'
 const openPositions = new Map()  // positionId -> { entry_time }
+const forceRefreshUsers = new Set() // user_id dont le token doit être rafraîchi de force (après invalidation)
 
 async function loadSymbols(ctid) {
   const res = await connection.sendCommand('ProtoOASymbolsListReq', {
@@ -67,6 +69,7 @@ async function resolveAndAuth(row) {
       ctid_trader_account_id:   ctid,
       access_token:             row.access_token,
       refresh_token:            row.refresh_token ?? null,
+      token_expires_at:         row.token_expires_at ?? null,
       ingest_key:               row.ingest_key,
     }, { onConflict: 'user_id,ctid_trader_account_id' })
 
@@ -80,17 +83,72 @@ async function resolveAndAuth(row) {
     .is('ctid_trader_account_id', null)
 }
 
+// Échange le refresh_token contre un nouvel access_token et le persiste.
+// Renvoie les nouveaux champs token, ou null en cas d'échec.
+async function refreshToken(row) {
+  if (!row.refresh_token) return null
+
+  const url = new URL('https://openapi.ctrader.com/apps/token')
+  url.searchParams.set('grant_type',    'refresh_token')
+  url.searchParams.set('refresh_token', row.refresh_token)
+  url.searchParams.set('client_id',     CTRADER_CLIENT_ID)
+  url.searchParams.set('client_secret', CTRADER_CLIENT_SECRET)
+
+  const res = await fetch(url.toString(), { method: 'POST' })
+  if (!res.ok) {
+    console.error('[ctrader] refresh token échec', res.status, await res.text())
+    return null
+  }
+
+  const json = await res.json()
+  const { accessToken, refreshToken, expiresIn } = json
+  if (!accessToken) {
+    console.error('[ctrader] refresh token : pas d\'accessToken', json)
+    return null
+  }
+
+  const tokenExpiresAt = new Date(Date.now() + (expiresIn ?? 3600) * 1000).toISOString()
+  // Persiste sur toutes les lignes du user (placeholder + comptes résolus partagent le token)
+  await supabase.from('ctrader_accounts')
+    .update({
+      access_token:     accessToken,
+      refresh_token:    refreshToken ?? row.refresh_token,
+      token_expires_at: tokenExpiresAt,
+    })
+    .eq('user_id', row.user_id)
+    .eq('environment', CTRADER_ENV)
+
+  console.log(`[ctrader] token rafraîchi (user ${row.user_id.slice(0, 8)}, expire ${tokenExpiresAt})`)
+  return { access_token: accessToken, refresh_token: refreshToken ?? row.refresh_token, token_expires_at: tokenExpiresAt }
+}
+
+// Renvoie row avec un token frais si l'expiration est proche ou si le refresh est forcé.
+async function ensureFreshToken(row, force) {
+  const expiresAt  = row.token_expires_at ? new Date(row.token_expires_at).getTime() : 0
+  const nearExpiry = expiresAt > 0 && expiresAt - Date.now() < TOKEN_REFRESH_BUFFER_MS
+  if (!force && !nearExpiry) return row
+  const refreshed = await refreshToken(row)
+  return refreshed ? { ...row, ...refreshed } : row
+}
+
 async function refreshAccounts() {
   const { data, error } = await supabase
     .from('ctrader_accounts')
-    .select('user_id, access_token, refresh_token, ingest_key, ctid_trader_account_id')
+    .select('user_id, access_token, refresh_token, ingest_key, ctid_trader_account_id, token_expires_at')
     .eq('environment', CTRADER_ENV)
   if (error) { console.error('[supabase]', error.message); return }
 
   const seen = new Set()
-  for (const row of data || []) {
+  for (let row of data || []) {
     if (seen.has(row.access_token)) continue
     seen.add(row.access_token)
+
+    // Rafraîchit le token si proche de l'expiration ou invalidé par le serveur
+    const force = forceRefreshUsers.has(row.user_id)
+    row = await ensureFreshToken(row, force)
+    forceRefreshUsers.delete(row.user_id)
+    seen.add(row.access_token)   // marque aussi le nouveau token comme vu
+
     try { await resolveAndAuth(row) } catch (e) { console.error('[auth]', e?.message) }
   }
 }
@@ -168,9 +226,17 @@ async function start() {
   connection.on('ProtoOAExecutionEvent', (e) =>
     handleExecution(e).catch(console.error)
   )
-  connection.on('ProtoOAAccountsTokenInvalidatedEvent', (e) =>
-    console.warn('[ctrader] token invalidé', e?.ctidTraderAccountIds)
-  )
+  connection.on('ProtoOAAccountsTokenInvalidatedEvent', (e) => {
+    const ctids = (e?.ctidTraderAccountIds || []).map(Number)
+    console.warn('[ctrader] token invalidé', ctids)
+    // Marque les users concernés pour refresh forcé + dé-authentifie pour forcer la ré-auth
+    for (const ctid of ctids) {
+      const ctx = authed.get(ctid)
+      if (ctx) forceRefreshUsers.add(ctx.userId)
+      authed.delete(ctid)
+    }
+    refreshAccounts().catch((err) => console.error('[refresh]', err?.message))
+  })
   connection.on('close', () => {
     console.warn('[ctrader] connexion fermée — reconnexion dans 5s')
     setTimeout(start, 5_000)
