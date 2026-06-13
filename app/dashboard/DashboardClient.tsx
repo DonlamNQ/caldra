@@ -2435,8 +2435,13 @@ export default function DashboardClient({
   // Auto-switch to integrations tab after cTrader OAuth callback
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
-    if (p.get('ctrader') === 'connected' || p.get('ctrader') === 'error') {
+    const ct = p.get('ctrader')
+    if (ct === 'connected' || ct === 'error') {
       setActiveTab('integrations')
+      if (ct === 'error') {
+        const reason = p.get('reason')
+        alert(`Connexion cTrader échouée${reason ? ` : ${decodeURIComponent(reason)}` : ''}`)
+      }
       window.history.replaceState({}, '', '/dashboard')
     }
   }, [])

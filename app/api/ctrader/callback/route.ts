@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const appUrl        = process.env.NEXT_PUBLIC_APP_URL!
   const errorRedirect = `${appUrl}/dashboard?ctrader=error`
 
-  if (!code || !userId) return NextResponse.redirect(errorRedirect)
+  if (!code || !userId) return NextResponse.redirect(`${errorRedirect}&reason=missing_code_or_state`)
 
   try {
     // Exchange auth code for tokens
@@ -29,17 +29,17 @@ export async function GET(req: NextRequest) {
     tokenUrl.searchParams.set('client_id', process.env.CTRADER_CLIENT_ID!)
     tokenUrl.searchParams.set('client_secret', process.env.CTRADER_CLIENT_SECRET!)
 
-    const tokenRes = await fetch(tokenUrl.toString(), { method: 'POST' })
-    if (!tokenRes.ok) {
-      console.error('[ctrader/callback] token exchange failed', tokenRes.status, await tokenRes.text())
-      return NextResponse.redirect(errorRedirect)
-    }
+    // cTrader attend un GET. En cas d'échec il renvoie souvent HTTP 200 avec errorCode/description.
+    const tokenRes = await fetch(tokenUrl.toString())
+    const raw = await tokenRes.text()
+    let json: any = {}
+    try { json = JSON.parse(raw) } catch {}
 
-    const json = await tokenRes.json()
-    const { accessToken, refreshToken, expiresIn } = json
+    const { accessToken, refreshToken, expiresIn, errorCode, description } = json
     if (!accessToken) {
-      console.error('[ctrader/callback] no accessToken in response', json)
-      return NextResponse.redirect(errorRedirect)
+      console.error('[ctrader/callback] token exchange échoué', tokenRes.status, raw)
+      const reason = errorCode || description || `http_${tokenRes.status}`
+      return NextResponse.redirect(`${errorRedirect}&reason=${encodeURIComponent(reason)}`)
     }
 
     const db = service()
@@ -69,8 +69,8 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.redirect(`${appUrl}/dashboard?ctrader=connected`)
-  } catch (e) {
+  } catch (e: any) {
     console.error('[ctrader/callback]', e)
-    return NextResponse.redirect(errorRedirect)
+    return NextResponse.redirect(`${errorRedirect}&reason=${encodeURIComponent('exception:' + (e?.message ?? ''))}`)
   }
 }
