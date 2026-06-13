@@ -55,6 +55,7 @@ interface DashboardClientProps {
   plan: string
   userMeta: { first_name?: string; last_name?: string; phone?: string }
   ctraderConnected: boolean
+  lastTradeAt: string | null
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -1323,8 +1324,19 @@ function RapportsPanel() {
 }
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
-function IntegrationsPanel({ apiKeyPrefix, initialWebhook, initialCtraderConnected }: { apiKeyPrefix: string | null; initialWebhook: string | null; initialCtraderConnected: boolean }) {
+function IntegrationsPanel({ apiKeyPrefix, initialWebhook, initialCtraderConnected, lastTradeAt }: { apiKeyPrefix: string | null; initialWebhook: string | null; initialCtraderConnected: boolean; lastTradeAt: string | null }) {
   const C = useContext(ThemeCtx)
+
+  // Indicateur de santé : « est-ce que Caldra reçoit bien tes trades ? »
+  const health = (() => {
+    if (!lastTradeAt) return { dot: 'rgba(255,255,255,.18)', color: C.te, text: "Aucun trade reçu pour l'instant. Connecte une plateforme ci-dessous, puis fais (ou attends) un trade." }
+    const diffMs = Date.now() - new Date(lastTradeAt).getTime()
+    const mins = Math.floor(diffMs / 60000)
+    const rel = mins < 1 ? "à l'instant" : mins < 60 ? `il y a ${mins} min` : mins < 1440 ? `il y a ${Math.floor(mins / 60)} h` : `il y a ${Math.floor(mins / 1440)} j`
+    return diffMs < 86_400_000
+      ? { dot: C.g, color: C.g, text: `Données actives · dernier trade reçu ${rel}.` }
+      : { dot: '#f59e0b', color: '#f59e0b', text: `Dernier trade reçu ${rel}. Si tu trades en ce moment, vérifie que ta plateforme (ou ton EA) tourne bien.` }
+  })()
   const [prefix, setPrefix]     = useState(apiKeyPrefix)
   const [newKey, setNewKey]     = useState<string|null>(null)
   const [keyCopied, setKeyCopied] = useState(false)
@@ -1474,6 +1486,12 @@ namespace CaldraBot
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
       </div>
     <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
+
+      {/* ── Indicateur de santé de connexion ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 10, padding: '11px 15px', marginBottom: 16 }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: health.dot, flexShrink: 0 }} />
+        <div style={{ fontSize: 12, color: health.color, lineHeight: 1.5 }}>{health.text}</div>
+      </div>
 
       {/* ── Clé API ── */}
       <IntCard style={{ marginBottom: 16 }}>
@@ -2431,7 +2449,7 @@ type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
   yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, plan, userMeta,
-  ctraderConnected,
+  ctraderConnected, lastTradeAt,
 }: DashboardClientProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     typeof window !== 'undefined' ? (localStorage.getItem('caldra-theme') as 'dark' | 'light') ?? 'dark' : 'dark'
@@ -2916,7 +2934,7 @@ export default function DashboardClient({
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} />
             )}
             {activeTab === 'rapports' && <RapportsPanel />}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} initialCtraderConnected={ctraderConnected} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} initialCtraderConnected={ctraderConnected} lastTradeAt={lastTradeAt} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}

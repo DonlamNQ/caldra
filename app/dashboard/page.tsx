@@ -51,6 +51,7 @@ export default async function DashboardPage() {
     { data: yesterdayTrades },
     { data: profile },
     { data: ctraderAccount },
+    { data: lastTrade },
   ] = await Promise.all([
     service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
       .order('level', { ascending: false }).order('created_at', { ascending: false }),
@@ -68,6 +69,7 @@ export default async function DashboardPage() {
       .gte('entry_time', yesterday).lt('entry_time', today),
     service.from('user_profiles').select('plan').eq('user_id', user.id).single(),
     service.from('ctrader_accounts').select('id').eq('user_id', user.id).limit(1),
+    service.from('trades').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ])
 
   // Today
@@ -136,6 +138,7 @@ export default async function DashboardPage() {
       plan={profile?.plan ?? 'free'}
       userMeta={{ first_name: meta.first_name, last_name: meta.last_name, phone: meta.phone }}
       ctraderConnected={!!(ctraderAccount && ctraderAccount.length > 0)}
+      lastTradeAt={lastTrade?.created_at ?? null}
     />
   )
 }
