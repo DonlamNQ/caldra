@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
   const isClosing = exit_price != null && pnl != null
 
   let trade
+  let openTradeExisted = false
   if (isClosing) {
     // Cherche un trade ouvert existant pour le mettre à jour (match par symbol + direction + entry_time)
     const { data: existing } = await supabase
@@ -108,6 +109,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (existing) {
+      openTradeExisted = true
       const { data: updated, error } = await supabase
         .from('trades')
         .update({ exit_price, exit_time, pnl, status: 'closed' })
@@ -156,7 +158,9 @@ export async function POST(req: NextRequest) {
     trade = inserted
   }
 
-  const alerts = await (isClosing ? analyzeClosedTrade(trade) : analyzeOpenTrade(trade))
+  // Si le trade fermé n'avait pas d'ouverture ingérée au préalable (cTrader, qui
+  // ne poste que des fermetures), on fait aussi tourner les détecteurs d'entrée.
+  const alerts = await (isClosing ? analyzeClosedTrade(trade, !openTradeExisted) : analyzeOpenTrade(trade))
 
   return NextResponse.json({
     success: true,

@@ -161,22 +161,12 @@ async function saveAndNotify(
   return alerts
 }
 
-// ── Alertes à l'OUVERTURE d'un trade ─────────────────────────────────────────
-// outside_session, revenge_sizing, immediate_reentry, overtrading
-export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
+// ── Détecteurs comportementaux liés à l'ENTRÉE ───────────────────────────────
+// outside_session, revenge_sizing, immediate_reentry, overtrading.
+// Extraits pour pouvoir tourner aussi à la fermeture (cTrader ne poste que des
+// trades fermés → analyzeOpenTrade n'est jamais appelé pour ces comptes).
+function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTrades: Trade[]): Alert[] {
   const alerts: Alert[] = []
-  const today = new Date().toISOString().split('T')[0]
-  const supabase = getSupabase()
-
-  const [{ data: rules }, { data: profile }, { data: sessionTrades }] = await Promise.all([
-    supabase.from('trading_rules').select('*').eq('user_id', trade.user_id).single(),
-    supabase.from('user_profiles').select('plan').eq('user_id', trade.user_id).single(),
-    supabase.from('trades').select('*').eq('user_id', trade.user_id).gte('entry_time', today).order('entry_time', { ascending: false }),
-  ])
-
-  if (!rules || !sessionTrades) return []
-
-  const isSentinel = profile?.plan === 'sentinel'
   const prevTrades = sessionTrades.filter((t: Trade) => t.id !== trade.id)
   const prevTrade = prevTrades[0] ?? null
 
@@ -237,12 +227,31 @@ export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
     })
   }
 
+  return alerts
+}
+
+// ── Alertes à l'OUVERTURE d'un trade ─────────────────────────────────────────
+export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
+  const today = new Date().toISOString().split('T')[0]
+  const supabase = getSupabase()
+
+  const [{ data: rules }, { data: profile }, { data: sessionTrades }] = await Promise.all([
+    supabase.from('trading_rules').select('*').eq('user_id', trade.user_id).single(),
+    supabase.from('user_profiles').select('plan').eq('user_id', trade.user_id).single(),
+    supabase.from('trades').select('*').eq('user_id', trade.user_id).gte('entry_time', today).order('entry_time', { ascending: false }),
+  ])
+
+  if (!rules || !sessionTrades) return []
+
+  const isSentinel = profile?.plan === 'sentinel'
+  const alerts = entryBehaviorAlerts(trade, rules, sessionTrades)
+
   return saveAndNotify(trade, alerts, sessionTrades, isSentinel, rules)
 }
 
 // ── Alertes à la FERMETURE d'un trade ────────────────────────────────────────
 // consecutive_losses, drawdown_alert
-export async function analyzeClosedTrade(trade: Trade): Promise<Alert[]> {
+export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = false): Promise<Alert[]> {
   const alerts: Alert[] = []
   const today = new Date().toISOString().split('T')[0]
   const supabase = getSupabase()
@@ -256,6 +265,13 @@ export async function analyzeClosedTrade(trade: Trade): Promise<Alert[]> {
   if (!rules || !sessionTrades) return []
 
   const isSentinel = profile?.plan === 'sentinel'
+
+  // Trade fermé sans ouverture préalablement ingérée (ex. cTrader, qui ne poste
+  // que des trades fermés) → on fait aussi tourner les détecteurs d'entrée,
+  // sinon overtrading / outside_session / revenge / re-entrée ne se déclenchent jamais.
+  if (includeEntryChecks) {
+    alerts.push(...entryBehaviorAlerts(trade, rules, sessionTrades))
+  }
 
   // ── 1. PERTES CONSÉCUTIVES ────────────────────────────────────────────────
   // Vraie série en cours : on compte depuis le trade le plus récent jusqu'au
