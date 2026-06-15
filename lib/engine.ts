@@ -258,14 +258,19 @@ export async function analyzeClosedTrade(trade: Trade): Promise<Alert[]> {
   const isSentinel = profile?.plan === 'sentinel'
 
   // ── 1. PERTES CONSÉCUTIVES ────────────────────────────────────────────────
-  const lastN = sessionTrades.slice(0, rules.max_consecutive_losses)
-  const consecutiveLossCount = lastN.filter((t: Trade) => (t.pnl ?? 0) < 0).length
-  if (consecutiveLossCount >= rules.max_consecutive_losses) {
+  // Vraie série en cours : on compte depuis le trade le plus récent jusqu'au
+  // premier gain (sessionTrades est trié par entry_time décroissant).
+  let lossStreak = 0
+  for (const t of sessionTrades as Trade[]) {
+    if ((t.pnl ?? 0) < 0) lossStreak++
+    else break
+  }
+  if (lossStreak >= rules.max_consecutive_losses) {
     alerts.push({
       type: 'consecutive_losses',
       level: 2,
-      message: `${rules.max_consecutive_losses} pertes consécutives`,
-      detail: { count: consecutiveLossCount },
+      message: `${lossStreak} pertes consécutives`,
+      detail: { count: lossStreak, threshold: rules.max_consecutive_losses },
     })
   }
 

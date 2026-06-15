@@ -117,6 +117,26 @@ export async function POST(req: NextRequest) {
       if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })
       trade = updated
     } else {
+      // Anti-doublon : un même trade fermé peut être ré-émis (reconnexion cTrader,
+      // retry réseau). On déduplique sur la signature exacte de la position fermée
+      // → ne gonfle ni le compteur de trades ni les alertes.
+      let dupeQuery = supabase
+        .from('trades')
+        .select('id')
+        .eq('user_id', user_id)
+        .eq('symbol', symbol as string)
+        .eq('direction', direction as string)
+        .eq('entry_time', entry_time as string)
+        .eq('status', 'closed')
+      if (exit_time) dupeQuery = dupeQuery.eq('exit_time', exit_time as string)
+      const { data: dupe } = await dupeQuery.maybeSingle()
+      if (dupe) {
+        return NextResponse.json(
+          { success: true, trade_id: dupe.id, duplicate: true, alerts_generated: 0, alerts: [] },
+          { headers: CORS_HEADERS }
+        )
+      }
+
       const { data: inserted, error } = await supabase
         .from('trades')
         .insert({ user_id, symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl, status: 'closed' })
