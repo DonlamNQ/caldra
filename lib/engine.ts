@@ -93,6 +93,11 @@ function buildPushContent(a: Alert): { title: string; body: string } {
       return a.level === 2
         ? { title: '🚫 Limite de trades atteinte', body: `${d.current}/${d.max} trades — stop pour aujourd'hui.` }
         : { title: `📊 ${d.current}/${d.max} trades`, body: "Tu approches ta limite de session." }
+    case 'stop_not_respected':
+      return {
+        title: '🛑 Stop non respecté',
+        body: `Perte de ${Math.round(Number(d.loss))}€ (${d.loss_pct}%) — au-delà de ton risque de ${d.max_risk_pct}%.`,
+      }
     default:
       return { title: a.message, body: '' }
   }
@@ -308,6 +313,27 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
         account_size: accountSize,
       },
     })
+  }
+
+  // ── 3. STOP NON RESPECTÉ ──────────────────────────────────────────────────
+  // Perte réalisée sur CE trade au-delà du risque par trade autorisé → le stop
+  // n'a pas été tenu (ou était absent). Mesurable sans capturer le stop-loss.
+  const tradeLoss = trade.pnl ?? 0
+  if (tradeLoss < 0) {
+    const lossPct = Math.abs(tradeLoss / accountSize) * 100
+    if (lossPct > rules.max_risk_per_trade_pct) {
+      alerts.push({
+        type: 'stop_not_respected',
+        level: 2,
+        message: 'Stop non respecté — perte au-delà de ton risque par trade',
+        detail: {
+          loss: tradeLoss,
+          loss_pct: lossPct.toFixed(2),
+          max_risk_pct: rules.max_risk_per_trade_pct,
+          account_size: accountSize,
+        },
+      })
+    }
   }
 
   return saveAndNotify(trade, alerts, sessionTrades, isSentinel, rules)
