@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   // Body JSON ou query params (fallback MT5 GET)
   const q = req.nextUrl.searchParams
-  let symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl
+  let symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl, stop_loss
   if (q.get('symbol')) {
     symbol      = q.get('symbol')
     direction   = q.get('direction')
@@ -56,14 +56,17 @@ export async function POST(req: NextRequest) {
     entry_time  = q.get('entry_time')
     exit_time   = q.get('exit_time') ?? undefined
     pnl         = q.get('pnl') != null ? parseFloat(q.get('pnl')!) : undefined
+    stop_loss   = q.get('stop_loss') != null ? parseFloat(q.get('stop_loss')!) : undefined
   } else {
     try {
       const body = await req.json()
-      ;({ symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl } = body)
+      ;({ symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl, stop_loss } = body)
     } catch {
       return NextResponse.json({ error: 'Invalid or empty body' }, { status: 400, headers: CORS_HEADERS })
     }
   }
+  // stop_loss optionnel — normalisé : un prix > 0, sinon null
+  const stopLoss = (typeof stop_loss === 'number' && isFinite(stop_loss) && stop_loss > 0) ? stop_loss : null
 
   // Validation stricte des champs
   if (!symbol || !direction || !size || !entry_price || !entry_time) {
@@ -112,7 +115,7 @@ export async function POST(req: NextRequest) {
       openTradeExisted = true
       const { data: updated, error } = await supabase
         .from('trades')
-        .update({ exit_price, exit_time, pnl, status: 'closed' })
+        .update({ exit_price, exit_time, pnl, status: 'closed', ...(stopLoss != null ? { stop_loss: stopLoss } : {}) })
         .eq('id', existing.id)
         .select()
         .single()
@@ -141,7 +144,7 @@ export async function POST(req: NextRequest) {
 
       const { data: inserted, error } = await supabase
         .from('trades')
-        .insert({ user_id, symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl, status: 'closed' })
+        .insert({ user_id, symbol, direction, size, entry_price, exit_price, entry_time, exit_time, pnl, stop_loss: stopLoss, status: 'closed' })
         .select()
         .single()
       if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })
@@ -151,7 +154,7 @@ export async function POST(req: NextRequest) {
     // Trade ouvert — insertion avec status open
     const { data: inserted, error } = await supabase
       .from('trades')
-      .insert({ user_id, symbol, direction, size, entry_price, entry_time, status: 'open' })
+      .insert({ user_id, symbol, direction, size, entry_price, entry_time, stop_loss: stopLoss, status: 'open' })
       .select()
       .single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: CORS_HEADERS })

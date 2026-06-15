@@ -254,13 +254,15 @@ async function handleExecution(state, event) {
   const deal = event.deal
   if (!deal) return
 
-  // Opening/increasing deal — memorise entry timestamp for later
+  // Opening/increasing deal — memorise entry timestamp + stop-loss for later
   if (!deal.closePositionDetail) {
     if (deal.positionId) {
       state.openPositions.set(Number(deal.positionId), {
         entry_time: deal.executionTimestamp
           ? new Date(Number(deal.executionTimestamp)).toISOString()
           : new Date().toISOString(),
+        // Le stop-loss vit sur la position (prix). Présent si attaché à l'ordre.
+        stop_loss: event.position?.stopLoss != null ? Number(event.position.stopLoss) : null,
       })
     }
     return
@@ -281,6 +283,8 @@ async function handleExecution(state, event) {
     : new Date().toISOString()
   const op          = state.openPositions.get(Number(deal.positionId))
   const entry_time  = op?.entry_time || exit_time
+  // Stop-loss capturé à l'ouverture ; sinon, dernier connu sur la position au close.
+  const stop_loss   = op?.stop_loss ?? (event.position?.stopLoss != null ? Number(event.position.stopLoss) : null)
   state.openPositions.delete(Number(deal.positionId))
 
   const payload = {
@@ -292,6 +296,7 @@ async function handleExecution(state, event) {
     entry_time,
     exit_time,
     pnl,
+    stop_loss,
   }
 
   try {

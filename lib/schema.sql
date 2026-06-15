@@ -184,3 +184,6 @@ alter table ctrader_accounts enable row level security;
 drop policy if exists "service role full access" on ctrader_accounts;
 create policy "service role full access" on ctrader_accounts for all using (true) with check (true);
 
+-- v2.5 : capture du stop-loss → détecteur "Risk dépassé" (risque planifié par trade)
+alter table trades add column if not exists stop_loss numeric;
+

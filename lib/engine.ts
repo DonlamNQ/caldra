@@ -20,6 +20,7 @@ export type Trade = {
   entry_time: string
   exit_time?: string
   pnl?: number
+  stop_loss?: number
   status?: string
 }
 
@@ -97,6 +98,11 @@ function buildPushContent(a: Alert): { title: string; body: string } {
       return {
         title: '🛑 Stop non respecté',
         body: `Perte de ${Math.round(Number(d.loss))}€ (${d.loss_pct}%) — au-delà de ton risque de ${d.max_risk_pct}%.`,
+      }
+    case 'risk_exceeded':
+      return {
+        title: '⚖️ Risk dépassé',
+        body: `Risque planifié ${d.risk_pct}% — au-delà de ta limite de ${d.max_risk_pct}% par trade.`,
       }
     default:
       return { title: a.message, body: '' }
@@ -330,6 +336,32 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
           loss: tradeLoss,
           loss_pct: lossPct.toFixed(2),
           max_risk_pct: rules.max_risk_per_trade_pct,
+          account_size: accountSize,
+        },
+      })
+    }
+  }
+
+  // ── 4. RISK DÉPASSÉ — risque planifié (entrée → stop) au-delà du budget ────
+  // Valeur monétaire par unité de prix dérivée du trade lui-même (auto-calibré,
+  // indépendant de l'instrument) : |pnl| / |sortie − entrée|.
+  const sl    = Number(trade.stop_loss)
+  const entry = Number(trade.entry_price)
+  const exit  = Number(trade.exit_price)
+  if (sl > 0 && entry > 0 && exit > 0 && exit !== entry) {
+    const valuePerUnit = Math.abs((trade.pnl ?? 0) / (exit - entry))
+    const riskAmount   = Math.abs(entry - sl) * valuePerUnit
+    const riskPct      = (riskAmount / accountSize) * 100
+    if (riskPct > rules.max_risk_per_trade_pct) {
+      alerts.push({
+        type: 'risk_exceeded',
+        level: 2,
+        message: 'Risk dépassé — position trop grande pour ton risque par trade',
+        detail: {
+          risk_pct: riskPct.toFixed(2),
+          max_risk_pct: rules.max_risk_per_trade_pct,
+          stop_loss: sl,
+          entry_price: entry,
           account_size: accountSize,
         },
       })
