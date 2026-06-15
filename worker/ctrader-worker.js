@@ -100,7 +100,14 @@ async function resolveAndAuth(row) {
     // La connexion de cet env n'est pas encore prête → on réessaiera au prochain tick.
     if (!state.appAuthed) continue
 
-    if (state.authed.has(ctid)) { resolvedAny = true; continue }
+    // Déjà authentifié sur la socket : pas besoin de ré-auth, mais on RAFRAÎCHIT le
+    // contexte. Une déconnexion/reconnexion OAuth régénère l'ingest_key — sans ça, le
+    // worker garderait l'ancienne clé (supprimée au /disconnect) → /api/ingest 401.
+    if (state.authed.has(ctid)) {
+      state.authed.set(ctid, { userId: row.user_id, ingestKey: row.ingest_key })
+      resolvedAny = true
+      continue
+    }
 
     try {
       await withTimeout(state.conn.sendCommand('ProtoOAAccountAuthReq', {
