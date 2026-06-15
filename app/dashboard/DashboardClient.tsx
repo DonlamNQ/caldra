@@ -1324,7 +1324,7 @@ function RapportsPanel() {
 }
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
-function IntegrationsPanel({ apiKeyPrefix, initialWebhook, initialCtraderConnected, lastTradeAt }: { apiKeyPrefix: string | null; initialWebhook: string | null; initialCtraderConnected: boolean; lastTradeAt: string | null }) {
+function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, lastTradeAt }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; lastTradeAt: string | null }) {
   const C = useContext(ThemeCtx)
 
   // Indicateur de santé : « est-ce que Caldra reçoit bien tes trades ? »
@@ -1347,7 +1347,6 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, initialCtraderConnect
 
   const [webhookSave, setWebhookSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
-  const [ctraderConn, setCtraderConn]         = useState(initialCtraderConnected)
   const [ctDisconnecting, setCtDisconnecting] = useState(false)
 
   async function disconnectCtrader() {
@@ -2482,6 +2481,8 @@ export default function DashboardClient({
   const [trades, setTrades] = useState<TradeRow[]>(initialTrades)
   const [stats, setStats] = useState<SessionStats>(initialStats)
   const [connected, setConnected] = useState(false)
+  // État cTrader remonté ici pour survivre au démontage/remontage de l'onglet Intégrations
+  const [ctraderConn, setCtraderConn] = useState(ctraderConnected)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
@@ -2934,7 +2935,7 @@ export default function DashboardClient({
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} />
             )}
             {activeTab === 'rapports' && <RapportsPanel />}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} initialCtraderConnected={ctraderConnected} lastTradeAt={lastTradeAt} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} lastTradeAt={lastTradeAt} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
