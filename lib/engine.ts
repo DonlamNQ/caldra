@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendAlertEmail, sendWebhookAlert } from './brevo'
+import { newsConflict } from './economic-calendar'
 import Anthropic from '@anthropic-ai/sdk'
 
 const getSupabase = () => createClient(
@@ -103,6 +104,11 @@ function buildPushContent(a: Alert): { title: string; body: string } {
       return {
         title: '⚖️ Risk dépassé',
         body: `Risque planifié ${d.risk_pct}% — au-delà de ta limite de ${d.max_risk_pct}% par trade.`,
+      }
+    case 'news_trading':
+      return {
+        title: '📰 Trade pendant news',
+        body: `${d.title} (${d.currency}) à ${d.minutes_from_event} min — volatilité macro.`,
       }
     default:
       return { title: a.message, body: '' }
@@ -241,6 +247,19 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
   return alerts
 }
 
+// Détecteur "Trade pendant news" — croise l'heure d'entrée avec le calendrier
+// économique (événements à fort impact ±5 min sur la devise du symbole).
+async function maybeNewsAlert(trade: Trade): Promise<Alert | null> {
+  const news = await newsConflict(trade.entry_time, trade.symbol)
+  if (!news) return null
+  return {
+    type: 'news_trading',
+    level: 2,
+    message: `Trade à ${news.minutes} min d'une news ${news.currency} à fort impact`,
+    detail: { title: news.title, currency: news.currency, minutes_from_event: news.minutes },
+  }
+}
+
 // ── Alertes à l'OUVERTURE d'un trade ─────────────────────────────────────────
 export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
   const today = new Date().toISOString().split('T')[0]
@@ -256,6 +275,8 @@ export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
 
   const isSentinel = profile?.plan === 'sentinel'
   const alerts = entryBehaviorAlerts(trade, rules, sessionTrades)
+  const news = await maybeNewsAlert(trade)
+  if (news) alerts.push(news)
 
   return saveAndNotify(trade, alerts, sessionTrades, isSentinel, rules)
 }
@@ -282,6 +303,8 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
   // sinon overtrading / outside_session / revenge / re-entrée ne se déclenchent jamais.
   if (includeEntryChecks) {
     alerts.push(...entryBehaviorAlerts(trade, rules, sessionTrades))
+    const news = await maybeNewsAlert(trade)
+    if (news) alerts.push(news)
   }
 
   // ── 1. PERTES CONSÉCUTIVES ────────────────────────────────────────────────
