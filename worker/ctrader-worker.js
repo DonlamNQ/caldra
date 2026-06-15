@@ -114,8 +114,14 @@ async function resolveAndAuth(row) {
         accessToken: row.access_token, ctidTraderAccountId: ctid,
       }), 10_000, `${env} account auth`)
     } catch (e) {
-      console.error(`[ctrader:${env}] échec ProtoOAAccountAuthReq compte ${ctid}:`, JSON.stringify(e))
-      continue
+      // Reconnexion sans redémarrage worker : le compte est encore loggué sur la
+      // socket → ALREADY_LOGGED_IN n'est pas une erreur, on enregistre quand même.
+      const msg = `${e?.message || ''} ${JSON.stringify(e)}`
+      if (!/ALREADY_LOGGED_IN/i.test(msg)) {
+        console.error(`[ctrader:${env}] échec ProtoOAAccountAuthReq compte ${ctid}:`, JSON.stringify(e))
+        continue
+      }
+      console.log(`[ctrader:${env}] compte ${ctid} déjà loggué — contexte rafraîchi`)
     }
     state.authed.set(ctid, { userId: row.user_id, ingestKey: row.ingest_key })
     await loadSymbols(state, ctid)
@@ -203,6 +209,21 @@ async function refreshAccounts() {
     .from('ctrader_accounts')
     .select('user_id, access_token, refresh_token, ingest_key, ctid_trader_account_id, token_expires_at')
   if (error) { console.error('[supabase]', error.message); return }
+
+  // Réconciliation : tout compte gardé en mémoire dont la clé d'ingestion n'existe
+  // plus en base a été déconnecté (le /disconnect supprime la ligne + la clé).
+  // On l'oublie → handleExecution l'ignore aussitôt → l'ingestion s'arrête net.
+  const validKeys = new Set((data || []).map(r => r.ingest_key))
+  for (const state of envStates) {
+    for (const ctid of [...state.authed.keys()]) {
+      if (!validKeys.has(state.authed.get(ctid).ingestKey)) {
+        state.authed.delete(ctid)
+        state.loggedAccounts.delete(ctid)
+        _loggedSkip.delete(ctid)
+        console.log(`[ctrader:${state.env}] compte ${ctid} oublié (déconnecté)`)
+      }
+    }
+  }
 
   if ((data || []).length === 0) {
     if (!noAccountsLogged) { console.log('[ctrader] aucune ligne ctrader_accounts en base — en attente de connexion OAuth'); noAccountsLogged = true }
