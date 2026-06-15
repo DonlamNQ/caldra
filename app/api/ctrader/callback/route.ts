@@ -66,7 +66,9 @@ export async function GET(req: NextRequest) {
     // Store tokens + ingest key — worker will fill in ctid_trader_account_id
     const tokenExpiresAt = new Date(Date.now() + (expiresIn ?? 3600) * 1000).toISOString()
 
-    await db.from('ctrader_accounts').delete().eq('user_id', userId).eq('environment', 'live')
+    // Repart d'un état propre : un nouveau token OAuth couvre démo + live, donc on
+    // remplace TOUTES les lignes du user (le worker re-résout l'environnement réel).
+    await db.from('ctrader_accounts').delete().eq('user_id', userId)
     await db.from('ctrader_accounts').insert({
       user_id:           userId,
       environment:       'live',

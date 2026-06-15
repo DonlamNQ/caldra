@@ -14,14 +14,23 @@ try {
 const {
   CTRADER_CLIENT_ID,
   CTRADER_CLIENT_SECRET,
-  CTRADER_ENV           = 'live',
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
   CALDRA_INGEST_URL     = 'https://getcaldra.com/api/ingest',
 } = process.env
 
-const HOST         = CTRADER_ENV === 'demo' ? 'demo.ctraderapi.com' : 'live.ctraderapi.com'
-const PORT         = 5035
+// Un SEUL worker gère les deux environnements dans le même processus.
+// C'est volontaire : un seul jeton OAuth couvre démo + live, et le rafraîchir
+// depuis deux processus concurrents fait que cTrader détecte la réutilisation
+// du refresh_token (rotation OAuth) et révoque toute l'autorisation.
+// CTRADER_ENV peut restreindre à un seul env si besoin (ex. 'demo' ou 'live'),
+// sinon les deux sont lancés.
+const HOSTS = { demo: 'demo.ctraderapi.com', live: 'live.ctraderapi.com' }
+const PORT  = 5035
+const ENVS  = (process.env.CTRADER_ENV && HOSTS[process.env.CTRADER_ENV])
+  ? [process.env.CTRADER_ENV]
+  : ['demo', 'live']
+
 const HEARTBEAT_MS = 10_000
 const TOKEN_REFRESH_BUFFER_MS = 10 * 60_000   // rafraîchit le token 10 min avant expiration
 
@@ -29,62 +38,86 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 })
 
-let connection     = null
-const authed       = new Map()   // ctid -> { userId, ingestKey }
-const symbolNames  = new Map()   // `${ctid}:${symbolId}` -> 'EURUSD'
-const openPositions = new Map()  // positionId -> { entry_time }
 const forceRefreshUsers = new Set() // user_id dont le token doit être rafraîchi de force (après invalidation)
-const loggedAccounts = new Set() // ctid déjà logués (auth/ignoré) — évite la répétition toutes les 30s
-let   timers       = []          // intervals actifs — purgés à chaque (re)connexion
-let   restarting   = false       // empêche les reconnexions concurrentes
-let   noAccountsLogged = false   // ne logger "aucune ligne" qu'une fois
+let   noAccountsLogged   = false     // ne logger "aucune ligne" qu'une fois
 
-async function loadSymbols(ctid) {
-  const res = await connection.sendCommand('ProtoOASymbolsListReq', {
-    ctidTraderAccountId: ctid, includeArchivedSymbols: false,
-  })
-  for (const s of res.symbol || []) {
-    symbolNames.set(`${ctid}:${s.symbolId}`, s.symbolName)
+// État par environnement — une connexion CTraderConnection isolée chacune.
+function makeEnvState(env) {
+  return {
+    env,
+    host:           HOSTS[env],
+    conn:           null,
+    appAuthed:      false,
+    authed:         new Map(),  // ctid -> { userId, ingestKey }
+    symbolNames:    new Map(),  // `${ctid}:${symbolId}` -> 'EURUSD'
+    openPositions:  new Map(),  // positionId -> { entry_time }
+    loggedAccounts: new Set(),  // ctid déjà logués — évite la répétition toutes les 30s
+    timers:         [],
+    restarting:     false,
   }
 }
 
+const envStates = ENVS.map(makeEnvState)
+const envByName = Object.fromEntries(envStates.map(s => [s.env, s]))
+
+async function loadSymbols(state, ctid) {
+  const res = await state.conn.sendCommand('ProtoOASymbolsListReq', {
+    ctidTraderAccountId: ctid, includeArchivedSymbols: false,
+  })
+  for (const s of res.symbol || []) {
+    state.symbolNames.set(`${ctid}:${s.symbolId}`, s.symbolName)
+  }
+}
+
+// Une connexion app-authed quelconque suffit pour lister les comptes du token.
+function listerConn() {
+  return envStates.find(s => s.appAuthed)?.conn || null
+}
+
 async function resolveAndAuth(row) {
-  const res = await connection.sendCommand('ProtoOAGetAccountListByAccessTokenReq', {
+  const lister = listerConn()
+  if (!lister) return   // aucune connexion prête à ce tick
+
+  const res = await lister.sendCommand('ProtoOAGetAccountListByAccessTokenReq', {
     accessToken: row.access_token,
   })
-
   const accounts = res.ctidTraderAccount || []
 
   let resolvedAny = false
   for (const acc of accounts) {
     const ctid = Number(acc.ctidTraderAccountId)
+    const env  = acc.isLive ? 'live' : 'demo'
+    const state = envByName[env]
 
-    // Compte d'un autre environnement → ignoré (logué une seule fois)
-    if ((CTRADER_ENV === 'live' && acc.isLive === false) || (CTRADER_ENV === 'demo' && acc.isLive === true)) {
-      if (!loggedAccounts.has(ctid)) {
-        console.log(`[ctrader] compte ${ctid} ignoré (compte ${acc.isLive ? 'live' : 'démo'}, worker en ${CTRADER_ENV})`)
-        loggedAccounts.add(ctid)
+    // Cet environnement n'est pas géré par ce worker (CTRADER_ENV restreint) → ignoré.
+    if (!state) {
+      if (!_loggedSkip.has(ctid)) {
+        console.log(`[ctrader] compte ${ctid} ignoré (compte ${env}, non géré par ce worker)`)
+        _loggedSkip.add(ctid)
       }
       continue
     }
+    // La connexion de cet env n'est pas encore prête → on réessaiera au prochain tick.
+    if (!state.appAuthed) continue
 
-    if (authed.has(ctid)) { resolvedAny = true; continue }
+    if (state.authed.has(ctid)) { resolvedAny = true; continue }
 
     try {
-      await withTimeout(connection.sendCommand('ProtoOAAccountAuthReq', {
+      await withTimeout(state.conn.sendCommand('ProtoOAAccountAuthReq', {
         accessToken: row.access_token, ctidTraderAccountId: ctid,
-      }), 10_000, 'account auth')
+      }), 10_000, `${env} account auth`)
     } catch (e) {
-      console.error(`[ctrader] échec ProtoOAAccountAuthReq compte ${ctid}:`, JSON.stringify(e))
+      console.error(`[ctrader:${env}] échec ProtoOAAccountAuthReq compte ${ctid}:`, JSON.stringify(e))
       continue
     }
-    authed.set(ctid, { userId: row.user_id, ingestKey: row.ingest_key })
-    await loadSymbols(ctid)
+    state.authed.set(ctid, { userId: row.user_id, ingestKey: row.ingest_key })
+    await loadSymbols(state, ctid)
 
-    // Persist resolved ctid — remove placeholder NULL row after first resolution
+    // Persiste le ctid résolu AVEC son vrai environnement (le callback écrit un
+    // placeholder 'live' par défaut — on le corrige ici selon isLive).
     await supabase.from('ctrader_accounts').upsert({
       user_id:                  row.user_id,
-      environment:              CTRADER_ENV,
+      environment:              env,
       ctid_trader_account_id:   ctid,
       access_token:             row.access_token,
       refresh_token:            row.refresh_token ?? null,
@@ -93,12 +126,12 @@ async function resolveAndAuth(row) {
     }, { onConflict: 'user_id,ctid_trader_account_id' })
 
     resolvedAny = true
-    loggedAccounts.add(ctid)
-    console.log(`[ctrader] compte ${ctid} (user ${row.user_id.slice(0, 8)}) authentifié`)
+    state.loggedAccounts.add(ctid)
+    console.log(`[ctrader:${env}] compte ${ctid} (user ${row.user_id.slice(0, 8)}) authentifié`)
   }
 
-  // Supprime la ligne placeholder (ctid null) du callback UNIQUEMENT si ce worker a
-  // résolu au moins un compte → évite qu'un worker de l'autre env efface le token.
+  // Supprime la ligne placeholder (ctid null) du callback une fois au moins un
+  // compte résolu — un seul worker, donc plus de race entre environnements.
   if (resolvedAny) {
     await supabase.from('ctrader_accounts')
       .delete()
@@ -106,6 +139,7 @@ async function resolveAndAuth(row) {
       .is('ctid_trader_account_id', null)
   }
 }
+const _loggedSkip = new Set()
 
 // Échange le refresh_token contre un nouvel access_token et le persiste.
 // Renvoie les nouveaux champs token, ou null en cas d'échec.
@@ -154,9 +188,10 @@ async function ensureFreshToken(row, force) {
   return refreshed ? { ...row, ...refreshed } : row
 }
 
+// Boucle CENTRALE unique : lit les tokens, les rafraîchit une seule fois, puis
+// route chaque compte vers la connexion du bon environnement. Une seule boucle
+// dans tout le processus → aucune rotation de refresh_token concurrente.
 async function refreshAccounts() {
-  // Pas de filtre sur `environment` : chaque worker voit TOUS les tokens et
-  // n'authentifie que les comptes correspondant à son env (filtre isLive plus bas).
   const { data, error } = await supabase
     .from('ctrader_accounts')
     .select('user_id, access_token, refresh_token, ingest_key, ctid_trader_account_id, token_expires_at')
@@ -183,9 +218,9 @@ async function refreshAccounts() {
   }
 }
 
-async function handleExecution(event) {
+async function handleExecution(state, event) {
   const ctid = Number(event.ctidTraderAccountId)
-  const ctx  = authed.get(ctid)
+  const ctx  = state.authed.get(ctid)
   if (!ctx) return
 
   const deal = event.deal
@@ -194,7 +229,7 @@ async function handleExecution(event) {
   // Opening/increasing deal — memorise entry timestamp for later
   if (!deal.closePositionDetail) {
     if (deal.positionId) {
-      openPositions.set(Number(deal.positionId), {
+      state.openPositions.set(Number(deal.positionId), {
         entry_time: deal.executionTimestamp
           ? new Date(Number(deal.executionTimestamp)).toISOString()
           : new Date().toISOString(),
@@ -205,7 +240,7 @@ async function handleExecution(event) {
 
   // Closing deal — build the closed-trade payload
   const cpd       = deal.closePositionDetail
-  const symbol    = symbolNames.get(`${ctid}:${deal.symbolId}`) || String(deal.symbolId)
+  const symbol    = state.symbolNames.get(`${ctid}:${deal.symbolId}`) || String(deal.symbolId)
   // SELL closes a long, BUY closes a short
   const direction = deal.tradeSide === 'SELL' ? 'long' : 'short'
   // grossProfit + swap + commission are in cents (moneyDigits=2) → divide by 100
@@ -216,9 +251,9 @@ async function handleExecution(event) {
   const exit_time = deal.executionTimestamp
     ? new Date(Number(deal.executionTimestamp)).toISOString()
     : new Date().toISOString()
-  const op          = openPositions.get(Number(deal.positionId))
+  const op          = state.openPositions.get(Number(deal.positionId))
   const entry_time  = op?.entry_time || exit_time
-  openPositions.delete(Number(deal.positionId))
+  state.openPositions.delete(Number(deal.positionId))
 
   const payload = {
     symbol,
@@ -240,7 +275,7 @@ async function handleExecution(event) {
     if (!r.ok) {
       console.error('[ingest] échec', r.status, await r.text())
     } else {
-      console.log(`[ingest] ${symbol} ${direction} pnl=${pnl.toFixed(2)}`)
+      console.log(`[ingest:${state.env}] ${symbol} ${direction} pnl=${pnl.toFixed(2)}`)
     }
   } catch (e) {
     console.error('[ingest] erreur réseau', e?.message)
@@ -257,72 +292,88 @@ function withTimeout(promise, ms, label) {
   ])
 }
 
-function clearTimers() {
-  for (const t of timers) clearInterval(t)
-  timers = []
+function clearTimers(state) {
+  for (const t of state.timers) clearInterval(t)
+  state.timers = []
 }
 
-function scheduleRestart(reason) {
-  if (restarting) return
-  restarting = true
-  console.warn(`[ctrader] reconnexion dans 5s (${reason})`)
-  clearTimers()
-  try { connection?.close() } catch {}
-  setTimeout(() => { restarting = false; start() }, 5_000)
+// Redémarre UNIQUEMENT la connexion de cet environnement — l'autre reste vivante.
+function restartEnv(state, reason) {
+  if (state.restarting) return
+  state.restarting = true
+  console.warn(`[ctrader:${state.env}] reconnexion dans 5s (${reason})`)
+  clearTimers(state)
+  state.appAuthed = false
+  try { state.conn?.close() } catch {}
+  setTimeout(() => { state.restarting = false; startEnv(state) }, 5_000)
 }
 
-async function start() {
-  clearTimers()
-  authed.clear()
-  symbolNames.clear()
-  loggedAccounts.clear()
+async function startEnv(state) {
+  clearTimers(state)
+  state.appAuthed = false
+  state.authed.clear()
+  state.symbolNames.clear()
+  state.loggedAccounts.clear()
 
-  connection = new CTraderConnection({ host: HOST, port: PORT })
+  state.conn = new CTraderConnection({ host: state.host, port: PORT })
 
-  connection.on('ProtoOAExecutionEvent', (e) =>
-    handleExecution(e).catch(console.error)
+  state.conn.on('ProtoOAExecutionEvent', (e) =>
+    handleExecution(state, e).catch(console.error)
   )
-  connection.on('ProtoOAAccountsTokenInvalidatedEvent', (e) => {
+  state.conn.on('ProtoOAAccountsTokenInvalidatedEvent', (e) => {
     const ctids = (e?.ctidTraderAccountIds || []).map(Number)
-    console.warn('[ctrader] token invalidé', ctids)
-    // Marque les users concernés pour refresh forcé + dé-authentifie pour forcer la ré-auth
+    console.warn(`[ctrader:${state.env}] token invalidé`, ctids)
     for (const ctid of ctids) {
-      const ctx = authed.get(ctid)
+      const ctx = state.authed.get(ctid)
       if (ctx) forceRefreshUsers.add(ctx.userId)
-      authed.delete(ctid)
+      state.authed.delete(ctid)
     }
     refreshAccounts().catch((err) => console.error('[refresh]', err?.message))
   })
 
   try {
-    await withTimeout(connection.open(), 15_000, 'open')
-    console.log(`[ctrader] connecté ${HOST}:${PORT}`)
+    await withTimeout(state.conn.open(), 15_000, `${state.env} open`)
+    console.log(`[ctrader:${state.env}] connecté ${state.host}:${PORT}`)
 
     // Heartbeat pour maintenir la connexion ouverte côté serveur
-    timers.push(setInterval(() => {
-      try { connection.sendHeartbeat() } catch (e) { scheduleRestart('heartbeat: ' + e?.message) }
+    state.timers.push(setInterval(() => {
+      try { state.conn.sendHeartbeat() } catch (e) { restartEnv(state, 'heartbeat: ' + e?.message) }
     }, HEARTBEAT_MS))
 
-    await withTimeout(connection.sendCommand('ProtoOAApplicationAuthReq', {
+    await withTimeout(state.conn.sendCommand('ProtoOAApplicationAuthReq', {
       clientId: CTRADER_CLIENT_ID, clientSecret: CTRADER_CLIENT_SECRET,
-    }), 15_000, 'app auth')
-    console.log('[ctrader] application authentifiée')
-
-    await refreshAccounts()
-    // Capte les nouveaux utilisateurs OAuth sans redémarrer le worker
-    timers.push(setInterval(refreshAccounts, 30_000))
+    }), 15_000, `${state.env} app auth`)
+    state.appAuthed = true
+    console.log(`[ctrader:${state.env}] application authentifiée`)
 
     // Watchdog : ProtoOAVersionReq doit répondre. Sinon la connexion est morte → reconnexion.
-    timers.push(setInterval(async () => {
+    state.timers.push(setInterval(async () => {
       try {
-        await withTimeout(connection.sendCommand('ProtoOAVersionReq', {}), 10_000, 'ping')
+        await withTimeout(state.conn.sendCommand('ProtoOAVersionReq', {}), 10_000, 'ping')
       } catch (e) {
-        scheduleRestart('watchdog: ' + (e?.message || 'ping échoué'))
+        restartEnv(state, 'watchdog: ' + (e?.message || 'ping échoué'))
       }
     }, 30_000))
   } catch (e) {
-    scheduleRestart('démarrage: ' + (e?.message || e))
+    restartEnv(state, 'démarrage: ' + (e?.message || e))
   }
 }
 
-start().catch((e) => scheduleRestart('fatal: ' + (e?.message || e)))
+let refreshLoopTimer = null
+
+async function main() {
+  // Ouvre toutes les connexions d'environnement en parallèle.
+  await Promise.all(envStates.map(startEnv))
+
+  // Boucle de rafraîchissement/résolution CENTRALE et unique.
+  await refreshAccounts()
+  refreshLoopTimer = setInterval(() => {
+    refreshAccounts().catch((err) => console.error('[refresh]', err?.message))
+  }, 30_000)
+}
+
+main().catch((e) => {
+  console.error('[ctrader] fatal', e?.message || e)
+  // Redémarre tout après 5s en cas d'échec global du démarrage.
+  setTimeout(() => { if (refreshLoopTimer) clearInterval(refreshLoopTimer); main().catch(console.error) }, 5_000)
+})
