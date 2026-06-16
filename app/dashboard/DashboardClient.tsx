@@ -205,6 +205,9 @@ const LL_STATES: { pts: number[][]; idle?: boolean }[] = [
   { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12],[650,22],[720,34],[790,41]] },
 ]
 
+const MARKER_R = 3
+const MARKER_MAX_X = 800 - 10  // garde le point dans le cadre (extrémité droite)
+
 function ptsToPath(pts: number[][]): string {
   return pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]).join(' ')
 }
@@ -240,11 +243,11 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       let livePts: number[][]
       if (s.idle) {
         const wave = Math.sin(llT * 0.55) * 3.8 + Math.sin(llT * 1.35) * 1.4
-        livePts = base.map(p => [p[0], Math.max(2, Math.min(42, p[1] + wave))])
+        livePts = base.map(p => [p[0], Math.max(6, Math.min(38, p[1] + wave))])
       } else {
         const noise = Math.sin(llT * 1.4) * 1.0 + Math.sin(llT * 3.1) * 0.4
         const last = base[base.length - 1]
-        const liveY = Math.max(1, Math.min(43, last[1] + noise))
+        const liveY = Math.max(6, Math.min(38, last[1] + noise))
         livePts = [...base.slice(0, -1), [last[0], liveY]]
       }
       const c = llColor(scoreRef.current)
@@ -254,7 +257,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       startRef.current?.setAttribute('stop-color', c)
       endRef.current?.setAttribute('stop-color', c)
       const lp = livePts[livePts.length - 1]
-      curRef.current?.setAttribute('cx', String(lp[0]))
+      curRef.current?.setAttribute('cx', String(Math.min(lp[0], MARKER_MAX_X)))
       curRef.current?.setAttribute('cy', String(lp[1]))
       curRef.current?.setAttribute('fill', c)
       rafId = requestAnimationFrame(animateLine)
@@ -278,7 +281,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       </defs>
       <path ref={fillRef} d={ptsToFill(initPts)} fill="url(#llg)" opacity=".08" />
       <path ref={pathRef} d={ptsToPath(initPts)} fill="none" stroke={c0} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle ref={curRef} cx={initPts[initPts.length - 1][0]} cy={initPts[initPts.length - 1][1]} r="3.5" fill={c0} />
+      <circle ref={curRef} cx={Math.min(initPts[initPts.length - 1][0], MARKER_MAX_X)} cy={Math.max(MARKER_R + 3, Math.min(38, initPts[initPts.length - 1][1]))} r={MARKER_R} fill={c0} />
     </svg>
   )
 }
