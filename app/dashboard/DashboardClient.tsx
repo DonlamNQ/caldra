@@ -250,14 +250,17 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
         const liveY = Math.max(6, Math.min(38, last[1] + noise))
         livePts = [...base.slice(0, -1), [last[0], liveY]]
       }
+      // La ligne s'arrête où se trouve le point lumineux (le point EST la fin de la ligne).
+      const li = livePts.length - 1
+      livePts[li] = [Math.min(livePts[li][0], MARKER_MAX_X), livePts[li][1]]
+      const lp = livePts[li]
       const c = llColor(scoreRef.current)
       pathRef.current?.setAttribute('d', ptsToPath(livePts))
       fillRef.current?.setAttribute('d', ptsToFill(livePts))
       pathRef.current?.setAttribute('stroke', c)
       startRef.current?.setAttribute('stop-color', c)
       endRef.current?.setAttribute('stop-color', c)
-      const lp = livePts[livePts.length - 1]
-      curRef.current?.setAttribute('cx', String(Math.min(lp[0], MARKER_MAX_X)))
+      curRef.current?.setAttribute('cx', String(lp[0]))
       curRef.current?.setAttribute('cy', String(lp[1]))
       curRef.current?.setAttribute('fill', c)
       rafId = requestAnimationFrame(animateLine)
@@ -269,7 +272,13 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
 
   // Tracé initial = ligne centrée (idle) pour rester visible même avant le 1er frame.
   const c0 = llColor(score)
-  const initPts = LL_STATES[Math.min(alerts.length, LL_STATES.length - 1)].pts
+  const rawPts = LL_STATES[Math.min(alerts.length, LL_STATES.length - 1)].pts
+  const initPts = rawPts.map((p, i) =>
+    i === rawPts.length - 1
+      ? [Math.min(p[0], MARKER_MAX_X), Math.max(6, Math.min(38, p[1]))]
+      : p
+  )
+  const initEnd = initPts[initPts.length - 1]
 
   return (
     <svg width="100%" viewBox="0 0 800 44" preserveAspectRatio="none" height="44" style={{ display: 'block' }}>
@@ -281,7 +290,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
       </defs>
       <path ref={fillRef} d={ptsToFill(initPts)} fill="url(#llg)" opacity=".08" />
       <path ref={pathRef} d={ptsToPath(initPts)} fill="none" stroke={c0} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle ref={curRef} cx={Math.min(initPts[initPts.length - 1][0], MARKER_MAX_X)} cy={Math.max(MARKER_R + 3, Math.min(38, initPts[initPts.length - 1][1]))} r={MARKER_R} fill={c0} />
+      <circle ref={curRef} cx={initEnd[0]} cy={initEnd[1]} r={MARKER_R} fill={c0} />
     </svg>
   )
 }
