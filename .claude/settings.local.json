@@ -65,7 +65,8 @@
       "WebSearch",
       "WebFetch(domain:metaapi.cloud)",
       "Bash(echo \"exit: $?\")",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -E \"page\\\\.\\(tsx|ts\\)$|route\\\\.\\(ts|js\\)$\")"
     ]
   },
   "hooks": {

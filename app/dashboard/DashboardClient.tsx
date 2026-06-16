@@ -205,30 +205,33 @@ const LL_STATES: { pts: number[][]; idle?: boolean }[] = [
   { pts: [[0,22],[130,22],[210,16],[320,9],[420,5],[500,3],[590,12],[650,22],[720,34],[790,41]] },
 ]
 
+function ptsToPath(pts: number[][]): string {
+  return pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]).join(' ')
+}
+function ptsToFill(pts: number[][]): string {
+  const l = pts[pts.length - 1]
+  return ptsToPath(pts) + ` L${l[0]} 44 L0 44Z`
+}
+
 function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number; pnl: number }) {
-  const pnlRef = useRef(pnl)
   const scoreRef = useRef(score)
   const llStateRef = useRef(0)
 
-  useEffect(() => { pnlRef.current = pnl }, [pnl])
+  const pathRef = useRef<SVGPathElement>(null)
+  const fillRef = useRef<SVGPathElement>(null)
+  const startRef = useRef<SVGStopElement>(null)
+  const endRef = useRef<SVGStopElement>(null)
+  const curRef = useRef<SVGCircleElement>(null)
+
   useEffect(() => { scoreRef.current = score }, [score])
 
   useEffect(() => {
-    const stateIdx = Math.min(alerts.length, LL_STATES.length - 1)
-    llStateRef.current = stateIdx
+    llStateRef.current = Math.min(alerts.length, LL_STATES.length - 1)
   }, [alerts.length])
 
   useEffect(() => {
     let llT = 0
     let rafId: number
-
-    function ptsToPath(pts: number[][]): string {
-      return pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]).join(' ')
-    }
-    function ptsToFill(pts: number[][]): string {
-      const l = pts[pts.length - 1]
-      return ptsToPath(pts) + ` L${l[0]} 44 L0 44Z`
-    }
 
     function animateLine() {
       llT += 0.016
@@ -244,17 +247,16 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
         const liveY = Math.max(1, Math.min(43, last[1] + noise))
         livePts = [...base.slice(0, -1), [last[0], liveY]]
       }
-      document.getElementById('ll-path')?.setAttribute('d', ptsToPath(livePts))
-      document.getElementById('ll-fill')?.setAttribute('d', ptsToFill(livePts))
       const c = llColor(scoreRef.current)
-      document.getElementById('ll-start')?.setAttribute('stop-color', c)
-      document.getElementById('ll-start')?.setAttribute('stop-opacity', '0.7')
-      document.getElementById('ll-end')?.setAttribute('stop-color', c)
-      document.getElementById('ll-end')?.setAttribute('stop-opacity', '0.95')
+      pathRef.current?.setAttribute('d', ptsToPath(livePts))
+      fillRef.current?.setAttribute('d', ptsToFill(livePts))
+      pathRef.current?.setAttribute('stroke', c)
+      startRef.current?.setAttribute('stop-color', c)
+      endRef.current?.setAttribute('stop-color', c)
       const lp = livePts[livePts.length - 1]
-      document.getElementById('ll-cur')?.setAttribute('cx', String(lp[0]))
-      document.getElementById('ll-cur')?.setAttribute('cy', String(lp[1]))
-      document.getElementById('ll-cur')?.setAttribute('fill', c)
+      curRef.current?.setAttribute('cx', String(lp[0]))
+      curRef.current?.setAttribute('cy', String(lp[1]))
+      curRef.current?.setAttribute('fill', c)
       rafId = requestAnimationFrame(animateLine)
     }
 
@@ -262,17 +264,21 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
     return () => cancelAnimationFrame(rafId)
   }, [])
 
+  // Tracé initial = ligne centrée (idle) pour rester visible même avant le 1er frame.
+  const c0 = llColor(score)
+  const initPts = LL_STATES[Math.min(alerts.length, LL_STATES.length - 1)].pts
+
   return (
     <svg width="100%" viewBox="0 0 800 44" preserveAspectRatio="none" height="44" style={{ display: 'block' }}>
       <defs>
         <linearGradient id="llg" x1="0" y1="0" x2="1" y2="0">
-          <stop id="ll-start" offset="0%" stopColor="#8ba0be" stopOpacity="0.7" />
-          <stop id="ll-end" offset="100%" stopColor="#8ba0be" stopOpacity="0.95" />
+          <stop ref={startRef} offset="0%" stopColor={c0} stopOpacity="0.7" />
+          <stop ref={endRef} offset="100%" stopColor={c0} stopOpacity="0.95" />
         </linearGradient>
       </defs>
-      <path id="ll-path" d="M0 40 L800 40" fill="none" stroke="url(#llg)" strokeWidth="1.5" strokeLinecap="round" />
-      <path id="ll-fill" d="M0 40 L800 40 L800 44 L0 44Z" fill="url(#llg)" opacity=".06" />
-      <circle id="ll-cur" cx="800" cy="40" r="3.5" fill="#8ba0be" />
+      <path ref={fillRef} d={ptsToFill(initPts)} fill="url(#llg)" opacity=".08" />
+      <path ref={pathRef} d={ptsToPath(initPts)} fill="none" stroke={c0} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle ref={curRef} cx={initPts[initPts.length - 1][0]} cy={initPts[initPts.length - 1][1]} r="3.5" fill={c0} />
     </svg>
   )
 }
@@ -622,6 +628,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         {/* Chart card */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreColor(score, C)}80, ${scoreColor(score, C)}20, transparent)`, transition: 'background .5s' }} />
+          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Ligne de session</div>
           <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
           </div>

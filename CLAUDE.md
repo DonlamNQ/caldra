@@ -35,34 +35,30 @@ caldra/
 │   │   └── OnboardingWizard.tsx      # Wizard 3 étapes (Client Component)
 │   ├── dashboard/
 │   │   ├── page.tsx                  # Server Component — charge alertes/trades du jour
-│   │   └── DashboardClient.tsx       # Realtime Supabase, ScoreRing, AlertFeed, TradeLog
-│   ├── alerts/
-│   │   ├── page.tsx                  # Server Component — charge 500 dernières alertes
-│   │   └── AlertsClient.tsx          # Filtres, search, pagination, export CSV
-│   ├── analytics/
-│   │   ├── page.tsx                  # Server Component — 30 derniers jours
-│   │   └── AnalyticsClient.tsx       # PnL chart SVG, alertes par type, table par jour
+│   │   └── DashboardClient.tsx       # Realtime Supabase, ScoreRing, AlertFeed, TradeLog,
+│   │                                 #   SessionLine (rAF), PnlChart, grille 9 détecteurs
+│   │                                 #   ⚠️ alertes + analytics sont intégrés ICI (plus de
+│   │                                 #   pages /alerts ni /analytics séparées)
 │   ├── billing/
 │   │   ├── page.tsx                  # Server Component — charge plan depuis user_profiles
 │   │   └── BillingClient.tsx         # Plans Free/Pro/Team, Stripe checkout/portal
 │   ├── pricing/page.tsx              # Page tarifs (public)
-│   ├── settings/
-│   │   ├── rules/
-│   │   │   ├── page.tsx              # Server Component — charge trading_rules
-│   │   │   └── RulesForm.tsx         # Formulaire règles (Client Component)
-│   │   ├── api/
-│   │   │   ├── page.tsx              # Server Component — charge api_keys
-│   │   │   └── ApiKeyClient.tsx      # Génération/révocation clé API + snippet curl
-│   │   └── integrations/
-│   │       ├── page.tsx              # Server Component — intégrations tierces
-│   │       └── CTraderClient.tsx     # Config webhook Slack/Discord + connexion cTrader
+│   ├── onboarding, pricing, support, forgot-password, reset-password,
+│   │   mentions-legales, confidentialite   # pages standalone
 │   └── api/
 │       ├── ingest/route.ts           # POST — ingest trades via x-caldra-key
 │       ├── rules/route.ts            # GET/PUT — trading_rules
 │       ├── session/route.ts          # GET — session stats du jour
 │       ├── api-key/route.ts          # GET/POST/DELETE — gestion clés API
 │       ├── sentinel/route.ts         # POST — débrief IA Sentinel (Anthropic)
-│       ├── detect/route.js           # POST — ancien endpoint (legacy, garder)
+│       ├── debrief/route.ts          # POST — débrief IA
+│       ├── waitlist/route.ts         # POST — contact Brevo (waitlist)
+│       ├── account/delete/route.ts   # POST — suppression de compte
+│       ├── push/subscribe/route.ts   # POST — abonnement web push
+│       ├── mt5-ea/route.ts           # GET — Expert Advisor MetaTrader 5
+│       ├── report/weekly/route.ts    # GET — rapport hebdo (PDF)
+│       ├── cron/weekly-report/route.ts # POST — cron rapport hebdo
+│       ├── ctrader/                  # connect / callback / disconnect (OAuth cTrader)
 │       └── billing/
 │           ├── checkout/route.ts     # POST — crée Stripe Checkout Session
 │           ├── portal/route.ts       # POST — lien Stripe Customer Portal
@@ -76,7 +72,11 @@ caldra/
 │       ├── AlertFeed.tsx             # Feed alertes avec badge level + animation
 │       └── TradeLog.tsx              # Table trades du jour
 ├── lib/
-│   ├── engine.ts                     # 6 détecteurs comportementaux → INSERT alerts
+│   ├── engine.ts                     # 9 détecteurs comportementaux → INSERT alerts
+│   ├── alertLabels.ts                # Mapping type d'alerte → libellé FR (UI)
+│   ├── economic-calendar.ts          # Fenêtres news pour le détecteur news_trading
+│   ├── brevo.ts / push.ts            # Emails Brevo / web push
+│   ├── pdf/WeeklyReport.tsx          # Rapport hebdo PDF
 │   ├── schema.sql                    # Schéma complet Supabase v2 (à exécuter en SQL Editor)
 │   ├── supabase/
 │   │   ├── client.ts                 # createBrowserClient (Client Components)
@@ -165,7 +165,7 @@ Header: x-caldra-key: cal_xxxxxxxxxxxxxxxxxxxx
 - Appelle `analyzeTradeForAlerts()` dans `lib/engine.ts` → INSERT dans `alerts`
 - Le dashboard se met à jour via Supabase Realtime
 
-### 6 détecteurs dans `lib/engine.ts`
+### 9 détecteurs dans `lib/engine.ts`
 
 | Détecteur | Level | Condition |
 |---|---|---|
@@ -175,6 +175,11 @@ Header: x-caldra-key: cal_xxxxxxxxxxxxxxxxxxxx
 | `drawdown_alert` | 2/3 | PnL session < 80%/100% du drawdown max |
 | `outside_session` | 1 | trade hors `session_start`–`session_end` |
 | `overtrading` | 1/2 | ≥ 80%/100% de `max_trades_per_session` |
+| `news_trading` | 2 | trade ouvert pendant une fenêtre news (`lib/economic-calendar.ts`) |
+| `stop_not_respected` | 2 | sortie au-delà du stop-loss capturé (stop non tenu) |
+| `risk_exceeded` | 2 | risque du trade > risque max autorisé (capture du stop) |
+
+Libellés FR centralisés dans `lib/alertLabels.ts` (`alertLabel(type)`) — réutilisés par `AlertFeed` et la grille de métriques du dashboard. **Tout nouveau détecteur doit y être ajouté.**
 
 ---
 
@@ -297,7 +302,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Schéma DB v2 (5 tables, RLS, triggers, realtime)
 - Dashboard temps réel (ScoreRing, AlertFeed, TradeLog)
 - `/api/ingest` avec auth per-user API key (SHA-256)
-- 6 détecteurs comportementaux dans `lib/engine.ts`
+- 9 détecteurs comportementaux dans `lib/engine.ts`
 - Analytics (PnL chart SVG, alertes par type, performance par jour)
 - Alertes (historique, filtres, search, export CSV)
 - Settings (règles trading, clé API, intégrations)
