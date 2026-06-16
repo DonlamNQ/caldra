@@ -476,6 +476,9 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             { type: 'drawdown_alert',     label: 'Drawdown' },
             { type: 'outside_session',    label: 'Horaires' },
             { type: 'overtrading',        label: 'Overtrade' },
+            { type: 'news_trading',       label: 'News' },
+            { type: 'stop_not_respected', label: 'Stop' },
+            { type: 'risk_exceeded',      label: 'Risk' },
           ] as { type: string; label: string }[]).map(({ type, label }) => {
             const ta = alerts.filter(a => (a.type ?? '') === type)
             const count = ta.length

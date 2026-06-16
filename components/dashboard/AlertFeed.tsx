@@ -1,5 +1,7 @@
 'use client'
 
+import { alertLabel } from '@/lib/alertLabels'
+
 export interface AlertRow {
   id: string
   trade_id?: string | null
@@ -45,7 +47,7 @@ function formatTime(iso: string) {
 function AlertCard({ alert, isNew }: { alert: AlertRow; isNew?: boolean }) {
   const level = alert.level ?? alert.severity ?? 1
   const cfg = LVL[level] ?? LVL[1]
-  const type = (alert.type ?? alert.pattern ?? '—').replace(/_/g, '_')
+  const type = alertLabel(alert.type ?? alert.pattern)
   const isCritical = level === 3
 
   return (

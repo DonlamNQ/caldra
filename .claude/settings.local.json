@@ -64,7 +64,8 @@
       "Bash(Remove-Item *)",
       "WebSearch",
       "WebFetch(domain:metaapi.cloud)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(echo \"EXIT:$?\")"
     ]
   },
   "hooks": {
