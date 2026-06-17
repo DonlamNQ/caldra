@@ -339,12 +339,15 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   const minV = rawMin - grace, maxV = rawMax + grace
   const range = maxV - minV
   const n = pts.length
-  const last = vals[n - 1]
-  const LC = last >= 0 ? '#3cc87a' : (drawdownAmt !== undefined && last <= -drawdownAmt) ? '#dc503c' : '#e2e8f0'
+  const GREEN = '#3cc87a', RED = '#dc503c'
+  const colorForV = (v: number) => (v >= 0 ? GREEN : RED)
 
   const xOf = (i: number) => PXL + (i / Math.max(n - 1, 1)) * DW
   const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
   const y0 = yOf(0)
+  // Fraction verticale de la ligne du zéro dans la zone de tracé → point de
+  // bascule des dégradés (vert au-dessus du zéro, rouge en-dessous).
+  const zf = Math.max(0, Math.min(1, (y0 - PYT) / DH))
 
   const xyPts = pts.map((p, i) => [xOf(i), yOf(p.v)] as [number, number])
   const polyPoints = xyPts.map(([x, y]) => `${x},${y}`).join(' ')
@@ -404,10 +407,19 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
       onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
         <defs>
-          <linearGradient id="pnl-grad" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={LC} stopOpacity="0.35"/>
-            <stop offset="65%" stopColor={LC} stopOpacity="0.06"/>
-            <stop offset="100%" stopColor={LC} stopOpacity="0"/>
+          {/* Ligne : vert au-dessus du zéro, rouge en-dessous (bascule à zf). */}
+          <linearGradient id="pnl-line" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
+            <stop offset={0} stopColor={GREEN}/>
+            <stop offset={zf} stopColor={GREEN}/>
+            <stop offset={zf} stopColor={RED}/>
+            <stop offset={1} stopColor={RED}/>
+          </linearGradient>
+          {/* Aplat : même bascule, faible opacité, estompé vers la ligne du zéro. */}
+          <linearGradient id="pnl-fill" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
+            <stop offset={0} stopColor={GREEN} stopOpacity="0.22"/>
+            <stop offset={zf} stopColor={GREEN} stopOpacity="0.04"/>
+            <stop offset={zf} stopColor={RED} stopOpacity="0.04"/>
+            <stop offset={1} stopColor={RED} stopOpacity="0.22"/>
           </linearGradient>
         </defs>
         {yTicks.map(v => (
@@ -425,15 +437,15 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
             {pts[i].t}
           </text>
         ))}
-        {n > 2 && <path d={fillPath} fill="url(#pnl-grad)" />}
+        {n > 2 && <path d={fillPath} fill="url(#pnl-fill)" />}
         {n >= 2
-          ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="round" />
-          : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={LC} />
+          ? <polyline points={polyPoints} fill="none" stroke="url(#pnl-line)" strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="round" />
+          : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={colorForV(pts[0].v)} />
         }
         {hover != null && (
           <g pointerEvents="none">
             <line x1={hx} y1={PYT} x2={hx} y2={H - PYB} stroke={C.b3} strokeWidth={0.6} strokeDasharray="2 2" />
-            <circle cx={hx} cy={hyV} r={2.6} fill={LC} stroke={C.sf} strokeWidth={1} />
+            <circle cx={hx} cy={hyV} r={2.6} fill={colorForV(pts[hover].v)} stroke={C.sf} strokeWidth={1} />
           </g>
         )}
       </svg>
