@@ -17,11 +17,11 @@ const C_DARK = {
 }
 const C_LIGHT = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.08)', rb: 'rgba(124,58,237,.20)', rg: 'rgba(124,58,237,.05)',
-  bg: '#eef1f5', sf: '#fcfcfd', sf2: '#f4f6f9',
-  b: 'rgba(15,23,42,.10)', b2: 'rgba(15,23,42,.16)', b3: 'rgba(15,23,42,.27)',
-  tx: '#0f172a', tm: 'rgba(15,23,42,.86)', td: 'rgba(15,23,42,.55)', te: 'rgba(15,23,42,.40)',
-  g: '#059669', o: '#c2410c',
-  pnl: '#23242c',
+  bg: '#dfe3ea', sf: '#ffffff', sf2: '#eef1f6',
+  b: 'rgba(15,23,42,.20)', b2: 'rgba(15,23,42,.30)', b3: 'rgba(15,23,42,.44)',
+  tx: '#0a0f1c', tm: 'rgba(10,15,28,.95)', td: 'rgba(10,15,28,.74)', te: 'rgba(10,15,28,.58)',
+  g: '#047857', o: '#b4530a',
+  pnl: '#0f172a',
 }
 type Palette = typeof C_DARK
 const ThemeCtx = createContext<Palette>(C_DARK)
