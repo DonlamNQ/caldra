@@ -70,7 +70,7 @@ function buildPushContent(a: Alert): { title: string; body: string } {
     case 'revenge_sizing':
       return {
         title: '⚠️ Revenge sizing',
-        body: `Sizing ×${d.ratio} après une perte — ${d.current_size} lots vs ${d.previous_size}`,
+        body: `Tu as multiplié ta taille par ${d.ratio} après une perte.`,
       }
     case 'immediate_reentry':
       return {
@@ -113,12 +113,12 @@ function buildPushContent(a: Alert): { title: string; body: string } {
     case 'averaging_down':
       return {
         title: '🔻 Moyenne à la baisse',
-        body: `Tu renforces ${d.symbol} ${d.direction} en perte (${d.current_size} vs ${d.previous_size}). Stop.`,
+        body: `Tu renforces ${d.symbol} ${d.direction} en perte. Stop.`,
       }
     case 'euphoria_sizing':
       return {
         title: '🚀 Sizing d\'euphorie',
-        body: `Taille ×${d.ratio} après un gain — ${d.current_size} vs ${d.previous_size}.`,
+        body: `Tu as multiplié ta taille par ${d.ratio} après un gain.`,
       }
     case 'overleverage':
       return {
