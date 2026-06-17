@@ -1,14 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendAlertEmail, sendWebhookAlert } from './brevo'
 import { newsConflict } from './economic-calendar'
-import Anthropic from '@anthropic-ai/sdk'
 
 const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-const getAnthropic = () => new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export type Trade = {
   id: string
@@ -30,38 +27,6 @@ export type Alert = {
   level: 1 | 2 | 3
   message: string
   detail: Record<string, unknown>
-}
-
-async function generateCoachingForAlert(
-  alertId: string,
-  alertType: string,
-  alertMessage: string,
-  alertDetail: Record<string, unknown>,
-  recentTrades: Trade[]
-): Promise<void> {
-  try {
-    const tradeContext = recentTrades.slice(0, 5)
-      .map(t => `${t.symbol} ${t.direction} size=${t.size} pnl=${t.pnl ?? '?'}`)
-      .join(', ')
-
-    const msg = await getAnthropic().messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 150,
-      messages: [{
-        role: 'user',
-        content: `Tu es le coach Caldra. Alerte déclenchée : "${alertMessage}" (${alertType}). Données : ${JSON.stringify(alertDetail)}. Trades récents : ${tradeContext}. Génère exactement 2 phrases : 1) le comportement observé sans jugement, 2) une action concrète à faire maintenant. Ton direct et bienveillant, pas de "vous".`,
-      }],
-    })
-
-    const coaching = (msg.content[0] as { type: string; text: string }).text
-
-    await getSupabase()
-      .from('alerts')
-      .update({ detail: { ...alertDetail, coaching } })
-      .eq('id', alertId)
-  } catch {
-    // Coaching is non-critical — silently skip if Anthropic is unavailable
-  }
 }
 
 function buildPushContent(a: Alert): { title: string; body: string } {
@@ -223,15 +188,9 @@ async function saveAndNotify(
     return sendPushToUser(trade.user_id, title, body, topPush.level)
   }).catch(() => {})
 
-  // IA coaching Sentinel (L2/L3 uniquement, non-bloquant)
-  if (isSentinel && insertedAlerts) {
-    const toCoach = insertedAlerts.filter((a: { level: number }) => a.level >= 2)
-    void Promise.all(
-      toCoach.map((a: { id: string; type: string; level: number; message: string; detail: Record<string, unknown> }) =>
-        generateCoachingForAlert(a.id, a.type, a.message, a.detail ?? {}, sessionTrades)
-      )
-    )
-  }
+  // Le coaching IA n'est plus généré ici (redondant + jamais affiché) : les cartes
+  // de coaching sont produites côté client via /api/sentinel (Haiku), et le débrief
+  // de session via /api/debrief. Voir SentinelPanel.
 
   return alerts
 }

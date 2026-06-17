@@ -1945,33 +1945,14 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
       setDebriefLoading(false)
     }
   }
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
   const msgsRef = useRef<HTMLDivElement>(null)
 
-  async function send() {
-    const txt = input.trim(); if (!txt || loading) return
-    const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-    const userMsg: ChatMsg = { role: 'user', content: txt, time: now }
-    setMsgs(prev => [...prev, userMsg]); setInput(''); setLoading(true)
-
-    try {
-      const res = await fetch('/api/sentinel', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...msgs, userMsg].map(m => ({ role: m.role, content: m.content })),
-          context: { score, pnl: stats.total_pnl, totalTrades: stats.total_trades, alertCount: alerts.length, alertTypes: [...new Set(alerts.map(a => a.type ?? '').filter(Boolean))], rules },
-        }),
-      })
-      const data = await res.json()
-      const reply = data.content || data.error || 'Erreur de connexion.'
-      setMsgs(prev => [...prev, { role: 'assistant', content: reply, time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }])
-    } catch {
-      setMsgs(prev => [...prev, { role: 'assistant', content: 'Erreur réseau — réessayez.', time: now }])
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Sentinel est PUSH : pas de chat à piloter. Le débrief se déclenche tout seul
+  // à la fermeture de session.
+  useEffect(() => {
+    if (sessionEnded && !debriefDone && !debriefLoading) triggerDebrief()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionEnded, debriefDone, debriefLoading])
 
   useEffect(() => { msgsRef.current?.scrollTo({ top: msgsRef.current.scrollHeight, behavior: 'smooth' }) }, [msgs])
 
@@ -2021,25 +2002,15 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
                 <div style={{ fontSize: 12.5, color: 'rgba(230,227,240,.95)', lineHeight: 1.55 }}>{m.content}</div>
               </div>
             ))}
-            {loading && (
+            {debriefLoading && (
               <div style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: '10px 10px 10px 2px', padding: '12px 14px', maxWidth: '85%' }}>
-                <div style={{ fontSize: 12.5, color: C.te, fontStyle: 'italic' }}>Sentinel analyse…</div>
+                <div style={{ fontSize: 12.5, color: C.te, fontStyle: 'italic' }}>Sentinel rédige le débrief de session…</div>
               </div>
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: 9, paddingTop: 11, borderTop: `.5px solid ${C.b}` }}>
-            <input
-              value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && send()}
-              placeholder="Pose une question à Sentinel..."
-              style={{ flex: 1, background: 'rgba(255,255,255,.03)', border: `.5px solid ${C.b2}`, borderRadius: 7, padding: '10px 14px', color: C.tm, fontSize: 13, fontFamily: SANS, outline: 'none', transition: 'border-color .2s' }}
-            />
-            <button onClick={send} disabled={loading || !input.trim()} style={{
-              padding: '10px 18px', background: C.red, border: 'none', borderRadius: 7, color: '#fff',
-              fontSize: 12, fontFamily: SANS, cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 500,
-              opacity: loading || !input.trim() ? .5 : 1, transition: 'opacity .2s', whiteSpace: 'nowrap' as const,
-            }}>Envoyer</button>
+          <div style={{ paddingTop: 11, borderTop: `.5px solid ${C.b}`, fontSize: 11, color: C.te, fontStyle: 'italic', lineHeight: 1.5 }}>
+            Sentinel veille en continu : coaching automatique au moment des alertes, et débrief généré à la fermeture de ta session — rien à demander.
           </div>
         </div>
       </div>
@@ -2085,28 +2056,15 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
           </div>
         )}
 
-        {/* Debrief proactif — fin de session */}
-        {isSentinel && (sessionEnded || debriefDone) && (
+        {/* Debrief auto — fin de session */}
+        {isSentinel && (sessionEnded || debriefDone || debriefLoading) && (
           <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.b}` }}>
             <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Debrief de session</div>
             {debriefDone ? (
-              <div style={{ fontSize: 11.5, color: C.g, fontWeight: 400 }}>✓ Debrief généré — voir le chat</div>
+              <div style={{ fontSize: 11.5, color: C.g, fontWeight: 400 }}>✓ Débrief généré ci-contre.</div>
             ) : (
-              <div>
-                <div style={{ fontSize: 11, color: C.td, marginBottom: 9 }}>
-                  Session terminée — analyse comportementale disponible.
-                </div>
-                <button
-                  onClick={triggerDebrief}
-                  disabled={debriefLoading}
-                  style={{
-                    width: '100%', padding: '9px 14px', background: C.rd, border: `.5px solid ${C.rb}`,
-                    borderRadius: 8, color: C.red, fontSize: 12, fontFamily: SANS, cursor: debriefLoading ? 'default' : 'pointer',
-                    fontWeight: 500, transition: 'all .2s', opacity: debriefLoading ? .6 : 1, textAlign: 'center' as const,
-                  }}
-                >
-                  {debriefLoading ? 'Analyse en cours…' : 'Générer le debrief Sentinel'}
-                </button>
+              <div style={{ fontSize: 11.5, color: C.td, fontWeight: 300, lineHeight: 1.5 }}>
+                Session terminée — Sentinel rédige automatiquement ton débrief…
               </div>
             )}
           </div>
