@@ -353,13 +353,13 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
   }
 
   // ── 8. DÉSESPOIR DE FIN DE SESSION ────────────────────────────────────────
-  // Entrée dans les 30 dernières min avant la clôture, session déjà perdante.
+  // Entrée dans les 10 dernières min avant la clôture, session déjà perdante.
   {
     const [endH, endM] = String(rules.session_end || '').split(':').map(Number)
     if (!isNaN(endH)) {
       const minsToEnd = (endH * 60 + (endM || 0)) - localMins
       const priorPnl = prevTrades.reduce((s: number, t: Trade) => s + (t.pnl || 0), 0)
-      if (minsToEnd >= 0 && minsToEnd <= 30 && priorPnl < 0) {
+      if (minsToEnd >= 0 && minsToEnd <= 10 && priorPnl < 0) {
         alerts.push({
           type: 'end_of_day_desperation',
           level: 2,
@@ -378,7 +378,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
 }
 
 // Détecteur "Trade pendant news" — croise l'heure d'entrée avec le calendrier
-// économique (événements à fort impact ±5 min sur la devise du symbole).
+// économique (événements à fort impact ±10 min sur la devise du symbole).
 async function maybeNewsAlert(trade: Trade): Promise<Alert | null> {
   const news = await newsConflict(trade.entry_time, trade.symbol)
   if (!news) return null

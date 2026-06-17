@@ -180,8 +180,8 @@ l'ouverture ET à la fermeture pour les flux closed-only comme cTrader) et ceux 
 | `averaging_down` | 3 | entrée | renforce une position perdante (même symbole+sens, size ≥ précédente) |
 | `euphoria_sizing` | 2 | entrée | size > last_size × 1.5 après un **gain** |
 | `accelerating_frequency` | 2 | entrée | écart entre entrées < 40% de la médiane, session perdante (≥4 trades) |
-| `end_of_day_desperation` | 2 | entrée | entrée dans les 30 min avant `session_end`, session déjà perdante |
-| `news_trading` | 2 | entrée | trade pendant une fenêtre news (`lib/economic-calendar.ts`) |
+| `end_of_day_desperation` | 2 | entrée | entrée dans les 10 min avant `session_end`, session déjà perdante |
+| `news_trading` | 2 | entrée | trade à ±10 min d'une news à fort impact (`lib/economic-calendar.ts`) |
 | `consecutive_losses` | 2 | ferm. | ≥ `max_consecutive_losses` pertes d'affilée |
 | `drawdown_alert` | 2/3 | ferm. | PnL session < 80%/100% du drawdown max |
 | `stop_not_respected` | 2 | ferm. | perte réalisée > `max_risk_per_trade_pct` (stop non tenu) |

@@ -486,8 +486,10 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             </span>
           )}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 5 }}>
-          {([
+        {(() => {
+          // On n'affiche QUE les tuiles déclenchées (count > 0) pour laisser
+          // la place au feed d'alertes en dessous.
+          const tiles = ([
             { type: 'revenge_sizing',     label: 'Revenge' },
             { type: 'immediate_reentry',  label: 'Re-entrée' },
             { type: 'consecutive_losses', label: 'Pertes' },
@@ -505,30 +507,38 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             { type: 'drawdown_override',      label: 'DD franchi' },
             { type: 'cut_winners_hold_losers',label: 'Coupe gains' },
             { type: 'end_of_day_desperation', label: 'Fin session' },
-          ] as { type: string; label: string }[]).map(({ type, label }) => {
-            const ta = alerts.filter(a => (a.type ?? '') === type)
-            const count = ta.length
-            const maxLvl = count > 0 ? Math.max(...ta.map(a => a.level ?? 1)) : 0
-            const col = maxLvl >= 3 ? '#dc3218' : maxLvl >= 2 ? C.red : maxLvl >= 1 ? C.o : null
-            const glow = count > 1 ? Math.min(1, 0.3 + count * 0.2) : 0.25
-            return (
-              <div key={type} style={{
-                padding: '8px 5px', borderRadius: 9, textAlign: 'center' as const,
-                background: count === 0 ? 'rgba(255,255,255,.02)' : `${col}16`,
-                border: count === 0 ? `.5px solid rgba(255,255,255,.04)` : `.5px solid ${col}55`,
-                boxShadow: 'none',
-                transition: 'all .4s',
-              }}>
-                <div style={{ fontSize: 16, fontFamily: MONO, lineHeight: 1.1, color: count === 0 ? 'rgba(255,255,255,.13)' : col!, fontWeight: count > 0 ? 600 : 300 }}>
-                  {count}
-                </div>
-                <div style={{ fontSize: 7.5, fontFamily: MONO, marginTop: 2, letterSpacing: .3, color: count === 0 ? 'rgba(255,255,255,.18)' : col! }}>
-                  {label}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+          ] as { type: string; label: string }[])
+            .map(({ type, label }) => {
+              const ta = alerts.filter(a => (a.type ?? '') === type)
+              const maxLvl = ta.length > 0 ? Math.max(...ta.map(a => a.level ?? 1)) : 0
+              return { type, label, count: ta.length, maxLvl }
+            })
+            .filter(t => t.count > 0)
+
+          if (tiles.length === 0) return null
+
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 5 }}>
+              {tiles.map(({ type, label, count, maxLvl }) => {
+                const col = maxLvl >= 3 ? '#dc3218' : maxLvl >= 2 ? C.red : C.o
+                return (
+                  <div key={type} style={{
+                    padding: '8px 5px', borderRadius: 9, textAlign: 'center' as const,
+                    background: `${col}16`, border: `.5px solid ${col}55`,
+                    transition: 'all .4s',
+                  }}>
+                    <div style={{ fontSize: 16, fontFamily: MONO, lineHeight: 1.1, color: col, fontWeight: 600 }}>
+                      {count}
+                    </div>
+                    <div style={{ fontSize: 7.5, fontFamily: MONO, marginTop: 2, letterSpacing: .3, color: col }}>
+                      {label}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
         {alerts.length > 0 && (
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {alerts.map((a, i) => {

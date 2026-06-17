@@ -8,7 +8,7 @@ type EcoEvent = { time: number; currency: string; title: string; impact: string 
 
 const FEED_URL  = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json'
 const CACHE_MS  = 30 * 60 * 1000   // le flux ne bouge qu'une fois par semaine
-const WINDOW_MIN_DEFAULT = 5
+const WINDOW_MIN_DEFAULT = 10      // ±10 min autour de l'événement
 
 let cache: { at: number; events: EcoEvent[] } | null = null
 
