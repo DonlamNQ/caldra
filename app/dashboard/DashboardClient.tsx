@@ -8,18 +8,20 @@ import type { DaySession } from './page'
 import { alertLabel } from '@/lib/alertLabels'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
-  red: '#7c3aed', rd: 'rgba(124,58,237,.1)', rb: 'rgba(124,58,237,.25)', rg: 'rgba(124,58,237,.05)',
-  bg: '#0c0c15', sf: '#12121c', sf2: '#181826',
-  b: 'rgba(255,255,255,.055)', b2: 'rgba(255,255,255,.1)', b3: 'rgba(255,255,255,.16)',
-  tx: '#eae8f5', tm: 'rgba(234,232,245,.95)', td: 'rgba(234,232,245,.65)', te: 'rgba(234,232,245,.4)',
-  g: '#00d17a', o: '#ffab00',
+  red: '#7c3aed', rd: 'rgba(124,58,237,.12)', rb: 'rgba(124,58,237,.28)', rg: 'rgba(124,58,237,.06)',
+  bg: '#09090f', sf: '#13131f', sf2: '#1c1c2b',
+  b: 'rgba(255,255,255,.07)', b2: 'rgba(255,255,255,.13)', b3: 'rgba(255,255,255,.22)',
+  tx: '#f3f1fb', tm: 'rgba(243,241,251,.90)', td: 'rgba(243,241,251,.60)', te: 'rgba(243,241,251,.38)',
+  g: '#2ee08f', o: '#ffb224',
+  pnl: '#e6e8f2',
 }
 const C_LIGHT = {
-  red: '#7c3aed', rd: 'rgba(124,58,237,.08)', rb: 'rgba(124,58,237,.18)', rg: 'rgba(124,58,237,.04)',
-  bg: '#c2c8e0', sf: '#ccd2ea', sf2: '#c6cce4',
-  b: 'rgba(30,30,80,.14)', b2: 'rgba(30,30,80,.24)', b3: 'rgba(30,30,80,.34)',
-  tx: '#06061c', tm: 'rgba(6,6,28,.98)', td: 'rgba(6,6,28,.84)', te: 'rgba(6,6,28,.62)',
-  g: '#005c38', o: '#7a4800',
+  red: '#7c3aed', rd: 'rgba(124,58,237,.09)', rb: 'rgba(124,58,237,.22)', rg: 'rgba(124,58,237,.05)',
+  bg: '#eef0f6', sf: '#ffffff', sf2: '#f6f7fb',
+  b: 'rgba(17,17,40,.10)', b2: 'rgba(17,17,40,.17)', b3: 'rgba(17,17,40,.30)',
+  tx: '#12122a', tm: 'rgba(18,18,42,.90)', td: 'rgba(18,18,42,.58)', te: 'rgba(18,18,42,.40)',
+  g: '#0a7d4f', o: '#b45309',
+  pnl: '#1e2233',
 }
 type Palette = typeof C_DARK
 const ThemeCtx = createContext<Palette>(C_DARK)
@@ -666,7 +668,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             <div style={{ borderTop: `.5px solid ${C.b}`, paddingTop: 8 }}>
               <div style={{ fontSize: 8.5, color: C.te, fontFamily: MONO, letterSpacing: .8, marginBottom: 4 }}>J−1</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-                <span style={{ fontSize: 14, color: '#e2e8f0' }}>{fmtEur(yesterdayStats.pnl)}</span>
+                <span style={{ fontSize: 14, color: C.pnl }}>{fmtEur(yesterdayStats.pnl)}</span>
                 <span style={{ fontSize: 11, fontFamily: MONO, color: scoreColor(yesterdayStats.score, C) }}>{yesterdayStats.score} pts</span>
               </div>
               {yesterdayStats.alerts > 0 && (
@@ -1026,7 +1028,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                 { val: String(avgScore), lbl: 'Score moy.', col: scoreColor(avgScore, C) },
                 { val: String(sessions.length), lbl: 'Sessions', col: C.tm },
                 { val: String(critical), lbl: 'Critiques', col: critical > 0 ? C.red : C.te },
-                { val: fmtEur(totalPnl), lbl: 'P&L total', col: '#e2e8f0' },
+                { val: fmtEur(totalPnl), lbl: 'P&L total', col: C.pnl },
               ].map((item, i) => (
                 <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px' }}>
                   <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.5, color: item.col }}>{item.val}</div>
@@ -1105,7 +1107,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>P&L cumulé — {sessions.length}j</div>
-          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: '#e2e8f0' }}>{fmtEur(totalPnl)}</div>
+          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: C.pnl }}>{fmtEur(totalPnl)}</div>
           <div style={{ fontSize: 12, color: C.td }}>Sur {sessions.length} sessions tradées</div>
           {cumulPts.length >= 2 && (() => {
             const vals = cumulPts.map(p => p.v)
@@ -1134,8 +1136,8 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
                   {rawTicks.map(v => <text key={v} x={PXL2 - 4} y={Math.max(PYT2 + 7, Math.min(H2 - PYB2 - 2, yOf(v) + 3))} textAnchor="end" fill="rgba(234,232,245,.35)" fontSize="8" style={{ fontFamily: 'monospace' }}>{fmtY2(v)}</text>)}
                   {xIdxs2.map(i => <text key={i} x={Math.max(PXL2 + 14, Math.min(W2 - PXR2 - 14, xOf(i)))} y={H2 - PYB2 + 12} textAnchor="middle" fill="rgba(234,232,245,.3)" fontSize="7.5" style={{ fontFamily: 'monospace' }}>{cumulPts[i].date.slice(5)}</text>)}
                   <path d={fillPath} fill="rgba(234,232,245,.05)" />
-                  <polyline points={ptStr} fill="none" stroke="#e2e8f0" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-                  <circle cx={xOf(n-1)} cy={yOf(vals[n-1])} r={3} fill="#e2e8f0" />
+                  <polyline points={ptStr} fill="none" stroke={C.pnl} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+                  <circle cx={xOf(n-1)} cy={yOf(vals[n-1])} r={3} fill={C.pnl} />
                 </svg>
               </div>
             )
@@ -2114,7 +2116,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
           <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Session actuelle</div>
           {[
             { k: 'Score', v: `${score} / 100`, c: scoreColor(score, C) },
-            { k: 'P&L', v: fmtEur(stats.total_pnl), c: '#e2e8f0' },
+            { k: 'P&L', v: fmtEur(stats.total_pnl), c: C.pnl },
             { k: 'Trades', v: String(stats.total_trades), c: C.tm },
             { k: 'Alertes', v: String(alerts.length), c: alerts.length > 0 ? C.red : C.td },
           ].map(({ k, v, c }) => (
@@ -2806,10 +2808,10 @@ export default function DashboardClient({
         @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .tab-nav{display:flex;align-items:center;background:rgba(255,255,255,.024);border:.5px solid rgba(255,255,255,.06);border-radius:13px;padding:4px 5px;gap:3px}
+        .tab-nav{display:flex;align-items:center;background:${C.b};border:.5px solid ${C.b};border-radius:13px;padding:4px 5px;gap:3px}
         .tab-btn{display:flex;align-items:center;gap:6px;padding:8px 22px;border-radius:9px;font-size:12.5px;letter-spacing:.3px;color:${C.td};cursor:pointer;border:none;background:none;white-space:nowrap;font-weight:400;font-family:${SANS};transition:color .15s,background .15s,box-shadow .15s}
-        .tab-btn:hover{color:${C.tm};background:rgba(255,255,255,.045)}
-        .tab-btn.active{color:${C.tx};background:rgba(255,255,255,.09);font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 .5px 0 rgba(255,255,255,.09)}
+        .tab-btn:hover{color:${C.tm};background:${C.b}}
+        .tab-btn.active{color:${C.tx};background:${C.b2};font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.14)}
         .tab-sentinel{color:rgba(124,58,237,.55)!important}
         .tab-sentinel.active{color:${C.red}!important;background:rgba(124,58,237,.14)!important;box-shadow:0 0 0 .5px rgba(124,58,237,.26),0 2px 8px rgba(0,0,0,.22)!important}
         textarea,input{box-sizing:border-box}
@@ -2818,7 +2820,7 @@ export default function DashboardClient({
         input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.3)}
         .c-card{transition:border-color .18s,box-shadow .18s}
         .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
-        .c-row:hover{background:rgba(255,255,255,.025)!important}
+        .c-row:hover{background:${C.b}!important}
         @media(max-width:768px){
           .app-root{height:auto!important;min-height:100dvh}
           .topbar{flex-wrap:wrap;height:auto!important;min-height:46px}
