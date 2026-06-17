@@ -12,7 +12,7 @@ export const ALERT_LABELS: Record<string, string> = {
   news_trading:       'Trade pendant news',
   stop_not_respected: 'Stop non respecté',
   risk_exceeded:      'Risk dépassé',
-  averaging_down:         'Moyenne à la baisse',
+  averaging_down:         'Acharnement directionnel',
   euphoria_sizing:        'Sizing d\'euphorie',
   overleverage:           'Sur-exposition',
   no_stop:                'Aucun stop',

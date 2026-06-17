@@ -77,8 +77,8 @@ function buildPushContent(a: Alert): { title: string; body: string } {
       }
     case 'averaging_down':
       return {
-        title: '🔻 Moyenne à la baisse',
-        body: `Tu renforces ${d.symbol} ${d.direction} en perte. Stop.`,
+        title: '🔻 Acharnement directionnel',
+        body: `Tu réattaques ${d.symbol} ${d.direction} juste après une perte. Stop.`,
       }
     case 'euphoria_sizing':
       return {
@@ -261,10 +261,12 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
     })
   }
 
-  // ── 5. MOYENNE À LA BAISSE (averaging down) ───────────────────────────────
-  // Renforcer la MÊME idée (même symbole + sens) après une perte = pyramider
-  // dans un perdant. Le pire biais destructeur de capital. Distinct du revenge
-  // (qui ne regarde ni le symbole ni le sens).
+  // ── 5. ACHARNEMENT DIRECTIONNEL (clé interne: averaging_down) ──────────────
+  // Re-rentrer sur le MÊME instrument, dans le MÊME sens, avec une taille ≥,
+  // juste après que ce trade s'est CLÔTURÉ en perte = s'acharner sur l'idée qui
+  // vient d'échouer. NB : trades séquentiels fermés (pas le renforcement d'une
+  // position encore ouverte — non détectable depuis les deals fermés cTrader).
+  // Distinct du revenge (qui ne regarde ni le symbole ni le sens).
   if (
     prevTrade &&
     (prevTrade.pnl ?? 0) < 0 &&
@@ -275,7 +277,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
     alerts.push({
       type: 'averaging_down',
       level: 3,
-      message: 'Moyenne à la baisse — tu renforces une position perdante',
+      message: 'Acharnement directionnel — tu réattaques le même sens juste après une perte',
       detail: {
         symbol: trade.symbol,
         direction: trade.direction,
