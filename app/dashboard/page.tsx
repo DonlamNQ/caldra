@@ -125,7 +125,11 @@ export default async function DashboardPage() {
 
   const ctraderRows = ctraderAccount ?? []
   const ctraderConflict = ctraderRows.some(r => (r as { status?: string }).status === 'conflict')
-  const ctraderConnected = ctraderRows.length > 0 && !ctraderConflict
+  // "Connecté" = le worker a résolu un vrai compte (ctid). Avant ça, c'est juste
+  // le placeholder OAuth → on affiche "connexion en cours", pas "connecté".
+  const ctraderResolved = ctraderRows.some(r => (r as { ctid_trader_account_id?: number }).ctid_trader_account_id != null)
+  const ctraderConnected = ctraderResolved && !ctraderConflict
+  const ctraderPending = ctraderRows.length > 0 && !ctraderResolved && !ctraderConflict
 
   return (
     <DashboardClient
@@ -143,6 +147,7 @@ export default async function DashboardPage() {
       userMeta={{ first_name: meta.first_name, last_name: meta.last_name, phone: meta.phone }}
       ctraderConnected={ctraderConnected}
       ctraderConflict={ctraderConflict}
+      ctraderPending={ctraderPending}
       lastTradeAt={lastTrade?.created_at ?? null}
     />
   )
