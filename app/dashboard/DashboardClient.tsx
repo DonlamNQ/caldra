@@ -370,14 +370,29 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   for (let i = step; i < n - 1; i += step) xIdxSet.add(i)
   const xIdxs = [...xIdxSet].sort((a, b) => a - b)
 
-  // Index du point le plus proche du curseur (pour le survol).
+  // Survol : on n'affiche l'info QUE si le curseur est sur la ligne ou dans la
+  // zone colorée (la bande entre la courbe et la ligne du zéro) à cette position X.
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    if (rect.width === 0) return
+    if (rect.width === 0 || rect.height === 0) return
     const xVB = ((e.clientX - rect.left) / rect.width) * W
-    let i = Math.round(((xVB - PXL) / DW) * (n - 1))
-    i = Math.max(0, Math.min(n - 1, i))
-    setHover(i)
+    const yVB = ((e.clientY - rect.top) / rect.height) * H
+
+    // Hors de la zone de tracé (gouttières / bandeau des heures) → rien.
+    if (xVB < PXL || xVB > W - PXR || yVB < PYT || yVB > H - PYB) { setHover(null); return }
+
+    // Hauteur de la courbe interpolée à cette position X.
+    const fi = Math.max(0, Math.min(n - 1, ((xVB - PXL) / DW) * (n - 1)))
+    const i0 = Math.floor(fi), i1 = Math.min(n - 1, i0 + 1)
+    const yCurve = yOf(pts[i0].v) + (yOf(pts[i1].v) - yOf(pts[i0].v)) * (fi - i0)
+
+    // Bande colorée = entre la courbe et la ligne du zéro, + tolérance pour la ligne.
+    const TOL = 5
+    const top = Math.min(yCurve, y0) - TOL
+    const bot = Math.max(yCurve, y0) + TOL
+    if (yVB < top || yVB > bot) { setHover(null); return }
+
+    setHover(Math.round(fi))
   }
 
   const hp = hover != null ? pts[hover] : null
