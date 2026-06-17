@@ -16,7 +16,9 @@ const {
   CTRADER_CLIENT_SECRET,
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
-  CALDRA_INGEST_URL     = 'https://getcaldra.com/api/ingest',
+  // Domaine Vercel direct (PAS getcaldra.com, qui est derrière Cloudflare et dont
+  // le "Bot Fight Mode" challenge les POST du worker → 403 "Just a moment").
+  CALDRA_INGEST_URL     = 'https://caldra-sable.vercel.app/api/ingest',
 } = process.env
 
 // Un SEUL worker gère les deux environnements dans le même processus.
