@@ -67,7 +67,8 @@
       "Bash(echo \"exit: $?\")",
       "Bash(echo \"EXIT:$?\")",
       "Bash(grep -E \"page\\\\.\\(tsx|ts\\)$|route\\\\.\\(ts|js\\)$\")",
-      "Bash(git revert *)"
+      "Bash(git revert *)",
+      "WebFetch(domain:www.tradezella.com)"
     ]
   },
   "hooks": {
