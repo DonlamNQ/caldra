@@ -17,9 +17,9 @@ const C_DARK = {
 }
 const C_LIGHT = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.09)', rb: 'rgba(124,58,237,.24)', rg: 'rgba(124,58,237,.05)',
-  bg: '#e7eaf2', sf: '#ffffff', sf2: '#f2f4fa',
+  bg: '#d7dbe6', sf: '#e8ebf2', sf2: '#e0e4ed',
   b: 'rgba(17,17,40,.13)', b2: 'rgba(17,17,40,.21)', b3: 'rgba(17,17,40,.32)',
-  tx: '#12122a', tm: 'rgba(18,18,42,.90)', td: 'rgba(18,18,42,.58)', te: 'rgba(18,18,42,.40)',
+  tx: '#14142b', tm: 'rgba(20,20,43,.88)', td: 'rgba(20,20,43,.56)', te: 'rgba(20,20,43,.40)',
   g: '#0a7d4f', o: '#b45309',
   pnl: '#1e2233',
 }
