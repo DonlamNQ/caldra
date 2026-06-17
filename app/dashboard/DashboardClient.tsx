@@ -304,9 +304,9 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
 
   const W = 600, H = 120
-  // PXL minimal : la courbe part du bord gauche du bloc. Les chiffres de l'axe Y
-  // sont rejetés DANS UNE GOUTTIÈRE À DROITE (PXR), donc hors du tracé.
-  const PXL = 3, PXR = 32, PYT = 6, PYB = 18
+  // Les chiffres de l'axe Y sont dans une gouttière À GAUCHE (PXL), hors du tracé.
+  // Gouttière volontairement fine pour limiter le décalage de la courbe.
+  const PXL = 30, PXR = 10, PYT = 6, PYB = 18
   const DW = W - PXL - PXR, DH = H - PYT - PYB
   const axisColor = C.te
   const gridColor = C.b
@@ -318,7 +318,7 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-        <text x={W - 3} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>€0</text>
+        <text x={PXL - 3} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>€0</text>
       </svg>
     )
   }
@@ -380,7 +380,7 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
       <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
       <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
       {yTicks.map(v => (
-        <text key={`t${v}`} x={W - 3} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
+        <text key={`t${v}`} x={PXL - 3} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
           textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
       ))}
       {xIdxs.map(i => (
