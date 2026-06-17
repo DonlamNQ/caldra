@@ -2072,7 +2072,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
                 <div key={card.id} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 8, padding: 11, marginBottom: 8, borderLeft: `3px solid ${lvlCol}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                     <span style={{ fontSize: 9, fontFamily: MONO, color: lvlCol, letterSpacing: .5 }}>
-                      L{card.alertLevel} · {card.alertType.replace(/_/g, ' ').toUpperCase()}
+                      L{card.alertLevel} · {alertLabel(card.alertType).toUpperCase()}
                     </span>
                     <span style={{ fontSize: 9, color: C.te, fontFamily: MONO }}>{card.time}</span>
                   </div>
@@ -2158,7 +2158,7 @@ const LVL_TOAST: Record<number, { label: string; color: string; bg: string; bord
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }) {
   const level = toast.alert.level ?? toast.alert.severity ?? 1
   const cfg = LVL_TOAST[level] ?? LVL_TOAST[1]
-  const type = (toast.alert.type ?? (toast.alert as any).pattern ?? '').replace(/_/g, ' ').toUpperCase()
+  const type = alertLabel(toast.alert.type ?? (toast.alert as any).pattern).toUpperCase()
   return (
     <div
       onClick={() => onDismiss(toast.id)}
