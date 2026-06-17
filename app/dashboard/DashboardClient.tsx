@@ -8,20 +8,20 @@ import type { DaySession } from './page'
 import { alertLabel } from '@/lib/alertLabels'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
-  red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.30)', rg: 'rgba(124,58,237,.07)',
-  bg: '#08080e', sf: '#16161f', sf2: '#20202e',
-  b: 'rgba(255,255,255,.12)', b2: 'rgba(255,255,255,.19)', b3: 'rgba(255,255,255,.29)',
-  tx: '#f3f1fb', tm: 'rgba(243,241,251,.90)', td: 'rgba(243,241,251,.64)', te: 'rgba(243,241,251,.47)',
-  g: '#2ee08f', o: '#ffb224',
-  pnl: '#e6e8f2',
+  red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
+  bg: '#0a0a0c', sf: '#161618', sf2: '#1f1f23',
+  b: 'rgba(255,255,255,.09)', b2: 'rgba(255,255,255,.15)', b3: 'rgba(255,255,255,.25)',
+  tx: '#ededf0', tm: 'rgba(237,237,240,.88)', td: 'rgba(237,237,240,.58)', te: 'rgba(237,237,240,.42)',
+  g: '#3ddc84', o: '#f5a623',
+  pnl: '#dcdce2',
 }
 const C_LIGHT = {
-  red: '#7c3aed', rd: 'rgba(124,58,237,.09)', rb: 'rgba(124,58,237,.24)', rg: 'rgba(124,58,237,.05)',
-  bg: '#d2d6e2', sf: '#e3e6ef', sf2: '#dadee9',
-  b: 'rgba(17,17,40,.17)', b2: 'rgba(17,17,40,.27)', b3: 'rgba(17,17,40,.38)',
-  tx: '#13132a', tm: 'rgba(19,19,42,.90)', td: 'rgba(19,19,42,.66)', te: 'rgba(19,19,42,.50)',
-  g: '#0a7d4f', o: '#b45309',
-  pnl: '#1e2233',
+  red: '#7c3aed', rd: 'rgba(124,58,237,.09)', rb: 'rgba(124,58,237,.22)', rg: 'rgba(124,58,237,.05)',
+  bg: '#eaeaec', sf: '#f7f7f9', sf2: '#f0f0f2',
+  b: 'rgba(20,20,28,.12)', b2: 'rgba(20,20,28,.20)', b3: 'rgba(20,20,28,.31)',
+  tx: '#1b1b21', tm: 'rgba(27,27,33,.88)', td: 'rgba(27,27,33,.60)', te: 'rgba(27,27,33,.46)',
+  g: '#0f7a4e', o: '#b45309',
+  pnl: '#26262c',
 }
 type Palette = typeof C_DARK
 const ThemeCtx = createContext<Palette>(C_DARK)
