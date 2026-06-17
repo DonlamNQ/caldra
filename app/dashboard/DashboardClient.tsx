@@ -314,7 +314,6 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     return (
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-        <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <text x={PXL - 4} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>€0</text>
       </svg>
     )
@@ -355,7 +354,17 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     for (let v = start; v <= end + step * 0.001; v += step) ticks.push(Math.round(v * 1000) / 1000)
     return ticks
   })()
-  const yTicks = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < 0.01) === i)
+  const yTicks = (() => {
+    // Dédoublonne par valeur puis écarte les labels qui se rendraient trop
+    // proches verticalement (sinon les chiffres se superposent quand l'amplitude
+    // est faible). On parcourt du haut vers le bas et on garde un écart minimum.
+    const uniq = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < 0.01) === i)
+    const out: number[] = []
+    for (const v of [...uniq].sort((a, b) => b - a)) {
+      if (out.length === 0 || Math.abs(yOf(v) - yOf(out[out.length - 1])) >= 11) out.push(v)
+    }
+    return out
+  })()
 
   const step = Math.max(1, Math.floor((n - 1) / 4))
   const xIdxSet = new Set([0, n - 1])
@@ -375,9 +384,8 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
         <line key={`g${v}`} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={gridColor} strokeWidth={0.5} />
       ))}
       <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-      <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
       {yTicks.map(v => (
-        <text key={`t${v}`} x={PXL - 4} y={Math.max(PYT + 7, Math.min(H - PYB - 2, yOf(v) + 3))}
+        <text key={`t${v}`} x={PXL - 4} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
           textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
       ))}
       {xIdxs.map(i => (
