@@ -427,10 +427,13 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
           position: 'absolute', left: `${Math.max(16, Math.min(84, (hx / W) * 100))}%`, top: `${(hyV / H) * 100}%`,
           transform: 'translate(-50%, calc(-100% - 9px))', pointerEvents: 'none', zIndex: 5,
           background: C.sf2, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '5px 8px',
-          whiteSpace: 'nowrap', fontFamily: MONO, fontSize: 10, lineHeight: 1.4,
+          whiteSpace: 'nowrap', fontFamily: MONO, fontSize: 9.5, lineHeight: 1.45,
           boxShadow: '0 4px 14px rgba(0,0,0,.4)',
         }}>
-          <span style={{ color: C.te }}>Cumul </span><span style={{ color: C.tm }}>{fmtY(hp.v)}</span>
+          <div style={{ color: C.te, marginBottom: 1 }}>
+            {hp.pnl == null ? 'Début de session' : `${hp.t} · ${hp.sym} ${hp.dir}`}
+          </div>
+          <div><span style={{ color: C.te }}>Cumul </span><span style={{ color: C.tm }}>{fmtY(hp.v)}</span></div>
         </div>
       )}
     </div>
