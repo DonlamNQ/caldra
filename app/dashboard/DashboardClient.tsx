@@ -643,7 +643,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
           <div>
             <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 5 }}>P&L</div>
-            <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
+            <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: -0.5, lineHeight: 1, color: C.tx, fontFamily: MONO }}>
               {fmtEur(stats.total_pnl)}
             </div>
           </div>
@@ -957,7 +957,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.3),transparent)' }} />
               <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 10 }}>{selectedDate}</div>
               <div style={{ fontSize: 38, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: scoreColor(selectedSession.score, C) }}>{selectedSession.score}</div>
-              <div style={{ fontSize: 13.5, color: C.tm, marginBottom: 12, marginTop: 4 }}>{fmtEur(selectedSession.pnl)}</div>
+              <div style={{ fontSize: 13.5, color: C.tm, marginBottom: 12, marginTop: 4, fontFamily: MONO }}>{fmtEur(selectedSession.pnl)}</div>
               {[
                 { k: 'Trades', v: String(selectedSession.tradeCount) },
                 { k: 'Win rate', v: selectedSession.tradeCount > 0 ? `${Math.round(selectedSession.wins / selectedSession.tradeCount * 100)}%` : '—' },
@@ -1105,7 +1105,7 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>P&L cumulé — {sessions.length}j</div>
-          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: '#e2e8f0' }}>{fmtEur(totalPnl)}</div>
+          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -1, lineHeight: 1, marginBottom: 3, color: '#e2e8f0', fontFamily: MONO }}>{fmtEur(totalPnl)}</div>
           <div style={{ fontSize: 12, color: C.td }}>Sur {sessions.length} sessions tradées</div>
           {cumulPts.length >= 2 && (() => {
             const vals = cumulPts.map(p => p.v)
