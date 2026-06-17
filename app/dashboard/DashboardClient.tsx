@@ -299,6 +299,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
 // ── PnlChart — cumulative SVG chart with Y/X axes ────────────────────────────
 function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: number }) {
   const C = useContext(ThemeCtx)
+  const [hover, setHover] = useState<number | null>(null)
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
@@ -323,9 +324,13 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     )
   }
 
-  const pts: { t: string; v: number }[] = [{ t: '—', v: 0 }]
+  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] =
+    [{ t: '—', v: 0, pnl: null, sym: null, dir: null }]
   let cum = 0
-  for (const t of sorted) { cum += t.pnl ?? 0; pts.push({ t: fmtTime(t.entry_time), v: cum }) }
+  for (const t of sorted) {
+    cum += t.pnl ?? 0
+    pts.push({ t: fmtTime(t.entry_time), v: cum, pnl: t.pnl ?? null, sym: t.symbol ?? null, dir: t.direction ?? null })
+  }
 
   const vals = pts.map(p => p.v)
   const rawMin = Math.min(0, ...vals), rawMax = Math.max(0, ...vals)
@@ -365,36 +370,81 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   for (let i = step; i < n - 1; i += step) xIdxSet.add(i)
   const xIdxs = [...xIdxSet].sort((a, b) => a - b)
 
+  // Index du point le plus proche du curseur (pour le survol).
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    if (rect.width === 0) return
+    const xVB = ((e.clientX - rect.left) / rect.width) * W
+    let i = Math.round(((xVB - PXL) / DW) * (n - 1))
+    i = Math.max(0, Math.min(n - 1, i))
+    setHover(i)
+  }
+
+  const hp = hover != null ? pts[hover] : null
+  const hx = hover != null ? xOf(hover) : 0
+  const hyV = hover != null ? yOf(pts[hover].v) : 0
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="pnl-grad" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor={LC} stopOpacity="0.35"/>
-          <stop offset="65%" stopColor={LC} stopOpacity="0.06"/>
-          <stop offset="100%" stopColor={LC} stopOpacity="0"/>
-        </linearGradient>
-      </defs>
-      {yTicks.map(v => (
-        <line key={`g${v}`} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={gridColor} strokeWidth={0.5} />
-      ))}
-      <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-      <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-      {yTicks.map(v => (
-        <text key={`t${v}`} x={PXL - 3} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
-          textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
-      ))}
-      {xIdxs.map(i => (
-        <text key={i} x={Math.max(PXL + 14, Math.min(W - PXR - 14, xOf(i)))}
-          y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
-          {pts[i].t}
-        </text>
-      ))}
-      {n > 2 && <path d={fillPath} fill="url(#pnl-grad)" />}
-      {n >= 2
-        ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="round" />
-        : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={LC} />
-      }
-    </svg>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}
+      onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="pnl-grad" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={LC} stopOpacity="0.35"/>
+            <stop offset="65%" stopColor={LC} stopOpacity="0.06"/>
+            <stop offset="100%" stopColor={LC} stopOpacity="0"/>
+          </linearGradient>
+        </defs>
+        {yTicks.map(v => (
+          <line key={`g${v}`} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={gridColor} strokeWidth={0.5} />
+        ))}
+        <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+        <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+        {yTicks.map(v => (
+          <text key={`t${v}`} x={PXL - 3} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
+            textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
+        ))}
+        {xIdxs.map(i => (
+          <text key={i} x={Math.max(PXL + 14, Math.min(W - PXR - 14, xOf(i)))}
+            y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
+            {pts[i].t}
+          </text>
+        ))}
+        {n > 2 && <path d={fillPath} fill="url(#pnl-grad)" />}
+        {n >= 2
+          ? <polyline points={polyPoints} fill="none" stroke={LC} strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="round" />
+          : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={LC} />
+        }
+        {hover != null && (
+          <g pointerEvents="none">
+            <line x1={hx} y1={PYT} x2={hx} y2={H - PYB} stroke={C.b3} strokeWidth={0.6} strokeDasharray="2 2" />
+            <circle cx={hx} cy={hyV} r={2.6} fill={LC} stroke={C.sf} strokeWidth={1} />
+          </g>
+        )}
+      </svg>
+      {hp && (
+        <div style={{
+          position: 'absolute', left: `${Math.max(16, Math.min(84, (hx / W) * 100))}%`, top: `${(hyV / H) * 100}%`,
+          transform: 'translate(-50%, calc(-100% - 9px))', pointerEvents: 'none', zIndex: 5,
+          background: C.sf2, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '5px 8px',
+          whiteSpace: 'nowrap', fontFamily: MONO, fontSize: 9.5, lineHeight: 1.45,
+          boxShadow: '0 4px 14px rgba(0,0,0,.4)',
+        }}>
+          {hp.pnl == null ? (
+            <>
+              <div style={{ color: C.te }}>Début de session</div>
+              <div style={{ color: C.tm }}>Cumul {fmtY(hp.v)}</div>
+            </>
+          ) : (
+            <>
+              <div style={{ color: C.te, marginBottom: 1 }}>{hp.t} · {hp.sym} {hp.dir}</div>
+              <div style={{ color: C.tm }}>Trade {fmtY(hp.pnl)}</div>
+              <div style={{ color: C.td }}>Cumul {fmtY(hp.v)}</div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
