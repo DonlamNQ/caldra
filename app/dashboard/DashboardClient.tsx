@@ -808,7 +808,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                           <div key={ai}>
                             <div style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, marginBottom: 1 }}>Alerte</div>
                             <div style={{ fontSize: 10.5, fontFamily: MONO, color: (a.level ?? 1) >= 3 ? '#dc3218' : (a.level ?? 1) >= 2 ? C.red : C.o }}>
-                              L{a.level ?? 1} — {(a.type ?? '').replace(/_/g, ' ')}
+                              L{a.level ?? 1} — {alertLabel(a.type)}
                             </div>
                           </div>
                         ))}
