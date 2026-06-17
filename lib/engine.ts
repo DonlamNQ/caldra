@@ -110,6 +110,46 @@ function buildPushContent(a: Alert): { title: string; body: string } {
         title: '📰 Trade pendant news',
         body: `${d.title} (${d.currency}) à ${d.minutes_from_event} min — volatilité macro.`,
       }
+    case 'averaging_down':
+      return {
+        title: '🔻 Moyenne à la baisse',
+        body: `Tu renforces ${d.symbol} ${d.direction} en perte (${d.current_size} vs ${d.previous_size}). Stop.`,
+      }
+    case 'euphoria_sizing':
+      return {
+        title: '🚀 Sizing d\'euphorie',
+        body: `Taille ×${d.ratio} après un gain — ${d.current_size} vs ${d.previous_size}.`,
+      }
+    case 'overleverage':
+      return {
+        title: '⚙️ Sur-exposition',
+        body: `Levier ×${d.leverage} sur ce trade (max ${d.max_leverage}×).`,
+      }
+    case 'no_stop':
+      return {
+        title: '🚨 Aucun stop-loss',
+        body: 'Trade fermé sans stop défini — risque non borné.',
+      }
+    case 'accelerating_frequency':
+      return {
+        title: '⏱️ Cadence qui s\'emballe',
+        body: `${d.last_gap_sec}s entre tes 2 derniers trades (médiane ${d.median_gap_sec}s) en perdant.`,
+      }
+    case 'drawdown_override':
+      return {
+        title: '🔴 Drawdown franchi — tu continues',
+        body: `Tu avais déjà −${d.prior_drawdown_pct}% (max ${d.max_allowed}%). Arrête-toi.`,
+      }
+    case 'cut_winners_hold_losers':
+      return {
+        title: '✂️ Tu coupes tes gains',
+        body: `Gagnants tenus ${d.avg_win_sec}s vs perdants ${d.avg_loss_sec}s.`,
+      }
+    case 'end_of_day_desperation':
+      return {
+        title: '🌙 Trade de fin de session',
+        body: `${d.minutes_to_close} min avant la clôture, en perte. Méfie-toi du rattrapage.`,
+      }
     default:
       return { title: a.message, body: '' }
   }
@@ -242,6 +282,96 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
       message: level === 2 ? 'Limite de trades atteinte' : 'Tu approches ta limite de trades',
       detail: { current: tradeCount, max: rules.max_trades_per_session },
     })
+  }
+
+  // ── 5. MOYENNE À LA BAISSE (averaging down) ───────────────────────────────
+  // Renforcer la MÊME idée (même symbole + sens) après une perte = pyramider
+  // dans un perdant. Le pire biais destructeur de capital. Distinct du revenge
+  // (qui ne regarde ni le symbole ni le sens).
+  if (
+    prevTrade &&
+    (prevTrade.pnl ?? 0) < 0 &&
+    prevTrade.symbol === trade.symbol &&
+    prevTrade.direction === trade.direction &&
+    trade.size >= prevTrade.size
+  ) {
+    alerts.push({
+      type: 'averaging_down',
+      level: 3,
+      message: 'Moyenne à la baisse — tu renforces une position perdante',
+      detail: {
+        symbol: trade.symbol,
+        direction: trade.direction,
+        previous_size: prevTrade.size,
+        current_size: trade.size,
+        previous_pnl: prevTrade.pnl ?? 0,
+      },
+    })
+  }
+
+  // ── 6. SIZING D'EUPHORIE ──────────────────────────────────────────────────
+  // Taille qui gonfle après un GAIN (excès de confiance) — miroir du revenge.
+  if (prevTrade && (prevTrade.pnl ?? 0) > 0 && trade.size > prevTrade.size * 1.5) {
+    alerts.push({
+      type: 'euphoria_sizing',
+      level: 2,
+      message: "Sizing d'euphorie après un gain",
+      detail: {
+        previous_size: prevTrade.size,
+        current_size: trade.size,
+        ratio: (trade.size / prevTrade.size).toFixed(2),
+      },
+    })
+  }
+
+  // ── 7. ACCÉLÉRATION DE LA FRÉQUENCE ───────────────────────────────────────
+  // L'écart entre entrées s'effondre alors que la session est perdante (tilt).
+  {
+    const entries = sessionTrades
+      .map((t: Trade) => new Date(t.entry_time).getTime())
+      .sort((a: number, b: number) => a - b)
+    if (entries.length >= 4) {
+      const gaps: number[] = []
+      for (let i = 1; i < entries.length; i++) gaps.push(entries[i] - entries[i - 1])
+      const lastGap = gaps[gaps.length - 1]
+      const earlier = gaps.slice(0, -1).sort((a, b) => a - b)
+      const median = earlier[Math.floor(earlier.length / 2)]
+      const sessionPnl = sessionTrades.reduce((s: number, t: Trade) => s + (t.pnl || 0), 0)
+      if (median > 0 && lastGap < median * 0.4 && sessionPnl < 0) {
+        alerts.push({
+          type: 'accelerating_frequency',
+          level: 2,
+          message: 'Tu trades de plus en plus vite en perdant',
+          detail: {
+            last_gap_sec: Math.round(lastGap / 1000),
+            median_gap_sec: Math.round(median / 1000),
+            trades: entries.length,
+          },
+        })
+      }
+    }
+  }
+
+  // ── 8. DÉSESPOIR DE FIN DE SESSION ────────────────────────────────────────
+  // Entrée dans les 30 dernières min avant la clôture, session déjà perdante.
+  {
+    const [endH, endM] = String(rules.session_end || '').split(':').map(Number)
+    if (!isNaN(endH)) {
+      const minsToEnd = (endH * 60 + (endM || 0)) - localMins
+      const priorPnl = prevTrades.reduce((s: number, t: Trade) => s + (t.pnl || 0), 0)
+      if (minsToEnd >= 0 && minsToEnd <= 30 && priorPnl < 0) {
+        alerts.push({
+          type: 'end_of_day_desperation',
+          level: 2,
+          message: 'Trade de fin de session en territoire perdant',
+          detail: {
+            minutes_to_close: minsToEnd,
+            session_end: rules.session_end,
+            session_pnl: priorPnl,
+          },
+        })
+      }
+    }
   }
 
   return alerts
@@ -386,6 +516,97 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
           stop_loss: sl,
           entry_price: entry,
           account_size: accountSize,
+        },
+      })
+    }
+  }
+
+  // ── 5. SUR-EXPOSITION (overleverage) ──────────────────────────────────────
+  // Valeur notionnelle de la position vs capital. valuePerUnit (= taille ×
+  // multiplicateur) auto-calibré depuis le trade → notional = valuePerUnit×prix.
+  {
+    const entryP = Number(trade.entry_price)
+    const exitP  = Number(trade.exit_price)
+    if (entryP > 0 && exitP > 0 && exitP !== entryP) {
+      const valuePerUnit = Math.abs((trade.pnl ?? 0) / (exitP - entryP))
+      const notional = valuePerUnit * entryP
+      const leverage = notional / accountSize
+      const maxLev = Number(rules.max_leverage) || 30
+      if (leverage > maxLev) {
+        alerts.push({
+          type: 'overleverage',
+          level: leverage > maxLev * 1.5 ? 3 : 2,
+          message: 'Sur-exposition — effet de levier trop élevé sur ce trade',
+          detail: {
+            leverage: leverage.toFixed(1),
+            max_leverage: maxLev,
+            notional: Math.round(notional),
+            account_size: accountSize,
+          },
+        })
+      }
+    }
+  }
+
+  // ── 6. AUCUN STOP (no_stop) — opt-in via rules.require_stop_loss ───────────
+  // Trade fermé sans stop-loss défini → risque non borné. Désactivé par défaut
+  // (sinon bruyant pour les flux qui ne transmettent jamais le stop).
+  if (rules.require_stop_loss && !(Number(trade.stop_loss) > 0)) {
+    alerts.push({
+      type: 'no_stop',
+      level: 2,
+      message: 'Trade sans stop-loss — risque non borné',
+      detail: { symbol: trade.symbol, pnl: trade.pnl ?? null },
+    })
+  }
+
+  // ── 7. DISPOSITION EFFECT (coupe les gains, garde les pertes) ─────────────
+  // Durée moyenne des gagnants << celle des perdants sur la session.
+  {
+    const dur = (t: Trade): number | null =>
+      t.exit_time && t.entry_time
+        ? (new Date(t.exit_time).getTime() - new Date(t.entry_time).getTime()) / 1000
+        : null
+    const wins   = (sessionTrades as Trade[]).filter(t => (t.pnl ?? 0) > 0 && dur(t) != null)
+    const losses = (sessionTrades as Trade[]).filter(t => (t.pnl ?? 0) < 0 && dur(t) != null)
+    if (wins.length >= 2 && losses.length >= 2) {
+      const avg = (arr: Trade[]) => arr.reduce((s, t) => s + (dur(t) as number), 0) / arr.length
+      const avgWin = avg(wins), avgLoss = avg(losses)
+      if (avgLoss > 0 && avgWin < avgLoss * 0.5) {
+        alerts.push({
+          type: 'cut_winners_hold_losers',
+          level: 2,
+          message: 'Tu coupes tes gains et laisses courir tes pertes',
+          detail: {
+            avg_win_sec: Math.round(avgWin),
+            avg_loss_sec: Math.round(avgLoss),
+            wins: wins.length,
+            losses: losses.length,
+          },
+        })
+      }
+    }
+  }
+
+  // ── 8. TILT POST-DRAWDOWN (drawdown_override) ─────────────────────────────
+  // L'utilisateur avait DÉJÀ franchi son drawdown max avant ce trade, et a
+  // quand même continué à trader.
+  {
+    const priorTrades = (sessionTrades as Trade[]).filter(
+      t => t.id !== trade.id &&
+        new Date(t.entry_time).getTime() < new Date(trade.entry_time).getTime()
+    )
+    const priorPnl = priorTrades.reduce((s, t) => s + (t.pnl || 0), 0)
+    const priorDdPct = Math.abs(priorPnl / accountSize) * 100
+    if (priorPnl < 0 && priorDdPct >= rules.max_daily_drawdown_pct) {
+      alerts.push({
+        type: 'drawdown_override',
+        level: 3,
+        message: 'Tu continues après avoir franchi ton drawdown maximum',
+        detail: {
+          prior_pnl: priorPnl,
+          prior_drawdown_pct: priorDdPct.toFixed(2),
+          max_allowed: rules.max_daily_drawdown_pct,
         },
       })
     }

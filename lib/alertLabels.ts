@@ -12,6 +12,14 @@ export const ALERT_LABELS: Record<string, string> = {
   news_trading:       'Trade pendant news',
   stop_not_respected: 'Stop non respecté',
   risk_exceeded:      'Risk dépassé',
+  averaging_down:         'Moyenne à la baisse',
+  euphoria_sizing:        'Sizing d\'euphorie',
+  overleverage:           'Sur-exposition',
+  no_stop:                'Aucun stop',
+  accelerating_frequency: 'Cadence qui s\'emballe',
+  drawdown_override:      'Drawdown franchi',
+  cut_winners_hold_losers:'Coupe les gains',
+  end_of_day_desperation: 'Désespoir fin de session',
 }
 
 /** Libellé FR lisible pour un type d'alerte (fallback : snake_case → mots). */

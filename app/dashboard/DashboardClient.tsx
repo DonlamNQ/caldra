@@ -497,6 +497,14 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             { type: 'news_trading',       label: 'News' },
             { type: 'stop_not_respected', label: 'Stop' },
             { type: 'risk_exceeded',      label: 'Risk' },
+            { type: 'averaging_down',         label: 'Averaging' },
+            { type: 'euphoria_sizing',        label: 'Euphorie' },
+            { type: 'overleverage',           label: 'Levier' },
+            { type: 'no_stop',                label: 'Sans stop' },
+            { type: 'accelerating_frequency', label: 'Cadence' },
+            { type: 'drawdown_override',      label: 'DD franchi' },
+            { type: 'cut_winners_hold_losers',label: 'Coupe gains' },
+            { type: 'end_of_day_desperation', label: 'Fin session' },
           ] as { type: string; label: string }[]).map(({ type, label }) => {
             const ta = alerts.filter(a => (a.type ?? '') === type)
             const count = ta.length

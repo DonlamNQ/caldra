@@ -165,21 +165,39 @@ Header: x-caldra-key: cal_xxxxxxxxxxxxxxxxxxxx
 - Appelle `analyzeTradeForAlerts()` dans `lib/engine.ts` → INSERT dans `alerts`
 - Le dashboard se met à jour via Supabase Realtime
 
-### 9 détecteurs dans `lib/engine.ts`
+### 17 détecteurs dans `lib/engine.ts`
 
-| Détecteur | Level | Condition |
-|---|---|---|
-| `revenge_sizing` | 2 | size > last_size × 1.5 après une perte |
-| `immediate_reentry` | 1 | < `min_time_between_entries_sec` après la sortie |
-| `consecutive_losses` | 2 | ≥ `max_consecutive_losses` pertes d'affilée |
-| `drawdown_alert` | 2/3 | PnL session < 80%/100% du drawdown max |
-| `outside_session` | 1 | trade hors `session_start`–`session_end` |
-| `overtrading` | 1/2 | ≥ 80%/100% de `max_trades_per_session` |
-| `news_trading` | 2 | trade ouvert pendant une fenêtre news (`lib/economic-calendar.ts`) |
-| `stop_not_respected` | 2 | sortie au-delà du stop-loss capturé (stop non tenu) |
-| `risk_exceeded` | 2 | risque du trade > risque max autorisé (capture du stop) |
+Répartis en deux familles : ceux liés à l'**entrée** (`entryBehaviorAlerts`, tournent à
+l'ouverture ET à la fermeture pour les flux closed-only comme cTrader) et ceux liés à la
+**fermeture** (`analyzeClosedTrade`, besoin du pnl/exit).
 
-Libellés FR centralisés dans `lib/alertLabels.ts` (`alertLabel(type)`) — réutilisés par `AlertFeed` et la grille de métriques du dashboard. **Tout nouveau détecteur doit y être ajouté.**
+| Détecteur | Level | Famille | Condition |
+|---|---|---|---|
+| `outside_session` | 1 | entrée | trade hors `session_start`–`session_end` |
+| `revenge_sizing` | 2 | entrée | size > last_size × 1.5 après une perte (tout symbole) |
+| `immediate_reentry` | 1 | entrée | < `min_time_between_entries_sec` après la sortie |
+| `overtrading` | 1/2 | entrée | ≥ 80%/100% de `max_trades_per_session` |
+| `averaging_down` | 3 | entrée | renforce une position perdante (même symbole+sens, size ≥ précédente) |
+| `euphoria_sizing` | 2 | entrée | size > last_size × 1.5 après un **gain** |
+| `accelerating_frequency` | 2 | entrée | écart entre entrées < 40% de la médiane, session perdante (≥4 trades) |
+| `end_of_day_desperation` | 2 | entrée | entrée dans les 30 min avant `session_end`, session déjà perdante |
+| `news_trading` | 2 | entrée | trade pendant une fenêtre news (`lib/economic-calendar.ts`) |
+| `consecutive_losses` | 2 | ferm. | ≥ `max_consecutive_losses` pertes d'affilée |
+| `drawdown_alert` | 2/3 | ferm. | PnL session < 80%/100% du drawdown max |
+| `stop_not_respected` | 2 | ferm. | perte réalisée > `max_risk_per_trade_pct` (stop non tenu) |
+| `risk_exceeded` | 2 | ferm. | risque planifié (entrée→stop) > `max_risk_per_trade_pct` |
+| `overleverage` | 2/3 | ferm. | levier notionnel > `max_leverage` (défaut 30×) |
+| `no_stop` | 2 | ferm. | trade fermé sans stop — **opt-in** via `require_stop_loss` |
+| `cut_winners_hold_losers` | 2 | ferm. | durée moy. gagnants < 50% des perdants (≥2 de chaque) |
+| `drawdown_override` | 3 | ferm. | continue à trader après avoir franchi le drawdown max |
+
+Réglages optionnels lus avec défaut (pas de migration DB obligatoire) : `max_leverage`
+(défaut 30), `require_stop_loss` (défaut off → `no_stop` désactivé).
+
+Libellés FR centralisés dans `lib/alertLabels.ts` (`alertLabel(type)`) — réutilisés par
+`AlertFeed` et la grille de métriques du dashboard. **Tout nouveau détecteur doit être
+ajouté à : `engine.ts` (logique) + `buildPushContent` (push) + `alertLabels.ts` (libellé) +
+la grille du dashboard.**
 
 ---
 
@@ -302,7 +320,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Schéma DB v2 (5 tables, RLS, triggers, realtime)
 - Dashboard temps réel (ScoreRing, AlertFeed, TradeLog)
 - `/api/ingest` avec auth per-user API key (SHA-256)
-- 9 détecteurs comportementaux dans `lib/engine.ts`
+- 17 détecteurs comportementaux dans `lib/engine.ts`
 - Analytics (PnL chart SVG, alertes par type, performance par jour)
 - Alertes (historique, filtres, search, export CSV)
 - Settings (règles trading, clé API, intégrations)
