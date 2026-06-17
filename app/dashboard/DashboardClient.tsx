@@ -17,11 +17,11 @@ const C_DARK = {
 }
 const C_LIGHT = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.08)', rb: 'rgba(124,58,237,.20)', rg: 'rgba(124,58,237,.05)',
-  bg: '#dfe3ea', sf: '#ffffff', sf2: '#eef1f6',
-  b: 'rgba(15,23,42,.20)', b2: 'rgba(15,23,42,.30)', b3: 'rgba(15,23,42,.44)',
-  tx: '#0a0f1c', tm: 'rgba(10,15,28,.95)', td: 'rgba(10,15,28,.74)', te: 'rgba(10,15,28,.58)',
-  g: '#047857', o: '#b4530a',
-  pnl: '#0f172a',
+  bg: '#e7eaf1', sf: '#fbfcfe', sf2: '#f1f3f8',
+  b: 'rgba(15,23,42,.14)', b2: 'rgba(15,23,42,.22)', b3: 'rgba(15,23,42,.34)',
+  tx: '#141a28', tm: 'rgba(20,26,40,.90)', td: 'rgba(20,26,40,.66)', te: 'rgba(20,26,40,.52)',
+  g: '#0a7d4f', o: '#b4530a',
+  pnl: '#1f2536',
 }
 type Palette = typeof C_DARK
 const ThemeCtx = createContext<Palette>(C_DARK)
@@ -597,7 +597,7 @@ function Sidebar({ score, alerts, stats, rules }: {
                 const lvl = a.level ?? 1
                 const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
                 return (
-                  <div key={a.type} style={{ padding: '8px 10px', borderRadius: 6, background: `${aCol}07`, borderLeft: `2px solid ${aCol}55`, flexShrink: 0, transition: 'all .3s' }}>
+                  <div key={a.type} style={{ padding: '8px 10px', borderRadius: 6, background: `${aCol}1a`, borderLeft: `3px solid ${aCol}`, flexShrink: 0, transition: 'all .3s' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                         <span style={{ fontSize: 10, color: aCol, fontFamily: MONO, letterSpacing: .3 }}>L{lvl} · {alertLabel(a.type)}</span>
