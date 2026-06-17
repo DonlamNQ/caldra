@@ -1414,10 +1414,38 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
 
   const [ctDisconnecting, setCtDisconnecting] = useState(false)
 
+  // Statut cTrader live : l'état serveur est figé au chargement de la page. Tant
+  // que ce n'est pas résolu (ni connecté ni conflit), on poll pour faire basculer
+  // "connexion en cours" → "connecté" ou "conflit" sans rafraîchir la page.
+  const [ctLive, setCtLive] = useState<{ connected: boolean; pending: boolean; conflict: boolean }>(
+    { connected: ctraderConn, pending: !!ctraderPending, conflict: !!ctraderConflict }
+  )
+  useEffect(() => {
+    setCtLive({ connected: ctraderConn, pending: !!ctraderPending, conflict: !!ctraderConflict })
+  }, [ctraderConn, ctraderPending, ctraderConflict])
+  useEffect(() => {
+    if (ctLive.connected || ctLive.conflict) return // état stable, inutile de poller
+    const supabase = createClient()
+    let alive = true
+    const poll = async () => {
+      const { data } = await supabase.from('ctrader_accounts').select('ctid_trader_account_id,status')
+      if (!alive || !data) return
+      const conflict = data.some((r: any) => r.status === 'conflict')
+      const resolved = data.some((r: any) => r.ctid_trader_account_id != null)
+      const connected = resolved && !conflict
+      setCtLive({ connected, pending: data.length > 0 && !resolved && !conflict, conflict })
+      if (connected) setCtraderConn(true)
+    }
+    poll()
+    const id = setInterval(poll, 5000)
+    return () => { alive = false; clearInterval(id) }
+  }, [ctLive.connected, ctLive.conflict, setCtraderConn])
+
   async function disconnectCtrader() {
     setCtDisconnecting(true)
     await fetch('/api/ctrader/disconnect', { method: 'POST' })
     setCtraderConn(false)
+    setCtLive({ connected: false, pending: false, conflict: false })
     setCtDisconnecting(false)
   }
 
@@ -1620,14 +1648,14 @@ namespace CaldraBot
                 <div style={{ fontSize: 10.5, color: C.td }}>Pepperstone, IC Markets, FxPro, Eightcap…</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: ctraderConflict ? C.red : ctraderConn ? C.g : ctraderPending ? C.o : C.b3, ...(ctraderPending ? { animation: 'pulse 1.5s infinite' } : {}) }} />
-                <span style={{ fontSize: 10, color: ctraderConflict ? C.red : ctraderConn ? C.g : ctraderPending ? C.o : C.td, letterSpacing: .5 }}>
-                  {ctraderConflict ? 'CONFLIT' : ctraderConn ? 'CONNECTÉ' : ctraderPending ? 'CONNEXION EN COURS…' : 'NON CONNECTÉ'}
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: ctLive.conflict ? C.red : ctLive.connected ? C.g : ctLive.pending ? C.o : C.b3, ...(ctLive.pending ? { animation: 'pulse 1.5s infinite' } : {}) }} />
+                <span style={{ fontSize: 10, color: ctLive.conflict ? C.red : ctLive.connected ? C.g : ctLive.pending ? C.o : C.td, letterSpacing: .5 }}>
+                  {ctLive.conflict ? 'CONFLIT' : ctLive.connected ? 'CONNECTÉ' : ctLive.pending ? 'CONNEXION EN COURS…' : 'NON CONNECTÉ'}
                 </span>
               </div>
             </div>
 
-            {ctraderConflict && (
+            {ctLive.conflict && (
               <div style={{ background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, padding: '9px 12px', marginBottom: 14 }}>
                 <div style={{ fontSize: 11.5, color: C.red, lineHeight: 1.5, fontWeight: 500 }}>
                   ⚠ Ce compte cTrader est déjà relié à un autre compte Caldra.
@@ -1639,12 +1667,12 @@ namespace CaldraBot
             )}
 
             <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
-              {ctraderConn
+              {ctLive.connected
                 ? 'Tes trades cTrader remontent automatiquement via OAuth. Aucun bot à maintenir.'
                 : 'Connexion OAuth one-click — les trades remontent automatiquement, sans bot à installer.'}
             </div>
 
-            {ctraderConn ? (
+            {ctLive.connected ? (
               <button
                 onClick={disconnectCtrader}
                 disabled={ctDisconnecting}
