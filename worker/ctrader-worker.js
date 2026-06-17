@@ -126,18 +126,11 @@ async function resolveAndAuth(row) {
     // La connexion de cet env n'est pas encore prête → on réessaiera au prochain tick.
     if (!state.appAuthed) continue
 
-    // Déjà authentifié sur la socket : pas besoin de ré-auth, mais on RAFRAÎCHIT le
-    // contexte. Une déconnexion/reconnexion OAuth régénère l'ingest_key — sans ça, le
-    // worker garderait l'ancienne clé (supprimée au /disconnect) → /api/ingest 401.
-    if (state.authed.has(ctid)) {
-      state.authed.set(ctid, { userId: row.user_id, ingestKey: row.ingest_key })
-      resolvedAny = true
-      continue
-    }
-
     // Garde-fou : un compte cTrader (ctid) ne peut être relié qu'à UN SEUL compte
-    // Caldra. S'il appartient déjà à un autre user en base, on refuse la connexion
-    // (sinon le même flux de trades alimenterait deux comptes).
+    // Caldra. S'il appartient déjà à un autre user en base, on refuse la connexion.
+    // IMPORTANT : ce contrôle DOIT passer AVANT le bloc state.authed.has(ctid),
+    // sinon un ctid déjà authentifié par le 1er user serait « rafraîchi » au profit
+    // du 2e (hijack) avant même d'être vérifié.
     const { data: owner } = await supabase
       .from('ctrader_accounts')
       .select('user_id')
@@ -151,6 +144,15 @@ async function resolveAndAuth(row) {
         console.warn(`[ctrader:${env}] compte ${ctid} déjà relié à un autre compte Caldra (user ${String(owner.user_id).slice(0, 8)}) — connexion refusée pour ${row.user_id.slice(0, 8)}`)
         _conflictLogged.add(ctid)
       }
+      continue
+    }
+
+    // Déjà authentifié sur la socket : pas besoin de ré-auth, mais on RAFRAÎCHIT le
+    // contexte. Une déconnexion/reconnexion OAuth régénère l'ingest_key — sans ça, le
+    // worker garderait l'ancienne clé (supprimée au /disconnect) → /api/ingest 401.
+    if (state.authed.has(ctid)) {
+      state.authed.set(ctid, { userId: row.user_id, ingestKey: row.ingest_key })
+      resolvedAny = true
       continue
     }
 
