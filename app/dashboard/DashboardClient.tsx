@@ -468,9 +468,8 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ score, alerts, stats, rules, notifPerm, onRequestNotif }: {
+function Sidebar({ score, alerts, stats, rules }: {
   score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
-  notifPerm: string; onRequestNotif: () => void
 }) {
   const C = useContext(ThemeCtx)
   const drawdownPct = rules
@@ -547,6 +546,9 @@ function Sidebar({ score, alerts, stats, rules, notifPerm, onRequestNotif }: {
         </div>
       )}
 
+      {/* Séparateur fin (pas pleine largeur) entre Règles du jour et Alertes */}
+      <div style={{ height: '.5px', background: C.b, width: '72%', margin: '2px auto 0', flexShrink: 0 }} />
+
       {/* Alertes — heatmap + feed (flex:1 pour remplir l'espace) */}
       <div style={{ padding: '14px 20px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
@@ -610,32 +612,6 @@ function Sidebar({ score, alerts, stats, rules, notifPerm, onRequestNotif }: {
           )
         })()}
 
-      </div>
-
-      {/* ── Bas de sidebar : Notif ── */}
-      <div style={{ padding: '12px 20px 16px', flexShrink: 0, borderTop: `.5px solid ${C.b}` }}>
-        <div style={{ marginBottom: 8 }}>
-          {notifPerm === 'granted' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
-              <span style={{ fontSize: 10.5, color: C.td, fontFamily: MONO }}>Notifications actives</span>
-            </div>
-          ) : notifPerm === 'denied' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569', flexShrink: 0 }} />
-              <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO, lineHeight: 1.4 }}>Notifications désactivées</span>
-            </div>
-          ) : (
-            <button
-              onClick={onRequestNotif}
-              style={{ width: '100%', padding: 8, background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, color: C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, transition: 'all .2s', animation: 'pulse 2s infinite' }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.rg; e.currentTarget.style.animation = 'none' }}
-              onMouseLeave={e => { e.currentTarget.style.background = C.rd; e.currentTarget.style.animation = 'pulse 2s infinite' }}
-            >
-              🔔 Activer les notifications
-            </button>
-          )}
-        </div>
       </div>
     </div>
   )
@@ -2891,6 +2867,25 @@ export default function DashboardClient({
             <div style={{ width: 2, height: 17, background: C.red, borderRadius: 1 }} />
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
+          {/* Statut notifications — déplacé ici (haut à gauche) */}
+          <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', flexShrink: 0 }}>
+            {notifPerm === 'granted' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
+                <span className="date-lbl" style={{ fontSize: 10, color: C.td, fontFamily: MONO }}>Notifications actives</span>
+              </div>
+            ) : notifPerm === 'denied' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569' }} />
+                <span className="date-lbl" style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>Notifications désactivées</span>
+              </div>
+            ) : (
+              <button onClick={requestNotifPermission}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, fontSize: 10, fontFamily: MONO, cursor: 'pointer', animation: 'pulse 2s infinite' }}>
+                🔔 <span className="date-lbl">Activer les notifications</span>
+              </button>
+            )}
+          </div>
           {/* Tabs — pill nav, centered absolutely */}
           <div className="nav-wrap" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center' }}>
             <div className="tab-nav">
@@ -2998,7 +2993,7 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
-          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} />}
+          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} />}
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
