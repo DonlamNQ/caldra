@@ -134,6 +134,24 @@ async function resolveAndAuth(row) {
       continue
     }
 
+    // Garde-fou : un compte cTrader (ctid) ne peut être relié qu'à UN SEUL compte
+    // Caldra. S'il appartient déjà à un autre user en base, on refuse la connexion
+    // (sinon le même flux de trades alimenterait deux comptes).
+    const { data: owner } = await supabase
+      .from('ctrader_accounts')
+      .select('user_id')
+      .eq('ctid_trader_account_id', ctid)
+      .neq('user_id', row.user_id)
+      .limit(1)
+      .maybeSingle()
+    if (owner) {
+      if (!_conflictLogged.has(ctid)) {
+        console.warn(`[ctrader:${env}] compte ${ctid} déjà relié à un autre compte Caldra (user ${String(owner.user_id).slice(0, 8)}) — connexion refusée pour ${row.user_id.slice(0, 8)}`)
+        _conflictLogged.add(ctid)
+      }
+      continue
+    }
+
     try {
       await withTimeout(state.conn.sendCommand('ProtoOAAccountAuthReq', {
         accessToken: row.access_token, ctidTraderAccountId: ctid,
@@ -178,6 +196,7 @@ async function resolveAndAuth(row) {
   }
 }
 const _loggedSkip = new Set()
+const _conflictLogged = new Set()  // ctid déjà relié à un autre compte Caldra — log une seule fois
 
 // Échange le refresh_token contre un nouvel access_token et le persiste.
 // Renvoie les nouveaux champs token, ou null en cas d'échec.
