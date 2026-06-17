@@ -456,9 +456,8 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm, onRequestNotif }: {
+function Sidebar({ score, alerts, stats, rules, notifPerm, onRequestNotif }: {
   score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
-  paused: boolean; onTogglePause: () => void
   notifPerm: string; onRequestNotif: () => void
 }) {
   const C = useContext(ThemeCtx)
@@ -511,13 +510,13 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
       </div>
 
       {/* Radar */}
-      <div style={{ padding: '10px 20px 8px', flexShrink: 0, background: 'rgba(255,255,255,.012)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ padding: '10px 20px 8px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <BehavioralRadar sizing={mSizing} risk={mRisk} reentry={mReentry} drawdown={mDrawdown} discipline={mDiscipline} />
       </div>
 
       {/* Règles du jour */}
       {rules && (
-        <div style={{ padding: '20px 20px', flexShrink: 0, background: 'rgba(255,255,255,.012)' }}>
+        <div style={{ padding: '20px 20px', flexShrink: 0 }}>
           <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 11, textTransform: 'uppercase' as const, fontFamily: MONO }}>Règles du jour</span>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
             <span style={{ fontSize: 12, color: C.td }}>Max trades</span>
@@ -601,7 +600,7 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
 
       </div>
 
-      {/* ── Bas de sidebar : Notif + Pause ── */}
+      {/* ── Bas de sidebar : Notif ── */}
       <div style={{ padding: '12px 20px 16px', flexShrink: 0, borderTop: `.5px solid ${C.b}` }}>
         <div style={{ marginBottom: 8 }}>
           {notifPerm === 'granted' ? (
@@ -625,14 +624,6 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             </button>
           )}
         </div>
-        <button
-          onClick={onTogglePause}
-          style={{ width: '100%', padding: 8, background: paused ? 'rgba(255,171,0,.08)' : C.rg, border: `.5px solid ${paused ? 'rgba(255,171,0,.28)' : C.rb}`, borderRadius: 7, color: paused ? C.o : C.red, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, transition: 'all .2s' }}
-          onMouseEnter={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.13)' : C.rd)}
-          onMouseLeave={e => (e.currentTarget.style.background = paused ? 'rgba(255,171,0,.08)' : C.rg)}
-        >
-          {paused ? '⏸ Alertes suspendues · Reprendre' : '⏸ Pause session'}
-        </button>
       </div>
     </div>
   )
@@ -2568,11 +2559,9 @@ export default function DashboardClient({
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
-  const [paused, setPaused] = useState(false)
   const [sentinelPrompt, setSentinelPrompt] = useState<AlertRow | null>(null)
   const [coachingCards, setCoachingCards] = useState<CoachingCard[]>([])
 
-  const pausedRef = useRef(false)
   const notifDelay = useRef(0)
   const notifReset = useRef<ReturnType<typeof setTimeout> | null>(null)
   const channelRef = useRef<any>(null)
@@ -2608,10 +2597,6 @@ export default function DashboardClient({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const togglePause = useCallback(() => {
-    setPaused(p => { pausedRef.current = !p; return !p })
-  }, [])
-
   const today = new Date().toISOString().split('T')[0]
 
   const dismissToast = useCallback((id: string) => {
@@ -2624,7 +2609,6 @@ export default function DashboardClient({
   }, [])
 
   const addToast = useCallback((alert: AlertRow) => {
-    if (pausedRef.current) return
     const id = `t-${Date.now()}`
     setToasts(prev => [{ id, alert, exiting: false }, ...prev].slice(0, 4))
     const timer = setTimeout(() => dismissToast(id), 5000)
@@ -2675,7 +2659,6 @@ export default function DashboardClient({
     channelRef.current = supabase
       .channel('caldra-live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts', filter: `user_id=eq.${userId}` }, (payload) => {
-        if (pausedRef.current) return
         const a = payload.new as AlertRow & { session_date?: string; user_id?: string }
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
@@ -2684,7 +2667,6 @@ export default function DashboardClient({
         if ((a.level ?? 1) >= 2) fetchAlertCoaching(a)
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
-        if (pausedRef.current) return
         const t = payload.new as TradeRow & { user_id?: string }
         setTrades(prev => [t, ...prev])
         setStats(prev => ({
@@ -3004,7 +2986,7 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
-          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} paused={paused} onTogglePause={togglePause} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} />}
+          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} notifPerm={notifPerm} onRequestNotif={requestNotifPermission} />}
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
