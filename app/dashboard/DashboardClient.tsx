@@ -486,76 +486,58 @@ function Sidebar({ score, alerts, stats, rules, paused, onTogglePause, notifPerm
             </span>
           )}
         </div>
-        {(() => {
-          // On n'affiche QUE les tuiles déclenchées (count > 0) pour laisser
-          // la place au feed d'alertes en dessous.
-          const tiles = ([
-            { type: 'revenge_sizing',     label: 'Revenge' },
-            { type: 'immediate_reentry',  label: 'Re-entrée' },
-            { type: 'consecutive_losses', label: 'Pertes' },
-            { type: 'drawdown_alert',     label: 'Drawdown' },
-            { type: 'outside_session',    label: 'Horaires' },
-            { type: 'overtrading',        label: 'Overtrade' },
-            { type: 'news_trading',       label: 'News' },
-            { type: 'stop_not_respected', label: 'Stop' },
-            { type: 'risk_exceeded',      label: 'Risk' },
-            { type: 'averaging_down',         label: 'Averaging' },
-            { type: 'euphoria_sizing',        label: 'Euphorie' },
-            { type: 'overleverage',           label: 'Levier' },
-            { type: 'no_stop',                label: 'Sans stop' },
-            { type: 'accelerating_frequency', label: 'Cadence' },
-            { type: 'drawdown_override',      label: 'DD franchi' },
-            { type: 'cut_winners_hold_losers',label: 'Coupe gains' },
-            { type: 'end_of_day_desperation', label: 'Fin session' },
-          ] as { type: string; label: string }[])
-            .map(({ type, label }) => {
-              const ta = alerts.filter(a => (a.type ?? '') === type)
-              const maxLvl = ta.length > 0 ? Math.max(...ta.map(a => a.level ?? 1)) : 0
-              return { type, label, count: ta.length, maxLvl }
+        {alerts.length > 0 && (() => {
+          // Plus de tuiles : un feed unique. Les alertes sont regroupées par type —
+          // une alerte déjà présente qui se re-déclenche ne crée pas une nouvelle
+          // ligne : l'existante remonte en haut (heure mise à jour) avec un badge
+          // ×N indiquant le nombre de répétitions.
+          const grouped = (() => {
+            const map = new Map<string, { type: string; level: number; message: string; created_at: any; count: number }>()
+            for (const a of alerts) {
+              const type = a.type ?? ''
+              const at = (a as any).created_at ?? null
+              const existing = map.get(type)
+              if (!existing) {
+                map.set(type, { type, level: a.level ?? 1, message: a.message, created_at: at, count: 1 })
+              } else {
+                existing.count += 1
+                existing.level = Math.max(existing.level, a.level ?? 1)
+                if (at && (!existing.created_at || new Date(at).getTime() > new Date(existing.created_at).getTime())) {
+                  existing.created_at = at
+                  existing.message = a.message
+                }
+              }
+            }
+            return [...map.values()].sort((x, y) => {
+              const tx = x.created_at ? new Date(x.created_at).getTime() : 0
+              const ty = y.created_at ? new Date(y.created_at).getTime() : 0
+              return ty - tx
             })
-            .filter(t => t.count > 0)
-
-          if (tiles.length === 0) return null
+          })()
 
           return (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 5 }}>
-              {tiles.map(({ type, label, count, maxLvl }) => {
-                const col = maxLvl >= 3 ? '#dc3218' : maxLvl >= 2 ? C.red : C.o
+            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto', minHeight: 0 }}>
+              {grouped.map(a => {
+                const lvl = a.level ?? 1
+                const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
                 return (
-                  <div key={type} style={{
-                    padding: '8px 5px', borderRadius: 9, textAlign: 'center' as const,
-                    background: `${col}16`, border: `.5px solid ${col}55`,
-                    transition: 'all .4s',
-                  }}>
-                    <div style={{ fontSize: 16, fontFamily: MONO, lineHeight: 1.1, color: col, fontWeight: 600 }}>
-                      {count}
+                  <div key={a.type} style={{ padding: '8px 10px', borderRadius: 6, background: `${aCol}07`, borderLeft: `2px solid ${aCol}55`, flexShrink: 0, transition: 'all .3s' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                        <span style={{ fontSize: 10, color: aCol, fontFamily: MONO, letterSpacing: .3 }}>L{lvl} · {(a.type ?? '').replace(/_/g, ' ')}</span>
+                        {a.count > 1 && (
+                          <span style={{ fontSize: 9, fontFamily: MONO, fontWeight: 600, color: aCol, background: `${aCol}1e`, border: `.5px solid ${aCol}55`, borderRadius: 99, padding: '1px 6px', lineHeight: 1.3, flexShrink: 0 }}>×{a.count}</span>
+                        )}
+                      </span>
+                      {a.created_at && <span style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, flexShrink: 0 }}>{fmtTime(a.created_at)}</span>}
                     </div>
-                    <div style={{ fontSize: 7.5, fontFamily: MONO, marginTop: 2, letterSpacing: .3, color: col }}>
-                      {label}
-                    </div>
+                    <div style={{ fontSize: 12.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
                   </div>
                 )
               })}
             </div>
           )
         })()}
-        {alerts.length > 0 && (
-          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto', minHeight: 0 }}>
-            {alerts.map((a, i) => {
-              const lvl = a.level ?? 1
-              const aCol = lvl >= 3 ? '#dc3218' : lvl >= 2 ? C.red : C.o
-              return (
-                <div key={(a as any).id ?? i} style={{ padding: '8px 10px', borderRadius: 6, background: `${aCol}07`, borderLeft: `2px solid ${aCol}55`, flexShrink: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                    <span style={{ fontSize: 10, color: aCol, fontFamily: MONO, letterSpacing: .3 }}>L{lvl} · {(a.type ?? '').replace(/_/g, ' ')}</span>
-                    {(a as any).created_at && <span style={{ fontSize: 9.5, color: C.te, fontFamily: MONO }}>{fmtTime((a as any).created_at)}</span>}
-                  </div>
-                  <div style={{ fontSize: 12.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
-                </div>
-              )
-            })}
-          </div>
-        )}
 
       </div>
 
