@@ -109,6 +109,7 @@ async function resolveAndAuth(row) {
   const accounts = res.ctidTraderAccount || []
 
   let resolvedAny = false
+  let hadConflict = false
   for (const acc of accounts) {
     const ctid = Number(acc.ctidTraderAccountId)
     const env  = acc.isLive ? 'live' : 'demo'
@@ -145,6 +146,7 @@ async function resolveAndAuth(row) {
       .limit(1)
       .maybeSingle()
     if (owner) {
+      hadConflict = true
       if (!_conflictLogged.has(ctid)) {
         console.warn(`[ctrader:${env}] compte ${ctid} déjà relié à un autre compte Caldra (user ${String(owner.user_id).slice(0, 8)}) — connexion refusée pour ${row.user_id.slice(0, 8)}`)
         _conflictLogged.add(ctid)
@@ -191,6 +193,13 @@ async function resolveAndAuth(row) {
   if (resolvedAny) {
     await supabase.from('ctrader_accounts')
       .delete()
+      .eq('user_id', row.user_id)
+      .is('ctid_trader_account_id', null)
+  } else if (hadConflict) {
+    // Aucun compte résolu et au moins un ctid déjà pris par un autre user → on
+    // marque le placeholder en conflit pour que le dashboard affiche l'erreur.
+    await supabase.from('ctrader_accounts')
+      .update({ status: 'conflict' })
       .eq('user_id', row.user_id)
       .is('ctid_trader_account_id', null)
   }

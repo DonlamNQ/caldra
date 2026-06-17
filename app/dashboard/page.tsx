@@ -68,7 +68,7 @@ export default async function DashboardPage() {
     service.from('trades').select('pnl').eq('user_id', user.id)
       .gte('entry_time', yesterday).lt('entry_time', today),
     service.from('user_profiles').select('plan').eq('user_id', user.id).single(),
-    service.from('ctrader_accounts').select('id').eq('user_id', user.id).limit(1),
+    service.from('ctrader_accounts').select('id, status, ctid_trader_account_id').eq('user_id', user.id),
     service.from('trades').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ])
 
@@ -123,6 +123,10 @@ export default async function DashboardPage() {
 
   const meta = user.user_metadata ?? {}
 
+  const ctraderRows = ctraderAccount ?? []
+  const ctraderConflict = ctraderRows.some(r => (r as { status?: string }).status === 'conflict')
+  const ctraderConnected = ctraderRows.length > 0 && !ctraderConflict
+
   return (
     <DashboardClient
       userId={user.id}
@@ -137,7 +141,8 @@ export default async function DashboardPage() {
       historicalSessions={historicalSessions}
       plan={profile?.plan ?? 'free'}
       userMeta={{ first_name: meta.first_name, last_name: meta.last_name, phone: meta.phone }}
-      ctraderConnected={!!(ctraderAccount && ctraderAccount.length > 0)}
+      ctraderConnected={ctraderConnected}
+      ctraderConflict={ctraderConflict}
       lastTradeAt={lastTrade?.created_at ?? null}
     />
   )

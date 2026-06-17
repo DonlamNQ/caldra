@@ -58,6 +58,7 @@ interface DashboardClientProps {
   plan: string
   userMeta: { first_name?: string; last_name?: string; phone?: string }
   ctraderConnected: boolean
+  ctraderConflict?: boolean
   lastTradeAt: string | null
 }
 
@@ -1387,7 +1388,7 @@ function RapportsPanel() {
 }
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
-function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, lastTradeAt }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; lastTradeAt: string | null }) {
+function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, ctraderConflict, lastTradeAt }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; ctraderConflict?: boolean; lastTradeAt: string | null }) {
   const C = useContext(ThemeCtx)
 
   // Indicateur de santé : « est-ce que Caldra reçoit bien tes trades ? »
@@ -1622,6 +1623,17 @@ namespace CaldraBot
                 <span style={{ fontSize: 10, color: ctraderConn ? C.g : C.td, letterSpacing: .5 }}>{ctraderConn ? 'CONNECTÉ' : 'NON CONNECTÉ'}</span>
               </div>
             </div>
+
+            {ctraderConflict && (
+              <div style={{ background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 7, padding: '9px 12px', marginBottom: 14 }}>
+                <div style={{ fontSize: 11.5, color: C.red, lineHeight: 1.5, fontWeight: 500 }}>
+                  ⚠ Ce compte cTrader est déjà relié à un autre compte Caldra.
+                </div>
+                <div style={{ fontSize: 11, color: C.td, lineHeight: 1.5, marginTop: 4 }}>
+                  Un compte de trading ne peut être connecté qu'à un seul compte Caldra. Déconnecte-le de l'autre compte, ou connecte un autre compte cTrader.
+                </div>
+              </div>
+            )}
 
             <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
               {ctraderConn
@@ -2469,7 +2481,7 @@ type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
   yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, plan, userMeta,
-  ctraderConnected, lastTradeAt,
+  ctraderConnected, ctraderConflict, lastTradeAt,
 }: DashboardClientProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     typeof window !== 'undefined' ? (localStorage.getItem('caldra-theme') as 'dark' | 'light') ?? 'dark' : 'dark'
@@ -2966,7 +2978,7 @@ export default function DashboardClient({
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} />
             )}
             {activeTab === 'rapports' && <RapportsPanel />}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} lastTradeAt={lastTradeAt} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} lastTradeAt={lastTradeAt} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
