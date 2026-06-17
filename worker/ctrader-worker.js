@@ -50,6 +50,7 @@ function makeEnvState(env) {
     appAuthed:      false,
     authed:         new Map(),  // ctid -> { userId, ingestKey }
     symbolNames:    new Map(),  // `${ctid}:${symbolId}` -> 'EURUSD'
+    lotSizes:       new Map(),  // `${ctid}:${symbolId}` -> lotSize (volume d'1 lot)
     openPositions:  new Map(),  // positionId -> { entry_time }
     loggedAccounts: new Set(),  // ctid déjà logués — évite la répétition toutes les 30s
     timers:         [],
@@ -66,6 +67,28 @@ async function loadSymbols(state, ctid) {
   })
   for (const s of res.symbol || []) {
     state.symbolNames.set(`${ctid}:${s.symbolId}`, s.symbolName)
+  }
+}
+
+// lotSize (volume d'un lot) propre à chaque symbole, récupéré à la demande puis
+// mis en cache. ProtoOASymbolsListReq (light) ne le contient pas → ProtoOASymbolByIdReq.
+// Indispensable pour convertir le volume cTrader en lots : le forex a un lotSize
+// de ~10 000 000 (100 000 unités), un indice ~100 — d'où le besoin d'un diviseur
+// par symbole et non d'un /100 codé en dur.
+async function getLotSize(state, ctid, symbolId) {
+  const key = `${ctid}:${symbolId}`
+  if (state.lotSizes.has(key)) return state.lotSizes.get(key)
+  try {
+    const res = await withTimeout(state.conn.sendCommand('ProtoOASymbolByIdReq', {
+      ctidTraderAccountId: ctid, symbolId: [Number(symbolId)],
+    }), 10_000, 'symbolById')
+    const sym = (res.symbol || [])[0]
+    const ls  = sym && Number(sym.lotSize) > 0 ? Number(sym.lotSize) : null
+    if (ls) state.lotSizes.set(key, ls)
+    return ls
+  } catch (e) {
+    console.error('[ctrader] lotSize introuvable', symbolId, e?.message)
+    return null
   }
 }
 
@@ -275,8 +298,10 @@ async function handleExecution(state, event) {
   const direction = deal.tradeSide === 'SELL' ? 'long' : 'short'
   // grossProfit + swap + commission are in cents (moneyDigits=2) → divide by 100
   const pnl       = ((+cpd.grossProfit || 0) + (+cpd.swap || 0) + (+cpd.commission || 0)) / 100
-  // volume is in lots×100 in cTrader protobuf (1 standard lot = 100)
-  const size      = (+deal.volume || 0) / 100
+  // Volume → lots : on divise par le lotSize DU SYMBOLE (forex ≈ 10 000 000,
+  // indice ≈ 100). Repli sur /100 si le lotSize n'a pas pu être récupéré.
+  const lotSize   = await getLotSize(state, ctid, deal.symbolId)
+  const size      = lotSize ? (+deal.volume || 0) / lotSize : (+deal.volume || 0) / 100
 
   const exit_time = deal.executionTimestamp
     ? new Date(Number(deal.executionTimestamp)).toISOString()
@@ -346,6 +371,7 @@ async function startEnv(state) {
   state.appAuthed = false
   state.authed.clear()
   state.symbolNames.clear()
+  state.lotSizes.clear()
   state.loggedAccounts.clear()
 
   state.conn = new CTraderConnection({ host: state.host, port: PORT })
