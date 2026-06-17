@@ -1389,7 +1389,7 @@ function RapportsPanel() {
 }
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
-function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, ctraderConflict, ctraderPending, lastTradeAt }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; ctraderConflict?: boolean; ctraderPending?: boolean; lastTradeAt: string | null }) {
+function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, ctraderConflict, ctraderPending, userId, lastTradeAt }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; ctraderConflict?: boolean; ctraderPending?: boolean; userId: string; lastTradeAt: string | null }) {
   const C = useContext(ThemeCtx)
 
   // Indicateur de santé : « est-ce que Caldra reçoit bien tes trades ? »
@@ -1428,7 +1428,7 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     const supabase = createClient()
     let alive = true
     const poll = async () => {
-      const { data } = await supabase.from('ctrader_accounts').select('ctid_trader_account_id,status')
+      const { data } = await supabase.from('ctrader_accounts').select('ctid_trader_account_id,status').eq('user_id', userId)
       if (!alive || !data) return
       const conflict = data.some((r: any) => r.status === 'conflict')
       const resolved = data.some((r: any) => r.ctid_trader_account_id != null)
@@ -3009,7 +3009,7 @@ export default function DashboardClient({
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} />
             )}
             {activeTab === 'rapports' && <RapportsPanel />}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} lastTradeAt={lastTradeAt} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
