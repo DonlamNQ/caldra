@@ -155,6 +155,23 @@ function buildPushContent(a: Alert): { title: string; body: string } {
   }
 }
 
+// Quand une alerte « sur-ensemble » plus sévère est présente sur le même trade,
+// on masque la version plus faible qui dit la même chose — évite la cascade de
+// doublons en fin de mauvaise session (clé = alerte faible, valeurs = alertes qui
+// la rendent redondante si elles sont aussi déclenchées).
+const REDUNDANT_WHEN: Record<string, string[]> = {
+  revenge_sizing: ['averaging_down'],     // averaging_down = grossir après perte, même symbole/sens (plus précis, L3)
+  drawdown_alert: ['drawdown_override'],  // override = a déjà franchi le max ET continue (L3)
+}
+
+function suppressRedundant(alerts: Alert[]): Alert[] {
+  const present = new Set(alerts.map(a => a.type))
+  return alerts.filter(a => {
+    const supersets = REDUNDANT_WHEN[a.type]
+    return !supersets || !supersets.some(s => present.has(s))
+  })
+}
+
 async function saveAndNotify(
   trade: Trade,
   alerts: Alert[],
@@ -162,6 +179,7 @@ async function saveAndNotify(
   isSentinel: boolean,
   rules: Record<string, unknown>
 ): Promise<Alert[]> {
+  alerts = suppressRedundant(alerts)
   if (alerts.length === 0) return []
 
   const today = new Date().toISOString().split('T')[0]
