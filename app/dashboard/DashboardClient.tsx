@@ -314,6 +314,7 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     return (
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+        <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <text x={PXL - 4} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>€0</text>
       </svg>
     )
@@ -341,29 +342,19 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   const polyPoints = xyPts.map(([x, y]) => `${x},${y}`).join(' ')
   const fillPath = `M${xyPts[0][0]} ${xyPts[0][1]} ${xyPts.slice(1).map(([x, y]) => `L${x} ${y}`).join(' ')} L${xOf(n - 1)} ${y0} L${xOf(0)} ${y0} Z`
 
-  // Nice round Y ticks
-  const rawTicks = (() => {
+  // Ticks Y équidistants : valeurs « rondes » multiples d'un pas, bornées à la
+  // zone visible [minV, maxV] → écart constant entre les nombres, jamais hors cadre.
+  const yTicks = (() => {
     if (rawRange < 1) return [0]
     const roughStep = rawRange / 4
     const mag = Math.pow(10, Math.floor(Math.log10(roughStep)))
     const norm = roughStep / mag
-    const step = norm < 1.5 ? mag : norm < 3.5 ? 2 * mag : norm < 7.5 ? 5 * mag : 10 * mag
-    const start = Math.floor(rawMin / step) * step
-    const end = Math.ceil(rawMax / step) * step
+    const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag
+    const start = Math.ceil(minV / step) * step
+    const end = Math.floor(maxV / step) * step
     const ticks: number[] = []
     for (let v = start; v <= end + step * 0.001; v += step) ticks.push(Math.round(v * 1000) / 1000)
-    return ticks
-  })()
-  const yTicks = (() => {
-    // Dédoublonne par valeur puis écarte les labels qui se rendraient trop
-    // proches verticalement (sinon les chiffres se superposent quand l'amplitude
-    // est faible). On parcourt du haut vers le bas et on garde un écart minimum.
-    const uniq = rawTicks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < 0.01) === i)
-    const out: number[] = []
-    for (const v of [...uniq].sort((a, b) => b - a)) {
-      if (out.length === 0 || Math.abs(yOf(v) - yOf(out[out.length - 1])) >= 11) out.push(v)
-    }
-    return out
+    return ticks.filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < 0.01) === i)
   })()
 
   const step = Math.max(1, Math.floor((n - 1) / 4))
@@ -384,8 +375,9 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
         <line key={`g${v}`} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={gridColor} strokeWidth={0.5} />
       ))}
       <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+      <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
       {yTicks.map(v => (
-        <text key={`t${v}`} x={PXL - 4} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
+        <text key={`t${v}`} x={PXL - 4} y={yOf(v) + 2}
           textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
       ))}
       {xIdxs.map(i => (
