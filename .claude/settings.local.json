@@ -78,7 +78,8 @@
       "WebFetch(domain:ninjatrader.com)",
       "Bash(python -m py_compile worker/mt5-worker.py)",
       "PowerShell(winget install *)",
-      "PowerShell($py = \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\"; & $py -c \"import MetaTrader5 as mt5; ok = mt5.initialize\\(path=r'C:\\\\Program Files\\\\MetaTrader 5\\\\terminal64.exe'\\); print\\('initialize:', ok\\); print\\('version:', mt5.version\\(\\)\\); ti = mt5.terminal_info\\(\\); print\\('terminal connecte:', ti.connected if ti else None\\); print\\('compte courant:', getattr\\(mt5.account_info\\(\\), 'login', None\\)\\); mt5.shutdown\\(\\)\")"
+      "PowerShell($py = \"C:\\\\Users\\\\Haby\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\"; & $py -c \"import MetaTrader5 as mt5; ok = mt5.initialize\\(path=r'C:\\\\Program Files\\\\MetaTrader 5\\\\terminal64.exe'\\); print\\('initialize:', ok\\); print\\('version:', mt5.version\\(\\)\\); ti = mt5.terminal_info\\(\\); print\\('terminal connecte:', ti.connected if ti else None\\); print\\('compte courant:', getattr\\(mt5.account_info\\(\\), 'login', None\\)\\); mt5.shutdown\\(\\)\")",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\"; Write-Output \"=== Dernieres lignes du worker ===\"; Get-Content mt5.log -Tail 20; if \\(\\(Test-Path mt5.err.log\\) -and \\(Get-Item mt5.err.log\\).Length -gt 0\\) { Write-Output \"=== erreurs ===\"; Get-Content mt5.err.log -Tail 10 })"
     ]
   },
   "hooks": {
