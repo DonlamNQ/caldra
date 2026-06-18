@@ -124,12 +124,20 @@ export default async function DashboardPage() {
   const meta = user.user_metadata ?? {}
 
   const ctraderRows = ctraderAccount ?? []
-  const ctraderConflict = ctraderRows.some(r => (r as { status?: string }).status === 'conflict')
+  // Le "conflit" (double connexion) est un signal ÉPHÉMÈRE : il s'affiche en live
+  // via le poll client pendant la tentative, mais ne doit pas persister. À chaque
+  // (re)chargement on purge le placeholder en conflit → un refresh repart propre,
+  // et le conflit ne réapparaît que sur une nouvelle tentative de double connexion.
+  if (ctraderRows.some(r => (r as { status?: string }).status === 'conflict')) {
+    await service.from('ctrader_accounts').delete().eq('user_id', user.id).eq('status', 'conflict')
+  }
+  const liveRows = ctraderRows.filter(r => (r as { status?: string }).status !== 'conflict')
+  const ctraderConflict = false
   // "Connecté" = le worker a résolu un vrai compte (ctid). Avant ça, c'est juste
   // le placeholder OAuth → on affiche "connexion en cours", pas "connecté".
-  const ctraderResolved = ctraderRows.some(r => (r as { ctid_trader_account_id?: number }).ctid_trader_account_id != null)
-  const ctraderConnected = ctraderResolved && !ctraderConflict
-  const ctraderPending = ctraderRows.length > 0 && !ctraderResolved && !ctraderConflict
+  const ctraderResolved = liveRows.some(r => (r as { ctid_trader_account_id?: number }).ctid_trader_account_id != null)
+  const ctraderConnected = ctraderResolved
+  const ctraderPending = liveRows.length > 0 && !ctraderResolved
 
   return (
     <DashboardClient
