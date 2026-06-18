@@ -89,6 +89,28 @@ def post_trade(ingest_key: str, payload: dict):
         print("[ingest] erreur réseau:", e)
 
 
+def ensure_init(force: bool = False):
+    """(Re)connecte le terminal MT5 ; le relance s'il a été fermé."""
+    if force or mt5.terminal_info() is None:
+        if MT5_TERMINAL_PATH:
+            mt5.initialize(path=MT5_TERMINAL_PATH)
+        else:
+            mt5.initialize()
+
+
+def broker_utc_offset(symbol: str) -> int:
+    """Décalage (secondes, arrondi à l'heure) entre l'heure serveur du broker et
+    l'UTC réel. Les deals MT5 sont horodatés en heure-broker → conversion en UTC."""
+    try:
+        mt5.symbol_select(symbol, True)
+        t = mt5.symbol_info_tick(symbol)
+        if t and t.time:
+            return int(round((t.time - time.time()) / 3600.0) * 3600)
+    except Exception:
+        pass
+    return 0
+
+
 def process_account(row: dict):
     user_id    = row["user_id"]
     login      = int(row["mt5_login"])
@@ -105,9 +127,18 @@ def process_account(row: dict):
     # Connexion au compte (change le compte courant du terminal).
     if not mt5.login(login, password=password, server=server):
         code, msg = mt5.last_error()
-        print(f"[mt5] login échec compte {login} ({server}): {code} {msg}")
-        set_status(user_id, "auth_failed")
-        return
+        # -10001 = IPC : lien terminal coupé → on réinitialise et on retente une fois.
+        if code == -10001:
+            ensure_init(force=True)
+            if not mt5.login(login, password=password, server=server):
+                code, msg = mt5.last_error()
+                print(f"[mt5] login échec (terminal injoignable) compte {login}: {code} {msg}")
+                set_status(user_id, "error")
+                return
+        else:
+            print(f"[mt5] login échec compte {login} ({server}): {code} {msg}")
+            set_status(user_id, "auth_failed")
+            return
 
     now = datetime.now(timezone.utc)
 
@@ -132,6 +163,7 @@ def process_account(row: dict):
         return
 
     seen = SEEN[user_id]
+    offset = broker_utc_offset(out_deals[0].symbol) if out_deals else 0
     for d in out_deals:
         if d.ticket in seen:
             continue
@@ -143,11 +175,11 @@ def process_account(row: dict):
         if ein is not None:
             direction = "long" if ein.type == 0 else "short"
             entry_price = ein.price
-            entry_time  = iso(ein.time)
+            entry_time  = iso(ein.time - offset)
         else:
             direction = "long" if d.type == 1 else "short"
             entry_price = d.price
-            entry_time  = iso(d.time - 60)
+            entry_time  = iso(d.time - offset - 60)
 
         pnl = (d.profit or 0) + (d.swap or 0) + (d.commission or 0)
         payload = {
@@ -157,7 +189,7 @@ def process_account(row: dict):
             "entry_price": float(entry_price),
             "exit_price":  float(d.price),
             "entry_time":  entry_time,
-            "exit_time":   iso(d.time),
+            "exit_time":   iso(d.time - offset),
             "pnl":         round(float(pnl), 2),
         }
         if payload["entry_price"] > 0 and payload["exit_price"] > 0 and payload["size"] > 0:
@@ -178,6 +210,7 @@ def main():
 
     while True:
         try:
+            ensure_init()   # garde le terminal vivant / le relance s'il a été fermé
             rows = supabase.table("mt5_accounts").select(
                 "user_id, mt5_login, mt5_server, password_enc, ingest_key, last_sync_at"
             ).execute().data or []
