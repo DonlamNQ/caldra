@@ -181,7 +181,9 @@ def process_account(row: dict):
             entry_price = d.price
             entry_time  = iso(d.time - offset - 60)
 
-        pnl = (d.profit or 0) + (d.swap or 0) + (d.commission or 0)
+        # PnL = colonne "Profit" de MT5 (comme l'EA) — hors commission/swap, pour
+        # coller à ce que le trader voit dans son terminal.
+        pnl = (d.profit or 0)
         payload = {
             "symbol":      str(d.symbol).strip(),
             "direction":   direction,
