@@ -63,6 +63,9 @@ namespace NinjaTrader.NinjaScript.Indicators
         private class Pos { public int Qty; public double AvgEntry; public DateTime EntryTime; public int RoundQty; public double Realized; }
         private readonly Dictionary<string, Pos> _positions = new Dictionary<string, Pos>();
         private readonly List<Account> _subscribed = new List<Account>();
+        // Horodatage de démarrage : on ignore toute exécution ANTÉRIEURE (NinjaTrader
+        // rejoue l'historique des fills à l'abonnement/connexion → sinon faux trades).
+        private DateTime _since;
 
         protected override void OnStateChange()
         {
@@ -78,6 +81,8 @@ namespace NinjaTrader.NinjaScript.Indicators
             }
             else if (State == State.DataLoaded)
             {
+                _since = DateTime.Now;   // les fills déjà présents (historique) seront ignorés
+
                 if (!Http.DefaultRequestHeaders.Contains("x-caldra-key"))
                     Http.DefaultRequestHeaders.Add("x-caldra-key", CaldraApiKey);
 
@@ -113,6 +118,9 @@ namespace NinjaTrader.NinjaScript.Indicators
                 int      fillQty    = (int)ex.Quantity * sign;
                 double   price      = ex.Price;
                 DateTime time       = ex.Time;
+
+                // Ignore les exécutions historiques rejouées au démarrage/à la connexion.
+                if (time < _since) return;
 
                 string key = (ex.Account != null ? ex.Account.Name : "?") + "|" + ex.Instrument.FullName;
                 Pos p;
