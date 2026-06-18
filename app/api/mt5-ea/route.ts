@@ -124,7 +124,7 @@ void SendOpen(string symbol, string direction, double volume,
    char post[]; char result[]; string resultHeaders;
    int res = WebRequest("POST", url, "Content-Type: application/json\r\n", 5000, post, result, resultHeaders);
    if (res == 200 || res == 201) Print("[Caldra] Ouverture envoyee OK ", symbol);
-   else Print("[Caldra] Erreur ouverture HTTP ", res);
+   else Print("[Caldra] Erreur ouverture HTTP ", res, " - ", CharArrayToString(result), " | url=", url);
 }
 
 void SendClose(string symbol, string direction, double volume,
@@ -141,7 +141,7 @@ void SendClose(string symbol, string direction, double volume,
    char post[]; char result[]; string resultHeaders;
    int res = WebRequest("POST", url, "Content-Type: application/json\r\n", 5000, post, result, resultHeaders);
    if (res == 200 || res == 201) Print("[Caldra] Fermeture envoyee OK ", symbol);
-   else Print("[Caldra] Erreur fermeture HTTP ", res);
+   else Print("[Caldra] Erreur fermeture HTTP ", res, " - ", CharArrayToString(result), " | url=", url);
 }
 
 //+------------------------------------------------------------------+
