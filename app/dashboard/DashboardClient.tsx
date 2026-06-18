@@ -1822,26 +1822,6 @@ namespace CaldraBot
             </div>
           </IntCard>
 
-          {/* TradingView */}
-          <IntCard style={{ opacity: .5 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>TV</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>TradingView</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Alertes webhook — tous brokers</div>
-              </div>
-              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: MONO, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 7 }}>
-              {(['1. Crée une alerte sur ton graphique TradingView.', '2. Dans "Notifications webhook", colle l\'URL Caldra.', '3. Tes trades sont envoyés automatiquement à chaque exécution.'] as string[]).map((t, i) => (
-                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
-                  <div style={{ fontSize: 11, color: C.td, lineHeight: 1.5 }}>{t.slice(3)}</div>
-                </div>
-              ))}
-            </div>
-          </IntCard>
-
           {/* Tradovate */}
           <IntCard style={{ opacity: .5 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>

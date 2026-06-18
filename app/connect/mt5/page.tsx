@@ -60,14 +60,7 @@ export default function ConnectMt5() {
             </div>
           </div>
 
-          {/* Explication mot de passe — claire */}
-          <div style={{ background: C.va, border: `.5px solid ${C.vb}`, borderRadius: 10, padding: '12px 14px', margin: '18px 0 22px' }}>
-            <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 5 }}>🔒 Utilise ton mot de passe investisseur</div>
-            <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6 }}>
-              C'est le mot de passe <strong style={{ color: C.tx }}>en lecture seule</strong> de ton compte MT5 : Caldra pourra <strong style={{ color: C.tx }}>voir</strong> tes trades, mais <strong style={{ color: C.tx }}>jamais</strong> en passer. Tu le trouves dans l'email de ton broker, ou dans MT5 → Outils → Options → Serveur.
-              <br /><span style={{ color: C.t3 }}>Pas d'investisseur sous la main ? Ton mot de passe habituel marche aussi (Caldra ne fait que lire).</span>
-            </div>
-          </div>
+          <div style={{ height: 18 }} />
 
           <div style={{ marginBottom: 16 }}>
             <label style={label}>Numéro de compte</label>
@@ -79,8 +72,9 @@ export default function ConnectMt5() {
             <div style={{ fontSize: 11, color: C.t3, marginTop: 6, lineHeight: 1.5 }}>Le nom exact est affiché dans MT5 sous ton compte (Navigateur), ou dans la fenêtre de connexion.</div>
           </div>
           <div style={{ marginBottom: 18 }}>
-            <label style={label}>Mot de passe investisseur</label>
+            <label style={label}>Mot de passe</label>
             <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" style={input} />
+            <div style={{ fontSize: 11, color: C.t3, marginTop: 6, lineHeight: 1.5 }}>Ton mot de passe MT5. Caldra ne fait que lire tes trades, il ne peut pas trader pour toi.</div>
           </div>
 
           {err && <div style={{ fontSize: 12.5, color: C.red, marginBottom: 14, lineHeight: 1.5 }}>{err}</div>}

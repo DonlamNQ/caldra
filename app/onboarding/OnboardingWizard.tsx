@@ -505,7 +505,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {[
                       ['1', 'Dans le dashboard, onglet Intégrations, ouvre la carte "MetaTrader 5".'],
-                      ['2', 'Entre ton numéro de compte, ton serveur, et ton mot de passe investisseur (lecture seule).'],
+                      ['2', 'Entre ton numéro de compte, ton serveur, et ton mot de passe MT5.'],
                       ['3', 'Clique Connecter — tes trades remontent automatiquement, sans rien à installer.'],
                     ].map(([n, t]) => (
                       <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
