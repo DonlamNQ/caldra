@@ -463,10 +463,10 @@ const HTML = `
               </div>
               <div class="ls-card">
                 <div class="ls-card-l">Trades du jour</div>
-                <div class="ls-tr"><span class="ls-tt">09:32</span><span class="ls-tn">NQ Long</span><span class="ls-tp">+140</span></div>
-                <div class="ls-tr"><span class="ls-tt">09:51</span><span class="ls-tn">NQ Short</span><span class="ls-tp">+100</span></div>
-                <div class="ls-tr"><span class="ls-tt">10:14</span><span class="ls-tn">NQ Short</span><span class="ls-tneg">−180</span></div>
-                <div class="ls-tr"><span class="ls-tt">10:31</span><span class="ls-tn">NQ Long</span><span class="ls-tneg">−210</span></div>
+                <div class="ls-tr"><span class="ls-tt">09:32</span><span class="ls-tn">EUR/USD Long</span><span class="ls-tp">+140</span></div>
+                <div class="ls-tr"><span class="ls-tt">09:51</span><span class="ls-tn">EUR/USD Short</span><span class="ls-tp">+100</span></div>
+                <div class="ls-tr"><span class="ls-tt">10:14</span><span class="ls-tn">EUR/USD Short</span><span class="ls-tneg">−180</span></div>
+                <div class="ls-tr"><span class="ls-tt">10:31</span><span class="ls-tn">EUR/USD Long</span><span class="ls-tneg">−210</span></div>
               </div>
             </div>
             <!-- macOS notification -->
@@ -550,7 +550,7 @@ const HTML = `
         <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></div>
         <div style="width:10px;height:10px;border-radius:50%;background:#ffbd2e"></div>
         <div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div>
-        <div class="demo-ttl">Caldra — Session NQ Futures — 30/03/2026</div>
+        <div class="demo-ttl">Caldra — Session EUR/USD — 30/03/2026</div>
       </div>
       <div class="demo-body">
         <div class="demo-lp">
@@ -559,8 +559,8 @@ const HTML = `
           <div class="demo-chart"><canvas id="pc"></canvas></div>
           <div class="demo-tlab">Derniers trades</div>
           <div id="tlog">
-            <div class="demo-tr"><span class="dtt">09:32</span><span class="dtins">NQ Long</span><span class="dtp">+€140</span></div>
-            <div class="demo-tr"><span class="dtt">09:51</span><span class="dtins">NQ Short</span><span class="dtp">+€100</span></div>
+            <div class="demo-tr"><span class="dtt">09:32</span><span class="dtins">EUR/USD Long</span><span class="dtp">+€140</span></div>
+            <div class="demo-tr"><span class="dtt">09:51</span><span class="dtins">EUR/USD Short</span><span class="dtp">+€100</span></div>
           </div>
         </div>
         <div class="demo-rp">
@@ -580,7 +580,7 @@ const HTML = `
     <div class="sec-h">Configure une fois.<br>Il veille toujours.</div>
     <p class="sec-d">Aucune saisie manuelle. Caldra se connecte à ta plateforme et fait le reste.</p>
     <div class="steps-grid">
-      <div class="step-c"><div class="step-n">01 — Connecte</div><div class="step-h">Ta plateforme de trading</div><div class="step-d">Connexion directe via API. Tes trades remontent automatiquement — rien à saisir manuellement.</div><div class="step-tags"><span class="stag-pill"><span class="stag-dot"></span>cTrader</span><span class="stag-pill"><span class="stag-dot"></span>MT5 EA</span><span class="stag-pill" style="opacity:.4">+ à venir</span></div></div>
+      <div class="step-c"><div class="step-n">01 — Connecte</div><div class="step-h">Ta plateforme de trading</div><div class="step-d">Connexion directe via API. Tes trades remontent automatiquement — rien à saisir manuellement.</div><div class="step-tags"><span class="stag-pill"><span class="stag-dot"></span>cTrader</span><span class="stag-pill"><span class="stag-dot"></span>MetaTrader 5</span><span class="stag-pill" style="opacity:.4">+ à venir</span></div></div>
       <div class="step-c"><div class="step-n">02 — Configure</div><div class="step-h">Tes règles et limites</div><div class="step-d">Horaires de session, risk par trade, drawdown max. Tes règles, tes standards — pas des valeurs génériques imposées.</div></div>
       <div class="step-c"><div class="step-n">03 — Trade</div><div class="step-h">Alerte immédiate si ça déraille</div><div class="step-d">Dès qu'un pattern dangereux est détecté, tu reçois une notification push + desktop en moins d'une seconde.</div></div>
     </div>
@@ -594,9 +594,9 @@ const HTML = `
     <div class="sec-h">Testé par des vrais traders.</div>
     <p class="sec-d">Bêta fermée — retours des premiers utilisateurs sur leurs sessions réelles.</p>
     <div class="testi-grid">
-      <div class="testi-c"><div class="testi-stars">★★★★★</div><p class="testi-q">« J'ai claqué trois semaines de gains en une après-midi à cause du tilt. <strong>Ce genre d'outil j'en avais besoin depuis longtemps.</strong> »</p><div class="testi-au"><div class="testi-av">TM</div><div><div class="testi-name">Thomas M.</div><div class="testi-role">Trader Futures · 3 ans</div></div></div></div>
+      <div class="testi-c"><div class="testi-stars">★★★★★</div><p class="testi-q">« J'ai claqué trois semaines de gains en une après-midi à cause du tilt. <strong>Ce genre d'outil j'en avais besoin depuis longtemps.</strong> »</p><div class="testi-au"><div class="testi-av">TM</div><div><div class="testi-name">Thomas M.</div><div class="testi-role">Trader Forex · 3 ans</div></div></div></div>
       <div class="testi-c"><div class="testi-stars">★★★★★</div><p class="testi-q">« <strong>Je savais même pas que je faisais du revenge sizing.</strong> Ça se voyait pas de l'intérieur. Hâte que ça sorte. »</p><div class="testi-au"><div class="testi-av">KF</div><div><div class="testi-name">KrazoliFX</div><div class="testi-role">Trader CFD/Forex · Paris</div></div></div></div>
-      <div class="testi-c"><div class="testi-stars">★★★★☆</div><p class="testi-q">« J'utilise TradeZella mais c'est toujours après coup. <strong>Avec Caldra l'alerte est arrivée pendant ma session.</strong> C'est pas du tout la même chose. »</p><div class="testi-au"><div class="testi-av">KL</div><div><div class="testi-name">Kevin L.</div><div class="testi-role">Trader Futures · Lyon</div></div></div></div>
+      <div class="testi-c"><div class="testi-stars">★★★★☆</div><p class="testi-q">« J'utilise TradeZella mais c'est toujours après coup. <strong>Avec Caldra l'alerte est arrivée pendant ma session.</strong> C'est pas du tout la même chose. »</p><div class="testi-au"><div class="testi-av">KL</div><div><div class="testi-name">Kevin L.</div><div class="testi-role">Trader Forex · Lyon</div></div></div></div>
     </div>
   </div>
 </div>
@@ -668,10 +668,10 @@ function renderDets(){
 renderDets();
 var pd=[0,140,240],simStep=0,ch;
 var SCN=[
-  {time:'10:14',side:'NQ Short',pnl:-180,a:null},
-  {time:'10:17',side:'NQ Long (re-entrée)',pnl:-95,a:{l:1,ti:'Re-entrée immédiate détectée',su:'Trade ouvert 3 min après la sortie. Prends une pause.'}},
-  {time:'10:31',side:'NQ Long (sizing ×2)',pnl:-210,a:{l:2,ti:'Revenge sizing + 3 pertes consécutives',su:'Taille doublée après série de pertes. Pause recommandée.'}},
-  {time:'10:33',side:'NQ Long',pnl:-320,a:{l:3,ti:'STOP — Ferme la plateforme.',su:'Drawdown critique + série + revenge sizing simultanés.'}}
+  {time:'10:14',side:'EUR/USD Short',pnl:-180,a:null},
+  {time:'10:17',side:'EUR/USD Long (re-entrée)',pnl:-95,a:{l:1,ti:'Re-entrée immédiate détectée',su:'Trade ouvert 3 min après la sortie. Prends une pause.'}},
+  {time:'10:31',side:'EUR/USD Long (sizing ×2)',pnl:-210,a:{l:2,ti:'Revenge sizing + 3 pertes consécutives',su:'Taille doublée après série de pertes. Pause recommandée.'}},
+  {time:'10:33',side:'EUR/USD Long',pnl:-320,a:{l:3,ti:'STOP — Ferme la plateforme.',su:'Drawdown critique + série + revenge sizing simultanés.'}}
 ];
 function initChart(){
   var canvas=document.getElementById('pc');if(!canvas)return;
@@ -704,7 +704,7 @@ function resetD(){
   ch.data.datasets[0].borderColor='#3cc87a';ch.data.datasets[0].pointBackgroundColor='#3cc87a';ch.data.datasets[0].backgroundColor='rgba(60,200,122,.06)';ch.update();
   document.getElementById('dpnl').textContent='+€240';document.getElementById('dpnl').style.color='#3cc87a';
   document.getElementById('dpc').textContent='Session en cours';
-  document.getElementById('tlog').innerHTML='<div class="demo-tr"><span class="dtt">09:32</span><span class="dtins">NQ Long</span><span class="dtp">+€140</span></div><div class="demo-tr"><span class="dtt">09:51</span><span class="dtins">NQ Short</span><span class="dtp">+€100</span></div>';
+  document.getElementById('tlog').innerHTML='<div class="demo-tr"><span class="dtt">09:32</span><span class="dtins">EUR/USD Long</span><span class="dtp">+€140</span></div><div class="demo-tr"><span class="dtt">09:51</span><span class="dtins">EUR/USD Short</span><span class="dtp">+€100</span></div>';
   document.getElementById('ac').innerHTML='<div style="font-size:12px;color:var(--t3);padding:.5rem 0">Aucune alerte — session saine.</div>';
   document.getElementById('sb').textContent='→ Simuler le trade suivant';
 }
