@@ -1809,6 +1809,42 @@ namespace CaldraBot
             </div>
           </IntCard>
 
+          {/* NinjaTrader add-on (futures) */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>NT8</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>NinjaTrader <span style={{ fontSize: 9, color: C.td, fontFamily: MONO, letterSpacing: .5 }}>FUTURES</span></div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Toutes prop firms : Apex, MyFundedFutures, Topstep…</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
+              {([
+                ['1', 'Clique sur "Télécharger l\'add-on" ci-dessous.'],
+                ['2', 'Place CaldraReporter.cs dans le dossier : Documents\\NinjaTrader 8\\bin\\Custom\\AddOns\\'],
+                ['3', 'Redémarre NinjaTrader (ou F5 dans l\'éditeur NinjaScript pour compiler).'],
+                ['4', 'Connecte ton compte prop firm dans NinjaTrader — tes trades fermés remontent tout seuls.'],
+              ] as [string, string][]).map(([n, t]) => (
+                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                  <div style={{ fontSize: 11, color: C.td, lineHeight: 1.5 }}>{t}</div>
+                </div>
+              ))}
+            </div>
+
+            <a
+              href="/api/ninjatrader-addon"
+              download
+              style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
+            >
+              Télécharger l'add-on →
+            </a>
+            <div style={{ fontSize: 9.5, color: C.te, lineHeight: 1.5, marginTop: 7, textAlign: 'center' as const }}>
+              Gratuit — aucun abonnement API. Chaque téléchargement régénère ta clé.
+            </div>
+          </IntCard>
+
           {/* TradingView */}
           <IntCard style={{ opacity: .5 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
