@@ -324,7 +324,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
                     {([
                       { value: 'ctrader' as Platform, label: 'cTrader', sub: 'Via cBot' },
-                      { value: 'mt5'     as Platform, label: 'MetaTrader 5', sub: 'Via EA' },
+                      { value: 'mt5'     as Platform, label: 'MetaTrader 5', sub: 'Via identifiants' },
                     ] as { value: Platform; label: string; sub: string }[]).map(o => {
                       const active = platform === o.value
                       return (
@@ -480,7 +480,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
               {/* Platform instructions */}
               <div style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 12, padding: '18px 20px', marginBottom: 20 }}>
                 <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 14 }}>
-                  {platform === 'ctrader' ? 'Connexion cTrader cBot' : 'Connexion MetaTrader 5 EA'}
+                  {platform === 'ctrader' ? 'Connexion cTrader cBot' : 'Connexion MetaTrader 5'}
                 </div>
 
                 {platform === 'ctrader' && (
@@ -504,9 +504,9 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                 {platform === 'mt5' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {[
-                      ['1', 'Dans le dashboard, onglet Intégrations, télécharge CaldraMT5.mq5.'],
-                      ['2', 'Dans MetaEditor (F4), place le fichier dans Experts/ et compile (F7).'],
-                      ['3', 'Glisse l\'EA sur un chart, colle ta clé API dans les paramètres, et active AutoTrading.'],
+                      ['1', 'Dans le dashboard, onglet Intégrations, ouvre la carte "MetaTrader 5".'],
+                      ['2', 'Entre ton numéro de compte, ton serveur, et ton mot de passe investisseur (lecture seule).'],
+                      ['3', 'Clique Connecter — tes trades remontent automatiquement, sans rien à installer.'],
                     ].map(([n, t]) => (
                       <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                         <div style={{ width: 22, height: 22, borderRadius: '50%', background: RD, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: RED, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>

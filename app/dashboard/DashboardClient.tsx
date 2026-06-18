@@ -1804,64 +1804,13 @@ namespace CaldraBot
             )}
           </IntCard>
 
-          {/* MetaTrader 5 EA */}
-          <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>MT5</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>MetaTrader 5</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Vantage, Admirals, XM, FTMO…</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
-              {([
-                ['1', 'Clique sur "Télécharger mon EA" ci-dessous.'],
-                ['2', 'Dans MT5 : "Fichier" → "Ouvrir le dossier des données" → ouvre le dossier MQL5/Experts et colle CaldraMT5.mq5 dedans.'],
-                ['3', 'Ouvre MetaEditor (F4), ouvre CaldraMT5.mq5 et appuie sur F7 pour le compiler.'],
-                ['4', 'MT5 → "Outils" → "Options" → onglet "Expert Advisors" : coche "Autoriser les WebRequest" et ajoute l\'URL ci-dessous, puis OK.'],
-                ['5', 'Dans le Navigateur (Ctrl+N), glisse CaldraMT5 sur un graphique et vérifie que le bouton "Algo Trading" en haut est vert.'],
-              ] as [string, string][]).map(([n, t]) => (
-                <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                  <div style={{ fontSize: 11, color: C.td, lineHeight: 1.5 }}>{t}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* URL WebRequest à autoriser (étape 3) — la seule valeur à copier */}
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, marginBottom: 5 }}>URL à autoriser (étape 4)</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 7, padding: '8px 11px' }}>
-                <code style={{ fontSize: 11.5, color: C.tx, fontFamily: MONO }}>https://getcaldra.com</code>
-                <button
-                  onClick={() => navigator.clipboard?.writeText('https://getcaldra.com')}
-                  style={{ fontSize: 10, fontFamily: SANS, background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0 }}
-                >
-                  Copier
-                </button>
-              </div>
-            </div>
-
-            <a
-              href="/api/mt5-ea"
-              download
-              style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
-            >
-              Télécharger mon EA →
-            </a>
-            <div style={{ fontSize: 9.5, color: C.te, lineHeight: 1.5, marginTop: 7, textAlign: 'center' as const }}>
-              Chaque téléchargement régénère ta clé. Si tu retélécharges l'EA, réinstalle-le.
-            </div>
-          </IntCard>
-
-          {/* MT5 par identifiants (sans EA) */}
+          {/* MetaTrader 5 — connexion par identifiants */}
           <IntCard>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>MT5</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>MT5 par identifiants <span style={{ fontSize: 9, color: C.td, fontFamily: MONO, letterSpacing: .5 }}>SANS EA</span></div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Connexion directe — aucun EA à installer</div>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>MetaTrader 5 <span style={{ fontSize: 9, color: C.td, fontFamily: MONO, letterSpacing: .5 }}>SANS EA</span></div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Vantage, Admirals, XM, FTMO… — connexion directe</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: mt5Status === 'connected' ? C.g : mt5Status === 'auth_failed' || mt5Status === 'error' ? C.red : mt5Has ? C.o : C.b3, ...(mt5Has && mt5Status !== 'connected' && mt5Status !== 'auth_failed' && mt5Status !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
