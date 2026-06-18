@@ -22,3 +22,6 @@ next-env.d.ts
 .vercel
 worker/.env
 worker/start.bat
+worker/*.log
+worker/__pycache__/
+worker/node_modules/
