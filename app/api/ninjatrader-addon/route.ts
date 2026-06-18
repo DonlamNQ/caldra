@@ -26,16 +26,17 @@ const service = () => createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Add-on NinjaScript (NinjaTrader 8) avec la clé injectée.
-// Écoute les exécutions de TOUS les comptes connectés (donc le compte prop firm,
-// quelle que soit la firm : Apex, MyFundedFutures, Topstep, Tradeify…), reconstruit
-// chaque trade fermé (entrées/sorties appariées, scaling et inversion gérés) et le
-// POST vers /api/ingest. PnL calculé via le PointValue de l'instrument (NQ=20, ES=50).
+// Indicateur NinjaScript (NinjaTrader 8) avec la clé injectée.
+// On utilise un INDICATEUR (pas un AddOn) : c'est le pattern fiable et documenté
+// pour écouter Account.ExecutionUpdate (abonnement dans State.DataLoaded). L'add-on
+// pur ne s'initialise pas de façon fiable. L'utilisateur l'ajoute sur un graphique.
+// Il capte les exécutions de TOUS les comptes connectés (compte prop firm inclus,
+// quelle que soit la firm), reconstruit chaque trade fermé (scaling/inversion gérés)
+// et le POST vers /api/ingest. PnL via PointValue de l'instrument (NQ=20, ES=50).
 function buildAddon(apiKey: string): string {
   return String.raw`#region Using declarations
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Globalization;
 using System.Net.Http;
 using System.Text;
@@ -44,14 +45,15 @@ using NinjaTrader.Cbi;
 using NinjaTrader.NinjaScript;
 #endregion
 
-// CaldraReporter — Caldra Trade Reporter pour NinjaTrader 8
-// Installation : copier ce fichier dans
-//   Documents\NinjaTrader 8\bin\Custom\AddOns\CaldraReporter.cs
-// puis redémarrer NinjaTrader (ou F5 dans l'éditeur NinjaScript pour compiler).
-// La clé Caldra est déjà intégrée — aucune saisie nécessaire.
-namespace NinjaTrader.NinjaScript.AddOns
+// CaldraReporter — Caldra Trade Reporter pour NinjaTrader 8 (indicateur)
+// Installation :
+//   1. Copier ce fichier dans  Documents\NinjaTrader 8\bin\Custom\Indicators\
+//   2. Compiler (F5 dans l'éditeur NinjaScript) ou redémarrer NinjaTrader
+//   3. Ouvrir un graphique → clic droit → Indicators… → ajouter "CaldraReporter" → OK
+// La clé Caldra est déjà intégrée. Il capte les trades de TOUS les comptes connectés.
+namespace NinjaTrader.NinjaScript.Indicators
 {
-    public class CaldraReporter : NinjaTrader.NinjaScript.AddOnBase
+    public class CaldraReporter : Indicator
     {
         private const string CaldraApiKey = "${apiKey}";
         private const string IngestUrl    = "https://getcaldra.com/api/ingest";
@@ -60,58 +62,42 @@ namespace NinjaTrader.NinjaScript.AddOns
         // Position en cours par compte+instrument (Qty signé : + long, − short).
         private class Pos { public int Qty; public double AvgEntry; public DateTime EntryTime; public int RoundQty; public double Realized; }
         private readonly Dictionary<string, Pos> _positions = new Dictionary<string, Pos>();
-        private readonly HashSet<Account> _subscribed = new HashSet<Account>();
+        private readonly List<Account> _subscribed = new List<Account>();
 
         protected override void OnStateChange()
         {
             if (State == State.SetDefaults)
             {
-                Name        = "CaldraReporter";
-                Description = "Envoie chaque trade fermé vers Caldra (/api/ingest).";
+                Name                     = "CaldraReporter";
+                Description              = "Envoie chaque trade fermé vers Caldra (/api/ingest).";
+                Calculate                = Calculate.OnBarClose;
+                IsOverlay                = true;
+                DisplayInDataBox         = false;
+                PaintPriceMarkers        = false;
+                IsSuspendedWhileInactive = false;   // continue à tourner même hors focus
             }
-            else if (State == State.Active)
+            else if (State == State.DataLoaded)
             {
                 if (!Http.DefaultRequestHeaders.Contains("x-caldra-key"))
                     Http.DefaultRequestHeaders.Add("x-caldra-key", CaldraApiKey);
 
                 lock (Account.All)
-                    foreach (Account a in Account.All) Subscribe(a);
+                    foreach (Account a in Account.All)
+                    {
+                        a.ExecutionUpdate += OnExecutionUpdate;
+                        _subscribed.Add(a);
+                    }
 
-                // Comptes qui se connectent après le démarrage.
-                try
-                {
-                    INotifyCollectionChanged notify = Account.All as INotifyCollectionChanged;
-                    if (notify != null) notify.CollectionChanged += OnAccountsChanged;
-                }
-                catch { }
-
-                NinjaTrader.Code.Output.Process("[Caldra] Add-on démarré ✓", PrintTo.OutputTab1);
+                Print("[Caldra] Reporter actif ✓ — " + _subscribed.Count + " compte(s) surveillé(s)");
             }
             else if (State == State.Terminated)
             {
-                try
-                {
-                    INotifyCollectionChanged notify = Account.All as INotifyCollectionChanged;
-                    if (notify != null) notify.CollectionChanged -= OnAccountsChanged;
-                }
-                catch { }
                 foreach (Account a in _subscribed) a.ExecutionUpdate -= OnExecutionUpdate;
                 _subscribed.Clear();
             }
         }
 
-        private void OnAccountsChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            if (e.NewItems != null)
-                foreach (Account a in e.NewItems) Subscribe(a);
-        }
-
-        private void Subscribe(Account a)
-        {
-            if (a == null || _subscribed.Contains(a)) return;
-            a.ExecutionUpdate += OnExecutionUpdate;
-            _subscribed.Add(a);
-        }
+        protected override void OnBarUpdate() { }
 
         private void OnExecutionUpdate(object sender, ExecutionEventArgs e)
         {
@@ -121,12 +107,12 @@ namespace NinjaTrader.NinjaScript.AddOns
                 if (ex == null || ex.Instrument == null || ex.Quantity <= 0) return;
 
                 MasterInstrument mi = ex.Instrument.MasterInstrument;
-                string symbol     = mi.Name;
-                double pointValue = mi.PointValue;
-                int    sign       = ex.MarketPosition == MarketPosition.Long ? 1 : -1;
-                int    fillQty    = (int)ex.Quantity * sign;
-                double price      = ex.Price;
-                DateTime time     = ex.Time;
+                string   symbol     = mi.Name;
+                double   pointValue = mi.PointValue;
+                int      sign       = ex.MarketPosition == MarketPosition.Long ? 1 : -1;
+                int      fillQty    = (int)ex.Quantity * sign;
+                double   price      = ex.Price;
+                DateTime time       = ex.Time;
 
                 string key = (ex.Account != null ? ex.Account.Name : "?") + "|" + ex.Instrument.FullName;
                 Pos p;
@@ -155,8 +141,8 @@ namespace NinjaTrader.NinjaScript.AddOns
                 }
 
                 // Réduction / clôture / inversion.
-                int    closeQty = Math.Min(Math.Abs(prevQty), Math.Abs(fillQty));
-                int    dirSign  = prevQty > 0 ? 1 : -1;
+                int closeQty = Math.Min(Math.Abs(prevQty), Math.Abs(fillQty));
+                int dirSign  = prevQty > 0 ? 1 : -1;
                 p.Realized += (price - p.AvgEntry) * dirSign * closeQty * pointValue;
                 int after = prevQty + fillQty;
 
@@ -167,7 +153,7 @@ namespace NinjaTrader.NinjaScript.AddOns
                 }
                 else if ((after > 0) != (prevQty > 0))
                 {
-                    // Inversion : on clôture l'ancienne, on ouvre la nouvelle avec le reste.
+                    // Inversion : clôture l'ancienne, ouvre la nouvelle avec le reste.
                     EmitTrade(symbol, dirSign > 0 ? "long" : "short", p.RoundQty, p.AvgEntry, price, p.EntryTime, time, p.Realized);
                     p.Qty = after; p.AvgEntry = price; p.EntryTime = time;
                     p.RoundQty = Math.Abs(after); p.Realized = 0;
@@ -180,7 +166,7 @@ namespace NinjaTrader.NinjaScript.AddOns
             }
             catch (Exception err)
             {
-                NinjaTrader.Code.Output.Process("[Caldra] erreur exec: " + err.Message, PrintTo.OutputTab1);
+                Print("[Caldra] erreur exec: " + err.Message);
             }
         }
 
@@ -201,13 +187,11 @@ namespace NinjaTrader.NinjaScript.AddOns
                 {
                     StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
                     HttpResponseMessage res = await Http.PostAsync(IngestUrl, content);
-                    NinjaTrader.Code.Output.Process(
-                        string.Format("[Caldra] {0} {1} pnl={2} ({3})", symbol, direction, pnl, (int)res.StatusCode),
-                        PrintTo.OutputTab1);
+                    Print(string.Format("[Caldra] {0} {1} pnl={2} ({3})", symbol, direction, pnl, (int)res.StatusCode));
                 }
                 catch (Exception err)
                 {
-                    NinjaTrader.Code.Output.Process("[Caldra] erreur envoi: " + err.Message, PrintTo.OutputTab1);
+                    Print("[Caldra] erreur envoi: " + err.Message);
                 }
             });
         }
@@ -230,7 +214,7 @@ namespace NinjaTrader.NinjaScript.AddOns
 `
 }
 
-// GET — génère une clé API fraîche, l'intègre à l'add-on, renvoie le .cs prêt à l'emploi.
+// GET — génère une clé API fraîche, l'intègre à l'indicateur, renvoie le .cs prêt à l'emploi.
 export async function GET() {
   const { data: { user } } = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

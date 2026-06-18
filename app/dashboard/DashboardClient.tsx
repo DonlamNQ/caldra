@@ -1822,9 +1822,10 @@ namespace CaldraBot
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 14 }}>
               {([
                 ['1', 'Clique sur "Télécharger l\'add-on" ci-dessous.'],
-                ['2', 'Place CaldraReporter.cs dans le dossier : Documents\\NinjaTrader 8\\bin\\Custom\\AddOns\\'],
+                ['2', 'Place CaldraReporter.cs dans : Documents\\NinjaTrader 8\\bin\\Custom\\Indicators\\'],
                 ['3', 'Redémarre NinjaTrader (ou F5 dans l\'éditeur NinjaScript pour compiler).'],
-                ['4', 'Connecte ton compte prop firm dans NinjaTrader — tes trades fermés remontent tout seuls.'],
+                ['4', 'Ouvre un graphique → clic droit → "Indicators…" → ajoute "CaldraReporter" → OK.'],
+                ['5', 'Vérifie dans la fenêtre Output : "[Caldra] Reporter actif ✓". Tes trades fermés remontent ensuite tout seuls.'],
               ] as [string, string][]).map(([n, t]) => (
                 <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>

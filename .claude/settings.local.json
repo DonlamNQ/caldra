@@ -74,7 +74,8 @@
       "WebFetch(domain:api.tradovate.com)",
       "WebFetch(domain:deepwiki.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:developer.ninjatrader.com)"
+      "WebFetch(domain:developer.ninjatrader.com)",
+      "WebFetch(domain:ninjatrader.com)"
     ]
   },
   "hooks": {
