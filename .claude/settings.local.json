@@ -75,7 +75,8 @@
       "WebFetch(domain:deepwiki.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:developer.ninjatrader.com)",
-      "WebFetch(domain:ninjatrader.com)"
+      "WebFetch(domain:ninjatrader.com)",
+      "Bash(python -m py_compile worker/mt5-worker.py)"
     ]
   },
   "hooks": {

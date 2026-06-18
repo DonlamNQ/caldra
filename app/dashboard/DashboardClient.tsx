@@ -1477,6 +1477,52 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     setTvDisconnecting(false)
   }
 
+  // ── MT5 par identifiants (worker Python) ──────────────────────────────────
+  const [mt5Status, setMt5Status] = useState<string | null>(null)   // null | pending | connected | auth_failed | error
+  const [mt5Has, setMt5Has] = useState(false)                        // une connexion existe en base
+  const [mt5Login, setMt5Login] = useState('')
+  const [mt5Server, setMt5Server] = useState('')
+  const [mt5Password, setMt5Password] = useState('')
+  const [mt5Saving, setMt5Saving] = useState(false)
+  const [mt5Err, setMt5Err] = useState<string | null>(null)
+  useEffect(() => {
+    const supabase = createClient()
+    let alive = true
+    const poll = async () => {
+      const { data } = await supabase.from('mt5_accounts').select('status').eq('user_id', userId)
+      if (!alive || !data) return
+      setMt5Has(data.length > 0)
+      setMt5Status(data.length > 0 ? (data[0] as any).status ?? 'pending' : null)
+    }
+    poll()
+    const id = setInterval(poll, 5000)
+    return () => { alive = false; clearInterval(id) }
+  }, [userId])
+
+  async function connectMt5() {
+    setMt5Err(null)
+    if (!mt5Login || !mt5Server || !mt5Password) { setMt5Err('Remplis les 3 champs.'); return }
+    setMt5Saving(true)
+    try {
+      const r = await fetch('/api/mt5/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: mt5Login, server: mt5Server, password: mt5Password }),
+      })
+      const j = await r.json()
+      if (!r.ok) { setMt5Err(j.error || 'Échec de la connexion'); setMt5Saving(false); return }
+      setMt5Has(true); setMt5Status('pending'); setMt5Password('')
+    } catch { setMt5Err('Erreur réseau') }
+    setMt5Saving(false)
+  }
+
+  async function disconnectMt5() {
+    setMt5Saving(true)
+    await fetch('/api/mt5/disconnect', { method: 'POST' })
+    setMt5Has(false); setMt5Status(null); setMt5Login(''); setMt5Server('')
+    setMt5Saving(false)
+  }
+
   async function genKey() {
     setKeyLoading(true); setNewKey(null); setKeyConfirm(false)
     const d = await fetch('/api/api-key', { method: 'POST' }).then(r => r.json())
@@ -1807,6 +1853,64 @@ namespace CaldraBot
             <div style={{ fontSize: 9.5, color: C.te, lineHeight: 1.5, marginTop: 7, textAlign: 'center' as const }}>
               Chaque téléchargement régénère ta clé. Si tu retélécharges l'EA, réinstalle-le.
             </div>
+          </IntCard>
+
+          {/* MT5 par identifiants (sans EA) */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>MT5</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>MT5 par identifiants <span style={{ fontSize: 9, color: C.td, fontFamily: MONO, letterSpacing: .5 }}>SANS EA</span></div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Connexion directe — aucun EA à installer</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: mt5Status === 'connected' ? C.g : mt5Status === 'auth_failed' || mt5Status === 'error' ? C.red : mt5Has ? C.o : C.b3, ...(mt5Has && mt5Status !== 'connected' && mt5Status !== 'auth_failed' && mt5Status !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
+                <span style={{ fontSize: 10, color: mt5Status === 'connected' ? C.g : mt5Status === 'auth_failed' || mt5Status === 'error' ? C.red : mt5Has ? C.o : C.td, letterSpacing: .5 }}>
+                  {mt5Status === 'connected' ? 'CONNECTÉ' : mt5Status === 'auth_failed' ? 'IDENTIFIANTS REFUSÉS' : mt5Status === 'error' ? 'ERREUR' : mt5Has ? 'EN ATTENTE DU WORKER…' : 'NON CONNECTÉ'}
+                </span>
+              </div>
+            </div>
+
+            {mt5Has ? (
+              <>
+                <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 14 }}>
+                  {mt5Status === 'connected'
+                    ? 'Connecté. Tes trades MT5 remontent automatiquement.'
+                    : mt5Status === 'auth_failed'
+                    ? 'Identifiants refusés par le broker. Vérifie compte / mot de passe investisseur / serveur, puis reconnecte.'
+                    : 'En attente : le worker va se connecter à ton compte dans un instant.'}
+                </div>
+                <button
+                  onClick={disconnectMt5}
+                  disabled={mt5Saving}
+                  style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: mt5Saving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: mt5Saving ? .5 : 1 }}
+                >
+                  {mt5Saving ? '…' : 'Déconnecter →'}
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.6, marginBottom: 12 }}>
+                  Utilise ton <strong style={{ color: C.tm }}>mot de passe investisseur</strong> (lecture seule) — Caldra ne pourra jamais trader, seulement lire.
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 12 }}>
+                  <input value={mt5Login} onChange={e => setMt5Login(e.target.value)} placeholder="Numéro de compte (ex. 51234567)"
+                    style={{ width: '100%', padding: '9px 11px', borderRadius: 7, fontSize: 12, fontFamily: MONO, background: C.sf2, border: `.5px solid ${C.b}`, color: C.tx, boxSizing: 'border-box' as const }} />
+                  <input value={mt5Server} onChange={e => setMt5Server(e.target.value)} placeholder="Serveur (ex. ICMarkets-Live01)"
+                    style={{ width: '100%', padding: '9px 11px', borderRadius: 7, fontSize: 12, fontFamily: MONO, background: C.sf2, border: `.5px solid ${C.b}`, color: C.tx, boxSizing: 'border-box' as const }} />
+                  <input value={mt5Password} onChange={e => setMt5Password(e.target.value)} type="password" placeholder="Mot de passe investisseur"
+                    style={{ width: '100%', padding: '9px 11px', borderRadius: 7, fontSize: 12, fontFamily: MONO, background: C.sf2, border: `.5px solid ${C.b}`, color: C.tx, boxSizing: 'border-box' as const }} />
+                </div>
+                {mt5Err && <div style={{ fontSize: 11, color: C.red, marginBottom: 10 }}>{mt5Err}</div>}
+                <button
+                  onClick={connectMt5}
+                  disabled={mt5Saving}
+                  style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: mt5Saving ? 'not-allowed' : 'pointer', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', opacity: mt5Saving ? .5 : 1 }}
+                >
+                  {mt5Saving ? 'Connexion…' : 'Connecter →'}
+                </button>
+              </>
+            )}
           </IntCard>
 
           {/* NinjaTrader add-on (futures) */}

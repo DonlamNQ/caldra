@@ -207,3 +207,23 @@ alter table tradovate_accounts enable row level security;
 drop policy if exists "service role full access" on tradovate_accounts;
 create policy "service role full access" on tradovate_accounts for all using (true) with check (true);
 
+-- v2.7 : connexion MT5 par identifiants (sans EA). Le worker Python
+-- (worker/mt5-worker.py, sur VPS Windows) se connecte au terminal avec le mot de
+-- passe INVESTISSEUR (lecture seule), lit history_deals_get et POST vers /api/ingest.
+-- Le mot de passe est chiffré (AES-256-GCM, voir lib/mt5crypto.ts) — jamais en clair.
+create table if not exists mt5_accounts (
+  id            uuid        primary key default gen_random_uuid(),
+  user_id       uuid        not null references auth.users(id) on delete cascade,
+  mt5_login     text        not null,
+  mt5_server    text        not null,
+  password_enc  text        not null,   -- mot de passe investisseur chiffré (AES-256-GCM)
+  ingest_key    text        not null,
+  status        text,                   -- connected | auth_failed | error
+  last_sync_at  timestamptz,
+  created_at    timestamptz default now(),
+  unique (user_id)
+);
+alter table mt5_accounts enable row level security;
+drop policy if exists "service role full access" on mt5_accounts;
+create policy "service role full access" on mt5_accounts for all using (true) with check (true);
+
