@@ -68,11 +68,15 @@ export async function POST(req: NextRequest) {
   // stop_loss optionnel — normalisé : un prix > 0, sinon null
   const stopLoss = (typeof stop_loss === 'number' && isFinite(stop_loss) && stop_loss > 0) ? stop_loss : null
 
+  // Normalise le symbole : certains brokers ajoutent un suffixe (« EURUSD+ »,
+  // « EURUSD.r », « EURUSDm »). En query string le « + » devient un espace → trim.
+  if (typeof symbol === 'string') symbol = symbol.trim()
+
   // Validation stricte des champs
   if (!symbol || !direction || !size || !entry_price || !entry_time) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400, headers: CORS_HEADERS })
   }
-  if (!/^[A-Za-z0-9./_-]{1,20}$/.test(String(symbol))) {
+  if (!/^[A-Za-z0-9.+/_-]{1,20}$/.test(String(symbol))) {
     return NextResponse.json({ error: 'Invalid symbol' }, { status: 400, headers: CORS_HEADERS })
   }
   if (!['long', 'short'].includes(String(direction))) {

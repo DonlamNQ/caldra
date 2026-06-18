@@ -117,7 +117,7 @@ void SendOpen(string symbol, string direction, double volume,
    string url = StringFormat(
       "https://getcaldra.com/api/ingest?key=%s&symbol=%s&direction=%s&size=%.2f"
       "&entry_price=%.5f&entry_time=%s",
-      CaldraApiKey, symbol, direction, volume,
+      CaldraApiKey, UrlEncode(symbol), direction, volume,
       entryPrice, UrlEncode(entryTime)
    );
 
@@ -133,7 +133,7 @@ void SendClose(string symbol, string direction, double volume,
    string url = StringFormat(
       "https://getcaldra.com/api/ingest?key=%s&symbol=%s&direction=%s&size=%.2f"
       "&entry_price=%.5f&exit_price=%.5f&entry_time=%s&exit_time=%s&pnl=%.2f",
-      CaldraApiKey, symbol, direction, volume,
+      CaldraApiKey, UrlEncode(symbol), direction, volume,
       entryPrice, exitPrice,
       UrlEncode(entryTime), UrlEncode(exitTime), profit
    );
