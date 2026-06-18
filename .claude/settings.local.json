@@ -70,7 +70,10 @@
       "Bash(git revert *)",
       "WebFetch(domain:www.tradezella.com)",
       "WebFetch(domain:help.ctrader.com)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "WebFetch(domain:api.tradovate.com)",
+      "WebFetch(domain:deepwiki.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   },
   "hooks": {

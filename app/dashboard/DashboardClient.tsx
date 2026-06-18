@@ -1449,6 +1449,31 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     setCtDisconnecting(false)
   }
 
+  // ── Tradovate (futures) — statut live auto-contenu (même logique que cTrader) ──
+  const [tvLive, setTvLive] = useState<{ connected: boolean; pending: boolean }>({ connected: false, pending: false })
+  const [tvDisconnecting, setTvDisconnecting] = useState(false)
+  useEffect(() => {
+    if (tvLive.connected) return
+    const supabase = createClient()
+    let alive = true
+    const poll = async () => {
+      const { data } = await supabase.from('tradovate_accounts').select('tradovate_account_id').eq('user_id', userId)
+      if (!alive || !data) return
+      const resolved = data.some((r: any) => r.tradovate_account_id != null)
+      setTvLive({ connected: resolved, pending: data.length > 0 && !resolved })
+    }
+    poll()
+    const id = setInterval(poll, 5000)
+    return () => { alive = false; clearInterval(id) }
+  }, [tvLive.connected, userId])
+
+  async function disconnectTradovate() {
+    setTvDisconnecting(true)
+    await fetch('/api/tradovate/disconnect', { method: 'POST' })
+    setTvLive({ connected: false, pending: false })
+    setTvDisconnecting(false)
+  }
+
   async function genKey() {
     setKeyLoading(true); setNewKey(null); setKeyConfirm(false)
     const d = await fetch('/api/api-key', { method: 'POST' }).then(r => r.json())
@@ -1683,6 +1708,46 @@ namespace CaldraBot
             ) : (
               <a
                 href="/api/ctrader/connect"
+                style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
+              >
+                Se connecter →
+              </a>
+            )}
+          </IntCard>
+
+          {/* Tradovate (futures) */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>TV</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Tradovate <span style={{ fontSize: 9, color: C.td, fontFamily: MONO, letterSpacing: .5 }}>FUTURES</span></div>
+                <div style={{ fontSize: 10.5, color: C.td }}>NQ, ES, CL… · AMP, Optimus, Tradovate</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: tvLive.connected ? C.g : tvLive.pending ? C.o : C.b3, ...(tvLive.pending ? { animation: 'pulse 1.5s infinite' } : {}) }} />
+                <span style={{ fontSize: 10, color: tvLive.connected ? C.g : tvLive.pending ? C.o : C.td, letterSpacing: .5 }}>
+                  {tvLive.connected ? 'CONNECTÉ' : tvLive.pending ? 'CONNEXION EN COURS…' : 'NON CONNECTÉ'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
+              {tvLive.connected
+                ? 'Tes trades futures Tradovate remontent automatiquement via OAuth.'
+                : 'Connexion OAuth one-click — tes trades futures remontent automatiquement.'}
+            </div>
+
+            {tvLive.connected ? (
+              <button
+                onClick={disconnectTradovate}
+                disabled={tvDisconnecting}
+                style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: tvDisconnecting ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: tvDisconnecting ? .5 : 1 }}
+              >
+                {tvDisconnecting ? 'Déconnexion…' : 'Déconnecter →'}
+              </button>
+            ) : (
+              <a
+                href="/api/tradovate/connect"
                 style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
               >
                 Se connecter →
@@ -2527,15 +2592,23 @@ export default function DashboardClient({
   const [activeTab, setActiveTab] = useState<TabId>('session')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Auto-switch to integrations tab after cTrader OAuth callback
+  // Auto-switch to integrations tab after cTrader / Tradovate OAuth callback
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     const ct = p.get('ctrader')
+    const tv = p.get('tradovate')
     if (ct === 'connected' || ct === 'error') {
       setActiveTab('integrations')
       if (ct === 'error') {
         const reason = p.get('reason')
         alert(`Connexion cTrader échouée${reason ? ` : ${decodeURIComponent(reason)}` : ''}`)
+      }
+      window.history.replaceState({}, '', '/dashboard')
+    } else if (tv === 'connected' || tv === 'error') {
+      setActiveTab('integrations')
+      if (tv === 'error') {
+        const reason = p.get('reason')
+        alert(`Connexion Tradovate échouée${reason ? ` : ${decodeURIComponent(reason)}` : ''}`)
       }
       window.history.replaceState({}, '', '/dashboard')
     }

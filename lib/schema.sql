@@ -187,3 +187,23 @@ create policy "service role full access" on ctrader_accounts for all using (true
 -- v2.5 : capture du stop-loss → détecteur "Risk dépassé" (risque planifié par trade)
 alter table trades add column if not exists stop_loss numeric;
 
+-- v2.6 : intégration futures Tradovate (OAuth) — même modèle que ctrader_accounts.
+-- Le worker Node (worker/tradovate-worker.js) lit les fillPair via REST/WS et POST
+-- vers /api/ingest avec l'ingest_key dédié. tradovate_account_id résolu par le worker.
+create table if not exists tradovate_accounts (
+  id                    uuid        primary key default gen_random_uuid(),
+  user_id               uuid        not null references auth.users(id) on delete cascade,
+  environment           text        not null default 'live',   -- live | demo
+  tradovate_account_id  bigint,                                 -- résolu par le worker
+  tradovate_user_id     bigint,
+  access_token          text        not null,
+  token_expires_at      timestamptz,
+  ingest_key            text        not null,
+  status                text,                                   -- connected | conflict | error
+  created_at            timestamptz default now(),
+  unique (user_id, tradovate_account_id)
+);
+alter table tradovate_accounts enable row level security;
+drop policy if exists "service role full access" on tradovate_accounts;
+create policy "service role full access" on tradovate_accounts for all using (true) with check (true);
+
