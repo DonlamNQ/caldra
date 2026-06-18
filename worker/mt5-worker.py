@@ -51,6 +51,10 @@ KEY = hashlib.sha256(MT5_ENC_KEY.encode()).digest()  # même dérivation que lib
 
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+# Dédup par ticket de deal (insensible au fuseau horaire, contrairement au temps).
+# user_id -> set des tickets de sortie déjà traités cette session.
+SEEN = {}
+
 
 def decrypt(enc_b64: str) -> str:
     """Déchiffre le mot de passe (format iv(12)||ciphertext||tag(16), AES-256-GCM)."""
@@ -107,34 +111,31 @@ def process_account(row: dict):
 
     now = datetime.now(timezone.utc)
 
-    # Première connexion : on pose un repère et on N'IMPORTE PAS l'historique
-    # (sinon on génèrerait des alertes sur d'anciens trades).
-    if not row.get("last_sync_at"):
-        set_status(user_id, "connected", synced=True)
-        print(f"[mt5] compte {login} connecté — repère posé (pas d'import d'historique)")
-        return
-
-    last_dt = datetime.fromisoformat(str(row["last_sync_at"]).replace("Z", "+00:00"))
-    watermark = last_dt.timestamp()
-
-    # Fenêtre large pour pouvoir apparier les deals d'entrée, mais on n'ÉMET que
-    # les sorties postérieures au repère.
-    deals = mt5.history_deals_get(now - timedelta(days=3), now + timedelta(hours=1))
+    # Fenêtre large pour apparier les entrées (l'heure MT5 est en heure-broker, on
+    # ne s'y fie donc PAS — la dédup se fait par ticket, insensible au fuseau).
+    deals = mt5.history_deals_get(now - timedelta(days=3), now + timedelta(days=1))
     if deals is None:
         set_status(user_id, "connected", synced=True)
         return
 
     # Index des deals d'entrée par position_id (entry == DEAL_ENTRY_IN == 0).
     entries = {d.position_id: d for d in deals if d.entry == 0}
+    # Deals de SORTIE (OUT=1, INOUT=2, OUT_BY=3) qui forment un trade fermé.
+    out_deals = [d for d in deals if d.entry != 0 and d.symbol]
 
-    for d in deals:
-        # On ne traite que les sorties (OUT=1, INOUT=2, OUT_BY=3) postérieures au repère.
-        if d.entry == 0:
+    # Premier passage de la session pour ce compte : on prend tous les deals
+    # existants comme REPÈRE (déjà vus) → on n'importe pas l'historique.
+    if user_id not in SEEN:
+        SEEN[user_id] = set(d.ticket for d in out_deals)
+        set_status(user_id, "connected", synced=True)
+        print(f"[mt5] compte {login} connecté — {len(SEEN[user_id])} deals existants ignorés (repère)")
+        return
+
+    seen = SEEN[user_id]
+    for d in out_deals:
+        if d.ticket in seen:
             continue
-        if d.time <= watermark:
-            continue
-        if not d.symbol:
-            continue
+        seen.add(d.ticket)
 
         ein = entries.get(d.position_id)
         # direction depuis le deal d'entrée (BUY=0 → long, SELL=1 → short) ;
