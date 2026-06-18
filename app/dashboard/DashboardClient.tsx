@@ -1424,7 +1424,10 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     setCtLive({ connected: ctraderConn, pending: !!ctraderPending, conflict: !!ctraderConflict })
   }, [ctraderConn, ctraderPending, ctraderConflict])
   useEffect(() => {
-    if (ctLive.connected || ctLive.conflict) return // état stable, inutile de poller
+    // On arrête de poller UNIQUEMENT une fois connecté. En conflit OU en attente,
+    // on continue : si le conflit se libère côté worker (l'autre compte se
+    // déconnecte), le dashboard bascule en "connecté" en live, sans refresh.
+    if (ctLive.connected) return
     const supabase = createClient()
     let alive = true
     const poll = async () => {
@@ -1439,7 +1442,7 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     poll()
     const id = setInterval(poll, 5000)
     return () => { alive = false; clearInterval(id) }
-  }, [ctLive.connected, ctLive.conflict, setCtraderConn])
+  }, [ctLive.connected, setCtraderConn])
 
   async function disconnectCtrader() {
     setCtDisconnecting(true)
