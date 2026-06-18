@@ -74,7 +74,6 @@ export default function ConnectMt5() {
           <div style={{ marginBottom: 18 }}>
             <label style={label}>Mot de passe</label>
             <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" style={input} />
-            <div style={{ fontSize: 11, color: C.t3, marginTop: 6, lineHeight: 1.5 }}>Ton mot de passe MT5. Caldra ne fait que lire tes trades, il ne peut pas trader pour toi.</div>
           </div>
 
           {err && <div style={{ fontSize: 12.5, color: C.red, marginBottom: 14, lineHeight: 1.5 }}>{err}</div>}
