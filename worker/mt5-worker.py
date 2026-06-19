@@ -46,7 +46,7 @@ MT5_ENC_KEY               = os.environ["MT5_ENC_KEY"]
 CALDRA_INGEST_URL         = os.environ.get("CALDRA_INGEST_URL", "https://caldra-sable.vercel.app/api/ingest")
 MT5_TERMINAL_PATH         = os.environ.get("MT5_TERMINAL_PATH")  # optionnel
 
-POLL_SECONDS = 20
+POLL_SECONDS = int(os.environ.get("MT5_POLL_SECONDS", "5"))  # poll rapide → réaction ~live
 KEY = hashlib.sha256(MT5_ENC_KEY.encode()).digest()  # même dérivation que lib/mt5crypto.ts
 
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
