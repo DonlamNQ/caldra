@@ -154,9 +154,14 @@ def process_account(row: dict):
     # Deals de SORTIE (OUT=1, INOUT=2, OUT_BY=3) qui forment un trade fermé.
     out_deals = [d for d in deals if d.entry != 0 and d.symbol]
 
-    # Premier passage de la session pour ce compte : on prend tous les deals
-    # existants comme REPÈRE (déjà vus) → on n'importe pas l'historique.
-    if user_id not in SEEN:
+    # Premier passage : on pose un REPÈRE (tous les deals existants = déjà vus) pour
+    # NE PAS réimporter l'historique. Deux cas déclenchent le repère :
+    #   1. user_id absent de SEEN → le worker vient de démarrer.
+    #   2. last_sync_at NULL → le compte vient d'être (re)connecté via Caldra (la route
+    #      /connect remet last_sync_at à NULL). Indispensable au CHANGEMENT DE COMPTE :
+    #      sans ça, le repère en mémoire = tickets de l'ancien compte → tous les trades
+    #      du nouveau compte passent pour "nouveaux" → bombardement d'alertes.
+    if user_id not in SEEN or row.get("last_sync_at") is None:
         SEEN[user_id] = set(d.ticket for d in out_deals)
         set_status(user_id, "connected", synced=True)
         print(f"[mt5] compte {login} connecté — {len(SEEN[user_id])} deals existants ignorés (repère)")
