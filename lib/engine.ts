@@ -29,9 +29,11 @@ export type Alert = {
   detail: Record<string, unknown>
 }
 
-// Notif = le HOOK humain (communicatif, zéro chiffre). Les chiffres vivent dans le
-// dashboard (feed → détail technique). Titre = emoji + nom court ; corps = nudge.
+// Notif = le HOOK humain : communicatif ET concret (on garde le contexte qualitatif —
+// symbole, sens, news…), mais SANS les chiffres bruts (ratios, %, secondes, €) qui,
+// eux, vivent dans le dashboard (feed → détail technique).
 function buildPushContent(a: Alert): { title: string; body: string } {
+  const d = a.detail as any
   switch (a.type) {
     case 'revenge_sizing':
       return { title: '⚠️ Revenge sizing', body: 'Tu grossis ta taille après une perte. Respire avant le prochain.' }
@@ -41,7 +43,7 @@ function buildPushContent(a: Alert): { title: string; body: string } {
       return { title: '📉 Pertes en série', body: 'Plusieurs pertes d\'affilée. Fais une pause avant de continuer.' }
     case 'drawdown_alert':
       return a.level === 3
-        ? { title: '🔴 Drawdown max atteint', body: 'Tu as atteint ta limite du jour. Coupe — tu as fait ta part.' }
+        ? { title: '🔴 Drawdown max atteint', body: 'Tu as atteint ta limite de perte du jour. Coupe — tu as fait ta part.' }
         : { title: '⚠️ Drawdown', body: 'Tu approches ta limite de perte du jour. Ralentis.' }
     case 'outside_session':
       return { title: '🕐 Hors session', body: 'Tu trades hors de ta fenêtre. Suis ton plan, pas l\'impulsion.' }
@@ -54,15 +56,15 @@ function buildPushContent(a: Alert): { title: string; body: string } {
     case 'risk_exceeded':
       return { title: '⚖️ Risk dépassé', body: 'Position trop grosse pour ton risque. Réduis la taille.' }
     case 'news_trading':
-      return { title: '📰 Trade pendant news', body: 'Tu trades en pleine annonce — là, c\'est le hasard qui décide.' }
+      return { title: '📰 Trade pendant news', body: `Tu trades pendant ${d.title} (${d.currency}). Là, c'est le hasard qui décide.` }
     case 'averaging_down':
-      return { title: '🔻 Acharnement directionnel', body: 'Tu réattaques une idée qui vient d\'échouer. Stop.' }
+      return { title: '🔻 Acharnement directionnel', body: `Tu réattaques ${d.symbol} ${d.direction} juste après une perte. Stop.` }
     case 'euphoria_sizing':
-      return { title: '🚀 Sizing d\'euphorie', body: 'Tu grossis après un gain. La confiance n\'est pas une stratégie.' }
+      return { title: '🚀 Sizing d\'euphorie', body: 'Tu grossis ta taille après un gain. La confiance n\'est pas une stratégie.' }
     case 'overleverage':
       return { title: '⚙️ Sur-exposition', body: 'Levier trop élevé sur ce trade. Un petit mouvement suffit à faire mal.' }
     case 'no_stop':
-      return { title: '🚨 Aucun stop-loss', body: 'Trade sans stop = risque non borné. Protège-toi.' }
+      return { title: '🚨 Aucun stop-loss', body: `${d.symbol} fermé sans stop. Risque non borné — protège-toi.` }
     case 'accelerating_frequency':
       return { title: '⏱️ Cadence qui s\'emballe', body: 'Tes entrées s\'accélèrent en perdant. C\'est le tilt — ralentis.' }
     case 'drawdown_override':
@@ -72,7 +74,7 @@ function buildPushContent(a: Alert): { title: string; body: string } {
     case 'end_of_day_desperation':
       return { title: '🌙 Fin de session', body: 'Trade de dernière minute en perte. Méfie-toi du rattrapage.' }
     case 'unfamiliar_symbol':
-      return { title: '🧭 Actif inhabituel', body: 'Tu sors de tes instruments habituels — sûr de ton setup ?' }
+      return { title: '🧭 Actif inhabituel', body: `${d.symbol} n'est pas dans tes instruments habituels — sûr de ton setup ?` }
     default:
       return { title: a.message, body: '' }
   }
