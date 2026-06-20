@@ -6,7 +6,7 @@ import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
 import type { DaySession } from './page'
 import { alertLabel } from '@/lib/alertLabels'
-import { alertConsequence } from '@/lib/alertConsequences'
+import { alertTechnical } from '@/lib/alertTechnical'
 import { noteOfTheDay } from '@/lib/coachNotes'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
@@ -358,8 +358,8 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     )
   }
 
-  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] =
-    [{ t: '—', v: 0, pnl: null, sym: null, dir: null }]
+  // Pas de point de départ synthétique à €0 : la courbe démarre au 1er trade.
+  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] = []
   let cum = 0
   for (const t of sorted) {
     cum += t.pnl ?? 0
@@ -559,6 +559,14 @@ function Sidebar({ score, alerts, stats, rules }: {
         <BehavioralRadar sizing={mSizing} risk={mRisk} reentry={mReentry} drawdown={mDrawdown} discipline={mDiscipline} />
       </div>
 
+      {/* Fenêtre de session */}
+      {rules && (
+        <div style={{ padding: '8px 20px 8px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 12, color: C.td }}>Fenêtre</span>
+          <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
+        </div>
+      )}
+
       {/* Message du jour (mindset) */}
       <div style={{ padding: '4px 20px 12px', flexShrink: 0 }}>
         <div style={{ padding: '11px 13px', borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}` }}>
@@ -566,14 +574,6 @@ function Sidebar({ score, alerts, stats, rules }: {
           <div style={{ fontSize: 12, color: C.tm, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.5 }}>{noteOfTheDay()}</div>
         </div>
       </div>
-
-      {/* Fenêtre de session */}
-      {rules && (
-        <div style={{ padding: '14px 20px 16px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: C.td }}>Fenêtre</span>
-          <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
-        </div>
-      )}
 
       {/* Séparateur fin (pas pleine largeur) avant les Alertes */}
       <div style={{ height: '.5px', background: C.b, width: '72%', margin: '2px auto 0', flexShrink: 0 }} />
@@ -594,19 +594,20 @@ function Sidebar({ score, alerts, stats, rules }: {
           // ligne : l'existante remonte en haut (heure mise à jour) avec un badge
           // ×N indiquant le nombre de répétitions.
           const grouped = (() => {
-            const map = new Map<string, { type: string; level: number; message: string; created_at: any; count: number }>()
+            const map = new Map<string, { type: string; level: number; message: string; created_at: any; count: number; detail: any }>()
             for (const a of alerts) {
               const type = a.type ?? ''
               const at = (a as any).created_at ?? null
               const existing = map.get(type)
               if (!existing) {
-                map.set(type, { type, level: a.level ?? 1, message: a.message, created_at: at, count: 1 })
+                map.set(type, { type, level: a.level ?? 1, message: a.message, created_at: at, count: 1, detail: (a as any).detail ?? null })
               } else {
                 existing.count += 1
                 existing.level = Math.max(existing.level, a.level ?? 1)
                 if (at && (!existing.created_at || new Date(at).getTime() > new Date(existing.created_at).getTime())) {
                   existing.created_at = at
                   existing.message = a.message
+                  existing.detail = (a as any).detail ?? null
                 }
               }
             }
@@ -634,9 +635,9 @@ function Sidebar({ score, alerts, stats, rules }: {
                       {a.created_at && <span style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, flexShrink: 0 }}>{fmtTime(a.created_at)}</span>}
                     </div>
                     <div style={{ fontSize: 12.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
-                    {alertConsequence(a.type) && (
-                      <div style={{ fontSize: 11, color: C.td, fontWeight: 300, lineHeight: 1.4, marginTop: 5, paddingTop: 5, borderTop: `.5px solid ${aCol}22`, fontStyle: 'italic' }}>
-                        {alertConsequence(a.type)}
+                    {alertTechnical(a.type, a.detail) && (
+                      <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO, lineHeight: 1.4, marginTop: 5, paddingTop: 5, borderTop: `.5px solid ${aCol}22` }}>
+                        {alertTechnical(a.type, a.detail)}
                       </div>
                     )}
                   </div>
@@ -691,7 +692,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             <div key={k}>
               <div style={{ fontSize: 8.5, color: C.te, fontFamily: MONO, letterSpacing: .8, marginBottom: 2 }}>{k}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                <span style={{ fontSize: 18, fontFamily: MONO, color: warn ? C.o : C.td }}>{v}</span>
+                <span style={{ fontSize: 18, fontFamily: MONO, color: C.td }}>{v}</span>
                 {sub && <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>{sub}</span>}
               </div>
             </div>
