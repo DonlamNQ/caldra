@@ -47,13 +47,27 @@ python mt5-worker.py
 ```
 Tu dois voir `[mt5] terminal initialisé — worker démarré`.
 
-## 7. Démarrage automatique (pour que ça survive aux reboots)
-Option simple — Planificateur de tâches :
-- Ouvre "Planificateur de tâches" → Créer une tâche.
-- Déclencheur : "À l'ouverture de session".
-- Action : Démarrer un programme → le `python.exe` + argument `mt5-worker.py`,
-  "Commencer dans" = le dossier du worker.
-- Cocher "Exécuter même si l'utilisateur n'est pas connecté" si besoin.
+## 7. Démarrage automatique (survit aux reboots + aux crashes)
+Deux fichiers sont fournis à côté du worker :
+- `run-mt5.bat` — relance le worker en boucle s'il s'arrête (**anti-crash**) et
+  écrit dans `mt5.log` / `mt5.err.log`.
+- `install-autostart.ps1` — enregistre une tâche planifiée qui lance ce `.bat`
+  **à chaque ouverture de session** (**anti-reboot**).
+
+Installation (une seule fois, PowerShell **admin**, dans le dossier du worker) :
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install-autostart.ps1
+Start-ScheduledTask -TaskName "Caldra MT5 Worker"   # démarre tout de suite
+```
+
+⚠️ **Pour survivre à un reboot complet sans intervention**, active l'auto-logon
+Windows — sinon le VPS reste bloqué sur l'écran de connexion et la session ne
+s'ouvre jamais (donc le worker ne démarre pas) :
+```
+netplwiz   →  décoche "Les utilisateurs doivent entrer un mot de passe"  →  saisis le mot de passe
+```
+Le terminal MT5 étant une appli graphique, le worker doit tourner dans une vraie
+session de bureau : c'est pour ça qu'on n'utilise PAS le compte SYSTEM.
 
 ## Validation
 Connecte un compte démo via Caldra (page MetaTrader 5 → Se connecter), fais un
