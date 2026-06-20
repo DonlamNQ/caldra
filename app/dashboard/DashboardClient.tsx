@@ -7,6 +7,7 @@ import type { TradeRow } from '@/components/dashboard/TradeLog'
 import type { DaySession } from './page'
 import { alertLabel } from '@/lib/alertLabels'
 import { alertConsequence } from '@/lib/alertConsequences'
+import { noteOfTheDay } from '@/lib/coachNotes'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -552,6 +553,14 @@ function Sidebar({ score, alerts, stats, rules, streak }: {
       {/* Radar */}
       <div style={{ padding: '10px 20px 8px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <BehavioralRadar sizing={mSizing} risk={mRisk} reentry={mReentry} drawdown={mDrawdown} discipline={mDiscipline} />
+      </div>
+
+      {/* Message du jour (mindset) */}
+      <div style={{ padding: '4px 20px 12px', flexShrink: 0 }}>
+        <div style={{ padding: '11px 13px', borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}` }}>
+          <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 6 }}>Message du jour</div>
+          <div style={{ fontSize: 12, color: C.tm, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.5 }}>{noteOfTheDay()}</div>
+        </div>
       </div>
 
       {/* Règles du jour */}
