@@ -1150,6 +1150,11 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
   const jSorted = [...jt].sort((a, b) => new Date(a.exit_time ?? a.entry_time).getTime() - new Date(b.exit_time ?? b.entry_time).getTime())
   let cum = 0, peak = 0, maxDD = 0
   const equity = jSorted.map(t => { cum += t.pnl ?? 0; if (cum > peak) peak = cum; if (peak - cum > maxDD) maxDD = peak - cum; return cum })
+  // Couleurs vert/rouge (Analytics = revue rétrospective, où le code couleur aide ;
+  // l'écran Session live reste neutre — règle anti-biais).
+  const GREEN = '#00d17a', RED = '#e0503c'
+  const pnlCol = (v: number) => v > 0 ? GREEN : v < 0 ? RED : C.tm
+  const symMaxAbs = Math.max(1, ...bySymbol.map(([, d]) => Math.abs(d.pnl)))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
@@ -1163,20 +1168,42 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
 
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
 
-      {/* Bandeau : chiffres clés du journal */}
+      {/* Bandeau : chiffres clés du journal (couleurs vert/rouge + donut win rate) */}
       <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, flexShrink: 0 }}>
-        {[
-          { val: fmtEur(grossProfit - grossLoss), lbl: 'P&L net', hint: `${nJ} trades` },
-          { val: `${jWinRate}%`, lbl: 'Win rate', hint: `${jWins.length}G / ${jLosses.length}P` },
-          { val: fmtPF(profitFactor), lbl: 'Profit factor', hint: 'gains ÷ pertes' },
-          { val: fmtEur(expectancy), lbl: 'Gain attendu', hint: 'par trade' },
-          { val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: 'pire creux' },
-        ].map((it, i) => (
-          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden' }}>
+        {([
+          { type: 'val', val: fmtEur(grossProfit - grossLoss), lbl: 'P&L net', hint: `${nJ} trades`, col: pnlCol(grossProfit - grossLoss) },
+          { type: 'donut', lbl: 'Win rate', frac: jWinRate, sub: `${jWins.length}G / ${jLosses.length}P` },
+          { type: 'val', val: fmtPF(profitFactor), lbl: 'Profit factor', hint: 'gains ÷ pertes', col: profitFactor >= 1 ? GREEN : RED },
+          { type: 'val', val: fmtEur(expectancy), lbl: 'Gain attendu', hint: 'par trade', col: pnlCol(expectancy) },
+          { type: 'val', val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: 'pire creux', col: maxDD > 0 ? RED : C.tm },
+        ] as any[]).map((it, i) => (
+          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden', display: it.type === 'donut' ? 'flex' : 'block', alignItems: 'center', gap: 12 }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-            <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
-            <div style={{ fontSize: 25, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: C.pnl }}>{it.val}</div>
-            <div style={{ fontSize: 10, color: C.td, marginTop: 5 }}>{it.hint}</div>
+            {it.type === 'donut' ? (
+              <>
+                {(() => {
+                  const r = 17, circ = 2 * Math.PI * r
+                  return (
+                    <svg width="44" height="44" viewBox="0 0 44 44" style={{ flexShrink: 0 }}>
+                      <circle cx="22" cy="22" r={r} fill="none" stroke={RED} strokeWidth="5" opacity={0.3} />
+                      <circle cx="22" cy="22" r={r} fill="none" stroke={GREEN} strokeWidth="5" strokeLinecap="round"
+                        strokeDasharray={`${circ * (it.frac / 100)} ${circ}`} transform="rotate(-90 22 22)" />
+                    </svg>
+                  )
+                })()}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>{it.lbl}</div>
+                  <div style={{ fontSize: 21, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: C.tm }}>{it.frac}%</div>
+                  <div style={{ fontSize: 10, color: C.td, marginTop: 4 }}>{it.sub}</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
+                <div style={{ fontSize: 25, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: it.col }}>{it.val}</div>
+                <div style={{ fontSize: 10, color: C.td, marginTop: 5 }}>{it.hint}</div>
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -1201,14 +1228,17 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
           const fillPath = `M${xOf(0)},${y0} ${equity.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
           const ticks = [maxV, 0, minV].filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.1) === i)
           const fy = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`
+          const up = equity[n - 1] >= 0
+          const eqLine = up ? GREEN : RED
+          const eqFill = up ? 'rgba(0,209,122,.10)' : 'rgba(224,80,60,.10)'
           return (
             <div style={{ height: 150, marginTop: 6 }}>
               <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
                 <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke="rgba(255,255,255,.1)" strokeWidth={0.5} strokeDasharray="4 6" />
                 {ticks.map(v => <text key={v} x={PXL - 5} y={Math.max(PYT + 7, Math.min(H - PYB, yOf(v) + 3))} textAnchor="end" fill="rgba(234,232,245,.35)" fontSize="8.5" style={{ fontFamily: 'monospace' }}>{fy(v)}</text>)}
-                <path d={fillPath} fill="rgba(234,232,245,.05)" />
-                <polyline points={pts} fill="none" stroke={C.pnl} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-                <circle cx={xOf(n - 1)} cy={yOf(equity[n - 1])} r={3} fill={C.pnl} />
+                <path d={fillPath} fill={eqFill} />
+                <polyline points={pts} fill="none" stroke={eqLine} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" />
+                <circle cx={xOf(n - 1)} cy={yOf(equity[n - 1])} r={3} fill={eqLine} />
               </svg>
             </div>
           )
@@ -1227,21 +1257,26 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
           {bySymbol.length === 0 ? (
             <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun trade fermé.</div>
           ) : bySymbol.slice(0, 6).map(([sym, d]) => (
-            <div key={sym} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
-              <span style={{ fontSize: 12.5, color: C.td, fontFamily: MONO }}>{sym} <span style={{ color: C.te }}>· {d.n} tr.</span></span>
-              <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.pnl, fontWeight: 500 }}>{fmtEur(d.pnl)}</span>
+            <div key={sym} style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>{sym} <span style={{ color: C.te }}>· {d.n} tr.</span></span>
+                <span style={{ fontSize: 12, fontFamily: MONO, color: pnlCol(d.pnl), fontWeight: 600 }}>{fmtEur(d.pnl)}</span>
+              </div>
+              <div style={{ height: 5, background: 'rgba(255,255,255,.05)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${Math.abs(d.pnl) / symMaxAbs * 100}%`, background: d.pnl >= 0 ? GREEN : RED, borderRadius: 3 }} />
+              </div>
             </div>
           ))}
-          <div style={{ height: 12 }} />
-          {[
-            { k: 'Long', v: `${wr(longs)}% · ${longs.length} tr.` },
-            { k: 'Short', v: `${wr(shorts)}% · ${shorts.length} tr.` },
-            { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—' },
-            { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—' },
-          ].map(({ k, v }) => (
+          <div style={{ height: 6 }} />
+          {([
+            { k: 'Long', v: `${wr(longs)}% · ${longs.length} tr.`, col: C.tm },
+            { k: 'Short', v: `${wr(shorts)}% · ${shorts.length} tr.`, col: C.tm },
+            { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—', col: GREEN },
+            { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—', col: RED },
+          ] as any[]).map(({ k, v, col }) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
               <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
-              <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
+              <span style={{ fontSize: 12.5, fontFamily: MONO, color: col, fontWeight: 500 }}>{v}</span>
             </div>
           ))}
         </div>
