@@ -1258,7 +1258,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
       </div>
 
       {/* Row 2: Patterns + Stats détaillées */}
-      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flex: 1 }}>
+      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
 
         {/* Patterns */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
