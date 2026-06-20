@@ -29,32 +29,40 @@ export type Alert = {
   detail: Record<string, unknown>
 }
 
-// Notif = le HOOK humain : communicatif ET concret (on garde le contexte qualitatif —
-// symbole, sens, news…), mais SANS les chiffres bruts (ratios, %, secondes, €) qui,
-// eux, vivent dans le dashboard (feed → détail technique).
+// Durée lisible pour les notifs (s / min / h).
+function durFR(sec: number): string {
+  const s = Math.round(Number(sec) || 0)
+  if (s < 90) return `${s}s`
+  const m = Math.round(s / 60)
+  return m < 90 ? `${m} min` : `${(m / 60).toFixed(1).replace('.0', '')}h`
+}
+
+// Notif = le HOOK humain : ton communicatif + le CHIFFRE/contexte clé tissé
+// naturellement (pas un dump technique). Le détail complet reste au dashboard (feed).
 function buildPushContent(a: Alert): { title: string; body: string } {
   const d = a.detail as any
+  const hhmm = (v: unknown) => String(v ?? '').slice(0, 5)
   switch (a.type) {
     case 'revenge_sizing':
-      return { title: '⚠️ Revenge sizing', body: 'Tu grossis ta taille après une perte. Respire avant le prochain.' }
+      return { title: '⚠️ Revenge sizing', body: `Tu as ×${d.ratio} ta taille après une perte. Respire avant le prochain.` }
     case 'immediate_reentry':
-      return { title: '⚡ Re-entrée rapide', body: 'À peine sorti, déjà rentré. Laisse retomber la pression.' }
+      return { title: '⚡ Re-entrée rapide', body: `Repositionné ${durFR(d.seconds_since_exit)} après ta sortie. Laisse retomber.` }
     case 'consecutive_losses':
-      return { title: '📉 Pertes en série', body: 'Plusieurs pertes d\'affilée. Fais une pause avant de continuer.' }
+      return { title: '📉 Pertes en série', body: `${d.count} pertes d'affilée. Fais une pause avant de continuer.` }
     case 'drawdown_alert':
       return a.level === 3
-        ? { title: '🔴 Drawdown max atteint', body: 'Tu as atteint ta limite de perte du jour. Coupe — tu as fait ta part.' }
-        : { title: '⚠️ Drawdown', body: 'Tu approches ta limite de perte du jour. Ralentis.' }
+        ? { title: '🔴 Drawdown max atteint', body: `Limite de perte du jour atteinte (${d.drawdown_pct}%). Coupe — tu as fait ta part.` }
+        : { title: '⚠️ Drawdown', body: `Tu approches ta limite de perte (${d.drawdown_pct}% / ${d.max_allowed}%). Ralentis.` }
     case 'outside_session':
-      return { title: '🕐 Hors session', body: 'Tu trades hors de ta fenêtre. Suis ton plan, pas l\'impulsion.' }
+      return { title: '🕐 Hors session', body: `Tu trades à ${hhmm(d.entry_time)}, hors de ta fenêtre (${hhmm(d.session_start)}–${hhmm(d.session_end)}).` }
     case 'overtrading':
       return a.level === 2
-        ? { title: '🚫 Limite de trades', body: 'Tu as atteint ta limite du jour. Stop pour aujourd\'hui.' }
-        : { title: '📊 Overtrading', body: 'Tu approches ta limite de trades. Sois sélectif.' }
+        ? { title: '🚫 Limite de trades', body: `${d.current}/${d.max} trades — stop pour aujourd'hui.` }
+        : { title: '📊 Overtrading', body: `${d.current}/${d.max} trades. Sois sélectif sur la suite.` }
     case 'stop_not_respected':
-      return { title: '🛑 Stop non respecté', body: 'Tu as laissé filer au-delà de ton risque. Reprends la main.' }
+      return { title: '🛑 Stop non respecté', body: `Perte à ${d.loss_pct}% (ton risque max : ${d.max_risk_pct}%). Reprends la main.` }
     case 'risk_exceeded':
-      return { title: '⚖️ Risk dépassé', body: 'Position trop grosse pour ton risque. Réduis la taille.' }
+      return { title: '⚖️ Risk dépassé', body: `Risque ${d.risk_pct}% sur ce trade (max ${d.max_risk_pct}%). Réduis la taille.` }
     case 'news_trading':
       return { title: '📰 Trade pendant news', body: `Tu trades pendant ${d.title} (${d.currency}). Là, c'est le hasard qui décide.` }
     case 'averaging_down':
@@ -62,17 +70,17 @@ function buildPushContent(a: Alert): { title: string; body: string } {
     case 'euphoria_sizing':
       return { title: '🚀 Sizing d\'euphorie', body: 'Tu grossis ta taille après un gain. La confiance n\'est pas une stratégie.' }
     case 'overleverage':
-      return { title: '⚙️ Sur-exposition', body: 'Levier trop élevé sur ce trade. Un petit mouvement suffit à faire mal.' }
+      return { title: '⚙️ Sur-exposition', body: `Levier ×${d.leverage} sur ce trade (max ${d.max_leverage}×). Un petit mouvement suffit.` }
     case 'no_stop':
       return { title: '🚨 Aucun stop-loss', body: `${d.symbol} fermé sans stop. Risque non borné — protège-toi.` }
     case 'accelerating_frequency':
-      return { title: '⏱️ Cadence qui s\'emballe', body: 'Tes entrées s\'accélèrent en perdant. C\'est le tilt — ralentis.' }
+      return { title: '⏱️ Cadence qui s\'emballe', body: `Tes entrées passent à ${durFR(d.last_gap_sec)} (vs ${durFR(d.median_gap_sec)} d'habitude). C'est le tilt — ralentis.` }
     case 'drawdown_override':
-      return { title: '🔴 Limite dépassée', body: 'Tu continues après avoir dépassé ta limite. Arrête-toi maintenant.' }
+      return { title: '🔴 Limite dépassée', body: `Déjà à ${d.prior_drawdown_pct}% de perte (max ${d.max_allowed}%) et tu continues. Arrête-toi.` }
     case 'cut_winners_hold_losers':
-      return { title: '✂️ Tu coupes tes gains', body: 'Tu coupes tes gains et gardes tes pertes. Inverse la logique.' }
+      return { title: '✂️ Tu coupes tes gains', body: `Gagnants tenus ${durFR(d.avg_win_sec)} vs perdants ${durFR(d.avg_loss_sec)}. Inverse la logique.` }
     case 'end_of_day_desperation':
-      return { title: '🌙 Fin de session', body: 'Trade de dernière minute en perte. Méfie-toi du rattrapage.' }
+      return { title: '🌙 Fin de session', body: `${d.minutes_to_close} min avant la clôture, en perte. Méfie-toi du rattrapage.` }
     case 'unfamiliar_symbol':
       return { title: '🧭 Actif inhabituel', body: `${d.symbol} n'est pas dans tes instruments habituels — sûr de ton setup ?` }
     default:
