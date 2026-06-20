@@ -75,6 +75,22 @@ function computeScore(alerts: AlertRow[]): number {
   return Math.max(0, 100 - deductions)
 }
 
+// Streak de discipline (mécanique d'engagement type Duolingo) : nombre de jours de
+// trading CONSÉCUTIFS (du plus récent en remontant) où la session a été maîtrisée —
+// score ≥ 70 (« Contrôlé ») ET aucune alerte critique. Les jours sans trade sont
+// neutres (ne cassent ni ne prolongent la série) : ne pas trader n'est pas indiscipliné.
+function computeDisciplineStreak(sessions: DaySession[]): number {
+  const tradingDays = sessions
+    .filter(s => s.tradeCount > 0)
+    .sort((a, b) => b.date.localeCompare(a.date))
+  let streak = 0
+  for (const s of tradingDays) {
+    if (s.score >= 70 && s.criticalAlerts === 0) streak++
+    else break
+  }
+  return streak
+}
+
 function fmtPnl(v: number) { return `${v >= 0 ? '+' : ''}${v.toFixed(2)}` }
 function fmtEur(v: number) { return `${v >= 0 ? '+€' : '-€'}${Math.abs(v).toFixed(0)}` }
 function fmtTime(iso: string) {
@@ -473,8 +489,8 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ score, alerts, stats, rules }: {
-  score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
+function Sidebar({ score, alerts, stats, rules, streak }: {
+  score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null; streak: number
 }) {
   const C = useContext(ThemeCtx)
   const drawdownPct = rules
@@ -504,7 +520,15 @@ function Sidebar({ score, alerts, stats, rules }: {
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
-        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: MONO }}>Profil comportemental</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Profil comportemental</span>
+          {streak > 0 && (
+            <div title={`${streak} jour${streak > 1 ? 's' : ''} de sessions maîtrisées d'affilée`} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 9px', borderRadius: 99, background: 'rgba(255,140,0,.1)', border: '.5px solid rgba(255,140,0,.28)' }}>
+              <span style={{ fontSize: 11 }}>🔥</span>
+              <span style={{ fontSize: 11, fontFamily: MONO, fontWeight: 600, color: '#ff8c00' }}>{streak}</span>
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ScoreRingSvg score={score} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -2684,6 +2708,7 @@ export default function DashboardClient({
   }, [plan, tradingRules])
 
   const score = computeScore(alerts)
+  const disciplineStreak = computeDisciplineStreak(historicalSessions)
 
   const _yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
   const _dayBefore = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0]
@@ -3042,7 +3067,7 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
-          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} />}
+          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} streak={disciplineStreak} />}
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
