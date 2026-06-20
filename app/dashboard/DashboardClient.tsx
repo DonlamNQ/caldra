@@ -539,28 +539,7 @@ function Sidebar({ score, alerts, stats, rules }: {
         </div>
       </div>
 
-      {/* Règles du jour */}
-      {rules && (
-        <div style={{ padding: '20px 20px', flexShrink: 0 }}>
-          <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 11, textTransform: 'uppercase' as const, fontFamily: MONO }}>Règles du jour</span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
-            <span style={{ fontSize: 12, color: C.td }}>Max trades</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ fontSize: 13, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{stats.total_trades}</span>
-              <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>/ {rules.max_trades_per_session}</span>
-              <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${tradesPct}%`, background: scoreColor(100 - tradesPct, C), borderRadius: 2, transition: 'width .4s' }} />
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-            <span style={{ fontSize: 12, color: C.td }}>Fenêtre</span>
-            <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Séparateur fin (pas pleine largeur) entre Règles du jour et Alertes */}
+      {/* Séparateur fin (pas pleine largeur) avant les Alertes */}
       <div style={{ height: '.5px', background: C.b, width: '72%', margin: '2px auto 0', flexShrink: 0 }} />
 
       {/* Alertes — heatmap + feed (flex:1 pour remplir l'espace) */}
