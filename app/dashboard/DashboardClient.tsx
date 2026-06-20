@@ -1164,7 +1164,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
 
       {/* Row 1: 3 KPI cards */}
-      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, flexShrink: 0 }}>
 
         {/* P&L cumulé */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -1258,7 +1258,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
       </div>
 
       {/* Row 2: Patterns + Stats détaillées */}
-      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
 
         {/* Patterns */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -1317,7 +1317,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
 
       {/* Row 3: Journal de trading (métriques trade-level) */}
       {nJ > 0 && (
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', flexShrink: 0 }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
             <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Journal de trading</div>
