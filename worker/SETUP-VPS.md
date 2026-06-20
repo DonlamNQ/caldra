@@ -47,27 +47,33 @@ python mt5-worker.py
 ```
 Tu dois voir `[mt5] terminal initialisé — worker démarré`.
 
-## 7. Démarrage automatique (survit aux reboots + aux crashes)
-Deux fichiers sont fournis à côté du worker :
-- `run-mt5.bat` — relance le worker en boucle s'il s'arrête (**anti-crash**) et
-  écrit dans `mt5.log` / `mt5.err.log`.
-- `install-autostart.ps1` — enregistre une tâche planifiée qui lance ce `.bat`
-  **à chaque ouverture de session** (**anti-reboot**).
+## 7. Démarrage automatique (survit aux reboots)
+La tâche planifiée **`CaldraMT5Worker`** (déclencheur *à l'ouverture de session*,
+`RestartCount 999`) existe déjà sur le VPS : elle lance `C:\caldra-worker\run.bat`
+qui boucle sur le worker (anti-crash) et log dans `mt5.log`. **Ne pas en créer
+une seconde** — ça ferait tourner deux workers sur le même terminal MT5 (un seul
+login à la fois) → conflit et faux `auth_failed`.
 
-Installation (une seule fois, PowerShell **admin**, dans le dossier du worker) :
+Ce qui manque pour survivre à un **reboot complet sans intervention** : qu'une
+session s'ouvre seule au boot, et que le terminal MT5 (appli GUI) se rouvre. Le
+script `harden-reboot.ps1` fait les deux (auto-logon + MT5 dans le dossier
+Démarrage). Une seule fois, PowerShell **admin**, dans le dossier du worker :
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install-autostart.ps1
-Start-ScheduledTask -TaskName "Caldra MT5 Worker"   # démarre tout de suite
-```
-
-⚠️ **Pour survivre à un reboot complet sans intervention**, active l'auto-logon
-Windows — sinon le VPS reste bloqué sur l'écran de connexion et la session ne
-s'ouvre jamais (donc le worker ne démarre pas) :
-```
-netplwiz   →  décoche "Les utilisateurs doivent entrer un mot de passe"  →  saisis le mot de passe
+powershell -ExecutionPolicy Bypass -File .\harden-reboot.ps1
 ```
 Le terminal MT5 étant une appli graphique, le worker doit tourner dans une vraie
 session de bureau : c'est pour ça qu'on n'utilise PAS le compte SYSTEM.
+
+> Règle RDP : quitter avec **« Déconnecter »**, jamais **« Fermer la session »**
+> (ça tue MT5 + le worker).
+
+### Mettre à jour le worker (après un push de fix)
+```powershell
+Invoke-WebRequest -UseBasicParsing `
+  "https://raw.githubusercontent.com/DonlamNQ/caldra/main/worker/mt5-worker.py" `
+  -OutFile "C:\caldra-worker\mt5-worker.py"
+Restart-ScheduledTask -TaskName "CaldraMT5Worker"
+```
 
 ## Validation
 Connecte un compte démo via Caldra (page MetaTrader 5 → Se connecter), fais un
