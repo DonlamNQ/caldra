@@ -17,6 +17,10 @@ Variables d'environnement (fichier .env à côté, ou env système) :
    SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, MT5_ENC_KEY
    CALDRA_INGEST_URL  (défaut https://caldra-sable.vercel.app/api/ingest)
    MT5_TERMINAL_PATH  (optionnel — chemin vers terminal64.exe)
+   MT5_BROKER         (optionnel — préfixes de serveur gérés par CE terminal, séparés
+                       par des virgules, ex. "Vantage,VantageMarkets". Vide = tous les
+                       comptes. Sert au multi-broker : 1 terminal de marque par broker,
+                       chaque worker ne traite que les comptes de SON broker.)
 """
 
 import os
@@ -48,6 +52,9 @@ MT5_TERMINAL_PATH         = os.environ.get("MT5_TERMINAL_PATH")  # optionnel
 
 POLL_SECONDS = int(os.environ.get("MT5_POLL_SECONDS", "5"))  # poll rapide → réaction ~live
 KEY = hashlib.sha256(MT5_ENC_KEY.encode()).digest()  # même dérivation que lib/mt5crypto.ts
+
+# Brokers gérés par CE terminal (préfixes de serveur, minuscules). Vide = tous.
+BROKER_PREFIXES = [b.strip().lower() for b in os.environ.get("MT5_BROKER", "").split(",") if b.strip()]
 
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
@@ -117,6 +124,11 @@ def process_account(row: dict):
     server     = row["mt5_server"]
     ingest_key = row["ingest_key"]
 
+    # Multi-broker : si ce worker est dédié à un/des broker(s), ignorer les comptes
+    # des autres (un autre worker, sur le terminal de marque du broker, les traite).
+    if BROKER_PREFIXES and not any(server.lower().startswith(p) for p in BROKER_PREFIXES):
+        return
+
     try:
         password = decrypt(row["password_enc"])
     except Exception as e:
@@ -135,9 +147,22 @@ def process_account(row: dict):
                 print(f"[mt5] login échec (terminal injoignable) compte {login}: {code} {msg}")
                 set_status(user_id, "error")
                 return
+        # -10005 = IPC timeout : ce terminal ne connaît pas ce serveur (mauvais broker)
+        # ou il est occupé. Ce N'EST PAS un problème d'identifiants → surtout ne pas
+        # afficher « refusés » au client. Statut dédié = broker pas encore pris en charge.
+        elif code == -10005:
+            print(f"[mt5] broker non pris en charge par ce terminal — compte {login} ({server}): {code} {msg}")
+            set_status(user_id, "broker_unavailable")
+            return
+        # -6 = Authorization failed : vrais identifiants invalides.
+        elif code == -6:
+            print(f"[mt5] identifiants refusés compte {login} ({server}): {code} {msg}")
+            set_status(user_id, "auth_failed")
+            return
+        # Tout le reste = transitoire → on retentera au prochain tour (pas « refusés »).
         else:
             print(f"[mt5] login échec compte {login} ({server}): {code} {msg}")
-            set_status(user_id, "auth_failed")
+            set_status(user_id, "error")
             return
 
     now = datetime.now(timezone.utc)

@@ -1478,7 +1478,7 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
   }
 
   // ── MT5 par identifiants (worker Python) ──────────────────────────────────
-  const [mt5Status, setMt5Status] = useState<string | null>(null)   // null | pending | connected | auth_failed | error
+  const [mt5Status, setMt5Status] = useState<string | null>(null)   // null | pending | connected | auth_failed | error | broker_unavailable
   const [mt5Has, setMt5Has] = useState(false)                        // une connexion existe en base
   const [mt5Saving, setMt5Saving] = useState(false)
   useEffect(() => {
@@ -1701,9 +1701,9 @@ namespace CaldraBot
                 <div style={{ fontSize: 10.5, color: C.td }}>Vantage, IC Markets, XM, FTMO…</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: mt5Status === 'connected' ? C.g : mt5Status === 'auth_failed' || mt5Status === 'error' ? C.red : mt5Has ? C.o : C.b3, ...(mt5Has && mt5Status !== 'connected' && mt5Status !== 'auth_failed' && mt5Status !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: mt5Status === 'connected' ? C.g : mt5Status === 'auth_failed' || mt5Status === 'error' ? C.red : mt5Has ? C.o : C.b3, ...(mt5Has && mt5Status !== 'connected' && mt5Status !== 'auth_failed' && mt5Status !== 'error' && mt5Status !== 'broker_unavailable' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
                 <span style={{ fontSize: 10, color: mt5Status === 'connected' ? C.g : mt5Status === 'auth_failed' || mt5Status === 'error' ? C.red : mt5Has ? C.o : C.td, letterSpacing: .5 }}>
-                  {mt5Status === 'connected' ? 'CONNECTÉ' : mt5Status === 'auth_failed' ? 'IDENTIFIANTS REFUSÉS' : mt5Status === 'error' ? 'ERREUR' : mt5Has ? 'EN ATTENTE…' : 'NON CONNECTÉ'}
+                  {mt5Status === 'connected' ? 'CONNECTÉ' : mt5Status === 'auth_failed' ? 'IDENTIFIANTS REFUSÉS' : mt5Status === 'error' ? 'ERREUR' : mt5Status === 'broker_unavailable' ? 'BROKER BIENTÔT DISPONIBLE' : mt5Has ? 'EN ATTENTE…' : 'NON CONNECTÉ'}
                 </span>
               </div>
             </div>
@@ -1712,6 +1712,8 @@ namespace CaldraBot
               {mt5Has
                 ? (mt5Status === 'auth_failed'
                     ? 'Identifiants refusés par le broker. Reconnecte-toi avec les bons identifiants.'
+                    : mt5Status === 'broker_unavailable'
+                    ? 'Identifiants enregistrés. Ton broker n’est pas encore pris en charge — on l’active, tes trades remonteront automatiquement dès que c’est prêt.'
                     : 'Tes trades MT5 remontent automatiquement.')
                 : 'Connecte ton compte avec tes identifiants — tes trades remontent automatiquement, sans rien à installer.'}
             </div>

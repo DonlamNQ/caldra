@@ -72,9 +72,38 @@ session de bureau : c'est pour ça qu'on n'utilise PAS le compte SYSTEM.
 Invoke-WebRequest -UseBasicParsing `
   "https://raw.githubusercontent.com/DonlamNQ/caldra/main/worker/mt5-worker.py" `
   -OutFile "C:\caldra-worker\mt5-worker.py"
-Restart-ScheduledTask -TaskName "CaldraMT5Worker"
+Stop-ScheduledTask  -TaskName "CaldraMT5Worker"   # Restart-ScheduledTask n'existe pas
+Start-ScheduledTask -TaskName "CaldraMT5Worker"   #   sur ce Windows → Stop puis Start
 ```
 
 ## Validation
 Connecte un compte démo via Caldra (page MetaTrader 5 → Se connecter), fais un
 trade, vérifie qu'il remonte. Le worker log chaque envoi : `[ingest] … pnl=…`.
+
+## 8. Multi-broker (un terminal MT5 ne connaît que SON broker)
+**Contrainte clé** : un terminal MT5 ne peut logger que des comptes de son propre
+broker. Tenter `mt5.login(server="ICMarkets-Live01")` sur un terminal Vantage →
+`-10005 IPC timeout`. Le worker traduit désormais ce cas en statut
+`broker_unavailable` (« BROKER BIENTÔT DISPONIBLE » côté client) — **pas** en
+« identifiants refusés ».
+
+Pour prendre en charge un nouveau broker quand un client arrive :
+1. Installe le terminal **de marque du broker** (téléchargé sur le site du broker —
+   il connaît déjà tous les serveurs de ce broker, donc pas de login manuel).
+   Mets-le dans son propre dossier, ex. `C:\MT5-ICMarkets\terminal64.exe`.
+2. Copie le worker dans un dossier dédié, ex. `C:\caldra-icmarkets\`, avec un `.env`
+   identique au principal **plus** :
+   ```
+   MT5_TERMINAL_PATH=C:\MT5-ICMarkets\terminal64.exe
+   MT5_BROKER=ICMarkets        # préfixe(s) de serveur gérés par CE worker (CSV)
+   ```
+   `MT5_BROKER` fait que ce worker ne traite QUE les comptes dont le serveur commence
+   par `ICMarkets` (les autres sont laissés aux autres workers).
+3. Ajoute le terminal au dossier Démarrage et crée une tâche planifiée dédiée
+   (même modèle que `CaldraMT5Worker`, nom différent, son propre `run.bat`).
+
+> Le worker principal (sans `MT5_BROKER`) traite tout le reste et marque
+> `broker_unavailable` les comptes dont aucun terminal ne gère le broker.
+
+Brokers cœur de cible à installer au fur et à mesure : IC Markets, Exness,
+Pepperstone, XM + prop firms FTMO, FundedNext, The5ers, E8, FundingPips.
