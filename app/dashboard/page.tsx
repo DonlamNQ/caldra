@@ -121,6 +121,15 @@ export default async function DashboardPage() {
       }
     })
 
+  // Trades pour le Journal de trading (Analytics) — 30j + aujourd'hui, fermés seulement
+  const journalTrades = [...(histTrades ?? []), ...safeTrades]
+    .filter((t: any) => t.pnl != null && t.exit_price != null)
+    .map((t: any) => ({
+      symbol: t.symbol, direction: t.direction, size: t.size,
+      entry_price: t.entry_price ?? null, exit_price: t.exit_price ?? null,
+      pnl: t.pnl ?? null, entry_time: t.entry_time, exit_time: t.exit_time ?? null,
+    }))
+
   const meta = user.user_metadata ?? {}
 
   const ctraderRows = ctraderAccount ?? []
@@ -151,6 +160,7 @@ export default async function DashboardPage() {
       tradingRules={rules ?? null}
       apiKeyPrefix={apiKey?.key_prefix ?? null}
       historicalSessions={historicalSessions}
+      journalTrades={journalTrades}
       plan={profile?.plan ?? 'free'}
       userMeta={{ first_name: meta.first_name, last_name: meta.last_name, phone: meta.phone }}
       ctraderConnected={ctraderConnected}

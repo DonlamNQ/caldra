@@ -46,6 +46,17 @@ interface TradingRules {
 
 interface SessionStats { total_trades: number; total_pnl: number; wins: number; losses: number }
 
+export interface JournalTrade {
+  symbol: string
+  direction: string
+  size: number
+  entry_price: number | null
+  exit_price: number | null
+  pnl: number | null
+  entry_time: string
+  exit_time: string | null
+}
+
 interface DashboardClientProps {
   userId: string
   userEmail: string
@@ -57,6 +68,7 @@ interface DashboardClientProps {
   tradingRules: TradingRules | null
   apiKeyPrefix: string | null
   historicalSessions: DaySession[]
+  journalTrades: JournalTrade[]
   plan: string
   userMeta: { first_name?: string; last_name?: string; phone?: string }
   ctraderConnected: boolean
@@ -1064,7 +1076,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
 }
 
 // ── AnalyticsPanel ─────────────────────────────────────────────────────────────
-function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; todayAlerts: AlertRow[] }) {
+function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[] }) {
   const C = useContext(ThemeCtx)
   if (sessions.length === 0) {
     return (
@@ -1107,6 +1119,33 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
     const prev = acc[acc.length - 1]?.v ?? 0
     return [...acc, { date: s.date, v: prev + s.pnl }]
   }, [])
+
+  // ── Journal de trading (métriques trade-level, 30j + aujourd'hui) ──────────────
+  const jt = journalTrades.filter(t => t.pnl != null)
+  const nJ = jt.length
+  const jWins = jt.filter(t => (t.pnl ?? 0) > 0)
+  const jLosses = jt.filter(t => (t.pnl ?? 0) < 0)
+  const grossProfit = jWins.reduce((s, t) => s + (t.pnl ?? 0), 0)
+  const grossLoss = Math.abs(jLosses.reduce((s, t) => s + (t.pnl ?? 0), 0))
+  const jWinRate = nJ > 0 ? Math.round((jWins.length / nJ) * 100) : 0
+  const avgWin = jWins.length > 0 ? grossProfit / jWins.length : 0
+  const avgLoss = jLosses.length > 0 ? grossLoss / jLosses.length : 0
+  const payoff = avgLoss > 0 ? avgWin / avgLoss : 0
+  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0)
+  const expectancy = nJ > 0 ? (grossProfit - grossLoss) / nJ : 0  // €/trade attendu
+  const best = jt.reduce<JournalTrade | null>((m, t) => (m == null || (t.pnl ?? 0) > (m.pnl ?? 0)) ? t : m, null)
+  const worst = jt.reduce<JournalTrade | null>((m, t) => (m == null || (t.pnl ?? 0) < (m.pnl ?? 0)) ? t : m, null)
+  const longs = jt.filter(t => t.direction === 'long')
+  const shorts = jt.filter(t => t.direction === 'short')
+  const wr = (arr: JournalTrade[]) => arr.length > 0 ? Math.round(arr.filter(t => (t.pnl ?? 0) > 0).length / arr.length * 100) : 0
+  // Par symbole : PnL et nb de trades
+  const bySymbol = Object.entries(jt.reduce<Record<string, { pnl: number; n: number }>>((acc, t) => {
+    const k = (t.symbol || '—').toUpperCase()
+    acc[k] = acc[k] || { pnl: 0, n: 0 }
+    acc[k].pnl += (t.pnl ?? 0); acc[k].n += 1
+    return acc
+  }, {})).sort((a, b) => b[1].pnl - a[1].pnl)
+  const fmtPF = (v: number) => v === Infinity ? '∞' : v.toFixed(2)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
@@ -1271,6 +1310,58 @@ function AnalyticsPanel({ sessions, todayAlerts }: { sessions: DaySession[]; tod
           ))}
         </div>
       </div>
+
+      {/* Row 3: Journal de trading (métriques trade-level) */}
+      {nJ > 0 && (
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Journal de trading</div>
+            <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>{nJ} trades · 30j</div>
+          </div>
+
+          <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
+            {[
+              { val: fmtPF(profitFactor), lbl: 'Profit factor' },
+              { val: `${jWinRate}%`, lbl: 'Win rate' },
+              { val: payoff > 0 ? payoff.toFixed(2) : '—', lbl: 'Ratio gain/perte' },
+              { val: fmtEur(expectancy), lbl: 'Expectancy / trade' },
+              { val: fmtEur(avgWin), lbl: 'Gain moyen' },
+              { val: fmtEur(-avgLoss), lbl: 'Perte moyenne' },
+            ].map((it, i) => (
+              <div key={i} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 9, padding: 13 }}>
+                <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.5, color: C.pnl }}>{it.val}</div>
+                <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 3 }}>{it.lbl}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              {[
+                { k: 'Long', v: `${wr(longs)}% · ${longs.length} tr.` },
+                { k: 'Short', v: `${wr(shorts)}% · ${shorts.length} tr.` },
+                { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—' },
+                { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—' },
+              ].map(({ k, v }) => (
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
+                  <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
+                  <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>Par symbole</div>
+              {bySymbol.slice(0, 5).map(([sym, d]) => (
+                <div key={sym} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
+                  <span style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>{sym}</span>
+                  <span style={{ fontSize: 12, fontFamily: MONO, color: C.pnl }}>{fmtEur(d.pnl)} <span style={{ color: C.te }}>· {d.n}</span></span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   )
@@ -2558,7 +2649,7 @@ type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations
 
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
-  yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, plan, userMeta,
+  yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, journalTrades, plan, userMeta,
   ctraderConnected, ctraderConflict, ctraderPending, lastTradeAt,
 }: DashboardClientProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
@@ -3092,7 +3183,7 @@ export default function DashboardClient({
               <CalendrierPanel sessions={historicalSessions} />
             )}
             {activeTab === 'analytics' && (
-              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} />
+              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} />
             )}
             {activeTab === 'rapports' && <RapportsPanel />}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} />}
