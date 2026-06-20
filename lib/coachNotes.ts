@@ -1,6 +1,9 @@
-// Messages "mindset" de Caldra — la voix du coach, façon Duolingo : un message par
-// jour, stable sur la journée, qui tourne. Ton : discipline, process, gestion du
-// risque, patience. Jamais de prédiction de marché, jamais culpabilisant.
+// Messages "mindset" de Caldra — la voix du coach, façon Duolingo. Le pool affiché
+// dans la sidebar (« message du jour ») = ces citations + les conséquences
+// pédagogiques par alerte (lib/alertConsequences.ts). Ton : discipline, process,
+// gestion du risque, patience. Jamais de prédiction de marché, jamais culpabilisant.
+
+import { allConsequences } from './alertConsequences'
 
 export const COACH_NOTES: string[] = [
   "La discipline, c'est répéter le bon geste même quand tu n'en as pas envie.",
@@ -23,16 +26,29 @@ export const COACH_NOTES: string[] = [
   "Gagner lentement, c'est gagner longtemps.",
   "Ce que tu mesures, tu l'améliores : relis tes sessions.",
   "La peur et l'euphorie sont de mauvais conseillers de sizing.",
+  "Protéger son capital n'est pas timide, c'est professionnel.",
+  "Un plan ennuyeux exécuté parfaitement bat un plan génial exécuté n'importe comment.",
+  "Tu n'as pas besoin d'avoir raison souvent, juste de perdre petit et gagner grand.",
+  "Le marché récompense la patience, pas l'agitation.",
+  "Sauter un trade douteux, c'est déjà gagner — tu as protégé ton capital et ton mental.",
+  "La meilleure position est parfois aucune position.",
+  "Ton edge ne vaut rien sans la discipline pour l'appliquer chaque jour.",
+  "Accepter une petite perte aujourd'hui, c'est s'éviter une grosse demain.",
+  "Le pro vise la régularité ; l'amateur vise le coup d'éclat.",
+  "Tes règles te protègent surtout de toi-même.",
 ]
+
+// Pool complet du « message du jour » : citations + conséquences par alerte.
+const POOL = [...COACH_NOTES, ...allConsequences()]
 
 /** Message du jour, stable sur la journée et tournant (basé sur le quantième). */
 export function noteOfTheDay(d: Date = new Date()): string {
   const start = Date.UTC(d.getUTCFullYear(), 0, 0)
   const dayOfYear = Math.floor((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - start) / 86_400_000)
-  return COACH_NOTES[dayOfYear % COACH_NOTES.length]
+  return POOL[dayOfYear % POOL.length]
 }
 
-/** Un message au hasard (varie à chaque visite). */
+/** Un message au hasard dans tout le pool (varie à chaque visite). */
 export function randomNote(): string {
-  return COACH_NOTES[Math.floor(Math.random() * COACH_NOTES.length)]
+  return POOL[Math.floor(Math.random() * POOL.length)]
 }
