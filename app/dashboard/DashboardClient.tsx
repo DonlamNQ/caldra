@@ -76,6 +76,22 @@ function computeScore(alerts: AlertRow[]): number {
   return Math.max(0, 100 - deductions)
 }
 
+// Jours de trading CONSÉCUTIFS (du plus récent en remontant) avec session maîtrisée
+// (score ≥ 70 ET 0 alerte critique). Jours sans trade = neutres. Sert à déclencher
+// une notif de JALON ponctuelle (pas un badge permanent).
+function computeDisciplineStreak(sessions: DaySession[]): number {
+  const tradingDays = sessions
+    .filter(s => s.tradeCount > 0)
+    .sort((a, b) => b.date.localeCompare(a.date))
+  let streak = 0
+  for (const s of tradingDays) {
+    if (s.score >= 70 && s.criticalAlerts === 0) streak++
+    else break
+  }
+  return streak
+}
+const MILESTONES = [3, 5, 7, 10, 14, 21, 30, 50, 100]
+
 function fmtPnl(v: number) { return `${v >= 0 ? '+' : ''}${v.toFixed(2)}` }
 function fmtEur(v: number) { return `${v >= 0 ? '+€' : '-€'}${Math.abs(v).toFixed(0)}` }
 function fmtTime(iso: string) {
@@ -2593,6 +2609,7 @@ export default function DashboardClient({
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [sentinelPrompt, setSentinelPrompt] = useState<AlertRow | null>(null)
+  const [milestone, setMilestone] = useState<number | null>(null)   // jalon de discipline à fêter
   const [coachingCards, setCoachingCards] = useState<CoachingCard[]>([])
 
   const notifDelay = useRef(0)
@@ -2680,6 +2697,22 @@ export default function DashboardClient({
   }, [plan, tradingRules])
 
   const score = computeScore(alerts)
+  const disciplineStreak = computeDisciplineStreak(historicalSessions)
+
+  // Notif de jalon : on fête le palier le plus haut atteint, une seule fois
+  // (mémorisé en localStorage) → réapparaît seulement quand on franchit le suivant.
+  useEffect(() => {
+    const reached = MILESTONES.filter(m => m <= disciplineStreak).pop()
+    if (!reached) return
+    const key = `caldra_milestone_${userId}`
+    const last = Number(localStorage.getItem(key) || 0)
+    if (reached > last) setMilestone(reached)
+  }, [disciplineStreak, userId])
+
+  const dismissMilestone = useCallback(() => {
+    if (milestone) localStorage.setItem(`caldra_milestone_${userId}`, String(milestone))
+    setMilestone(null)
+  }, [milestone, userId])
 
   const _yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
   const _dayBefore = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0]
@@ -2888,6 +2921,17 @@ export default function DashboardClient({
         }
       `}</style>
 
+
+      {milestone && (
+        <div style={{ position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(0,209,122,.45)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 8px 40px rgba(0,209,122,.16)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
+          <div style={{ fontSize: 22, flexShrink: 0 }}>🏆</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, color: '#00d17a', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Jalon atteint</div>
+            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>Bravo — {milestone} sessions maîtrisées d'affilée. Garde le cap.</div>
+          </div>
+          <button onClick={dismissMilestone} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
+        </div>
+      )}
 
       {sentinelPrompt && (
         <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(255,90,61,.45)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 8px 40px rgba(255,90,61,.18)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
