@@ -628,7 +628,7 @@ function Sidebar({ score, alerts, stats, rules }: {
                   <div key={a.type} style={{ padding: '8px 10px', borderRadius: 6, background: `${aCol}1a`, borderLeft: `3px solid ${aCol}`, flexShrink: 0, transition: 'all .3s' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                        <span style={{ fontSize: 10, color: aCol, fontFamily: MONO, fontWeight: 600, letterSpacing: .3 }}>L{lvl}</span>
+                        <span style={{ fontSize: 10, color: aCol, fontFamily: MONO, fontWeight: 600, letterSpacing: .3 }}>L{lvl} · {alertLabel(a.type)}</span>
                         {a.count > 1 && (
                           <span style={{ fontSize: 9, fontFamily: MONO, fontWeight: 600, color: aCol, background: `${aCol}1e`, border: `.5px solid ${aCol}55`, borderRadius: 99, padding: '1px 6px', lineHeight: 1.3, flexShrink: 0 }}>×{a.count}</span>
                         )}
