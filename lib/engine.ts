@@ -380,7 +380,7 @@ async function maybeNewsAlert(trade: Trade): Promise<Alert | null> {
 // Garde-fou nouveau user : sous un minimum d'historique, tout paraîtrait "inhabituel"
 // → on se tait tant que le profil n'est pas assez fourni.
 async function maybeUnfamiliarSymbolAlert(trade: Trade): Promise<Alert | null> {
-  const LOOKBACK_DAYS = 60
+  const LOOKBACK_DAYS = 30
   const MIN_HISTORY_TRADES = 15   // sous ce seuil : pas assez de profil → pas d'alerte
   const norm = (s: unknown) => String(s ?? '').trim().toUpperCase()
   const sym = norm(trade.symbol)
