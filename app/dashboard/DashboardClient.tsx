@@ -1321,7 +1321,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
             <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Journal de trading</div>
-            <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>{nJ} trades · 30j</div>
+            <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>{nJ} trades · 30j · v3</div>
           </div>
 
           <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
