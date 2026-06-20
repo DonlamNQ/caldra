@@ -165,7 +165,7 @@ Header: x-caldra-key: cal_xxxxxxxxxxxxxxxxxxxx
 - Appelle `analyzeTradeForAlerts()` dans `lib/engine.ts` → INSERT dans `alerts`
 - Le dashboard se met à jour via Supabase Realtime
 
-### 17 détecteurs dans `lib/engine.ts`
+### 18 détecteurs dans `lib/engine.ts`
 
 Répartis en deux familles : ceux liés à l'**entrée** (`entryBehaviorAlerts`, tournent à
 l'ouverture ET à la fermeture pour les flux closed-only comme cTrader) et ceux liés à la
@@ -182,6 +182,7 @@ l'ouverture ET à la fermeture pour les flux closed-only comme cTrader) et ceux 
 | `accelerating_frequency` | 2 | entrée | écart entre entrées < 40% de la médiane, session perdante (≥4 trades) |
 | `end_of_day_desperation` | 2 | entrée | entrée dans les 10 min avant `session_end`, session déjà perdante |
 | `news_trading` | 2 | entrée | trade à ±10 min d'une news à fort impact (`lib/economic-calendar.ts`) |
+| `unfamiliar_symbol` | 1 | entrée | symbole hors des instruments habituels (fenêtre 60 j, min 15 trades d'historique) |
 | `consecutive_losses` | 2 | ferm. | ≥ `max_consecutive_losses` pertes d'affilée |
 | `drawdown_alert` | 2/3 | ferm. | PnL session < 80%/100% du drawdown max |
 | `stop_not_respected` | 2 | ferm. | perte réalisée > `max_risk_per_trade_pct` (stop non tenu) |
@@ -320,7 +321,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Schéma DB v2 (5 tables, RLS, triggers, realtime)
 - Dashboard temps réel (ScoreRing, AlertFeed, TradeLog)
 - `/api/ingest` avec auth per-user API key (SHA-256)
-- 17 détecteurs comportementaux dans `lib/engine.ts`
+- 18 détecteurs comportementaux dans `lib/engine.ts`
 - Analytics (PnL chart SVG, alertes par type, performance par jour)
 - Alertes (historique, filtres, search, export CSV)
 - Settings (règles trading, clé API, intégrations)

@@ -115,6 +115,11 @@ function buildPushContent(a: Alert): { title: string; body: string } {
         title: '🌙 Trade de fin de session',
         body: `${d.minutes_to_close} min avant la clôture, en perte. Méfie-toi du rattrapage.`,
       }
+    case 'unfamiliar_symbol':
+      return {
+        title: '🧭 Actif inhabituel',
+        body: `${d.symbol} n'est pas dans tes instruments habituels — sûr de ton setup ?`,
+      }
     default:
       return { title: a.message, body: '' }
   }
@@ -369,6 +374,39 @@ async function maybeNewsAlert(trade: Trade): Promise<Alert | null> {
   }
 }
 
+// Détecteur "Actif inhabituel" — le trader ouvre une position sur un symbole qu'il
+// ne trade PAS d'habitude (FOMO, chasse aux opportunités, hors zone de compétence).
+// Compare au-delà de la session du jour : sur une fenêtre glissante d'historique.
+// Garde-fou nouveau user : sous un minimum d'historique, tout paraîtrait "inhabituel"
+// → on se tait tant que le profil n'est pas assez fourni.
+async function maybeUnfamiliarSymbolAlert(trade: Trade): Promise<Alert | null> {
+  const LOOKBACK_DAYS = 60
+  const MIN_HISTORY_TRADES = 15   // sous ce seuil : pas assez de profil → pas d'alerte
+  const norm = (s: unknown) => String(s ?? '').trim().toUpperCase()
+  const sym = norm(trade.symbol)
+  if (!sym) return null
+
+  const since = new Date(Date.now() - LOOKBACK_DAYS * 86_400_000).toISOString()
+  const { data: hist } = await getSupabase()
+    .from('trades')
+    .select('symbol')
+    .eq('user_id', trade.user_id)
+    .gte('entry_time', since)
+    .neq('id', trade.id)   // exclut le trade courant (déjà inséré au moment de l'analyse)
+
+  if (!hist || hist.length < MIN_HISTORY_TRADES) return null
+
+  const known = new Set(hist.map(t => norm(t.symbol)))
+  if (known.has(sym)) return null
+
+  return {
+    type: 'unfamiliar_symbol',
+    level: 1,
+    message: 'Actif inhabituel — hors de tes instruments habituels',
+    detail: { symbol: trade.symbol, known_symbols: known.size, lookback_days: LOOKBACK_DAYS },
+  }
+}
+
 // ── Alertes à l'OUVERTURE d'un trade ─────────────────────────────────────────
 export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
   const today = new Date().toISOString().split('T')[0]
@@ -386,6 +424,8 @@ export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
   const alerts = entryBehaviorAlerts(trade, rules, sessionTrades)
   const news = await maybeNewsAlert(trade)
   if (news) alerts.push(news)
+  const unfamiliar = await maybeUnfamiliarSymbolAlert(trade)
+  if (unfamiliar) alerts.push(unfamiliar)
 
   return saveAndNotify(trade, alerts, sessionTrades, isSentinel, rules)
 }
@@ -414,6 +454,8 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
     alerts.push(...entryBehaviorAlerts(trade, rules, sessionTrades))
     const news = await maybeNewsAlert(trade)
     if (news) alerts.push(news)
+    const unfamiliar = await maybeUnfamiliarSymbolAlert(trade)
+    if (unfamiliar) alerts.push(unfamiliar)
   }
 
   // ── 1. PERTES CONSÉCUTIVES ────────────────────────────────────────────────
