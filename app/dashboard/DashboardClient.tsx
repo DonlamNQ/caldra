@@ -1152,7 +1152,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
   const equity = jSorted.map(t => { cum += t.pnl ?? 0; if (cum > peak) peak = cum; if (peak - cum > maxDD) maxDD = peak - cum; return cum })
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
       {/* Header */}
       <div style={{ padding: '18px 24px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
