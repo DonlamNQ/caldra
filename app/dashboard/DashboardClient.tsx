@@ -1163,117 +1163,121 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
 
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
 
-      {/* Row 1: 3 KPI cards */}
-      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, flexShrink: 0 }}>
+      {/* Bandeau : chiffres clés du journal */}
+      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, flexShrink: 0 }}>
+        {[
+          { val: fmtEur(grossProfit - grossLoss), lbl: 'P&L net', hint: `${nJ} trades` },
+          { val: `${jWinRate}%`, lbl: 'Win rate', hint: `${jWins.length}G / ${jLosses.length}P` },
+          { val: fmtPF(profitFactor), lbl: 'Profit factor', hint: 'gains ÷ pertes' },
+          { val: fmtEur(expectancy), lbl: 'Gain attendu', hint: 'par trade' },
+          { val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: 'pire creux' },
+        ].map((it, i) => (
+          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+            <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
+            <div style={{ fontSize: 25, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: C.pnl }}>{it.val}</div>
+            <div style={{ fontSize: 10, color: C.td, marginTop: 5 }}>{it.hint}</div>
+          </div>
+        ))}
+      </div>
 
-        {/* P&L cumulé */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>P&L cumulé — {sessions.length}j</div>
-          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: C.pnl }}>{fmtEur(totalPnl)}</div>
-          <div style={{ fontSize: 12, color: C.td }}>Sur {sessions.length} sessions tradées</div>
-          {cumulPts.length >= 2 && (() => {
-            const vals = cumulPts.map(p => p.v)
-            const minV = Math.min(0, ...vals), maxV = Math.max(0, ...vals)
-            const range = maxV - minV || 1
-            const n = cumulPts.length
-            const W2 = 600, H2 = 110, PXL2 = 42, PXR2 = 6, PYT2 = 6, PYB2 = 18
-            const DW2 = W2 - PXL2 - PXR2, DH2 = H2 - PYT2 - PYB2
-            const xOf = (i: number) => PXL2 + (i / (n - 1)) * DW2
-            const yOf = (v: number) => PYT2 + DH2 - ((v - minV) / range) * DH2
-            const y0 = yOf(0)
-            const ptStr = cumulPts.map((p, i) => `${xOf(i)},${yOf(p.v)}`).join(' ')
-            const fillPath = `M${xOf(0)},${y0} ${cumulPts.map((p, i) => `L${xOf(i)},${yOf(p.v)}`).join(' ')} L${xOf(n-1)},${y0} Z`
-            const rawTicks = [minV, 0, maxV].filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.12) === i)
-            const fmtY2 = (v: number) => v === 0 ? '€0' : v > 0 ? `+€${Math.abs(v).toFixed(0)}` : `-€${Math.abs(v).toFixed(0)}`
-            const step2 = Math.max(1, Math.floor((n - 1) / 4))
-            const xIdxSet2 = new Set([0, n - 1])
-            for (let i = step2; i < n - 1; i += step2) xIdxSet2.add(i)
-            const xIdxs2 = [...xIdxSet2].sort((a, b) => a - b)
-            return (
-              <div style={{ marginTop: 14, height: 110 }}>
-                <svg viewBox={`0 0 ${W2} ${H2}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-                  <line x1={PXL2} y1={PYT2} x2={PXL2} y2={H2 - PYB2} stroke="rgba(255,255,255,.08)" strokeWidth={1} />
-                  <line x1={PXL2} y1={H2 - PYB2} x2={W2 - PXR2} y2={H2 - PYB2} stroke="rgba(255,255,255,.08)" strokeWidth={1} />
-                  <line x1={PXL2} y1={y0} x2={W2 - PXR2} y2={y0} stroke="rgba(255,255,255,.08)" strokeWidth={0.5} strokeDasharray="4 6" />
-                  {rawTicks.map(v => <text key={v} x={PXL2 - 4} y={Math.max(PYT2 + 7, Math.min(H2 - PYB2 - 2, yOf(v) + 3))} textAnchor="end" fill="rgba(234,232,245,.35)" fontSize="8" style={{ fontFamily: 'monospace' }}>{fmtY2(v)}</text>)}
-                  {xIdxs2.map(i => <text key={i} x={Math.max(PXL2 + 14, Math.min(W2 - PXR2 - 14, xOf(i)))} y={H2 - PYB2 + 12} textAnchor="middle" fill="rgba(234,232,245,.3)" fontSize="7.5" style={{ fontFamily: 'monospace' }}>{cumulPts[i].date.slice(5)}</text>)}
-                  <path d={fillPath} fill="rgba(234,232,245,.05)" />
-                  <polyline points={ptStr} fill="none" stroke={C.pnl} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-                  <circle cx={xOf(n-1)} cy={yOf(vals[n-1])} r={3} fill={C.pnl} />
-                </svg>
-              </div>
-            )
-          })()}
+      {/* Grande courbe d'evolution du capital (trade par trade) */}
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Évolution du capital</div>
+          <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>trade par trade</div>
         </div>
+        {equity.length >= 2 ? (() => {
+          const minV = Math.min(0, ...equity), maxV = Math.max(0, ...equity)
+          const range = maxV - minV || 1
+          const n = equity.length
+          const W = 600, H = 150, PXL = 46, PXR = 8, PYT = 10, PYB = 10
+          const DW = W - PXL - PXR, DH = H - PYT - PYB
+          const xOf = (i: number) => PXL + (i / (n - 1)) * DW
+          const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
+          const y0 = yOf(0)
+          const pts = equity.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
+          const fillPath = `M${xOf(0)},${y0} ${equity.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
+          const ticks = [maxV, 0, minV].filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.1) === i)
+          const fy = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`
+          return (
+            <div style={{ height: 150, marginTop: 6 }}>
+              <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
+                <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke="rgba(255,255,255,.1)" strokeWidth={0.5} strokeDasharray="4 6" />
+                {ticks.map(v => <text key={v} x={PXL - 5} y={Math.max(PYT + 7, Math.min(H - PYB, yOf(v) + 3))} textAnchor="end" fill="rgba(234,232,245,.35)" fontSize="8.5" style={{ fontFamily: 'monospace' }}>{fy(v)}</text>)}
+                <path d={fillPath} fill="rgba(234,232,245,.05)" />
+                <polyline points={pts} fill="none" stroke={C.pnl} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+                <circle cx={xOf(n - 1)} cy={yOf(equity[n - 1])} r={3} fill={C.pnl} />
+              </svg>
+            </div>
+          )
+        })() : (
+          <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic', padding: '24px 0' }}>Pas encore assez de trades fermés pour tracer la courbe.</div>
+        )}
+      </div>
 
-        {/* Score moyen */}
+      {/* Détails : Par instrument | Comportement */}
+      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
+
+        {/* Par instrument */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Score moyen</div>
-          <div style={{ fontSize: 34, fontWeight: 300, letterSpacing: -2, lineHeight: 1, marginBottom: 3, color: scoreColor(avgScore, C) }}>{avgScore}</div>
-          <div style={{ fontSize: 12, color: C.td, marginBottom: 14 }}>Sur {sessions.length} sessions</div>
+          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 14 }}>Par instrument</div>
+          {bySymbol.length === 0 ? (
+            <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun trade fermé.</div>
+          ) : bySymbol.slice(0, 6).map(([sym, d]) => (
+            <div key={sym} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
+              <span style={{ fontSize: 12.5, color: C.td, fontFamily: MONO }}>{sym} <span style={{ color: C.te }}>· {d.n} tr.</span></span>
+              <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.pnl, fontWeight: 500 }}>{fmtEur(d.pnl)}</span>
+            </div>
+          ))}
+          <div style={{ height: 12 }} />
           {[
-            { k: `Sessions > 80`, v: `${sessionsAbove80} / ${sessions.length}` },
-            { k: `Sessions critiques`, v: `${sessionsCritical} / ${sessions.length}` },
-            { k: `Tendance 30j`, v: '— pts' },
+            { k: 'Long', v: `${wr(longs)}% · ${longs.length} tr.` },
+            { k: 'Short', v: `${wr(shorts)}% · ${shorts.length} tr.` },
+            { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—' },
+            { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—' },
           ].map(({ k, v }) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
               <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
               <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
             </div>
           ))}
         </div>
 
-        {/* Performance par jour */}
+        {/* Comportement */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Performance par jour</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginTop: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Comportement</div>
+            <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>score moy. <span style={{ color: scoreColor(avgScore, C), fontWeight: 600 }}>{avgScore}</span></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 16 }}>
             {dayNames.map((name, i) => {
               const ds = byDow[i] ?? []
               const avg = ds.length > 0 ? Math.round(ds.reduce((s, d) => s + d.score, 0) / ds.length) : null
               const col = avg !== null ? scoreColor(avg, C) : C.te
               const dbg = avg !== null ? (avg >= 70 ? 'rgba(0,209,122,' : avg >= 40 ? 'rgba(255,171,0,' : 'rgba(255,90,61,') : 'rgba(255,255,255,'
               return (
-                <div key={name} style={{ borderRadius: 7, height: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: `${dbg}.09)`, border: `.5px solid ${dbg}.22)` }}>
-                  <span style={{ fontSize: 14, fontFamily: MONO, fontWeight: 500, color: col }}>{avg ?? '—'}</span>
+                <div key={name} style={{ borderRadius: 7, height: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: `${dbg}.09)`, border: `.5px solid ${dbg}.22)` }}>
+                  <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: col }}>{avg ?? '—'}</span>
                   <span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: MONO }}>{name}</span>
                 </div>
               )
             })}
           </div>
-          <div style={{ marginTop: 12 }}>
-            {[
-              { k: 'Meilleur créneau', v: 'Lun–Mar' },
-              { k: 'Win rate global', v: `${winRate}%` },
-            ].map(({ k, v }) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
-                <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
-                <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Patterns + Stats détaillées */}
-      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
-
-        {/* Patterns */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Patterns déclenchés ce mois</div>
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 10 }}>Patterns déclenchés</div>
           {patterns.length === 0 ? (
-            <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun pattern détecté — excellent travail.</div>
+            <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun pattern — excellent travail.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {patterns.map(([type, count]) => {
                 const pct = Math.round((count / maxCount) * 100)
                 const col = pct >= 60 ? C.red : pct >= 30 ? C.o : C.b3
                 return (
                   <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                    <span style={{ fontSize: 12, color: C.td, width: 130, flexShrink: 0 }}>{type}</span>
+                    <span style={{ fontSize: 12, color: C.td, width: 120, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{type}</span>
                     <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,.05)', borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: col, borderRadius: 2 }} />
                     </div>
@@ -1284,114 +1288,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
             </div>
           )}
         </div>
-
-        {/* Stats détaillées */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Stats détaillées</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            {[
-              { val: `${winRate}%`, lbl: 'Win rate global' },
-              { val: String(sessions.length), lbl: 'Sessions ce mois' },
-              { val: '—', lbl: 'Sessions pausées' },
-              { val: String(totalAlerts), lbl: 'Alertes totales' },
-            ].map((item, i) => (
-              <div key={i} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 9, padding: 14 }}>
-                <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.5 }}>{item.val}</div>
-                <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 3 }}>{item.lbl}</div>
-              </div>
-            ))}
-          </div>
-          {[
-            { k: 'Moy. alertes / session', v: sessions.length > 0 ? (totalAlerts / sessions.length).toFixed(1) : '—' },
-            { k: 'Trades / session', v: avgTrades },
-            { k: 'Trades total', v: String(totalTrades) },
-          ].map(({ k, v }) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
-              <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
-              <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
-            </div>
-          ))}
-        </div>
       </div>
-
-      {/* Row 3: Journal de trading (métriques trade-level) */}
-      {nJ > 0 && (
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-            <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Journal de trading</div>
-            <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>{nJ} trades · 30j</div>
-          </div>
-
-          <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
-            {[
-              { val: fmtPF(profitFactor), lbl: 'Profit factor' },
-              { val: `${jWinRate}%`, lbl: 'Win rate' },
-              { val: payoff > 0 ? payoff.toFixed(2) : '—', lbl: 'Ratio gain/perte' },
-              { val: fmtEur(expectancy), lbl: 'Expectancy / trade' },
-              { val: fmtEur(avgWin), lbl: 'Gain moyen' },
-              { val: fmtEur(-avgLoss), lbl: 'Perte moyenne' },
-            ].map((it, i) => (
-              <div key={i} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 9, padding: 13 }}>
-                <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.5, color: C.pnl }}>{it.val}</div>
-                <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginTop: 3 }}>{it.lbl}</div>
-              </div>
-            ))}
-          </div>
-
-          {equity.length >= 2 && (() => {
-            const minV = Math.min(0, ...equity), maxV = Math.max(0, ...equity)
-            const range = maxV - minV || 1
-            const n = equity.length
-            const W = 600, H = 90, PXL = 8, PXR = 6, PYT = 8, PYB = 8
-            const DW = W - PXL - PXR, DH = H - PYT - PYB
-            const xOf = (i: number) => PXL + (i / (n - 1)) * DW
-            const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
-            const y0 = yOf(0)
-            const pts = equity.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
-            const fillPath = `M${xOf(0)},${y0} ${equity.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
-            return (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                  <span style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe d'equity</span>
-                  <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>Max drawdown {fmtEur(-maxDD)}</span>
-                </div>
-                <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 90 }} preserveAspectRatio="none">
-                  <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke="rgba(255,255,255,.08)" strokeWidth={0.5} strokeDasharray="4 6" />
-                  <path d={fillPath} fill="rgba(234,232,245,.05)" />
-                  <polyline points={pts} fill="none" stroke={C.pnl} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-                </svg>
-              </div>
-            )
-          })()}
-
-          <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>
-              {[
-                { k: 'Long', v: `${wr(longs)}% · ${longs.length} tr.` },
-                { k: 'Short', v: `${wr(shorts)}% · ${shorts.length} tr.` },
-                { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—' },
-                { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—' },
-              ].map(({ k, v }) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
-                  <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
-                  <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
-                </div>
-              ))}
-            </div>
-            <div>
-              <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>Par symbole</div>
-              {bySymbol.slice(0, 5).map(([sym, d]) => (
-                <div key={sym} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
-                  <span style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>{sym}</span>
-                  <span style={{ fontSize: 12, fontFamily: MONO, color: C.pnl }}>{fmtEur(d.pnl)} <span style={{ color: C.te }}>· {d.n}</span></span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
     </div>
   )
