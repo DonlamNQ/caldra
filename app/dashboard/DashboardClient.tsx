@@ -1146,6 +1146,10 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
     return acc
   }, {})).sort((a, b) => b[1].pnl - a[1].pnl)
   const fmtPF = (v: number) => v === Infinity ? '∞' : v.toFixed(2)
+  // Courbe d'equity trade-par-trade + max drawdown (sur l'equity réalisée)
+  const jSorted = [...jt].sort((a, b) => new Date(a.exit_time ?? a.entry_time).getTime() - new Date(b.exit_time ?? b.entry_time).getTime())
+  let cum = 0, peak = 0, maxDD = 0
+  const equity = jSorted.map(t => { cum += t.pnl ?? 0; if (cum > peak) peak = cum; if (peak - cum > maxDD) maxDD = peak - cum; return cum })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
@@ -1335,6 +1339,32 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
               </div>
             ))}
           </div>
+
+          {equity.length >= 2 && (() => {
+            const minV = Math.min(0, ...equity), maxV = Math.max(0, ...equity)
+            const range = maxV - minV || 1
+            const n = equity.length
+            const W = 600, H = 90, PXL = 8, PXR = 6, PYT = 8, PYB = 8
+            const DW = W - PXL - PXR, DH = H - PYT - PYB
+            const xOf = (i: number) => PXL + (i / (n - 1)) * DW
+            const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
+            const y0 = yOf(0)
+            const pts = equity.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
+            const fillPath = `M${xOf(0)},${y0} ${equity.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
+            return (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                  <span style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe d'equity</span>
+                  <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>Max drawdown {fmtEur(-maxDD)}</span>
+                </div>
+                <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 90 }} preserveAspectRatio="none">
+                  <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke="rgba(255,255,255,.08)" strokeWidth={0.5} strokeDasharray="4 6" />
+                  <path d={fillPath} fill="rgba(234,232,245,.05)" />
+                  <polyline points={pts} fill="none" stroke={C.pnl} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+                </svg>
+              </div>
+            )
+          })()}
 
           <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
