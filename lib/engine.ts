@@ -228,7 +228,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
     alerts.push({
       type: 'revenge_sizing',
       level: 2,
-      message: 'Revenge sizing détecté',
+      message: 'Taille augmentée après une perte',
       detail: {
         previous_size: prevTrade.size,
         current_size: trade.size,
@@ -245,7 +245,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
       alerts.push({
         type: 'immediate_reentry',
         level: 1,
-        message: 'Re-entrée immédiate détectée',
+        message: 'Repositionné trop vite après la sortie',
         detail: {
           seconds_since_exit: Math.round(secsSinceLastExit),
           minimum_required: rules.min_time_between_entries_sec,
@@ -282,7 +282,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
     alerts.push({
       type: 'averaging_down',
       level: 3,
-      message: 'Acharnement directionnel — tu réattaques le même sens juste après une perte',
+      message: 'Tu réattaques le même sens juste après une perte',
       detail: {
         symbol: trade.symbol,
         direction: trade.direction,
@@ -299,7 +299,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
     alerts.push({
       type: 'euphoria_sizing',
       level: 2,
-      message: "Sizing d'euphorie après un gain",
+      message: 'Taille augmentée après un gain',
       detail: {
         previous_size: prevTrade.size,
         current_size: trade.size,
@@ -402,7 +402,7 @@ async function maybeUnfamiliarSymbolAlert(trade: Trade): Promise<Alert | null> {
   return {
     type: 'unfamiliar_symbol',
     level: 1,
-    message: 'Actif inhabituel — hors de tes instruments habituels',
+    message: 'Hors de tes instruments habituels',
     detail: { symbol: trade.symbol, known_symbols: known.size, lookback_days: LOOKBACK_DAYS },
   }
 }
@@ -470,7 +470,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
     alerts.push({
       type: 'consecutive_losses',
       level: 2,
-      message: `${lossStreak} pertes consécutives`,
+      message: 'Série de pertes en cours',
       detail: { count: lossStreak, threshold: rules.max_consecutive_losses },
     })
   }
@@ -485,7 +485,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
     alerts.push({
       type: 'drawdown_alert',
       level,
-      message: level === 3 ? 'STOP — Drawdown maximum atteint' : 'Drawdown journalier critique',
+      message: level === 3 ? 'STOP — limite de perte journalière atteinte' : 'Tu approches ta limite de perte du jour',
       detail: {
         current_pnl: totalPnl,
         drawdown_pct: drawdownPct.toFixed(2),
@@ -505,7 +505,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
       alerts.push({
         type: 'stop_not_respected',
         level: 2,
-        message: 'Stop non respecté — perte au-delà de ton risque par trade',
+        message: 'Perte au-delà de ton risque par trade',
         detail: {
           loss: tradeLoss,
           loss_pct: lossPct.toFixed(2),
@@ -530,7 +530,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
       alerts.push({
         type: 'risk_exceeded',
         level: 2,
-        message: 'Risk dépassé — position trop grande pour ton risque par trade',
+        message: 'Position trop grande pour ton risque par trade',
         detail: {
           risk_pct: riskPct.toFixed(2),
           max_risk_pct: rules.max_risk_per_trade_pct,
@@ -557,7 +557,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
         alerts.push({
           type: 'overleverage',
           level: leverage > maxLev * 1.5 ? 3 : 2,
-          message: 'Sur-exposition — effet de levier trop élevé sur ce trade',
+          message: 'Effet de levier trop élevé sur ce trade',
           detail: {
             leverage: leverage.toFixed(1),
             max_leverage: maxLev,
@@ -576,7 +576,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
     alerts.push({
       type: 'no_stop',
       level: 2,
-      message: 'Trade sans stop-loss — risque non borné',
+      message: 'Trade fermé sans stop-loss',
       detail: { symbol: trade.symbol, pnl: trade.pnl ?? null },
     })
   }
@@ -623,7 +623,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
       alerts.push({
         type: 'drawdown_override',
         level: 3,
-        message: 'Tu continues après avoir franchi ton drawdown maximum',
+        message: 'Tu continues à trader après avoir dépassé ta limite',
         detail: {
           prior_pnl: priorPnl,
           prior_drawdown_pct: priorDdPct.toFixed(2),

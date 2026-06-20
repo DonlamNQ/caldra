@@ -2,6 +2,15 @@
 // feed à la place de la conséquence pédagogique (qui, elle, ira dans les messages).
 // Court, factuel, propre au trade.
 
+// Durée lisible : secondes < 90s, sinon minutes, sinon heures.
+function fmtDur(sec: number): string {
+  const s = Math.round(sec)
+  if (s < 90) return `${s}s`
+  const m = Math.round(s / 60)
+  if (m < 90) return `${m} min`
+  return `${(m / 60).toFixed(1).replace('.0', '')}h`
+}
+
 export function alertTechnical(type?: string | null, detail?: Record<string, any> | null): string | null {
   const d = detail || {}
   switch (type) {
@@ -9,7 +18,7 @@ export function alertTechnical(type?: string | null, detail?: Record<string, any
     case 'euphoria_sizing':
       return d.current_size != null ? `Taille ${d.current_size} vs ${d.previous_size} (×${d.ratio})` : null
     case 'immediate_reentry':
-      return d.seconds_since_exit != null ? `${d.seconds_since_exit}s après sortie · min ${d.minimum_required}s` : null
+      return d.seconds_since_exit != null ? `${fmtDur(d.seconds_since_exit)} après sortie · min ${fmtDur(d.minimum_required)}` : null
     case 'overtrading':
       return d.current != null ? `${d.current}/${d.max} trades` : null
     case 'outside_session':
@@ -17,7 +26,7 @@ export function alertTechnical(type?: string | null, detail?: Record<string, any
     case 'averaging_down':
       return d.symbol ? `${d.symbol} ${d.direction} · taille ${d.current_size} ≥ ${d.previous_size}` : null
     case 'consecutive_losses':
-      return d.count != null ? `${d.count} pertes d'affilée · seuil ${d.threshold}` : null
+      return d.count != null ? `${d.count} d'affilée · seuil ${d.threshold}` : null
     case 'drawdown_alert':
     case 'drawdown_override':
       return d.drawdown_pct != null || d.prior_drawdown_pct != null
@@ -30,17 +39,17 @@ export function alertTechnical(type?: string | null, detail?: Record<string, any
     case 'overleverage':
       return d.leverage != null ? `Levier ×${d.leverage} · max ${d.max_leverage}×` : null
     case 'accelerating_frequency':
-      return d.last_gap_sec != null ? `${d.last_gap_sec}s entre entrées · médiane ${d.median_gap_sec}s` : null
+      return d.last_gap_sec != null ? `${fmtDur(d.last_gap_sec)} entre entrées · médiane ${fmtDur(d.median_gap_sec)}` : null
     case 'end_of_day_desperation':
       return d.minutes_to_close != null ? `${d.minutes_to_close} min avant clôture` : null
     case 'news_trading':
       return d.title ? `${d.title} (${d.currency}) à ${d.minutes_from_event} min` : null
     case 'cut_winners_hold_losers':
-      return d.avg_win_sec != null ? `Gagnants ${d.avg_win_sec}s vs perdants ${d.avg_loss_sec}s` : null
+      return d.avg_win_sec != null ? `Gagnants ${fmtDur(d.avg_win_sec)} vs perdants ${fmtDur(d.avg_loss_sec)}` : null
     case 'no_stop':
       return d.symbol ? `${d.symbol} fermé sans stop` : null
     case 'unfamiliar_symbol':
-      return d.symbol ? `${d.symbol} · ${d.known_symbols} symboles habituels (${d.lookback_days}j)` : null
+      return d.symbol ? `${d.symbol} · ${d.known_symbols} symbole${d.known_symbols > 1 ? 's' : ''} habituel${d.known_symbols > 1 ? 's' : ''} (${d.lookback_days}j)` : null
     default:
       return null
   }
