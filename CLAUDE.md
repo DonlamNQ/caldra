@@ -198,7 +198,8 @@ Réglages optionnels lus avec défaut (pas de migration DB obligatoire) : `max_l
 Libellés FR centralisés dans `lib/alertLabels.ts` (`alertLabel(type)`) — réutilisés par
 `AlertFeed` et la grille de métriques du dashboard. **Tout nouveau détecteur doit être
 ajouté à : `engine.ts` (logique) + `buildPushContent` (push) + `alertLabels.ts` (libellé) +
-la grille du dashboard.**
+la grille du dashboard + `alertConsequences.ts` (conséquence pédagogique affichée
+dans le feed).**
 
 ---
 

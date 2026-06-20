@@ -6,6 +6,7 @@ import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
 import type { DaySession } from './page'
 import { alertLabel } from '@/lib/alertLabels'
+import { alertConsequence } from '@/lib/alertConsequences'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -609,6 +610,11 @@ function Sidebar({ score, alerts, stats, rules }: {
                       {a.created_at && <span style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, flexShrink: 0 }}>{fmtTime(a.created_at)}</span>}
                     </div>
                     <div style={{ fontSize: 12.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
+                    {alertConsequence(a.type) && (
+                      <div style={{ fontSize: 11, color: C.td, fontWeight: 300, lineHeight: 1.4, marginTop: 5, paddingTop: 5, borderTop: `.5px solid ${aCol}22`, fontStyle: 'italic' }}>
+                        {alertConsequence(a.type)}
+                      </div>
+                    )}
                   </div>
                 )
               })}
