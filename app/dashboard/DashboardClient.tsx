@@ -1161,7 +1161,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Données sur les {sessions.length} dernières sessions</div>
       </div>
 
-    <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+    <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
 
       {/* Row 1: 3 KPI cards */}
       <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
