@@ -539,6 +539,14 @@ function Sidebar({ score, alerts, stats, rules }: {
         </div>
       </div>
 
+      {/* Fenêtre de session */}
+      {rules && (
+        <div style={{ padding: '14px 20px 16px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 12, color: C.td }}>Fenêtre</span>
+          <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
+        </div>
+      )}
+
       {/* Séparateur fin (pas pleine largeur) avant les Alertes */}
       <div style={{ height: '.5px', background: C.b, width: '72%', margin: '2px auto 0', flexShrink: 0 }} />
 
