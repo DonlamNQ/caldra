@@ -1977,6 +1977,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
   const [sessionEnded, setSessionEnded] = useState(false)
   const [debriefLoading, setDebriefLoading] = useState(false)
   const [debriefDone, setDebriefDone] = useState(false)
+  const [debriefFailed, setDebriefFailed] = useState(false)   // stoppe les retries après un échec
 
   useEffect(() => {
     if (!rules?.session_end || !isSentinel || stats.total_trades === 0) return
@@ -2006,9 +2007,11 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
         setDebriefDone(true)
         setSessionEnded(false)
       } else {
+        setDebriefFailed(true)   // erreur applicative → on ne réessaie pas en boucle
         setMsgs(prev => [...prev, { role: 'assistant', content: data.error ?? 'Erreur lors du debrief.', time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }])
       }
     } catch {
+      setDebriefFailed(true)   // erreur réseau → on ne réessaie pas en boucle
       setMsgs(prev => [...prev, { role: 'assistant', content: 'Erreur réseau lors du debrief.', time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }])
     } finally {
       setDebriefLoading(false)
@@ -2019,9 +2022,9 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
   // Sentinel est PUSH : pas de chat à piloter. Le débrief se déclenche tout seul
   // à la fermeture de session.
   useEffect(() => {
-    if (sessionEnded && !debriefDone && !debriefLoading) triggerDebrief()
+    if (sessionEnded && !debriefDone && !debriefFailed && !debriefLoading) triggerDebrief()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionEnded, debriefDone, debriefLoading])
+  }, [sessionEnded, debriefDone, debriefFailed, debriefLoading])
 
   useEffect(() => { msgsRef.current?.scrollTo({ top: msgsRef.current.scrollHeight, behavior: 'smooth' }) }, [msgs])
 

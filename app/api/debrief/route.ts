@@ -4,8 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import Anthropic from '@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
 export async function POST(req: NextRequest) {
   const cookieStore = cookies()
   const supabase = createServerClient(
@@ -35,6 +33,10 @@ export async function POST(req: NextRequest) {
 
   if (profile?.plan !== 'sentinel') {
     return NextResponse.json({ error: 'Plan Sentinel requis' }, { status: 403 })
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: 'Clé API Anthropic non configurée' }, { status: 503 })
   }
 
   const body = await req.json().catch(() => ({}))
@@ -77,7 +79,10 @@ export async function POST(req: NextRequest) {
       ).join('\n')
     : 'Aucune alerte'
 
-  const msg = await anthropic.messages.create({
+  const anthropic = new Anthropic()
+  let msg
+  try {
+    msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 450,
     system: `Tu es Caldra, un coach de trading comportemental. Tu analyses les sessions et fournis des debriefings précis, honnêtes et constructifs. Tu te concentres sur les comportements, pas uniquement sur les résultats financiers. Tes réponses sont en français, concises et actionnables.`,
@@ -98,7 +103,11 @@ Génère un debrief structuré en 3 parties courtes :
 2. **Pattern dominant** — le thème central de cette session
 3. **Demain** — un point précis et concret à travailler`,
     }],
-  })
+    })
+  } catch (e) {
+    console.error('[debrief] échec Anthropic:', e)
+    return NextResponse.json({ error: 'Le débrief IA est momentanément indisponible.' }, { status: 502 })
+  }
 
   const debrief = (msg.content[0] as { type: string; text: string }).text
 
