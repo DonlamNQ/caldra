@@ -3202,7 +3202,7 @@ export default function DashboardClient({
         </div>
 
         {/* ── Main layout ── */}
-        <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
+        <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', gridTemplateRows: 'minmax(0, 1fr)', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
           {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} />}
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
