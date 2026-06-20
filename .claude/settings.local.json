@@ -88,7 +88,8 @@
       "Bash(findstr /I /V \"node_modules\")",
       "Bash(git *)",
       "Bash(cmd /c \"type C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5.log 2>nul | more +0\")",
-      "Bash(powershell -Command \"Get-Content C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5.log -Tail 30\")"
+      "Bash(powershell -Command \"Get-Content C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5.log -Tail 30\")",
+      "Bash(py -m py_compile worker/mt5-worker.py)"
     ]
   },
   "hooks": {
