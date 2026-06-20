@@ -1794,11 +1794,8 @@ namespace CaldraBot
             </div>
 
             {mt5Has && mt5Info && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', marginBottom: 12, borderRadius: 7, background: C.sf2, border: `.5px solid ${C.b}`, fontFamily: MONO, fontSize: 11 }}>
-                <span style={{ color: C.te }}>Compte</span>
-                <span style={{ color: C.tm, fontWeight: 600 }}>{mt5Info.login}</span>
-                <span style={{ color: C.b3 }}>·</span>
-                <span style={{ color: C.tm }}>{mt5Info.server}</span>
+              <div style={{ fontSize: 11, fontFamily: MONO, color: C.te, marginBottom: 12 }}>
+                {mt5Info.login} · {mt5Info.server}
               </div>
             )}
 
