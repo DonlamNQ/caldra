@@ -29,97 +29,50 @@ export type Alert = {
   detail: Record<string, unknown>
 }
 
+// Notif = le HOOK humain (communicatif, zéro chiffre). Les chiffres vivent dans le
+// dashboard (feed → détail technique). Titre = emoji + nom court ; corps = nudge.
 function buildPushContent(a: Alert): { title: string; body: string } {
-  const d = a.detail
   switch (a.type) {
     case 'revenge_sizing':
-      return {
-        title: '⚠️ Revenge sizing',
-        body: `Tu as multiplié ta taille par ${d.ratio} après une perte.`,
-      }
+      return { title: '⚠️ Revenge sizing', body: 'Tu grossis ta taille après une perte. Respire avant le prochain.' }
     case 'immediate_reentry':
-      return {
-        title: '⚡ Re-entrée rapide',
-        body: `${d.seconds_since_exit}s après la clôture. Délai minimum : ${d.minimum_required}s.`,
-      }
+      return { title: '⚡ Re-entrée rapide', body: 'À peine sorti, déjà rentré. Laisse retomber la pression.' }
     case 'consecutive_losses':
-      return {
-        title: `📉 ${d.count} pertes d'affilée`,
-        body: 'Pause ou analyse avant de continuer.',
-      }
+      return { title: '📉 Pertes en série', body: 'Plusieurs pertes d\'affilée. Fais une pause avant de continuer.' }
     case 'drawdown_alert':
       return a.level === 3
-        ? { title: '🔴 Drawdown max atteint', body: `STOP. PnL session : ${Math.round(Number(d.current_pnl))}€ (−${d.drawdown_pct}%)` }
-        : { title: `⚠️ Drawdown à ${d.drawdown_pct}% du seuil`, body: `Ralentis — limite journalière : ${d.max_allowed}%` }
+        ? { title: '🔴 Drawdown max atteint', body: 'Tu as atteint ta limite du jour. Coupe — tu as fait ta part.' }
+        : { title: '⚠️ Drawdown', body: 'Tu approches ta limite de perte du jour. Ralentis.' }
     case 'outside_session':
-      return {
-        title: '🕐 Hors session',
-        body: `Trade à ${String(d.entry_time).slice(0, 5)}. Fenêtre : ${String(d.session_start).slice(0, 5)}–${String(d.session_end).slice(0, 5)}.`,
-      }
+      return { title: '🕐 Hors session', body: 'Tu trades hors de ta fenêtre. Suis ton plan, pas l\'impulsion.' }
     case 'overtrading':
       return a.level === 2
-        ? { title: '🚫 Limite de trades atteinte', body: `${d.current}/${d.max} trades — stop pour aujourd'hui.` }
-        : { title: `📊 ${d.current}/${d.max} trades`, body: "Tu approches ta limite de session." }
+        ? { title: '🚫 Limite de trades', body: 'Tu as atteint ta limite du jour. Stop pour aujourd\'hui.' }
+        : { title: '📊 Overtrading', body: 'Tu approches ta limite de trades. Sois sélectif.' }
     case 'stop_not_respected':
-      return {
-        title: '🛑 Stop non respecté',
-        body: `Perte de ${Math.round(Number(d.loss))}€ (${d.loss_pct}%) — au-delà de ton risque de ${d.max_risk_pct}%.`,
-      }
+      return { title: '🛑 Stop non respecté', body: 'Tu as laissé filer au-delà de ton risque. Reprends la main.' }
     case 'risk_exceeded':
-      return {
-        title: '⚖️ Risk dépassé',
-        body: `Risque planifié ${d.risk_pct}% — au-delà de ta limite de ${d.max_risk_pct}% par trade.`,
-      }
+      return { title: '⚖️ Risk dépassé', body: 'Position trop grosse pour ton risque. Réduis la taille.' }
     case 'news_trading':
-      return {
-        title: '📰 Trade pendant news',
-        body: `${d.title} (${d.currency}) à ${d.minutes_from_event} min — volatilité macro.`,
-      }
+      return { title: '📰 Trade pendant news', body: 'Tu trades en pleine annonce — là, c\'est le hasard qui décide.' }
     case 'averaging_down':
-      return {
-        title: '🔻 Acharnement directionnel',
-        body: `Tu réattaques ${d.symbol} ${d.direction} juste après une perte. Stop.`,
-      }
+      return { title: '🔻 Acharnement directionnel', body: 'Tu réattaques une idée qui vient d\'échouer. Stop.' }
     case 'euphoria_sizing':
-      return {
-        title: '🚀 Sizing d\'euphorie',
-        body: `Tu as multiplié ta taille par ${d.ratio} après un gain.`,
-      }
+      return { title: '🚀 Sizing d\'euphorie', body: 'Tu grossis après un gain. La confiance n\'est pas une stratégie.' }
     case 'overleverage':
-      return {
-        title: '⚙️ Sur-exposition',
-        body: `Levier ×${d.leverage} sur ce trade (max ${d.max_leverage}×).`,
-      }
+      return { title: '⚙️ Sur-exposition', body: 'Levier trop élevé sur ce trade. Un petit mouvement suffit à faire mal.' }
     case 'no_stop':
-      return {
-        title: '🚨 Aucun stop-loss',
-        body: 'Trade fermé sans stop défini — risque non borné.',
-      }
+      return { title: '🚨 Aucun stop-loss', body: 'Trade sans stop = risque non borné. Protège-toi.' }
     case 'accelerating_frequency':
-      return {
-        title: '⏱️ Cadence qui s\'emballe',
-        body: `${d.last_gap_sec}s entre tes 2 derniers trades (médiane ${d.median_gap_sec}s) en perdant.`,
-      }
+      return { title: '⏱️ Cadence qui s\'emballe', body: 'Tes entrées s\'accélèrent en perdant. C\'est le tilt — ralentis.' }
     case 'drawdown_override':
-      return {
-        title: '🔴 Drawdown franchi — tu continues',
-        body: `Tu avais déjà −${d.prior_drawdown_pct}% (max ${d.max_allowed}%). Arrête-toi.`,
-      }
+      return { title: '🔴 Limite dépassée', body: 'Tu continues après avoir dépassé ta limite. Arrête-toi maintenant.' }
     case 'cut_winners_hold_losers':
-      return {
-        title: '✂️ Tu coupes tes gains',
-        body: `Gagnants tenus ${d.avg_win_sec}s vs perdants ${d.avg_loss_sec}s.`,
-      }
+      return { title: '✂️ Tu coupes tes gains', body: 'Tu coupes tes gains et gardes tes pertes. Inverse la logique.' }
     case 'end_of_day_desperation':
-      return {
-        title: '🌙 Trade de fin de session',
-        body: `${d.minutes_to_close} min avant la clôture, en perte. Méfie-toi du rattrapage.`,
-      }
+      return { title: '🌙 Fin de session', body: 'Trade de dernière minute en perte. Méfie-toi du rattrapage.' }
     case 'unfamiliar_symbol':
-      return {
-        title: '🧭 Actif inhabituel',
-        body: `${d.symbol} n'est pas dans tes instruments habituels — sûr de ton setup ?`,
-      }
+      return { title: '🧭 Actif inhabituel', body: 'Tu sors de tes instruments habituels — sûr de ton setup ?' }
     default:
       return { title: a.message, body: '' }
   }

@@ -1553,15 +1553,17 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
   // ── MT5 par identifiants (worker Python) ──────────────────────────────────
   const [mt5Status, setMt5Status] = useState<string | null>(null)   // null | pending | connected | auth_failed | error | broker_unavailable
   const [mt5Has, setMt5Has] = useState(false)                        // une connexion existe en base
+  const [mt5Info, setMt5Info] = useState<{ login: string; server: string } | null>(null)
   const [mt5Saving, setMt5Saving] = useState(false)
   useEffect(() => {
     const supabase = createClient()
     let alive = true
     const poll = async () => {
-      const { data } = await supabase.from('mt5_accounts').select('status').eq('user_id', userId)
+      const { data } = await supabase.from('mt5_accounts').select('status, mt5_login, mt5_server').eq('user_id', userId)
       if (!alive || !data) return
       setMt5Has(data.length > 0)
       setMt5Status(data.length > 0 ? (data[0] as any).status ?? 'pending' : null)
+      setMt5Info(data.length > 0 ? { login: (data[0] as any).mt5_login, server: (data[0] as any).mt5_server } : null)
     }
     poll()
     const id = setInterval(poll, 5000)
@@ -1571,7 +1573,7 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
   async function disconnectMt5() {
     setMt5Saving(true)
     await fetch('/api/mt5/disconnect', { method: 'POST' })
-    setMt5Has(false); setMt5Status(null)
+    setMt5Has(false); setMt5Status(null); setMt5Info(null)
     setMt5Saving(false)
   }
 
@@ -1790,6 +1792,15 @@ namespace CaldraBot
                     : 'Tes trades MT5 remontent automatiquement.')
                 : 'Connecte ton compte avec tes identifiants — tes trades remontent automatiquement, sans rien à installer.'}
             </div>
+
+            {mt5Has && mt5Info && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', marginBottom: 12, borderRadius: 7, background: C.sf2, border: `.5px solid ${C.b}`, fontFamily: MONO, fontSize: 11 }}>
+                <span style={{ color: C.te }}>Compte</span>
+                <span style={{ color: C.tm, fontWeight: 600 }}>{mt5Info.login}</span>
+                <span style={{ color: C.b3 }}>·</span>
+                <span style={{ color: C.tm }}>{mt5Info.server}</span>
+              </div>
+            )}
 
             {mt5Has ? (
               <button
