@@ -7,7 +7,7 @@ import type { TradeRow } from '@/components/dashboard/TradeLog'
 import type { DaySession } from './page'
 import { alertLabel } from '@/lib/alertLabels'
 import { alertTechnical } from '@/lib/alertTechnical'
-import { noteOfTheDay } from '@/lib/coachNotes'
+import { randomNote } from '@/lib/coachNotes'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -210,7 +210,7 @@ function BehavioralRadar({ sizing, risk, reentry, drawdown, discipline }: {
       {values.map((v, i) => {
         const [x, y] = pt(i, r + 23)
         const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
-        const vc = v >= 70 ? C.g : v >= 40 ? C.o : C.red
+        const vc = v >= 70 ? C.g : v >= 40 ? C.o : C.tm
         return (
           <g key={i}>
             <text x={x} y={y - 3} textAnchor={anchor} fontSize={10} fill={C.td} fontFamily={MONO}>{labels[i]}</text>
@@ -506,6 +506,7 @@ function Sidebar({ score, alerts, stats, rules }: {
   score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
 }) {
   const C = useContext(ThemeCtx)
+  const [dailyNote] = useState(() => randomNote())
   const drawdownPct = rules
     ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
@@ -563,7 +564,7 @@ function Sidebar({ score, alerts, stats, rules }: {
       {rules && (
         <div style={{ padding: '8px 20px 8px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: C.td }}>Fenêtre</span>
-          <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
+          <span style={{ fontSize: 11, color: C.tm, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
         </div>
       )}
 
@@ -571,7 +572,7 @@ function Sidebar({ score, alerts, stats, rules }: {
       <div style={{ padding: '4px 20px 12px', flexShrink: 0 }}>
         <div style={{ padding: '11px 13px', borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}` }}>
           <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 6 }}>Message du jour</div>
-          <div style={{ fontSize: 12, color: C.tm, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.5 }}>{noteOfTheDay()}</div>
+          <div style={{ fontSize: 12, color: C.tm, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.5 }}>{dailyNote}</div>
         </div>
       </div>
 
@@ -636,7 +637,7 @@ function Sidebar({ score, alerts, stats, rules }: {
                     </div>
                     <div style={{ fontSize: 12.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
                     {alertTechnical(a.type, a.detail) && (
-                      <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO, lineHeight: 1.4, marginTop: 5, paddingTop: 5, borderTop: `.5px solid ${aCol}22` }}>
+                      <div style={{ fontSize: 11.5, color: C.td, fontWeight: 300, lineHeight: 1.4, marginTop: 5, paddingTop: 5, borderTop: `.5px solid ${aCol}22` }}>
                         {alertTechnical(a.type, a.detail)}
                       </div>
                     )}

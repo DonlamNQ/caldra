@@ -31,3 +31,8 @@ export function noteOfTheDay(d: Date = new Date()): string {
   const dayOfYear = Math.floor((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - start) / 86_400_000)
   return COACH_NOTES[dayOfYear % COACH_NOTES.length]
 }
+
+/** Un message au hasard (varie à chaque visite). */
+export function randomNote(): string {
+  return COACH_NOTES[Math.floor(Math.random() * COACH_NOTES.length)]
+}
