@@ -1098,7 +1098,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
 
   const patternCounts: Record<string, number> = {}
   for (const a of allAlerts) {
-    const t = (a.type ?? '').replace(/_/g, ' ')
+    const t = a.type ?? ''
     if (t) patternCounts[t] = (patternCounts[t] ?? 0) + 1
   }
   const patterns = Object.entries(patternCounts).sort((a, b) => b[1] - a[1]).slice(0, 6)
@@ -1323,7 +1323,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
                 const col = pct >= 60 ? C.red : pct >= 30 ? C.o : C.b3
                 return (
                   <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                    <span style={{ fontSize: 12, color: C.td, width: 120, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{type}</span>
+                    <span title={alertLabel(type)} style={{ fontSize: 12, color: C.td, width: 120, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{alertLabel(type)}</span>
                     <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,.05)', borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: col, borderRadius: 2 }} />
                     </div>
