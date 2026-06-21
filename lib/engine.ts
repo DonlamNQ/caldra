@@ -157,8 +157,8 @@ async function saveAndNotify(
   await import('./push').then(({ sendPushToUser }) => {
     const { title, body } = buildPushContent(topPush)
     const suffix = extraCount <= 0 ? ''
-      : extraCount === 1 ? '\n+ 1 autre signal sur ce trade.'
-      : `\n+ ${extraCount} autres signaux sur ce trade.`
+      : extraCount === 1 ? ' · + 1 autre signal sur ce trade.'
+      : ` · + ${extraCount} autres signaux sur ce trade.`
     return sendPushToUser(trade.user_id, title, body + suffix, topPush.level)
   }).catch(() => {})
 
