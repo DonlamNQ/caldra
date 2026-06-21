@@ -55,6 +55,7 @@ export interface JournalTrade {
   pnl: number | null
   entry_time: string
   exit_time: string | null
+  stop_loss: number | null
 }
 
 interface DashboardClientProps {
@@ -1029,10 +1030,11 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
               if (wScores.length === 0) return null
               const avg = Math.round(wScores.reduce((a, b) => a + b) / wScores.length)
               const col = scoreColor(avg, C)
+              const wPnl = w.days.reduce((a, d) => a + (sessionByDate[cellDate(d)]?.pnl ?? 0), 0)
               return (
                 <div key={w.lbl} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px', marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.td }}>{w.lbl}</span>
+                    <span style={{ fontSize: 11, color: C.td }}>{w.lbl} <span style={{ fontFamily: MONO, color: C.pnl }}>· {fmtEur(wPnl)}</span></span>
                     <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: col }}>{avg}</span>
                   </div>
                   <div style={{ height: 2, background: 'rgba(255,255,255,.05)', borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
@@ -1080,7 +1082,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
 }
 
 // ── AnalyticsPanel ─────────────────────────────────────────────────────────────
-function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[] }) {
+function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number }) {
   const C = useContext(ThemeCtx)
   if (sessions.length === 0) {
     return (
@@ -1166,6 +1168,48 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
   const longPnl = longs.reduce((a, t) => a + (t.pnl ?? 0), 0)
   const shortPnl = shorts.reduce((a, t) => a + (t.pnl ?? 0), 0)
 
+  // ── Statistiques de journal supplémentaires ──────────────────────────────────
+  const maxDDpct = accountSize > 0 ? (maxDD / accountSize) * 100 : 0
+  // Sharpe / Sortino approximatifs (sur le P&L par trade, non annualisés)
+  const pnls = jt.map(t => t.pnl ?? 0)
+  const mean = nJ > 0 ? pnls.reduce((a, b) => a + b, 0) / nJ : 0
+  const sd = nJ > 0 ? Math.sqrt(pnls.reduce((a, b) => a + (b - mean) ** 2, 0) / nJ) : 0
+  const downsideDev = nJ > 0 ? Math.sqrt(pnls.reduce((a, b) => a + Math.min(0, b) ** 2, 0) / nJ) : 0
+  const sharpe = sd > 0 ? mean / sd : 0
+  const sortino = downsideDev > 0 ? mean / downsideDev : 0
+  // P&L par heure d'entrée (heure locale du navigateur)
+  const byHour: Record<number, { pnl: number; n: number }> = {}
+  for (const t of jt) {
+    const h = new Date(t.entry_time).getHours()
+    byHour[h] = byHour[h] || { pnl: 0, n: 0 }
+    byHour[h].pnl += t.pnl ?? 0; byHour[h].n += 1
+  }
+  const hours = Object.entries(byHour).map(([h, d]) => ({ h: Number(h), ...d })).sort((a, b) => a.h - b.h)
+  const hourMaxAbs = Math.max(1, ...hours.map(x => Math.abs(x.pnl)))
+  // Distribution des R réalisés — uniquement pour les trades dont le stop est renseigné.
+  // R = gain de prix dans le sens du trade ÷ distance au stop (la taille/valeur de point
+  // se simplifie, pas besoin du multiplicateur de contrat).
+  const rArr = jt.reduce<number[]>((acc, t) => {
+    const sl = Number(t.stop_loss), entry = Number(t.entry_price), exit = Number(t.exit_price)
+    if (t.stop_loss != null && t.entry_price != null && t.exit_price != null && Math.abs(entry - sl) > 0) {
+      const dir = t.direction === 'short' ? -1 : 1
+      acc.push(((exit - entry) * dir) / Math.abs(entry - sl))
+    }
+    return acc
+  }, [])
+  const rBuckets = ([
+    { lbl: '≤-2R', lo: -Infinity, hi: -2 },
+    { lbl: '-2..-1', lo: -2, hi: -1 },
+    { lbl: '-1..0', lo: -1, hi: 0 },
+    { lbl: '0..1', lo: 0, hi: 1 },
+    { lbl: '1..2', lo: 1, hi: 2 },
+    { lbl: '2..3', lo: 2, hi: 3 },
+    { lbl: '≥3R', lo: 3, hi: Infinity },
+  ]).map(b => ({ ...b, n: rArr.filter(r => r > b.lo && r <= b.hi).length }))
+  const rMax = Math.max(1, ...rBuckets.map(b => b.n))
+  const avgR = rArr.length > 0 ? rArr.reduce((a, b) => a + b, 0) / rArr.length : 0
+  const fmtR = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
@@ -1185,7 +1229,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
           { type: 'donut', lbl: 'Win rate', frac: jWinRate, sub: `${jWins.length}G / ${jLosses.length}P` },
           { type: 'val', val: fmtPF(profitFactor), lbl: 'Profit factor', hint: 'gains ÷ pertes', col: C.tx },
           { type: 'val', val: fmtEur(expectancy), lbl: 'Gain attendu', hint: 'par trade', col: pnlCol(expectancy) },
-          { type: 'val', val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: 'pire creux', col: C.tm },
+          { type: 'val', val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: maxDD > 0 ? `−${maxDDpct.toFixed(1)}% du capital` : 'pire creux', col: C.tm },
         ] as any[]).map((it, i) => (
           <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden', display: it.type === 'donut' ? 'flex' : 'block', alignItems: 'center', gap: 12 }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
@@ -1380,6 +1424,82 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
               </div>
             )
           })()}
+        </div>
+      </div>
+
+      {/* Statistiques avancées (journal) */}
+      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, flexShrink: 0 }}>
+        {([
+          { lbl: 'Gain moyen', val: jWins.length > 0 ? fmtEur(avgWin) : '—', col: jWins.length > 0 ? GREEN : C.tm, hint: `${jWins.length} gagnants` },
+          { lbl: 'Perte moyenne', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', col: jLosses.length > 0 ? RED : C.tm, hint: `${jLosses.length} perdants` },
+          { lbl: 'R:R réalisé', val: avgLoss > 0 ? fmtPF(payoff) : '—', col: C.tx, hint: 'gain moy. ÷ perte moy.' },
+          { lbl: 'Sharpe', val: nJ > 1 ? sharpe.toFixed(2) : '—', col: C.tx, hint: 'par trade' },
+          { lbl: 'Sortino', val: nJ > 1 ? sortino.toFixed(2) : '—', col: C.tx, hint: 'par trade' },
+        ] as any[]).map((it, i) => (
+          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+            <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
+            <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: it.col }}>{it.val}</div>
+            <div style={{ fontSize: 10, color: C.td, marginTop: 5 }}>{it.hint}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Heures d'entrée | Distribution des R */}
+      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
+
+        {/* P&L par heure d'entrée */}
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>P&L par heure d'entrée</div>
+            <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>heure locale</div>
+          </div>
+          {hours.length === 0 ? (
+            <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun trade fermé.</div>
+          ) : (() => {
+            const W = 600, H = 110, PYT = 8, PYB = 8, DH = H - PYT - PYB, mid = PYT + DH / 2
+            const n = hours.length, gap = W / n, bw = Math.min(gap * 0.6, 26)
+            return (
+              <div>
+                <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 110 }} preserveAspectRatio="none">
+                  <line x1={0} y1={mid} x2={W} y2={mid} stroke={C.b} strokeWidth={0.5} strokeDasharray="4 6" />
+                  {hours.map((x, i) => {
+                    const h = Math.abs(x.pnl) / hourMaxAbs * (DH / 2), px = i * gap + (gap - bw) / 2, up = x.pnl >= 0
+                    return <rect key={x.h} x={px} y={up ? mid - h : mid} width={bw} height={Math.max(1, h)} rx={1} fill={BAR} opacity={up ? 0.9 : 0.45} />
+                  })}
+                </svg>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${n}, 1fr)`, marginTop: 5 }}>
+                  {hours.map(x => <span key={x.h} style={{ textAlign: 'center' as const, fontSize: 8.5, color: C.te, fontFamily: MONO }}>{x.h}h</span>)}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+
+        {/* Distribution des R réalisés */}
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Distribution des R réalisés</div>
+            {rArr.length > 0 && <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>moy. {fmtR(avgR)} · {rArr.length} tr.</div>}
+          </div>
+          {rArr.length === 0 ? (
+            <div style={{ fontSize: 12.5, color: C.te, fontStyle: 'italic', lineHeight: 1.5 }}>Renseigne le stop de tes trades pour voir la distribution des R (gain réalisé rapporté au risque entrée → stop).</div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${rBuckets.length}, 1fr)`, gap: 5, alignItems: 'end', height: 110 }}>
+              {rBuckets.map(b => {
+                const h = b.n / rMax * 78, neg = b.hi <= 0
+                return (
+                  <div key={b.lbl} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                    <span style={{ fontSize: 9, fontFamily: MONO, color: C.td, marginBottom: 3 }}>{b.n || ''}</span>
+                    <div style={{ width: '64%', height: Math.max(2, h), background: BAR, borderRadius: 2, opacity: neg ? 0.45 : 0.9 }} />
+                    <span style={{ fontSize: 8, color: 'rgba(255,255,255,.3)', fontFamily: MONO, marginTop: 5 }}>{b.lbl}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -3211,7 +3331,7 @@ export default function DashboardClient({
               <CalendrierPanel sessions={historicalSessions} />
             )}
             {activeTab === 'analytics' && (
-              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} />
+              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={tradingRules?.account_size || 10000} />
             )}
             {activeTab === 'rapports' && <RapportsPanel />}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} />}

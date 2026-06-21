@@ -57,7 +57,7 @@ export default async function DashboardPage() {
       .order('level', { ascending: false }).order('created_at', { ascending: false }),
     service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', today)
       .order('entry_time', { ascending: false }).limit(50),
-    service.from('trades').select('id,symbol,direction,size,entry_price,exit_price,pnl,entry_time,exit_time')
+    service.from('trades').select('id,symbol,direction,size,entry_price,exit_price,pnl,entry_time,exit_time,stop_loss')
       .eq('user_id', user.id).gte('entry_time', thirtyDaysAgo).lt('entry_time', today)
       .order('entry_time'),
     service.from('alerts').select('session_date,level,type,message')
@@ -128,6 +128,7 @@ export default async function DashboardPage() {
       symbol: t.symbol, direction: t.direction, size: t.size,
       entry_price: t.entry_price ?? null, exit_price: t.exit_price ?? null,
       pnl: t.pnl ?? null, entry_time: t.entry_time, exit_time: t.exit_time ?? null,
+      stop_loss: t.stop_loss ?? null,
     }))
 
   const meta = user.user_metadata ?? {}
