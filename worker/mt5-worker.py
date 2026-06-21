@@ -66,7 +66,10 @@ SEEN = {}
 # retenter leur login à CHAQUE tour (ça ralentit toute la boucle) ; on les retente
 # seulement toutes les BACKOFF_SECONDS. user_id -> timestamp avant lequel on saute.
 BACKOFF = {}
-BACKOFF_SECONDS = 120
+# Broker non installé : le compte ne se débloquera qu'après installation du terminal de
+# marque + restart du worker (qui vide ce dict). Inutile de le retenter souvent — chaque
+# tentative coûte un timeout ET peut perturber le terminal. 30 min suffit largement.
+BACKOFF_SECONDS = int(os.environ.get("MT5_BROKER_BACKOFF_SECONDS", "1800"))
 FAIL_BACKOFF_SECONDS = 60       # échec creds/terminal : ne pas retenter à chaque tour (sinon ça stalle la boucle)
 
 # Login borné : le défaut MT5 (60 s) fait que CHAQUE compte en échec bloque la boucle
