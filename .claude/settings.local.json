@@ -89,7 +89,10 @@
       "Bash(git *)",
       "Bash(cmd /c \"type C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5.log 2>nul | more +0\")",
       "Bash(powershell -Command \"Get-Content C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5.log -Tail 30\")",
-      "Bash(py -m py_compile worker/mt5-worker.py)"
+      "Bash(py -m py_compile worker/mt5-worker.py)",
+      "Bash(python -m py_compile mt5-worker.py)",
+      "Bash(python3 -m py_compile worker/mt5-worker.py)",
+      "PowerShell(python -m py_compile \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5-worker.py\"; if \\($?\\) { \"OK py_compile\" })"
     ]
   },
   "hooks": {
