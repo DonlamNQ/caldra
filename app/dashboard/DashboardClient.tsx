@@ -1184,7 +1184,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
 
       {/* Bandeau : chiffres clés du journal (couleurs vert/rouge + donut win rate) */}
-      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, flexShrink: 0 }}>
+      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, flexShrink: 0 }}>
         {([
           { type: 'val', val: fmtEur(grossProfit - grossLoss), lbl: 'P&L net', hint: `${nJ} trades`, col: pnlCol(grossProfit - grossLoss) },
           { type: 'donut', lbl: 'Win rate', frac: jWinRate, sub: `${jWins.length}G / ${jLosses.length}P` },
@@ -3088,7 +3088,7 @@ export default function DashboardClient({
           .panel-container{overflow:visible!important;height:auto!important;min-height:0!important;flex:none!important;display:block!important}
           .panel-container>*{height:auto!important;min-height:0!important;overflow:visible!important;flex:none!important}
           .resp-grid-2{grid-template-columns:1fr!important}
-          .resp-grid-3{grid-template-columns:1fr!important}
+          .kpi-grid{grid-template-columns:repeat(2,1fr)!important}
           .session-main-grid{grid-template-columns:1fr!important}
           .sentinel-grid{grid-template-columns:1fr!important}
           .sentinel-sidebar{display:none!important}
