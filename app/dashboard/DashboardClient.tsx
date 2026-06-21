@@ -1170,13 +1170,6 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
 
   // ── Statistiques de journal supplémentaires ──────────────────────────────────
   const maxDDpct = accountSize > 0 ? (maxDD / accountSize) * 100 : 0
-  // Sharpe / Sortino approximatifs (sur le P&L par trade, non annualisés)
-  const pnls = jt.map(t => t.pnl ?? 0)
-  const mean = nJ > 0 ? pnls.reduce((a, b) => a + b, 0) / nJ : 0
-  const sd = nJ > 0 ? Math.sqrt(pnls.reduce((a, b) => a + (b - mean) ** 2, 0) / nJ) : 0
-  const downsideDev = nJ > 0 ? Math.sqrt(pnls.reduce((a, b) => a + Math.min(0, b) ** 2, 0) / nJ) : 0
-  const sharpe = sd > 0 ? mean / sd : 0
-  const sortino = downsideDev > 0 ? mean / downsideDev : 0
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
@@ -1396,13 +1389,11 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
       </div>
 
       {/* Statistiques avancées (journal) */}
-      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, flexShrink: 0 }}>
+      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, flexShrink: 0 }}>
         {([
           { lbl: 'Gain moyen', val: jWins.length > 0 ? fmtEur(avgWin) : '—', col: jWins.length > 0 ? GREEN : C.tm, hint: `${jWins.length} gagnants` },
           { lbl: 'Perte moyenne', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', col: jLosses.length > 0 ? RED : C.tm, hint: `${jLosses.length} perdants` },
           { lbl: 'R:R réalisé', val: avgLoss > 0 ? fmtPF(payoff) : '—', col: C.tx, hint: 'gain moy. ÷ perte moy.' },
-          { lbl: 'Sharpe', val: nJ > 1 ? sharpe.toFixed(2) : '—', col: C.tx, hint: 'par trade' },
-          { lbl: 'Sortino', val: nJ > 1 ? sortino.toFixed(2) : '—', col: C.tx, hint: 'par trade' },
         ] as any[]).map((it, i) => (
           <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
