@@ -62,6 +62,12 @@ supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 # user_id -> set des tickets de sortie déjà traités cette session.
 SEEN = {}
 
+# Backoff des comptes injoignables (broker non installé → -10005 lent). On évite de
+# retenter leur login à CHAQUE tour (ça ralentit toute la boucle) ; on les retente
+# seulement toutes les BACKOFF_SECONDS. user_id -> timestamp avant lequel on saute.
+BACKOFF = {}
+BACKOFF_SECONDS = 120
+
 
 def decrypt(enc_b64: str) -> str:
     """Déchiffre le mot de passe (format iv(12)||ciphertext||tag(16), AES-256-GCM)."""
@@ -129,6 +135,11 @@ def process_account(row: dict):
     if BROKER_PREFIXES and not any(server.lower().startswith(p) for p in BROKER_PREFIXES):
         return
 
+    # Compte injoignable récemment (broker non installé) → on saute jusqu'à expiration
+    # du backoff, pour ne pas subir son timeout de login à chaque tour.
+    if time.time() < BACKOFF.get(user_id, 0):
+        return
+
     try:
         password = decrypt(row["password_enc"])
     except Exception as e:
@@ -153,6 +164,7 @@ def process_account(row: dict):
         elif code == -10005:
             print(f"[mt5] broker non pris en charge par ce terminal — compte {login} ({server}): {code} {msg}")
             set_status(user_id, "broker_unavailable")
+            BACKOFF[user_id] = time.time() + BACKOFF_SECONDS  # ne pas re-tenter à chaque tour
             return
         # -6 = Authorization failed : vrais identifiants invalides.
         elif code == -6:
