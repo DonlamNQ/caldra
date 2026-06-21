@@ -1377,7 +1377,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
                   return (
                     <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
                       <span style={{ fontSize: 9, fontFamily: MONO, color: pnlCol(v), marginBottom: 3 }}>{v >= 0 ? '+' : ''}{Math.round(v)}</span>
-                      <div style={{ width: '66%', height: Math.max(2, h), background: BAR, borderRadius: 2, opacity: up ? 0.9 : 0.45 }} />
+                      <div style={{ width: '66%', height: Math.max(2, h), background: up ? GREEN : RED, borderRadius: 2, opacity: 0.9 }} />
                       <span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: MONO, marginTop: 5 }}>{name}</span>
                     </div>
                   )
