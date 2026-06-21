@@ -25,6 +25,7 @@ Variables d'environnement (fichier .env à côté, ou env système) :
 
 import os
 import time
+import json
 import base64
 import hashlib
 from datetime import datetime, timedelta, timezone
@@ -71,6 +72,31 @@ BACKOFF = {}
 # tentative coûte un timeout ET peut perturber le terminal. 30 min suffit largement.
 BACKOFF_SECONDS = int(os.environ.get("MT5_BROKER_BACKOFF_SECONDS", "1800"))
 FAIL_BACKOFF_SECONDS = 60       # échec creds/terminal : ne pas retenter à chaque tour (sinon ça stalle la boucle)
+
+# Persistance du backoff : run.bat relance le worker à chaque crash (terminal instable),
+# ce qui vidait BACKOFF en mémoire → re-login -10005 à CHAQUE restart → spam + terminal
+# encore plus déstabilisé. On sauve/recharge le dict sur disque pour que le skip 30 min
+# survive aux redémarrages.
+BACKOFF_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backoff.json")
+
+
+def load_backoff():
+    try:
+        with open(BACKOFF_FILE, "r", encoding="utf-8") as f:
+            now = time.time()
+            for uid, ts in json.load(f).items():
+                if ts > now:           # on ignore les backoffs déjà expirés
+                    BACKOFF[uid] = ts
+    except (FileNotFoundError, ValueError):
+        pass
+
+
+def save_backoff():
+    try:
+        with open(BACKOFF_FILE, "w", encoding="utf-8") as f:
+            json.dump(BACKOFF, f)
+    except Exception as e:
+        print("[mt5] sauvegarde backoff échec:", e)
 
 # Login borné : le défaut MT5 (60 s) fait que CHAQUE compte en échec bloque la boucle
 # ~1 min → latence de plusieurs minutes pour les comptes sains. 8 s suffit largement.
@@ -147,10 +173,15 @@ def process_account(row: dict):
     if BROKER_PREFIXES and not any(server.lower().startswith(p) for p in BROKER_PREFIXES):
         return
 
-    # Compte fraîchement (re)connecté via Caldra (last_sync_at NULL) → on purge un
-    # éventuel backoff pour le retenter immédiatement.
-    if row.get("last_sync_at") is None:
-        BACKOFF.pop(user_id, None)
+    # Compte fraîchement (re)connecté via Caldra → on purge un éventuel backoff pour le
+    # retenter immédiatement. La route /connect réinsère la ligne avec status=NULL : c'est
+    # CE signal qui distingue une vraie reconnexion d'un compte durablement indisponible.
+    # ⚠️ Un compte broker_unavailable/auth_failed garde last_sync_at NULL en PERMANENCE :
+    # se fier au seul last_sync_at re-purgeait son backoff à chaque tour → -10005 toutes
+    # les 5 s. On exclut donc ces statuts terminaux.
+    if row.get("last_sync_at") is None and row.get("status") not in ("broker_unavailable", "auth_failed"):
+        if BACKOFF.pop(user_id, None) is not None:
+            save_backoff()
 
     # Compte injoignable récemment (broker non installé / échec) → on saute jusqu'à
     # expiration du backoff, pour ne pas subir son timeout de login à chaque tour.
@@ -183,6 +214,7 @@ def process_account(row: dict):
                     print(f"[mt5] login échec (terminal injoignable) compte {login}: {code} {msg}")
                     set_status(user_id, "error")
                     BACKOFF[user_id] = time.time() + FAIL_BACKOFF_SECONDS
+                    save_backoff()
                     return
             # -10005 = IPC timeout : ce terminal ne connaît pas ce serveur (mauvais broker)
             # ou il est occupé. Ce N'EST PAS un problème d'identifiants → surtout ne pas
@@ -191,12 +223,14 @@ def process_account(row: dict):
                 print(f"[mt5] broker non pris en charge par ce terminal — compte {login} ({server}): {code} {msg}")
                 set_status(user_id, "broker_unavailable")
                 BACKOFF[user_id] = time.time() + BACKOFF_SECONDS  # ne pas re-tenter à chaque tour
+                save_backoff()
                 return
             # -6 = Authorization failed : vrais identifiants invalides.
             elif code == -6:
                 print(f"[mt5] identifiants refusés compte {login} ({server}): {code} {msg}")
                 set_status(user_id, "auth_failed")
                 BACKOFF[user_id] = time.time() + FAIL_BACKOFF_SECONDS
+                save_backoff()
                 return
             # Tout le reste = transitoire → backoff court (pas « refusés »), pour ne pas
             # staller la boucle en le retentant à chaque tour.
@@ -204,6 +238,7 @@ def process_account(row: dict):
                 print(f"[mt5] login échec compte {login} ({server}): {code} {msg}")
                 set_status(user_id, "error")
                 BACKOFF[user_id] = time.time() + FAIL_BACKOFF_SECONDS
+                save_backoff()
                 return
         CURRENT_LOGIN = login
     t_login = time.time() - t_login0
@@ -289,6 +324,7 @@ def main():
         print("[mt5] initialize échec — terminal injoignable, nouvelle tentative dans 10s:", mt5.last_error())
         time.sleep(10)
     print("[mt5] terminal initialisé — worker démarré")
+    load_backoff()   # reprend les skips en cours (survit aux restarts run.bat)
 
     while True:
         t_cycle = time.time()
@@ -296,7 +332,7 @@ def main():
         try:
             ensure_init()   # garde le terminal vivant / le relance s'il a été fermé
             rows = supabase.table("mt5_accounts").select(
-                "user_id, mt5_login, mt5_server, password_enc, ingest_key, last_sync_at"
+                "user_id, mt5_login, mt5_server, password_enc, ingest_key, last_sync_at, status"
             ).execute().data or []
             if not rows:
                 print("[mt5] aucun compte enregistré — en attente")

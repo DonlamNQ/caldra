@@ -23,5 +23,6 @@ next-env.d.ts
 worker/.env
 worker/start.bat
 worker/*.log
+worker/backoff.json
 worker/__pycache__/
 worker/node_modules/
