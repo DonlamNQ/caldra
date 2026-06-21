@@ -99,8 +99,11 @@ def save_backoff():
         print("[mt5] sauvegarde backoff échec:", e)
 
 # Login borné : le défaut MT5 (60 s) fait que CHAQUE compte en échec bloque la boucle
-# ~1 min → latence de plusieurs minutes pour les comptes sains. 8 s suffit largement.
-LOGIN_TIMEOUT_MS = int(os.environ.get("MT5_LOGIN_TIMEOUT_MS", "8000"))
+# ~1 min → latence de plusieurs minutes pour les comptes sains. Mais 8 s était trop juste :
+# certains serveurs (ICMarkets demo p.ex.) mettent 6–8 s à authentifier → faux -10005.
+# 12 s laisse de la marge ; un compte vraiment mort est de toute façon mis en backoff après
+# un échec, donc il ne stalle pas la boucle à chaque tour.
+LOGIN_TIMEOUT_MS = int(os.environ.get("MT5_LOGIN_TIMEOUT_MS", "12000"))
 
 # Compte actuellement loggé dans le terminal → évite un re-login inutile (coûteux) quand
 # le tour suivant retombe sur le même compte (cas fréquent : un seul compte sain restant).
@@ -219,7 +222,19 @@ def process_account(row: dict):
             # -10005 = IPC timeout : ce terminal ne connaît pas ce serveur (mauvais broker)
             # ou il est occupé. Ce N'EST PAS un problème d'identifiants → surtout ne pas
             # afficher « refusés » au client. Statut dédié = broker pas encore pris en charge.
+            # -10005 = IPC timeout. Deux sens TRÈS différents → on tranche via last_sync_at :
+            #   • compte JAMAIS synchronisé (last_sync_at NULL) → ce terminal ne connaît pas
+            #     ce broker → broker_unavailable + backoff long (30 min).
+            #   • compte DÉJÀ synchronisé → login lent / terminal occupé (PAS un mauvais
+            #     broker) → backoff COURT, on NE le marque PAS indisponible. Sinon on
+            #     suspendait 30 min un compte valide juste parce qu'un login a dépassé le
+            #     timeout — c'est ce qui sautait ICMarketsEU-Demo après un restart.
             elif code == -10005:
+                if row.get("last_sync_at") is not None:
+                    print(f"[mt5] login lent (IPC timeout) compte {login} ({server}) — retry bientôt: {code} {msg}")
+                    BACKOFF[user_id] = time.time() + FAIL_BACKOFF_SECONDS
+                    save_backoff()
+                    return
                 print(f"[mt5] broker non pris en charge par ce terminal — compte {login} ({server}): {code} {msg}")
                 set_status(user_id, "broker_unavailable")
                 BACKOFF[user_id] = time.time() + BACKOFF_SECONDS  # ne pas re-tenter à chaque tour
