@@ -3017,7 +3017,7 @@ export default function DashboardClient({
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0;text-decoration:none}
         a{text-decoration:none!important}
-        html,body{height:100%;background:${C.bg}}
+        html,body{height:100%;background:${C.bg};overflow-x:hidden;max-width:100%}
         ::-webkit-scrollbar{width:0;height:0}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.15}}
         @keyframes sli{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
@@ -3039,7 +3039,9 @@ export default function DashboardClient({
         .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
         .c-row:hover{background:${C.b}!important}
         @media(max-width:768px){
-          .app-root{height:auto!important;min-height:100dvh}
+          .app-root{height:auto!important;min-height:100dvh;max-width:100vw;overflow-x:hidden}
+          .topbar{width:100%;max-width:100vw}
+          .notif-bar{order:2;width:100%;justify-content:flex-start!important;padding:6px 12px!important;border-top:.5px solid rgba(255,255,255,.055)}
           .topbar{flex-wrap:wrap;height:auto!important;min-height:46px}
           .nav-wrap{position:static!important;left:auto!important;transform:none!important;order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:5px 8px;border-top:.5px solid rgba(255,255,255,.055)}
           .nav-wrap::-webkit-scrollbar{display:none}
@@ -3088,7 +3090,7 @@ export default function DashboardClient({
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
+      <div className="app-root" style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
         {/* ── Top bar ── */}
         <div className="topbar" style={{ display: 'flex', alignItems: 'center', height: 46, borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0, position: 'relative' }}>
@@ -3098,21 +3100,21 @@ export default function DashboardClient({
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 5, textTransform: 'uppercase' as const, color: C.tx }}>Cald<span style={{ color: C.red }}>ra</span></span>
           </div>
           {/* Statut notifications — déplacé ici (haut à gauche) */}
-          <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', flexShrink: 0 }}>
+          <div className="notif-bar" style={{ display: 'flex', alignItems: 'center', padding: '0 16px', flexShrink: 0 }}>
             {notifPerm === 'granted' ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
-                <span className="date-lbl" style={{ fontSize: 10, color: C.td, fontFamily: MONO }}>Notifications actives</span>
+                <span className="notif-lbl" style={{ fontSize: 10, color: C.td, fontFamily: MONO }}>Notifications actives</span>
               </div>
             ) : notifPerm === 'denied' ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569' }} />
-                <span className="date-lbl" style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>Notifications désactivées</span>
+                <span className="notif-lbl" style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>Notifications désactivées</span>
               </div>
             ) : (
               <button onClick={requestNotifPermission}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, fontSize: 10, fontFamily: MONO, cursor: 'pointer', animation: 'pulse 2s infinite' }}>
-                🔔 <span className="date-lbl">Activer les notifications</span>
+                🔔 <span className="notif-lbl">Activer les notifications</span>
               </button>
             )}
           </div>
