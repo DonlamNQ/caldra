@@ -165,6 +165,7 @@ def process_account(row: dict):
     # Fast path : si le terminal est déjà loggé sur CE compte, on saute le re-login
     # (coûteux). Énorme gain de latence quand il ne reste qu'un compte sain à traiter.
     global CURRENT_LOGIN
+    t_login0 = time.time()
     info = mt5.account_info() if CURRENT_LOGIN == login else None
     if not (info is not None and getattr(info, "login", None) == login):
         # timeout borné (LOGIN_TIMEOUT_MS) : un login qui échoue ne bloque plus la boucle.
@@ -202,12 +203,18 @@ def process_account(row: dict):
                 BACKOFF[user_id] = time.time() + FAIL_BACKOFF_SECONDS
                 return
         CURRENT_LOGIN = login
+    t_login = time.time() - t_login0
 
     now = datetime.now(timezone.utc)
 
     # Fenêtre large pour apparier les entrées (l'heure MT5 est en heure-broker, on
     # ne s'y fie donc PAS — la dédup se fait par ticket, insensible au fuseau).
+    t_histo0 = time.time()
     deals = mt5.history_deals_get(now - timedelta(days=3), now + timedelta(days=1))
+    t_histo = time.time() - t_histo0
+    # Chrono : repère le(s) compte(s) qui plombent la rotation (login lent / re-sync histo).
+    if t_login + t_histo > 2:
+        print(f"[mt5] compte {login} lent: login {t_login:.1f}s + histo {t_histo:.1f}s")
     if deals is None:
         set_status(user_id, "connected", synced=True)
         return
@@ -281,6 +288,8 @@ def main():
     print("[mt5] terminal initialisé — worker démarré")
 
     while True:
+        t_cycle = time.time()
+        rows = []
         try:
             ensure_init()   # garde le terminal vivant / le relance s'il a été fermé
             rows = supabase.table("mt5_accounts").select(
@@ -295,6 +304,10 @@ def main():
                     print("[mt5] erreur compte:", e)
         except Exception as e:
             print("[mt5] erreur boucle:", e)
+        dt = time.time() - t_cycle
+        # Chrono cycle complet : si > 6s, la rotation des comptes est le goulot de latence.
+        if dt > 6:
+            print(f"[mt5] cycle complet: {dt:.1f}s pour {len(rows)} comptes")
         time.sleep(POLL_SECONDS)
 
 
