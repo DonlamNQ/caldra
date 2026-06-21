@@ -71,7 +71,7 @@ export const ALERT_CONSEQUENCES: Record<string, string[]> = {
   ],
   overleverage: [
     "Le levier amplifie tout — surtout tes erreurs. Un petit mouvement suffit à liquider.",
-    "Trop de levier, c'est rouler à 200 sans ceinture : ça va vite jusqu'au mur.",
+    "Plus le levier est élevé, plus une faible variation de prix suffit à entamer ton capital.",
     "L'effet de levier flatte l'ego et vide les comptes.",
   ],
   no_stop: [
