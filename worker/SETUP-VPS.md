@@ -105,5 +105,32 @@ Pour prendre en charge un nouveau broker quand un client arrive :
 > Le worker principal (sans `MT5_BROKER`) traite tout le reste et marque
 > `broker_unavailable` les comptes dont aucun terminal ne gère le broker.
 
+## Dépannage — `-10005 IPC timeout` (worker bloqué à l'init)
+
+`initialize échec — terminal injoignable (-10005)` en boucle = le module Python
+n'arrive pas à parler au terminal. Causes, par fréquence :
+
+1. **Terminal ouvert mais PAS connecté à un compte** (cause n°1, et celle qui revient
+   après un reboot). MT5 doit être loggé à un compte (n'importe lequel) avec des cours
+   qui bougent, sinon `initialize()` échoue toujours. → Navigateur (`Ctrl+N`) → Comptes
+   → double-clic sur le compte. **Cocher « Sauvegarder les informations du compte »**
+   pour qu'il se reconnecte seul au lancement (sinon chaque reboot = re-déconnecté).
+2. **Algo Trading désactivé** (bouton rouge dans la barre d'outils) → l'API Python
+   refuse de s'attacher. Le passer au vert (Outils → Options → Expert Advisors →
+   « Autoriser le trading algorithmique »).
+3. **Niveaux de privilège différents** entre terminal et worker : le tube IPC exige
+   que les DEUX soient au même niveau (les deux normaux, ou les deux admin). Terminal
+   ouvert au double-clic = normal → lancer le worker en PowerShell **normal** aussi.
+4. **`MT5_TERMINAL_PATH` pointe sur un autre MT5** que celui ouvert (plusieurs installs).
+5. **Build du terminal auto-mis à jour**, plus récent que le paquet Python →
+   `pip install --upgrade MetaTrader5`.
+
+Test rapide (PowerShell, terminal ouvert ET connecté) :
+```powershell
+python -c "import MetaTrader5 as mt5; print(mt5.initialize(), mt5.last_error())"
+```
+→ doit afficher `True (1, 'Success')`. Tant que c'est `False (-10005, ...)`, le worker
+ne peut rien faire : régler ça avant tout autre diagnostic.
+
 Brokers cœur de cible à installer au fur et à mesure : IC Markets, Exness,
 Pepperstone, XM + prop firms FTMO, FundedNext, The5ers, E8, FundingPips.
