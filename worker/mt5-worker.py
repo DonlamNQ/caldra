@@ -266,7 +266,9 @@ def process_account(row: dict):
     deals = mt5.history_deals_get(now - timedelta(days=3), now + timedelta(days=1))
     t_histo = time.time() - t_histo0
     # Chrono : repère le(s) compte(s) qui plombent la rotation (login lent / re-sync histo).
-    if t_login + t_histo > 2:
+    # Seuil à 5 s : ~2 s par login est normal au changement de compte sur un terminal
+    # partagé — on ne loggue que les vrais pics (≥5 s), pas le régime nominal.
+    if t_login + t_histo > 5:
         print(f"[mt5] compte {login} lent: login {t_login:.1f}s + histo {t_histo:.1f}s")
     if deals is None:
         set_status(user_id, "connected", synced=True)
