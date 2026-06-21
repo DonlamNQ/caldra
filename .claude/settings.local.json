@@ -94,7 +94,9 @@
       "Bash(python3 -m py_compile worker/mt5-worker.py)",
       "PowerShell(python -m py_compile \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5-worker.py\"; if \\($?\\) { \"OK py_compile\" })",
       "PowerShell(python -m py_compile \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5-worker.py\"; if \\($?\\) { \"OK\" })",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(echo \"C:\\\\\\\\caldra-worker existe \\(VPS\\)\")",
+      "Bash(echo \"pas C:\\\\\\\\caldra-worker ici \\(machine dev\\)\")"
     ]
   },
   "hooks": {
