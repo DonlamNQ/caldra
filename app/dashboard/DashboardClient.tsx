@@ -1162,7 +1162,6 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
   const BAR = C.b3            // barres neutres
   const symMaxAbs = Math.max(1, ...bySymbol.map(([, d]) => Math.abs(d.pnl)))
   // Données des diagrammes additionnels
-  const dailyPnl = sessions.map(s => ({ date: s.date, pnl: s.pnl }))
   const dowPnl = [0, 1, 2, 3, 4].map(i => (byDow[i] ?? []).reduce((a, d) => a + d.pnl, 0))
   const longPnl = longs.reduce((a, t) => a + (t.pnl ?? 0), 0)
   const shortPnl = shorts.reduce((a, t) => a + (t.pnl ?? 0), 0)
@@ -1336,28 +1335,6 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
           )}
         </div>
       </div>
-
-      {/* PnL quotidien (barres vert/rouge) */}
-      {dailyPnl.length > 0 && (
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 12 }}>PnL quotidien</div>
-          {(() => {
-            const maxAbs = Math.max(1, ...dailyPnl.map(d => Math.abs(d.pnl)))
-            const W = 600, H = 120, PYT = 8, PYB = 8, DH = H - PYT - PYB, mid = PYT + DH / 2
-            const n = dailyPnl.length, gap = W / n, bw = gap * 0.55
-            return (
-              <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 120 }} preserveAspectRatio="none">
-                <line x1={0} y1={mid} x2={W} y2={mid} stroke="rgba(255,255,255,.1)" strokeWidth={0.5} strokeDasharray="4 6" />
-                {dailyPnl.map((d, i) => {
-                  const h = Math.abs(d.pnl) / maxAbs * (DH / 2), x = i * gap + (gap - bw) / 2, up = d.pnl >= 0
-                  return <rect key={i} x={x} y={up ? mid - h : mid} width={bw} height={Math.max(1, h)} rx={1} fill={BAR} opacity={up ? 0.9 : 0.45} />
-                })}
-              </svg>
-            )
-          })()}
-        </div>
-      )}
 
       {/* Long vs Short | PnL par jour de semaine */}
       <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
