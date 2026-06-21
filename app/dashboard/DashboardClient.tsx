@@ -1183,14 +1183,18 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
 
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
 
-      {/* Bandeau : chiffres clés du journal (couleurs vert/rouge + donut win rate) */}
-      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, flexShrink: 0 }}>
+      {/* Bandeau unique : chiffres clés du journal. R:R placé juste après Drawdown max
+          → sur mobile (2 par rangée) plus de case vide ; desktop en 4 par rangée. */}
+      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, flexShrink: 0 }}>
         {([
           { type: 'val', val: fmtEur(grossProfit - grossLoss), lbl: 'P&L net', hint: `${nJ} trades`, col: pnlCol(grossProfit - grossLoss) },
           { type: 'donut', lbl: 'Win rate', frac: jWinRate, sub: `${jWins.length}G / ${jLosses.length}P` },
           { type: 'val', val: fmtPF(profitFactor), lbl: 'Profit factor', hint: 'gains ÷ pertes', col: C.tx },
           { type: 'val', val: fmtEur(expectancy), lbl: 'Gain attendu', hint: 'par trade', col: C.tx },
           { type: 'val', val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: maxDD > 0 ? `−${maxDDpct.toFixed(1)}% du capital` : 'pire creux', col: C.tm },
+          { type: 'val', val: avgLoss > 0 ? fmtPF(payoff) : '—', lbl: 'R:R réalisé', hint: 'gain ÷ perte', col: C.tx },
+          { type: 'val', val: jWins.length > 0 ? fmtEur(avgWin) : '—', lbl: 'Gain moyen', hint: `${jWins.length} gagnants`, col: C.tx, arrow: jWins.length > 0 ? 'up' : null },
+          { type: 'val', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', lbl: 'Perte moyenne', hint: `${jLosses.length} perdants`, col: C.tx, arrow: jLosses.length > 0 ? 'down' : null },
         ] as any[]).map((it, i) => (
           <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden', display: it.type === 'donut' ? 'flex' : 'block', alignItems: 'center', gap: 12 }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
@@ -1215,31 +1219,14 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
             ) : (
               <>
                 <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
-                <div style={{ fontSize: 25, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: it.col }}>{it.val}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ fontSize: 25, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: it.col }}>{it.val}</span>
+                  {it.arrow === 'up' && <span style={{ fontSize: 14, lineHeight: 1, color: GREEN }}>↑</span>}
+                  {it.arrow === 'down' && <span style={{ fontSize: 14, lineHeight: 1, color: RED }}>↓</span>}
+                </div>
                 <div style={{ fontSize: 10, color: C.td, marginTop: 5 }}>{it.hint}</div>
               </>
             )}
-          </div>
-        ))}
-      </div>
-
-      {/* Stats journal compactes — remontées ici, en petites cartes qui restent en
-          ligne (3 par rangée) même sur mobile, contrairement au bandeau principal. */}
-      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, flexShrink: 0 }}>
-        {([
-          { lbl: 'Gain moyen', val: jWins.length > 0 ? fmtEur(avgWin) : '—', hint: `${jWins.length} gagnants`, arrow: jWins.length > 0 ? 'up' : null },
-          { lbl: 'Perte moyenne', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', hint: `${jLosses.length} perdants`, arrow: jLosses.length > 0 ? 'down' : null },
-          { lbl: 'R:R réalisé', val: avgLoss > 0 ? fmtPF(payoff) : '—', hint: 'gain ÷ perte', arrow: null },
-        ] as any[]).map((it, i) => (
-          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-            <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ fontSize: 25, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: C.tx }}>{it.val}</span>
-              {it.arrow === 'up' && <span style={{ fontSize: 14, lineHeight: 1, color: GREEN }}>↑</span>}
-              {it.arrow === 'down' && <span style={{ fontSize: 14, lineHeight: 1, color: RED }}>↓</span>}
-            </div>
-            <div style={{ fontSize: 10, color: C.td, marginTop: 5 }}>{it.hint}</div>
           </div>
         ))}
       </div>
@@ -1292,14 +1279,17 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
         {/* Par instrument */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 14 }}>Par instrument</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Par instrument</div>
+            <div style={{ fontSize: 9.5, color: C.te, fontFamily: MONO }}>barre = ampleur du P&L</div>
+          </div>
           {bySymbol.length === 0 ? (
             <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun trade fermé.</div>
           ) : bySymbol.slice(0, 6).map(([sym, d]) => (
             <div key={sym} style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>{sym} <span style={{ color: C.te }}>· {d.n} tr.</span></span>
-                <span style={{ fontSize: 12, fontFamily: MONO, color: pnlCol(d.pnl), fontWeight: 600 }}>{fmtEur(d.pnl)}</span>
+                <span style={{ fontSize: 12, fontFamily: MONO, color: C.tx, fontWeight: 600 }}>{fmtEur(d.pnl)}</span>
               </div>
               <div style={{ height: 5, background: 'rgba(255,255,255,.05)', borderRadius: 3, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${Math.abs(d.pnl) / symMaxAbs * 100}%`, background: BAR, borderRadius: 3 }} />
@@ -1308,8 +1298,8 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
           ))}
           <div style={{ height: 6 }} />
           {([
-            { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—', col: best && (best.pnl ?? 0) > 0 ? GREEN : C.tm },
-            { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—', col: worst && (worst.pnl ?? 0) < 0 ? RED : C.tm },
+            { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—', col: C.tx },
+            { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—', col: C.tx },
           ] as any[]).map(({ k, v, col }) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
               <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
@@ -1325,6 +1315,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
             <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Comportement</div>
             <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>score moy. <span style={{ color: scoreColor(avgScore, C), fontWeight: 600 }}>{avgScore}</span></div>
           </div>
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 10 }}>Score moyen par jour</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 16 }}>
             {dayNames.map((name, i) => {
               const ds = byDow[i] ?? []
