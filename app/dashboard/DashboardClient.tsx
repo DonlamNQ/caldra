@@ -2754,6 +2754,9 @@ export default function DashboardClient({
   const [milestone, setMilestone] = useState<number | null>(null)   // jalon de discipline à fêter
   const [coachingCards, setCoachingCards] = useState<CoachingCard[]>([])
 
+  const [topbarH, setTopbarH] = useState(0)   // hauteur de la topbar fixe sur mobile → décalage du contenu
+  const topbarRef = useRef<HTMLDivElement>(null)
+
   const notifDelay = useRef(0)
   const notifReset = useRef<ReturnType<typeof setTimeout> | null>(null)
   const channelRef = useRef<any>(null)
@@ -2887,6 +2890,20 @@ export default function DashboardClient({
       .subscribe(s => setConnected(s === 'SUBSCRIBED'))
     return () => { channelRef.current?.unsubscribe() }
   }, [userId, today, addToast, fetchAlertCoaching])
+
+  // Topbar fixe sur mobile : on mesure sa hauteur (variable car elle passe sur 2 lignes)
+  // pour décaler le contenu d'autant. Sur desktop la topbar reste dans le flux → 0.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width:768px)')
+    const update = () => {
+      setTopbarH(mq.matches && topbarRef.current ? topbarRef.current.offsetHeight : 0)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    if (topbarRef.current) ro.observe(topbarRef.current)
+    mq.addEventListener('change', update)
+    return () => { ro.disconnect(); mq.removeEventListener('change', update) }
+  }, [])
 
   useEffect(() => {
     if (typeof Notification !== 'undefined') {
@@ -3059,7 +3076,7 @@ export default function DashboardClient({
         .c-row:hover{background:${C.b}!important}
         @media(max-width:768px){
           .app-root{height:auto!important;min-height:100dvh}
-          .topbar{flex-wrap:wrap;height:auto!important;min-height:46px}
+          .topbar{flex-wrap:wrap;height:auto!important;min-height:46px;position:fixed!important;top:0;left:0;right:0;width:100vw;z-index:50}
           .nav-wrap{position:static!important;left:auto!important;transform:none!important;order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:5px 8px;border-top:.5px solid rgba(255,255,255,.055)}
           .nav-wrap::-webkit-scrollbar{display:none}
           .tab-nav{border-radius:10px;width:max-content}
@@ -3121,7 +3138,7 @@ export default function DashboardClient({
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
         {/* ── Top bar ── */}
-        <div className="topbar" style={{ display: 'flex', alignItems: 'center', height: 46, borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0, position: 'relative' }}>
+        <div ref={topbarRef} className="topbar" style={{ display: 'flex', alignItems: 'center', height: 46, borderBottom: `.5px solid ${C.b}`, background: C.sf, flexShrink: 0, position: 'relative' }}>
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 18px 0 20px', borderRight: `.5px solid ${C.b}`, alignSelf: 'stretch', flexShrink: 0, height: 46, minHeight: 46 }}>
             <div style={{ width: 2, height: 17, background: C.red, borderRadius: 1 }} />
@@ -3252,7 +3269,7 @@ export default function DashboardClient({
         </div>
 
         {/* ── Main layout ── */}
-        <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', gridTemplateRows: 'minmax(0, 1fr)', flex: 1, overflow: 'hidden', minHeight: 0, height: 0 }}>
+        <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', gridTemplateRows: 'minmax(0, 1fr)', flex: 1, overflow: 'hidden', minHeight: 0, height: 0, marginTop: topbarH }}>
           {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} />}
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
