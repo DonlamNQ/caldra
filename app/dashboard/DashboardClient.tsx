@@ -1223,6 +1223,23 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
         ))}
       </div>
 
+      {/* Stats journal compactes — remontées ici, en petites cartes qui restent en
+          ligne (3 par rangée) même sur mobile, contrairement au bandeau principal. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, flexShrink: 0 }}>
+        {([
+          { lbl: 'Gain moyen', val: jWins.length > 0 ? fmtEur(avgWin) : '—', col: jWins.length > 0 ? GREEN : C.tm, hint: `${jWins.length} gagnants` },
+          { lbl: 'Perte moyenne', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', col: jLosses.length > 0 ? RED : C.tm, hint: `${jLosses.length} perdants` },
+          { lbl: 'R:R réalisé', val: avgLoss > 0 ? fmtPF(payoff) : '—', col: C.tx, hint: 'gain ÷ perte' },
+        ] as any[]).map((it, i) => (
+          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 11, padding: '11px 13px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+            <div style={{ fontSize: 8.5, color: C.te, letterSpacing: .8, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 6 }}>{it.lbl}</div>
+            <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.5, lineHeight: 1, color: it.col }}>{it.val}</div>
+            <div style={{ fontSize: 9.5, color: C.td, marginTop: 4 }}>{it.hint}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Grande courbe d'evolution du capital (trade par trade) */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
@@ -1386,22 +1403,6 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
             )
           })()}
         </div>
-      </div>
-
-      {/* Statistiques avancées (journal) */}
-      <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, flexShrink: 0 }}>
-        {([
-          { lbl: 'Gain moyen', val: jWins.length > 0 ? fmtEur(avgWin) : '—', col: jWins.length > 0 ? GREEN : C.tm, hint: `${jWins.length} gagnants` },
-          { lbl: 'Perte moyenne', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', col: jLosses.length > 0 ? RED : C.tm, hint: `${jLosses.length} perdants` },
-          { lbl: 'R:R réalisé', val: avgLoss > 0 ? fmtPF(payoff) : '—', col: C.tx, hint: 'gain moy. ÷ perte moy.' },
-        ] as any[]).map((it, i) => (
-          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-            <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
-            <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: it.col }}>{it.val}</div>
-            <div style={{ fontSize: 10, color: C.td, marginTop: 5 }}>{it.hint}</div>
-          </div>
-        ))}
       </div>
 
     </div>
