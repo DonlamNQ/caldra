@@ -1189,7 +1189,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
           { type: 'val', val: fmtEur(grossProfit - grossLoss), lbl: 'P&L net', hint: `${nJ} trades`, col: pnlCol(grossProfit - grossLoss) },
           { type: 'donut', lbl: 'Win rate', frac: jWinRate, sub: `${jWins.length}G / ${jLosses.length}P` },
           { type: 'val', val: fmtPF(profitFactor), lbl: 'Profit factor', hint: 'gains ÷ pertes', col: C.tx },
-          { type: 'val', val: fmtEur(expectancy), lbl: 'Gain attendu', hint: 'par trade', col: pnlCol(expectancy) },
+          { type: 'val', val: fmtEur(expectancy), lbl: 'Gain attendu', hint: 'par trade', col: C.tx },
           { type: 'val', val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: maxDD > 0 ? `−${maxDDpct.toFixed(1)}% du capital` : 'pire creux', col: C.tm },
         ] as any[]).map((it, i) => (
           <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden', display: it.type === 'donut' ? 'flex' : 'block', alignItems: 'center', gap: 12 }}>
@@ -1227,15 +1227,19 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
           ligne (3 par rangée) même sur mobile, contrairement au bandeau principal. */}
       <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, flexShrink: 0 }}>
         {([
-          { lbl: 'Gain moyen', val: jWins.length > 0 ? fmtEur(avgWin) : '—', col: jWins.length > 0 ? GREEN : C.tm, hint: `${jWins.length} gagnants` },
-          { lbl: 'Perte moyenne', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', col: jLosses.length > 0 ? RED : C.tm, hint: `${jLosses.length} perdants` },
-          { lbl: 'R:R réalisé', val: avgLoss > 0 ? fmtPF(payoff) : '—', col: C.tx, hint: 'gain ÷ perte' },
+          { lbl: 'Gain moyen', val: jWins.length > 0 ? fmtEur(avgWin) : '—', hint: `${jWins.length} gagnants`, arrow: jWins.length > 0 ? 'up' : null },
+          { lbl: 'Perte moyenne', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', hint: `${jLosses.length} perdants`, arrow: jLosses.length > 0 ? 'down' : null },
+          { lbl: 'R:R réalisé', val: avgLoss > 0 ? fmtPF(payoff) : '—', hint: 'gain ÷ perte', arrow: null },
         ] as any[]).map((it, i) => (
-          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 11, padding: '11px 13px', position: 'relative', overflow: 'hidden' }}>
+          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-            <div style={{ fontSize: 8.5, color: C.te, letterSpacing: .8, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 6 }}>{it.lbl}</div>
-            <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.5, lineHeight: 1, color: it.col }}>{it.val}</div>
-            <div style={{ fontSize: 9.5, color: C.td, marginTop: 4 }}>{it.hint}</div>
+            <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ fontSize: 25, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: C.tx }}>{it.val}</span>
+              {it.arrow === 'up' && <span style={{ fontSize: 14, lineHeight: 1, color: GREEN }}>↑</span>}
+              {it.arrow === 'down' && <span style={{ fontSize: 14, lineHeight: 1, color: RED }}>↓</span>}
+            </div>
+            <div style={{ fontSize: 10, color: C.td, marginTop: 5 }}>{it.hint}</div>
           </div>
         ))}
       </div>
