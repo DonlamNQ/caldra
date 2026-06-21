@@ -2749,6 +2749,7 @@ export default function DashboardClient({
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
+  const [notifHint, setNotifHint] = useState<string | null>(null)   // message d'aide si l'activation échoue (iOS / permission bloquée)
   const [sentinelPrompt, setSentinelPrompt] = useState<AlertRow | null>(null)
   const [milestone, setMilestone] = useState<number | null>(null)   // jalon de discipline à fêter
   const [coachingCards, setCoachingCards] = useState<CoachingCard[]>([])
@@ -2967,10 +2968,27 @@ export default function DashboardClient({
   }
 
   async function requestNotifPermission() {
-    if (typeof Notification === 'undefined') return
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    const isIOS = /iphone|ipad|ipod/i.test(ua)
+    const standalone = typeof window !== 'undefined' &&
+      (window.matchMedia?.('(display-mode: standalone)').matches || (navigator as any).standalone === true)
+
+    // iOS n'autorise les notifications web QUE si l'app est installée sur l'écran
+    // d'accueil (mode standalone). En onglet Safari, requestPermission renvoie denied
+    // → on guide l'utilisateur au lieu d'afficher « désactivé ».
+    if (typeof Notification === 'undefined' || (isIOS && !standalone)) {
+      setNotifHint(isIOS
+        ? "Sur iPhone/iPad, installe d'abord Caldra sur ton écran d'accueil (bouton Partager → « Sur l'écran d'accueil »), puis rouvre l'app pour activer les notifications."
+        : "Ton navigateur ne supporte pas les notifications. Essaie d'installer Caldra comme application.")
+      return
+    }
+
     const perm = await Notification.requestPermission()
     setNotifPerm(perm)
-    if (perm !== 'granted') return
+    if (perm !== 'granted') {
+      setNotifHint("Notifications bloquées. Autorise-les pour Caldra dans les réglages de ton navigateur (puis recharge la page).")
+      return
+    }
 
     // Subscribe to web push so the server can deliver alerts to this device
     try {
@@ -3018,7 +3036,8 @@ export default function DashboardClient({
         *{box-sizing:border-box;margin:0;padding:0;text-decoration:none}
         a{text-decoration:none!important}
         html,body{height:100%;background:${C.bg}}
-        ::-webkit-scrollbar{width:0;height:0}
+        *{scrollbar-width:none;-ms-overflow-style:none}
+        ::-webkit-scrollbar{width:0;height:0;display:none}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.15}}
         @keyframes sli{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
         @keyframes toastIn{from{opacity:0;transform:translateX(28px) scale(.97)}to{opacity:1;transform:translateX(0) scale(1)}}
@@ -3071,6 +3090,17 @@ export default function DashboardClient({
             <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>Bravo — {milestone} sessions maîtrisées d'affilée. Garde le cap.</div>
           </div>
           <button onClick={dismissMilestone} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
+        </div>
+      )}
+
+      {notifHint && (
+        <div style={{ position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(124,58,237,.45)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 8px 40px rgba(124,58,237,.16)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
+          <div style={{ fontSize: 20, flexShrink: 0 }}>🔔</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, color: '#7c3aed', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Notifications</div>
+            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>{notifHint}</div>
+          </div>
+          <button onClick={() => setNotifHint(null)} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
         </div>
       )}
 
