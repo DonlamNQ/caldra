@@ -67,6 +67,15 @@ SEEN = {}
 # seulement toutes les BACKOFF_SECONDS. user_id -> timestamp avant lequel on saute.
 BACKOFF = {}
 BACKOFF_SECONDS = 120
+FAIL_BACKOFF_SECONDS = 60       # échec creds/terminal : ne pas retenter à chaque tour (sinon ça stalle la boucle)
+
+# Login borné : le défaut MT5 (60 s) fait que CHAQUE compte en échec bloque la boucle
+# ~1 min → latence de plusieurs minutes pour les comptes sains. 8 s suffit largement.
+LOGIN_TIMEOUT_MS = int(os.environ.get("MT5_LOGIN_TIMEOUT_MS", "8000"))
+
+# Compte actuellement loggé dans le terminal → évite un re-login inutile (coûteux) quand
+# le tour suivant retombe sur le même compte (cas fréquent : un seul compte sain restant).
+CURRENT_LOGIN = None
 
 
 def decrypt(enc_b64: str) -> str:
@@ -135,8 +144,13 @@ def process_account(row: dict):
     if BROKER_PREFIXES and not any(server.lower().startswith(p) for p in BROKER_PREFIXES):
         return
 
-    # Compte injoignable récemment (broker non installé) → on saute jusqu'à expiration
-    # du backoff, pour ne pas subir son timeout de login à chaque tour.
+    # Compte fraîchement (re)connecté via Caldra (last_sync_at NULL) → on purge un
+    # éventuel backoff pour le retenter immédiatement.
+    if row.get("last_sync_at") is None:
+        BACKOFF.pop(user_id, None)
+
+    # Compte injoignable récemment (broker non installé / échec) → on saute jusqu'à
+    # expiration du backoff, pour ne pas subir son timeout de login à chaque tour.
     if time.time() < BACKOFF.get(user_id, 0):
         return
 
@@ -148,34 +162,46 @@ def process_account(row: dict):
         return
 
     # Connexion au compte (change le compte courant du terminal).
-    if not mt5.login(login, password=password, server=server):
-        code, msg = mt5.last_error()
-        # -10001 = IPC : lien terminal coupé → on réinitialise et on retente une fois.
-        if code == -10001:
-            ensure_init(force=True)
-            if not mt5.login(login, password=password, server=server):
-                code, msg = mt5.last_error()
-                print(f"[mt5] login échec (terminal injoignable) compte {login}: {code} {msg}")
-                set_status(user_id, "error")
+    # Fast path : si le terminal est déjà loggé sur CE compte, on saute le re-login
+    # (coûteux). Énorme gain de latence quand il ne reste qu'un compte sain à traiter.
+    global CURRENT_LOGIN
+    info = mt5.account_info() if CURRENT_LOGIN == login else None
+    if not (info is not None and getattr(info, "login", None) == login):
+        # timeout borné (LOGIN_TIMEOUT_MS) : un login qui échoue ne bloque plus la boucle.
+        if not mt5.login(login, password=password, server=server, timeout=LOGIN_TIMEOUT_MS):
+            code, msg = mt5.last_error()
+            CURRENT_LOGIN = None
+            # -10001 = IPC : lien terminal coupé → on réinitialise et on retente une fois.
+            if code == -10001:
+                ensure_init(force=True)
+                if not mt5.login(login, password=password, server=server, timeout=LOGIN_TIMEOUT_MS):
+                    code, msg = mt5.last_error()
+                    print(f"[mt5] login échec (terminal injoignable) compte {login}: {code} {msg}")
+                    set_status(user_id, "error")
+                    BACKOFF[user_id] = time.time() + FAIL_BACKOFF_SECONDS
+                    return
+            # -10005 = IPC timeout : ce terminal ne connaît pas ce serveur (mauvais broker)
+            # ou il est occupé. Ce N'EST PAS un problème d'identifiants → surtout ne pas
+            # afficher « refusés » au client. Statut dédié = broker pas encore pris en charge.
+            elif code == -10005:
+                print(f"[mt5] broker non pris en charge par ce terminal — compte {login} ({server}): {code} {msg}")
+                set_status(user_id, "broker_unavailable")
+                BACKOFF[user_id] = time.time() + BACKOFF_SECONDS  # ne pas re-tenter à chaque tour
                 return
-        # -10005 = IPC timeout : ce terminal ne connaît pas ce serveur (mauvais broker)
-        # ou il est occupé. Ce N'EST PAS un problème d'identifiants → surtout ne pas
-        # afficher « refusés » au client. Statut dédié = broker pas encore pris en charge.
-        elif code == -10005:
-            print(f"[mt5] broker non pris en charge par ce terminal — compte {login} ({server}): {code} {msg}")
-            set_status(user_id, "broker_unavailable")
-            BACKOFF[user_id] = time.time() + BACKOFF_SECONDS  # ne pas re-tenter à chaque tour
-            return
-        # -6 = Authorization failed : vrais identifiants invalides.
-        elif code == -6:
-            print(f"[mt5] identifiants refusés compte {login} ({server}): {code} {msg}")
-            set_status(user_id, "auth_failed")
-            return
-        # Tout le reste = transitoire → on retentera au prochain tour (pas « refusés »).
-        else:
-            print(f"[mt5] login échec compte {login} ({server}): {code} {msg}")
-            set_status(user_id, "error")
-            return
+            # -6 = Authorization failed : vrais identifiants invalides.
+            elif code == -6:
+                print(f"[mt5] identifiants refusés compte {login} ({server}): {code} {msg}")
+                set_status(user_id, "auth_failed")
+                BACKOFF[user_id] = time.time() + FAIL_BACKOFF_SECONDS
+                return
+            # Tout le reste = transitoire → backoff court (pas « refusés »), pour ne pas
+            # staller la boucle en le retentant à chaque tour.
+            else:
+                print(f"[mt5] login échec compte {login} ({server}): {code} {msg}")
+                set_status(user_id, "error")
+                BACKOFF[user_id] = time.time() + FAIL_BACKOFF_SECONDS
+                return
+        CURRENT_LOGIN = login
 
     now = datetime.now(timezone.utc)
 
