@@ -1225,7 +1225,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
 
       {/* Stats journal compactes — remontées ici, en petites cartes qui restent en
           ligne (3 par rangée) même sur mobile, contrairement au bandeau principal. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, flexShrink: 0 }}>
+      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, flexShrink: 0 }}>
         {([
           { lbl: 'Gain moyen', val: jWins.length > 0 ? fmtEur(avgWin) : '—', col: jWins.length > 0 ? GREEN : C.tm, hint: `${jWins.length} gagnants` },
           { lbl: 'Perte moyenne', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', col: jLosses.length > 0 ? RED : C.tm, hint: `${jLosses.length} perdants` },
