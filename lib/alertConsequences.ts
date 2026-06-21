@@ -27,7 +27,7 @@ export const ALERT_CONSEQUENCES: Record<string, string[]> = {
   averaging_down: [
     "Renforcer une position perdante transforme une petite perte en trou qui efface ta semaine.",
     "Moyenner à la baisse, c'est ajouter de l'argent à une idée qui a déjà tort.",
-    "Espérer qu'un perdant revienne, c'est financer son propre naufrage.",
+    "Ajouter à une position perdante augmente ton exposition au moment où la thèse est déjà en défaut.",
   ],
   euphoria_sizing: [
     "Gonfler la taille après un gain, c'est l'excès de confiance qui prépare la prochaine grosse perte.",
@@ -72,11 +72,11 @@ export const ALERT_CONSEQUENCES: Record<string, string[]> = {
   overleverage: [
     "Le levier amplifie tout — surtout tes erreurs. Un petit mouvement suffit à liquider.",
     "Plus le levier est élevé, plus une faible variation de prix suffit à entamer ton capital.",
-    "L'effet de levier flatte l'ego et vide les comptes.",
+    "Un levier élevé réduit la marge d'erreur : la liquidation arrive plus tôt qu'on ne l'anticipe.",
   ],
   no_stop: [
     "Un trade sans stop, c'est un risque illimité : il suffit d'un gap pour tout emporter.",
-    "Sans stop, tu ne trades pas, tu pries. Et le marché n'écoute pas les prières.",
+    "Sans stop, ta perte n'a pas de limite définie : un gap peut l'élargir bien au-delà de ce que tu avais prévu.",
     "Le stop, c'est la première ligne que tu écris avant d'entrer — jamais après.",
   ],
   cut_winners_hold_losers: [
