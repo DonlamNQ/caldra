@@ -358,8 +358,10 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     )
   }
 
-  // Pas de point de départ synthétique à €0 : la courbe démarre au 1er trade.
-  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] = []
+  // La courbe démarre à €0 (début de session) — la ligne part de la base, mais on ne
+  // dessine aucun marqueur visible sur ce point d'origine (juste l'ancrage du tracé).
+  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] =
+    [{ t: '—', v: 0, pnl: null, sym: null, dir: null }]
   let cum = 0
   for (const t of sorted) {
     cum += t.pnl ?? 0
