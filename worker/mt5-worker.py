@@ -269,13 +269,15 @@ def process_account(row: dict):
 
 
 def main():
-    if MT5_TERMINAL_PATH:
-        ok = mt5.initialize(path=MT5_TERMINAL_PATH)
-    else:
-        ok = mt5.initialize()
-    if not ok:
-        print("[mt5] initialize échec:", mt5.last_error())
-        raise SystemExit(1)
+    # Init résilient : si le terminal n'est pas prêt (IPC timeout, terminal figé ou pas
+    # encore ouvert), on RETENTE au lieu de crasher. Un SystemExit relançait tout le
+    # process (via la tâche planifiée) → boucle de crash + repère SEEN perdu à chaque fois.
+    while True:
+        ok = mt5.initialize(path=MT5_TERMINAL_PATH) if MT5_TERMINAL_PATH else mt5.initialize()
+        if ok:
+            break
+        print("[mt5] initialize échec — terminal injoignable, nouvelle tentative dans 10s:", mt5.last_error())
+        time.sleep(10)
     print("[mt5] terminal initialisé — worker démarré")
 
     while True:
