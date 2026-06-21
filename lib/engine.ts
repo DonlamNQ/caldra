@@ -149,11 +149,17 @@ async function saveAndNotify(
     ])
   }
 
-  // Push notification — 1 seule par trade (alerte la plus grave)
+  // Push notification — 1 seule par trade (alerte la plus grave). Si d'autres
+  // signaux ont aussi été déclenchés sur le même trade, on le signale en fin de
+  // corps pour que l'utilisateur sache qu'il y en a plus à consulter dans l'app.
   const topPush = alerts.reduce((a, b) => b.level > a.level ? b : a)
+  const extraCount = alerts.length - 1
   await import('./push').then(({ sendPushToUser }) => {
     const { title, body } = buildPushContent(topPush)
-    return sendPushToUser(trade.user_id, title, body, topPush.level)
+    const suffix = extraCount <= 0 ? ''
+      : extraCount === 1 ? '\n+ 1 autre signal sur ce trade.'
+      : `\n+ ${extraCount} autres signaux sur ce trade.`
+    return sendPushToUser(trade.user_id, title, body + suffix, topPush.level)
   }).catch(() => {})
 
   // Le coaching IA n'est plus généré ici (redondant + jamais affiché) : les cartes
