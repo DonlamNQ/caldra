@@ -364,7 +364,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - **`middleware.ts`** : `/api/billing/webhook` et `/api/waitlist` explicitement listés comme routes publiques
 
 ### 🎨 Conventions visuelles à respecter
-- **PnL neutre (`#e2e8f0`) sur l'écran Session (live)** — anti-biais cognitif pendant le trading. **Exception : l'onglet Analytics (revue rétrospective) utilise le vert/rouge** (P&L, courbe d'equity, barres par symbole, donut win rate) — assumé depuis 2026-06-20.
+- **PnL neutre (`#e2e8f0`) sur l'écran Session (live)** — anti-biais cognitif pendant le trading. **Analytics (revue rétrospective) : vert/rouge CIBLÉ** — réservé aux **valeurs P&L chiffrées** (P&L net, gain attendu, € par symbole, meilleur/pire trade, Long/Short, label par jour) et à la **ligne de la courbe d'equity**. Les barres, le donut win rate et les jauges restent **neutres** (la direction/magnitude porte déjà le signe) — anti-saturation, depuis 2026-06-21. SVG : pas de texte d'axe en `<text>` avec `preserveAspectRatio="none"` (ça s'étire) → libellés en HTML superposé ; traits de courbe en `vectorEffect="non-scaling-stroke"`.
 - **Accent app** : `#7c3aed` (violet) dans le dashboard / `#dc503c` (rouge) dans les pages standalone (billing, login)
 - **Logo** : CALDRA `letterSpacing: 8`, SESSION `letterSpacing: 3`, fontSize 7
 - **Calendrier** : jours avec trades = `#1a1a2e` bg + border rouge ; sans trades = `#0d0d1a` bg + border `#1e1e35`

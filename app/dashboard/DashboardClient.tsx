@@ -1154,10 +1154,12 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
   const jSorted = [...jt].sort((a, b) => new Date(a.exit_time ?? a.entry_time).getTime() - new Date(b.exit_time ?? b.entry_time).getTime())
   let cum = 0, peak = 0, maxDD = 0
   const equity = jSorted.map(t => { cum += t.pnl ?? 0; if (cum > peak) peak = cum; if (peak - cum > maxDD) maxDD = peak - cum; return cum })
-  // Couleurs vert/rouge (Analytics = revue rétrospective, où le code couleur aide ;
-  // l'écran Session live reste neutre — règle anti-biais).
-  const GREEN = '#00d17a', RED = '#e0503c'
+  // Vert/rouge CIBLÉ : réservé aux valeurs P&L chiffrées et à la courbe d'equity.
+  // Tout le reste (barres, donut, jauges) reste neutre/accent — anti-saturation.
+  // La direction/magnitude d'une barre porte déjà le signe, pas besoin de la colorer.
+  const GREEN = C.g, RED = '#e0503c'
   const pnlCol = (v: number) => v > 0 ? GREEN : v < 0 ? RED : C.tm
+  const BAR = C.b3            // barres neutres
   const symMaxAbs = Math.max(1, ...bySymbol.map(([, d]) => Math.abs(d.pnl)))
   // Données des diagrammes additionnels
   const dailyPnl = sessions.map(s => ({ date: s.date, pnl: s.pnl }))
@@ -1182,9 +1184,9 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
         {([
           { type: 'val', val: fmtEur(grossProfit - grossLoss), lbl: 'P&L net', hint: `${nJ} trades`, col: pnlCol(grossProfit - grossLoss) },
           { type: 'donut', lbl: 'Win rate', frac: jWinRate, sub: `${jWins.length}G / ${jLosses.length}P` },
-          { type: 'val', val: fmtPF(profitFactor), lbl: 'Profit factor', hint: 'gains ÷ pertes', col: profitFactor >= 1 ? GREEN : RED },
+          { type: 'val', val: fmtPF(profitFactor), lbl: 'Profit factor', hint: 'gains ÷ pertes', col: C.tx },
           { type: 'val', val: fmtEur(expectancy), lbl: 'Gain attendu', hint: 'par trade', col: pnlCol(expectancy) },
-          { type: 'val', val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: 'pire creux', col: maxDD > 0 ? RED : C.tm },
+          { type: 'val', val: fmtEur(-maxDD), lbl: 'Drawdown max', hint: 'pire creux', col: C.tm },
         ] as any[]).map((it, i) => (
           <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden', display: it.type === 'donut' ? 'flex' : 'block', alignItems: 'center', gap: 12 }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
@@ -1194,8 +1196,8 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
                   const r = 17, circ = 2 * Math.PI * r
                   return (
                     <svg width="44" height="44" viewBox="0 0 44 44" style={{ flexShrink: 0 }}>
-                      <circle cx="22" cy="22" r={r} fill="none" stroke={RED} strokeWidth="5" opacity={0.3} />
-                      <circle cx="22" cy="22" r={r} fill="none" stroke={GREEN} strokeWidth="5" strokeLinecap="round"
+                      <circle cx="22" cy="22" r={r} fill="none" stroke={C.b2} strokeWidth="5" />
+                      <circle cx="22" cy="22" r={r} fill="none" stroke={C.red} strokeWidth="5" strokeLinecap="round"
                         strokeDasharray={`${circ * (it.frac / 100)} ${circ}`} transform="rotate(-90 22 22)" />
                     </svg>
                   )
@@ -1239,16 +1241,19 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
           const fy = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`
           const up = equity[n - 1] >= 0
           const eqLine = up ? GREEN : RED
-          const eqFill = up ? 'rgba(0,209,122,.10)' : 'rgba(224,80,60,.10)'
+          const eqFill = up ? 'rgba(46,224,143,.10)' : 'rgba(224,80,60,.10)'
           return (
-            <div style={{ height: 150, marginTop: 6 }}>
+            // height 150 = viewBox H → l'axe vertical n'est pas déformé ; les libellés
+            // sont en HTML (et non en <text> SVG) pour ne pas s'étirer horizontalement.
+            <div style={{ height: H, marginTop: 6, position: 'relative' }}>
               <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-                <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke="rgba(255,255,255,.1)" strokeWidth={0.5} strokeDasharray="4 6" />
-                {ticks.map(v => <text key={v} x={PXL - 5} y={Math.max(PYT + 7, Math.min(H - PYB, yOf(v) + 3))} textAnchor="end" fill="rgba(234,232,245,.35)" fontSize="8.5" style={{ fontFamily: 'monospace' }}>{fy(v)}</text>)}
+                <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={C.b} strokeWidth={0.5} strokeDasharray="4 6" />
                 <path d={fillPath} fill={eqFill} />
-                <polyline points={pts} fill="none" stroke={eqLine} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" />
-                <circle cx={xOf(n - 1)} cy={yOf(equity[n - 1])} r={3} fill={eqLine} />
+                <polyline points={pts} fill="none" stroke={eqLine} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
               </svg>
+              {ticks.map(v => (
+                <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 6, top: Math.max(0, Math.min(H - 10, yOf(v) - 5)), textAlign: 'right', fontSize: 9, fontFamily: MONO, color: C.te, lineHeight: 1 }}>{fy(v)}</div>
+              ))}
             </div>
           )
         })() : (
@@ -1272,16 +1277,14 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
                 <span style={{ fontSize: 12, fontFamily: MONO, color: pnlCol(d.pnl), fontWeight: 600 }}>{fmtEur(d.pnl)}</span>
               </div>
               <div style={{ height: 5, background: 'rgba(255,255,255,.05)', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.abs(d.pnl) / symMaxAbs * 100}%`, background: d.pnl >= 0 ? GREEN : RED, borderRadius: 3 }} />
+                <div style={{ height: '100%', width: `${Math.abs(d.pnl) / symMaxAbs * 100}%`, background: BAR, borderRadius: 3 }} />
               </div>
             </div>
           ))}
           <div style={{ height: 6 }} />
           {([
-            { k: 'Long', v: `${wr(longs)}% · ${longs.length} tr.`, col: C.tm },
-            { k: 'Short', v: `${wr(shorts)}% · ${shorts.length} tr.`, col: C.tm },
-            { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—', col: GREEN },
-            { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—', col: RED },
+            { k: 'Meilleur trade', v: best ? `${fmtEur(best.pnl ?? 0)} · ${best.symbol}` : '—', col: best && (best.pnl ?? 0) > 0 ? GREEN : C.tm },
+            { k: 'Pire trade', v: worst ? `${fmtEur(worst.pnl ?? 0)} · ${worst.symbol}` : '—', col: worst && (worst.pnl ?? 0) < 0 ? RED : C.tm },
           ] as any[]).map(({ k, v, col }) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
               <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
@@ -1348,7 +1351,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
                 <line x1={0} y1={mid} x2={W} y2={mid} stroke="rgba(255,255,255,.1)" strokeWidth={0.5} strokeDasharray="4 6" />
                 {dailyPnl.map((d, i) => {
                   const h = Math.abs(d.pnl) / maxAbs * (DH / 2), x = i * gap + (gap - bw) / 2, up = d.pnl >= 0
-                  return <rect key={i} x={x} y={up ? mid - h : mid} width={bw} height={Math.max(1, h)} rx={1} fill={up ? GREEN : RED} opacity={0.85} />
+                  return <rect key={i} x={x} y={up ? mid - h : mid} width={bw} height={Math.max(1, h)} rx={1} fill={BAR} opacity={up ? 0.9 : 0.45} />
                 })}
               </svg>
             )
@@ -1374,7 +1377,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
                   <span style={{ fontSize: 12.5, fontFamily: MONO, color: pnlCol(r.pnl), fontWeight: 600 }}>{fmtEur(r.pnl)}</span>
                 </div>
                 <div style={{ height: 8, background: 'rgba(255,255,255,.05)', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${Math.abs(r.pnl) / m * 100}%`, background: r.pnl >= 0 ? GREEN : RED, borderRadius: 4 }} />
+                  <div style={{ height: '100%', width: `${Math.abs(r.pnl) / m * 100}%`, background: BAR, borderRadius: 4 }} />
                 </div>
               </div>
             ))
@@ -1392,7 +1395,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
                   return (
                     <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
                       <span style={{ fontSize: 9, fontFamily: MONO, color: pnlCol(v), marginBottom: 3 }}>{v >= 0 ? '+' : ''}{Math.round(v)}</span>
-                      <div style={{ width: '66%', height: Math.max(2, h), background: up ? GREEN : RED, borderRadius: 2, opacity: 0.85 }} />
+                      <div style={{ width: '66%', height: Math.max(2, h), background: BAR, borderRadius: 2, opacity: up ? 0.9 : 0.45 }} />
                       <span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: MONO, marginTop: 5 }}>{name}</span>
                     </div>
                   )
@@ -1402,30 +1405,6 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades }: { sessions: Da
           })()}
         </div>
       </div>
-
-      {/* Frise des résultats trade par trade */}
-      {jSorted.length > 0 && (
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
-            <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Résultats trade par trade</div>
-            <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>{jWins.length}G / {jLosses.length}P</div>
-          </div>
-          {(() => {
-            const m = Math.max(1, ...jSorted.map(t => Math.abs(t.pnl ?? 0)))
-            const W = 600, H = 70, mid = H / 2, n = jSorted.length, gap = W / n, bw = Math.max(1, gap * 0.7)
-            return (
-              <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 70 }} preserveAspectRatio="none">
-                <line x1={0} y1={mid} x2={W} y2={mid} stroke="rgba(255,255,255,.1)" strokeWidth={0.5} />
-                {jSorted.map((t, i) => {
-                  const v = t.pnl ?? 0, h = Math.abs(v) / m * (mid - 3), x = i * gap + (gap - bw) / 2, up = v >= 0
-                  return <rect key={i} x={x} y={up ? mid - h : mid} width={bw} height={Math.max(1, h)} fill={up ? GREEN : RED} opacity={0.85} />
-                })}
-              </svg>
-            )
-          })()}
-        </div>
-      )}
     </div>
     </div>
   )
