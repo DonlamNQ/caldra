@@ -95,6 +95,28 @@ function genTrades(userId) {
       })
     }
   }
+  // Garantir que la SESSION la plus récente finit positive (courbe verte) et que
+  // le P&L net global reste positif.
+  const dayKey = t => t.entry_time.slice(0, 10)
+  const lastKey = trades.map(dayKey).sort().at(-1)
+  const lastDay = trades.filter(t => dayKey(t) === lastKey)
+  const lastSum = lastDay.reduce((a, t) => a + t.pnl, 0)
+  if (lastSum <= 0) {
+    const sym = pick(SYMBOLS)
+    const ref = lastDay.at(-1)
+    const entry = new Date(new Date(ref.entry_time).getTime() + 30 * 60000)
+    const exit = new Date(entry.getTime() + Math.floor(rnd(10, 60)) * 60000)
+    const size = 2
+    const pnl = round(-lastSum + rnd(120, 320))      // repasse la journée dans le vert
+    const entryPrice = round(sym.base * (1 + rnd(-0.012, 0.012)), 2)
+    const exitPrice = round(entryPrice + pnl / (size * sym.pv), 2)
+    trades.push({
+      user_id: userId, symbol: sym.s, direction: 'long', size,
+      entry_price: entryPrice, exit_price: exitPrice,
+      entry_time: entry.toISOString(), exit_time: exit.toISOString(),
+      pnl, status: 'closed',
+    })
+  }
   return trades
 }
 
