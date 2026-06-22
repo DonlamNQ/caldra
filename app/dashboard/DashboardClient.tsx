@@ -1247,31 +1247,31 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
           const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
           const y0 = yOf(0)
 
-          // Couleur pilotée par le SIGNE du capital cumulé : vert tant que le
-          // cumul est positif, rouge tant qu'il est négatif. Comme le cumul se
-          // reporte d'une session à la suivante, la couleur « continue » de la
-          // veille et ne bascule qu'au franchissement de la ligne zéro — qu'on
-          // interpole pour couper proprement le trait à 0.
+          // Couleur par SESSION : chaque journée est verte si son résultat net
+          // (somme des P&L du jour) est positif, rouge s'il est négatif. La couleur
+          // habille tout le segment de la journée ; le trait reste continu d'un
+          // jour à l'autre (le capital ne « repart » pas, seule la teinte change).
           type Pt = { x: number; y: number }
+          const dayKey = (t: any) => { const d = new Date(t.exit_time ?? t.entry_time); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` }
+          const dayResult: Record<string, number> = {}
+          jSorted.forEach(t => { const k = dayKey(t); dayResult[k] = (dayResult[k] ?? 0) + (t.pnl ?? 0) })
+          const colOf = (i: number) => { const r = dayResult[dayKey(jSorted[i])]; return r > 0 ? GREEN : r < 0 ? RED : C.tm }
           const segs: { col: string; pts: Pt[] }[] = []
-          let curCol = equity[0] >= 0 ? GREEN : RED
-          let curPts: Pt[] = [{ x: xOf(0), y: yOf(equity[0]) }]
-          for (let i = 1; i < n; i++) {
-            const v0 = equity[i - 1], v1 = equity[i]
-            const pos0 = v0 >= 0, pos1 = v1 >= 0
-            if (pos0 === pos1) {
-              curPts.push({ x: xOf(i), y: yOf(v1) })
+          let curCol = colOf(1)
+          let curPts: Pt[] = [{ x: xOf(0), y: yOf(equity[0]) }, { x: xOf(1), y: yOf(equity[1]) }]
+          for (let i = 2; i < n; i++) {
+            const c = colOf(i)
+            if (c === curCol) {
+              curPts.push({ x: xOf(i), y: yOf(equity[i]) })
             } else {
-              const frac = v0 / (v0 - v1)               // position du passage à 0
-              const xc = xOf(i - 1) + frac * (xOf(i) - xOf(i - 1))
-              curPts.push({ x: xc, y: y0 })
               segs.push({ col: curCol, pts: curPts })
-              curCol = pos1 ? GREEN : RED
-              curPts = [{ x: xc, y: y0 }, { x: xOf(i), y: yOf(v1) }]
+              curCol = c
+              // on repart du point précédent pour que les segments se touchent
+              curPts = [{ x: xOf(i - 1), y: yOf(equity[i - 1]) }, { x: xOf(i), y: yOf(equity[i]) }]
             }
           }
           segs.push({ col: curCol, pts: curPts })
-          const fillOf = (c: string) => c === GREEN ? 'rgba(46,224,143,.10)' : 'rgba(224,80,60,.10)'
+          const fillOf = (c: string) => c === GREEN ? 'rgba(46,224,143,.10)' : c === RED ? 'rgba(224,80,60,.10)' : 'rgba(255,255,255,.04)'
 
           const ticks = [maxV, 0, minV].filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.1) === i)
           const fy = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`

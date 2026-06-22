@@ -137,10 +137,26 @@ async function saveAndNotify(
     const userEmail = authData?.user?.email ?? null
     const webhookUrl: string | null = (rules.slack_webhook_url as string) ?? null
 
+    // Anti-spam email : 1 seul mail par TYPE d'alerte critique et par session.
+    // Si une alerte de ce type a déjà été émise aujourd'hui (level ≥ 3), on ne
+    // renvoie pas de mail — on cherche le 1er type critique encore non notifié.
     const criticalAlerts = alerts.filter(a => a.level >= 3)
+    let alertToEmail: Alert | null = null
+    if (userEmail && criticalAlerts.length > 0) {
+      const insertedIds = (insertedAlerts ?? []).map(a => a.id)
+      let priorQ = supabase.from('alerts')
+        .select('type')
+        .eq('user_id', trade.user_id)
+        .eq('session_date', today)
+        .gte('level', 3)
+      if (insertedIds.length) priorQ = priorQ.not('id', 'in', `(${insertedIds.join(',')})`)
+      const { data: priorCritical } = await priorQ
+      const alreadyEmailed = new Set((priorCritical ?? []).map((r: { type: string }) => r.type))
+      alertToEmail = criticalAlerts.find(a => !alreadyEmailed.has(a.type)) ?? null
+    }
     await Promise.all([
-      userEmail && criticalAlerts.length > 0
-        ? sendAlertEmail({ to: userEmail, alertType: criticalAlerts[0].type, level: criticalAlerts[0].level, message: criticalAlerts[0].message, sessionDate: today, detail: criticalAlerts[0].detail })
+      alertToEmail
+        ? sendAlertEmail({ to: userEmail as string, alertType: alertToEmail.type, level: alertToEmail.level, message: alertToEmail.message, sessionDate: today, detail: alertToEmail.detail })
         : Promise.resolve(),
       ...hotAlerts.map(a => webhookUrl
         ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
@@ -157,8 +173,8 @@ async function saveAndNotify(
   await import('./push').then(({ sendPushToUser }) => {
     const { title, body } = buildPushContent(topPush)
     const suffix = extraCount <= 0 ? ''
-      : extraCount === 1 ? ' · + 1 autre signal sur ce trade.'
-      : ` · + ${extraCount} autres signaux sur ce trade.`
+      : extraCount === 1 ? ' + 1 autre signal sur ce trade.'
+      : ` + ${extraCount} autres signaux sur ce trade.`
     return sendPushToUser(trade.user_id, title, body + suffix, topPush.level)
   }).catch(() => {})
 
