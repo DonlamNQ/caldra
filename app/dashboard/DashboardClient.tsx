@@ -359,10 +359,9 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
     )
   }
 
-  // La courbe démarre à €0 (début de session) — la ligne part de la base, mais on ne
-  // dessine aucun marqueur visible sur ce point d'origine (juste l'ancrage du tracé).
-  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] =
-    [{ t: '—', v: 0, pnl: null, sym: null, dir: null }]
+  // La courbe démarre directement au premier trade : pas de point d'origine
+  // artificiel à €0. Si la session ouvre dans le rouge, le tracé part en rouge.
+  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] = []
   let cum = 0
   for (const t of sorted) {
     cum += t.pnl ?? 0
@@ -476,7 +475,7 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
             {pts[i].t}
           </text>
         ))}
-        {n > 2 && <path d={fillPath} fill="url(#pnl-fill)" />}
+        {n >= 2 && <path d={fillPath} fill="url(#pnl-fill)" />}
         {n >= 2
           ? <polyline points={polyPoints} fill="none" stroke="url(#pnl-line)" strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="round" />
           : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={colorForV(pts[0].v)} />
@@ -2389,8 +2388,39 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
     const t = a.type ?? ''; if (t) acc[t] = (acc[t] ?? 0) + 1; return acc
   }, {})
   const dominant = Object.entries(alertsByType).sort((a, b) => b[1] - a[1])[0]
-  const vigilanceCol = score >= 70 ? SN.g : score >= 40 ? SN.o : SN.r
   const debriefMsg = msgs.find(m => m.isDebrief)
+
+  // ── Lecture comportementale (verdict qualitatif de Sentinel, ≠ KPIs bruts) ───
+  const TENSION_TYPES = ['revenge_sizing', 'averaging_down', 'euphoria_sizing', 'accelerating_frequency', 'immediate_reentry', 'end_of_day_desperation', 'drawdown_override']
+  const hasCritical = alerts.some(a => (a.level ?? a.severity ?? 1) >= 3)
+  const hasTension = alerts.some(a => TENSION_TYPES.includes(a.type ?? ''))
+  const verdict =
+    hasCritical
+      ? { label: 'RUPTURE DE DISCIPLINE', tone: SN.r, text: "Plusieurs garde-fous ont sauté. Le risque d'enchaînement impulsif est élevé — s'arrêter maintenant est la décision la plus rentable." }
+    : hasTension
+      ? { label: 'TENSION ÉMOTIONNELLE', tone: SN.o, text: 'Des réactions à chaud apparaissent dans tes entrées. Ralentis et reviens à ton plan avant la prochaine prise.' }
+    : stats.total_trades === 0
+      ? { label: 'EN PLACE', tone: SN.violet, text: "Je me suis positionné sur ta session. J'analyserai chaque entrée dès le premier trade." }
+    : score >= 80
+      ? { label: 'DISCIPLINE MAÎTRISÉE', tone: SN.g, text: 'Comportement aligné avec tes règles depuis le début. Rien à corriger — garde ce rythme.' }
+      : { label: 'SOUS OBSERVATION', tone: SN.violet, text: "Rien d'alarmant, mais je reste attentif aux écarts de cadence et de taille de position." }
+
+  // ── Sous surveillance : proximité des garde-fous (budget de risque consommé) ──
+  const watchItems: Array<{ label: string; detail: string; pct: number }> = []
+  if (rules) {
+    const acct = rules.account_size || 10000
+    const maxLoss = acct * ((rules.max_daily_drawdown_pct ?? 0) / 100)
+    const loss = stats.total_pnl < 0 ? -stats.total_pnl : 0
+    const ddPct = maxLoss > 0 ? Math.min(100, (loss / maxLoss) * 100) : 0
+    watchItems.push({ label: 'Budget de risque', detail: `${Math.round(ddPct)}% consommé`, pct: ddPct })
+    if (rules.max_trades_per_session > 0)
+      watchItems.push({ label: 'Cadence', detail: `${stats.total_trades} / ${rules.max_trades_per_session} trades`, pct: Math.min(100, (stats.total_trades / rules.max_trades_per_session) * 100) })
+  }
+  if (dominant) watchItems.push({ label: 'Schéma récurrent', detail: `${alertLabel(dominant[0])} ×${dominant[1]}`, pct: Math.min(100, dominant[1] * 25) })
+  const watchCol = (p: number) => (p >= 80 ? SN.r : p >= 50 ? SN.o : SN.violet)
+
+  // ── Activité de la veille (méta : ce que Sentinel a produit, pas la session) ──
+  const debriefStatus = debriefDone ? 'Généré ↓' : debriefLoading ? 'En cours…' : sessionEnded ? 'Imminent' : rules?.session_end ? `Prévu · ${rules.session_end}` : 'En fin de session'
 
   // ── Top bar commun (wordmark + statut) ──────────────────────────────────────
   const TopBar = (
@@ -2406,13 +2436,6 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
         <div style={{ width: 5, height: 5, borderRadius: '50%', background: isSentinel ? SN.violet : SN.td, animation: isSentinel ? 'pulse 1.8s infinite' : 'none' }} />
         <span style={{ fontSize: 9, letterSpacing: 2, fontFamily: MONO, color: isSentinel ? SN.violet : SN.td }}>{isSentinel ? 'EN VEILLE' : 'DORMANT'}</span>
       </div>
-    </div>
-  )
-
-  const Readout = ({ label, value, col }: { label: string; value: string; col?: string }) => (
-    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '8px 0', borderBottom: `.5px solid ${SN.line}` }}>
-      <span style={{ fontSize: 9, letterSpacing: 1.5, color: SN.te, fontFamily: MONO, textTransform: 'uppercase' as const }}>{label}</span>
-      <span style={{ fontSize: 12, fontFamily: MONO, color: col ?? SN.tm, letterSpacing: .3 }}>{value}</span>
     </div>
   )
 
@@ -2466,33 +2489,45 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
         {/* ── Colonne CŒUR (instruments) ── */}
         <div style={{ borderRight: `.5px solid ${SN.line}`, padding: '24px 22px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <SentinelOrb active score={score} SN={SN} />
-          <div style={{ fontSize: 9, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginTop: 8, marginBottom: 20 }}>INDICE DE VIGILANCE</div>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginTop: 8, marginBottom: 22 }}>INDICE DE VIGILANCE</div>
 
           <div style={{ width: '100%' }}>
-            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginBottom: 8 }}>ÉTAT DE LA MENACE</div>
-            {dominant ? (
-              <div style={{ padding: '11px 13px', border: `.5px solid rgba(255,180,84,.28)`, borderLeft: `2px solid ${SN.o}`, borderRadius: 5, background: 'rgba(255,180,84,.05)', marginBottom: 18 }}>
-                <div style={{ fontSize: 9, fontFamily: MONO, color: SN.o, letterSpacing: .5, marginBottom: 4 }}>{alertLabel(dominant[0]).toUpperCase()} ×{dominant[1]}</div>
-                <div style={{ fontSize: 11, color: SN.tm, lineHeight: 1.5, fontWeight: 300 }}>Schéma dominant de la session. Vigilance accrue.</div>
-              </div>
-            ) : (
-              <div style={{ padding: '11px 13px', border: `.5px solid rgba(52,232,158,.22)`, borderLeft: `2px solid ${SN.g}`, borderRadius: 5, background: 'rgba(52,232,158,.04)', marginBottom: 18 }}>
-                <div style={{ fontSize: 9, fontFamily: MONO, color: SN.g, letterSpacing: .5, marginBottom: 4 }}>PÉRIMÈTRE DÉGAGÉ</div>
-                <div style={{ fontSize: 11, color: SN.tm, lineHeight: 1.5, fontWeight: 300 }}>Aucun schéma à risque détecté.</div>
-              </div>
+            {/* Évaluation — lecture qualitative de Sentinel */}
+            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginBottom: 8 }}>ÉVALUATION</div>
+            <div style={{ padding: '12px 14px', border: `.5px solid ${SN.line}`, borderLeft: `2px solid ${verdict.tone}`, borderRadius: 5, background: SN.panel, marginBottom: 22 }}>
+              <div style={{ fontSize: 9, fontFamily: MONO, color: verdict.tone, letterSpacing: 1, marginBottom: 6 }}>{verdict.label}</div>
+              <div style={{ fontSize: 11.5, color: SN.tm, lineHeight: 1.55, fontWeight: 300 }}>{verdict.text}</div>
+            </div>
+
+            {/* Sous surveillance — proximité des garde-fous */}
+            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginBottom: 10 }}>SOUS SURVEILLANCE</div>
+            {watchItems.length > 0 ? watchItems.map(w => {
+              const col = watchCol(w.pct)
+              return (
+                <div key={w.label} style={{ marginBottom: 13 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
+                    <span style={{ fontSize: 11, color: SN.tm, fontWeight: 300 }}>{w.label}</span>
+                    <span style={{ fontSize: 9.5, fontFamily: MONO, color: col, letterSpacing: .3 }}>{w.detail}</span>
+                  </div>
+                  <div style={{ height: 3, borderRadius: 2, background: SN.line, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.max(3, w.pct)}%`, height: '100%', background: col, borderRadius: 2, transition: 'width .4s' }} />
+                  </div>
+                </div>
+              )
+            }) : (
+              <div style={{ fontSize: 11, color: SN.td, fontWeight: 300, lineHeight: 1.5, marginBottom: 8 }}>Aucun garde-fou défini. Renseigne tes règles pour que je veille dessus.</div>
             )}
 
-            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginBottom: 4 }}>RELEVÉ DE SESSION</div>
-            <Readout label="Vigilance" value={`${score} / 100`} col={vigilanceCol} />
-            <Readout label="P&L" value={fmtEur(stats.total_pnl)} col={SN.tm} />
-            <Readout label="Trades" value={String(stats.total_trades)} />
-            <Readout label="Signaux" value={String(alerts.length)} col={alerts.length > 0 ? SN.r : SN.td} />
-            {rules && <>
-              <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, margin: '18px 0 4px' }}>PARAMÈTRES DE GARDE</div>
-              <Readout label="Drawdown max" value={`${rules.max_daily_drawdown_pct}%`} />
-              <Readout label="Max trades" value={String(rules.max_trades_per_session)} />
-              <Readout label="Fenêtre" value={`${rules.session_start}–${rules.session_end}`} />
-            </>}
+            {/* Activité de la veille — méta sur le travail de Sentinel */}
+            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, margin: '20px 0 4px' }}>ACTIVITÉ DE LA VEILLE</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '8px 0', borderBottom: `.5px solid ${SN.line}` }}>
+              <span style={{ fontSize: 11, color: SN.tm, fontWeight: 300 }}>Interventions émises</span>
+              <span style={{ fontSize: 12, fontFamily: MONO, color: coachingCards.length > 0 ? SN.o : SN.td }}>{coachingCards.length}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '8px 0' }}>
+              <span style={{ fontSize: 11, color: SN.tm, fontWeight: 300 }}>Débrief de session</span>
+              <span style={{ fontSize: 11, fontFamily: MONO, color: debriefDone ? SN.g : SN.td, letterSpacing: .3 }}>{debriefStatus}</span>
+            </div>
           </div>
         </div>
 
