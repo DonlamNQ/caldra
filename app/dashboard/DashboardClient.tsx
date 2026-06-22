@@ -1101,7 +1101,6 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
     return <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic', padding: '24px 0' }}>Pas encore assez de trades fermés pour tracer la courbe.</div>
   }
 
-  const dayKey = (t: JournalTrade) => { const d = new Date(t.exit_time ?? t.entry_time); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` }
   const fmtDT = (iso: string) => new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
   const fmtD = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
 
@@ -1114,10 +1113,18 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
     pts.push({ v: cum, pnl: tr.pnl ?? null, sym: tr.symbol, dir: tr.direction, t: fmtDT(tr.exit_time ?? tr.entry_time) })
   }
 
-  // Couleur = résultat net de la session la plus récente.
-  const lastKey = dayKey(sorted[sorted.length - 1])
-  const lastDayResult = sorted.filter(t => dayKey(t) === lastKey).reduce((a, t) => a + (t.pnl ?? 0), 0)
-  const eqCol = lastDayResult > 0 ? GREEN : lastDayResult < 0 ? RED : C.tm
+  // Couleur = tendance des 3 dernières sessions : on additionne le résultat net
+  // des 3 derniers jours de trading ; vert si la moyenne penche positif, rouge
+  // si elle penche négatif. (Bucket de jour en epoch → tri numérique fiable.)
+  const dayResults = new Map<number, number>()
+  for (const t of sorted) {
+    const d = new Date(t.exit_time ?? t.entry_time)
+    const key = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
+    dayResults.set(key, (dayResults.get(key) ?? 0) + (t.pnl ?? 0))
+  }
+  const last3 = [...dayResults.keys()].sort((a, b) => a - b).slice(-3)
+  const trend = last3.reduce((a, k) => a + (dayResults.get(k) ?? 0), 0)
+  const eqCol = trend > 0 ? GREEN : trend < 0 ? RED : C.tm
 
   const W = 600, H = 150, PXL = 46, PXR = 10, PYT = 12, PYB = 22
   const DW = W - PXL - PXR, DH = H - PYT - PYB
