@@ -236,21 +236,25 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
   }
 
   // ── 5. ACHARNEMENT DIRECTIONNEL (clé interne: averaging_down) ──────────────
-  // Re-rentrer une N-ième fois sur le MÊME instrument, dans le MÊME sens, après
-  // DEUX pertes consécutives sur ce même setup = s'entêter sur une idée déjà
-  // invalidée deux fois. Reprendre un setup valide une seule fois après un stop
-  // est du trading normal → on n'alerte qu'à partir de la 2e perte d'affilée.
+  // Re-rentrer une N-ième fois sur le MÊME instrument, dans le MÊME sens, alors
+  // que les DEUX dernières prises sur ce même setup ont perdu = s'entêter sur
+  // une idée déjà invalidée deux fois. Reprendre un setup valide une seule fois
+  // après un stop est du trading normal → on n'alerte qu'à partir de la 2e perte.
+  // On ne regarde QUE les trades sur ce symbole+sens : des trades intercalés sur
+  // d'autres instruments ne cassent pas la chaîne. Un GAIN entre-temps sur ce
+  // même setup, lui, remet le compteur à zéro (l'idée a fonctionné).
   // La taille n'entre pas en compte (l'entêtement, pas le sur-engagement).
   // NB : trades séquentiels fermés (pas le renforcement d'une position encore
   // ouverte — non détectable depuis les deals fermés cTrader).
   // Distinct du revenge (qui ne regarde ni le symbole ni le sens).
-  const prev1 = prevTrades[0] ?? null
-  const prev2 = prevTrades[1] ?? null
+  const sameSetup = prevTrades.filter(
+    (t: Trade) => t.symbol === trade.symbol && t.direction === trade.direction
+  )
+  const prev1 = sameSetup[0] ?? null
+  const prev2 = sameSetup[1] ?? null
   if (
     prev1 && prev2 &&
-    (prev1.pnl ?? 0) < 0 && (prev2.pnl ?? 0) < 0 &&
-    prev1.symbol === trade.symbol && prev2.symbol === trade.symbol &&
-    prev1.direction === trade.direction && prev2.direction === trade.direction
+    (prev1.pnl ?? 0) < 0 && (prev2.pnl ?? 0) < 0
   ) {
     alerts.push({
       type: 'averaging_down',
