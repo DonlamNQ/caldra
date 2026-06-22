@@ -96,7 +96,8 @@
       "PowerShell(python -m py_compile \"C:\\\\Users\\\\Haby\\\\Documents\\\\caldra\\\\worker\\\\mt5-worker.py\"; if \\($?\\) { \"OK\" })",
       "Bash(python -c ' *)",
       "Bash(echo \"C:\\\\\\\\caldra-worker existe \\(VPS\\)\")",
-      "Bash(echo \"pas C:\\\\\\\\caldra-worker ici \\(machine dev\\)\")"
+      "Bash(echo \"pas C:\\\\\\\\caldra-worker ici \\(machine dev\\)\")",
+      "Bash(echo \"GET /dashboard -> $\\(curl -s -o /dev/null -w '%{http_code}' -L --max-redirs 0 http://localhost:3000/dashboard\\)\")"
     ]
   },
   "hooks": {
