@@ -658,14 +658,17 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   const C = useContext(ThemeCtx)
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
   const [dailyNote] = useState(() => randomNote())
-  // Message du jour = petit pop-up fermable, une fois par jour (mémorisé localement).
-  const [showNote, setShowNote] = useState(false)
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    if (localStorage.getItem('caldra_note_dismissed') !== today) setShowNote(true)
-  }, [])
+  // Message du jour = petit pop-up fermable.
+  // ⚠️ TEMPORAIRE : le pop-up réapparaît à CHAQUE refresh (nouveau message
+  // aléatoire) pour pouvoir parcourir les différents messages. Pour revenir au
+  // comportement « une fois par jour », remettre le bloc localStorage ci-dessous.
+  const [showNote, setShowNote] = useState(true)
+  // useEffect(() => {
+  //   const today = new Date().toISOString().slice(0, 10)
+  //   if (localStorage.getItem('caldra_note_dismissed') !== today) setShowNote(true)
+  // }, [])
   const dismissNote = () => {
-    localStorage.setItem('caldra_note_dismissed', new Date().toISOString().slice(0, 10))
+    // localStorage.setItem('caldra_note_dismissed', new Date().toISOString().slice(0, 10))
     setShowNote(false)
   }
   const score = computeScore(alerts)
