@@ -1236,37 +1236,76 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Évolution du capital</div>
-          <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>trade par trade</div>
         </div>
         {equity.length >= 2 ? (() => {
           const minV = Math.min(0, ...equity), maxV = Math.max(0, ...equity)
           const range = maxV - minV || 1
           const n = equity.length
-          const W = 600, H = 150, PXL = 46, PXR = 8, PYT = 10, PYB = 10
+          const W = 600, H = 150, PXL = 52, PXR = 10, PYT = 12, PYB = 12
           const DW = W - PXL - PXR, DH = H - PYT - PYB
           const xOf = (i: number) => PXL + (i / (n - 1)) * DW
           const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
           const y0 = yOf(0)
-          const pts = equity.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
-          const fillPath = `M${xOf(0)},${y0} ${equity.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
+
+          // Couleur pilotée par le SIGNE du capital cumulé : vert tant que le
+          // cumul est positif, rouge tant qu'il est négatif. Comme le cumul se
+          // reporte d'une session à la suivante, la couleur « continue » de la
+          // veille et ne bascule qu'au franchissement de la ligne zéro — qu'on
+          // interpole pour couper proprement le trait à 0.
+          type Pt = { x: number; y: number }
+          const segs: { col: string; pts: Pt[] }[] = []
+          let curCol = equity[0] >= 0 ? GREEN : RED
+          let curPts: Pt[] = [{ x: xOf(0), y: yOf(equity[0]) }]
+          for (let i = 1; i < n; i++) {
+            const v0 = equity[i - 1], v1 = equity[i]
+            const pos0 = v0 >= 0, pos1 = v1 >= 0
+            if (pos0 === pos1) {
+              curPts.push({ x: xOf(i), y: yOf(v1) })
+            } else {
+              const frac = v0 / (v0 - v1)               // position du passage à 0
+              const xc = xOf(i - 1) + frac * (xOf(i) - xOf(i - 1))
+              curPts.push({ x: xc, y: y0 })
+              segs.push({ col: curCol, pts: curPts })
+              curCol = pos1 ? GREEN : RED
+              curPts = [{ x: xc, y: y0 }, { x: xOf(i), y: yOf(v1) }]
+            }
+          }
+          segs.push({ col: curCol, pts: curPts })
+          const fillOf = (c: string) => c === GREEN ? 'rgba(46,224,143,.10)' : 'rgba(224,80,60,.10)'
+
           const ticks = [maxV, 0, minV].filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.1) === i)
           const fy = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`
-          const up = equity[n - 1] >= 0
-          const eqLine = up ? GREEN : RED
-          const eqFill = up ? 'rgba(46,224,143,.10)' : 'rgba(224,80,60,.10)'
+          const dOf = (t: any) => new Date(t.exit_time ?? t.entry_time)
+          const fmtD = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
           return (
             // height 150 = viewBox H → l'axe vertical n'est pas déformé ; les libellés
             // sont en HTML (et non en <text> SVG) pour ne pas s'étirer horizontalement.
-            <div style={{ height: H, marginTop: 6, position: 'relative' }}>
-              <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-                <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={C.b} strokeWidth={0.5} strokeDasharray="4 6" />
-                <path d={fillPath} fill={eqFill} />
-                <polyline points={pts} fill="none" stroke={eqLine} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-              </svg>
-              {ticks.map(v => (
-                <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 6, top: Math.max(0, Math.min(H - 10, yOf(v) - 5)), textAlign: 'right', fontSize: 9, fontFamily: MONO, color: C.te, lineHeight: 1 }}>{fy(v)}</div>
-              ))}
-            </div>
+            <>
+              <div style={{ height: H, marginTop: 6, position: 'relative' }}>
+                <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
+                  {/* lignes de repère horizontales */}
+                  {ticks.filter(v => v !== 0).map(v => (
+                    <line key={v} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={C.b} strokeWidth={0.5} opacity={0.5} />
+                  ))}
+                  {/* ligne zéro */}
+                  <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={C.b3} strokeWidth={0.5} strokeDasharray="4 6" />
+                  {segs.map((s, idx) => (
+                    <g key={idx}>
+                      <path d={`M${s.pts[0].x},${y0} ${s.pts.map(p => `L${p.x},${p.y}`).join(' ')} L${s.pts[s.pts.length - 1].x},${y0} Z`} fill={fillOf(s.col)} />
+                      <polyline points={s.pts.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke={s.col} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                    </g>
+                  ))}
+                </svg>
+                {ticks.map(v => (
+                  <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 8, top: Math.max(0, Math.min(H - 10, yOf(v) - 5)), textAlign: 'right', fontSize: 9, fontFamily: MONO, color: C.te, lineHeight: 1 }}>{fy(v)}</div>
+                ))}
+              </div>
+              {/* axe des dates */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, paddingLeft: `${(PXL / W) * 100}%`, paddingRight: `${(PXR / W) * 100}%`, fontSize: 9, fontFamily: MONO, color: C.te }}>
+                <span>{fmtD(dOf(jSorted[0]))}</span>
+                <span>{fmtD(dOf(jSorted[n - 1]))}</span>
+              </div>
+            </>
           )
         })() : (
           <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic', padding: '24px 0' }}>Pas encore assez de trades fermés pour tracer la courbe.</div>
