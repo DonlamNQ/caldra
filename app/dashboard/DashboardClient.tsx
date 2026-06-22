@@ -1247,31 +1247,16 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
           const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
           const y0 = yOf(0)
 
-          // Couleur par SESSION : chaque journée est verte si son résultat net
-          // (somme des P&L du jour) est positif, rouge s'il est négatif. La couleur
-          // habille tout le segment de la journée ; le trait reste continu d'un
-          // jour à l'autre (le capital ne « repart » pas, seule la teinte change).
-          type Pt = { x: number; y: number }
+          // Couleur de TOUTE la courbe selon le résultat de la session la plus
+          // récente (le jour du dernier trade) : verte si ce jour finit positif,
+          // rouge s'il finit négatif. Une seule teinte pour tout le graphe.
           const dayKey = (t: any) => { const d = new Date(t.exit_time ?? t.entry_time); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` }
-          const dayResult: Record<string, number> = {}
-          jSorted.forEach(t => { const k = dayKey(t); dayResult[k] = (dayResult[k] ?? 0) + (t.pnl ?? 0) })
-          const colOf = (i: number) => { const r = dayResult[dayKey(jSorted[i])]; return r > 0 ? GREEN : r < 0 ? RED : C.tm }
-          const segs: { col: string; pts: Pt[] }[] = []
-          let curCol = colOf(1)
-          let curPts: Pt[] = [{ x: xOf(0), y: yOf(equity[0]) }, { x: xOf(1), y: yOf(equity[1]) }]
-          for (let i = 2; i < n; i++) {
-            const c = colOf(i)
-            if (c === curCol) {
-              curPts.push({ x: xOf(i), y: yOf(equity[i]) })
-            } else {
-              segs.push({ col: curCol, pts: curPts })
-              curCol = c
-              // on repart du point précédent pour que les segments se touchent
-              curPts = [{ x: xOf(i - 1), y: yOf(equity[i - 1]) }, { x: xOf(i), y: yOf(equity[i]) }]
-            }
-          }
-          segs.push({ col: curCol, pts: curPts })
-          const fillOf = (c: string) => c === GREEN ? 'rgba(46,224,143,.10)' : c === RED ? 'rgba(224,80,60,.10)' : 'rgba(255,255,255,.04)'
+          const lastKey = dayKey(jSorted[n - 1])
+          const lastDayResult = jSorted.filter(t => dayKey(t) === lastKey).reduce((a, t) => a + (t.pnl ?? 0), 0)
+          const eqLine = lastDayResult > 0 ? GREEN : lastDayResult < 0 ? RED : C.tm
+          const eqFill = eqLine === GREEN ? 'rgba(46,224,143,.10)' : eqLine === RED ? 'rgba(224,80,60,.10)' : 'rgba(255,255,255,.04)'
+          const pts = equity.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
+          const fillPath = `M${xOf(0)},${y0} ${equity.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
 
           const ticks = [maxV, 0, minV].filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.1) === i)
           const fy = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`
@@ -1289,12 +1274,8 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
                   ))}
                   {/* ligne zéro */}
                   <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={C.b3} strokeWidth={0.5} strokeDasharray="4 6" />
-                  {segs.map((s, idx) => (
-                    <g key={idx}>
-                      <path d={`M${s.pts[0].x},${y0} ${s.pts.map(p => `L${p.x},${p.y}`).join(' ')} L${s.pts[s.pts.length - 1].x},${y0} Z`} fill={fillOf(s.col)} />
-                      <polyline points={s.pts.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke={s.col} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                    </g>
-                  ))}
+                  <path d={fillPath} fill={eqFill} />
+                  <polyline points={pts} fill="none" stroke={eqLine} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
                 </svg>
                 {ticks.map(v => (
                   <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 8, top: Math.max(0, Math.min(H - 10, yOf(v) - 5)), textAlign: 'right', fontSize: 9, fontFamily: MONO, color: C.te, lineHeight: 1 }}>{fy(v)}</div>
