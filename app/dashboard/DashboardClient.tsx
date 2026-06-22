@@ -511,7 +511,6 @@ function Sidebar({ score, alerts, stats, rules }: {
   score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
 }) {
   const C = useContext(ThemeCtx)
-  const [dailyNote] = useState(() => randomNote())
   const drawdownPct = rules
     ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
@@ -572,14 +571,6 @@ function Sidebar({ score, alerts, stats, rules }: {
           <span style={{ fontSize: 11, color: C.tm, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
         </div>
       )}
-
-      {/* Message du jour (mindset) */}
-      <div style={{ padding: '4px 20px 12px', flexShrink: 0 }}>
-        <div style={{ padding: '11px 13px', borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}` }}>
-          <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 6 }}>Message du jour</div>
-          <div style={{ fontSize: 12, color: C.tm, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.5 }}>{dailyNote}</div>
-        </div>
-      </div>
 
       {/* Séparateur fin (pas pleine largeur) avant les Alertes */}
       <div style={{ height: '.5px', background: C.b, width: '72%', margin: '2px auto 0', flexShrink: 0 }} />
@@ -666,6 +657,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 }) {
   const C = useContext(ThemeCtx)
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
+  const [dailyNote] = useState(() => randomNote())
   const score = computeScore(alerts)
   const streak = consecutiveLosses(trades)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
@@ -675,6 +667,14 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
+
+      {/* Message du jour (mindset) — bandeau fin pleine largeur, déplacé hors du
+          feed pour ne plus rogner les alertes dans la sidebar. */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '9px 14px', borderRadius: 10, background: C.sf2, border: `.5px solid ${C.b}` }}>
+        <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO, flexShrink: 0 }}>Message du jour</span>
+        <span style={{ width: '.5px', height: 14, background: C.b, flexShrink: 0 }} />
+        <span style={{ fontSize: 12, color: C.tm, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.4, minWidth: 0 }}>{dailyNote}</span>
+      </div>
 
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
@@ -3363,6 +3363,20 @@ export default function DashboardClient({
                     {item.label}
                   </button>
                 ))}
+                <div style={{ margin: '5px 10px', borderTop: `.5px solid ${C.b}` }} />
+                <a
+                  href="/support"
+                  style={{
+                    display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left',
+                    background: 'transparent', borderRadius: 7, textDecoration: 'none',
+                    color: C.tm, fontSize: 12.5, fontFamily: SANS, cursor: 'pointer',
+                    boxSizing: 'border-box',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = C.b }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  Aide &amp; support
+                </a>
                 <div style={{ margin: '5px 10px', borderTop: `.5px solid ${C.b}` }} />
                 <button
                   onClick={async () => {
