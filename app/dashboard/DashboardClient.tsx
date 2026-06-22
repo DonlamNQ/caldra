@@ -2247,25 +2247,39 @@ interface CoachingCard { id: string; alertType: string; alertLevel: number; aler
 
 
 // ── Palette signature Sentinel ───────────────────────────────────────────────
-// Surface volontairement distincte du reste de Caldra : un "poste de veille" IA,
-// toujours en mode nuit profonde quel que soit le thème de l'app.
-const SN = {
+// Surface volontairement distincte du reste de Caldra : un "poste de veille" IA.
+// Deux variantes — nuit profonde (sombre) / lavande (clair) — suivant le thème.
+type SNPalette = typeof SN_DARK
+const SN_DARK = {
   void: '#060509',
-  ink: '#0a0813',
   panel: 'rgba(139,92,246,.04)',
   line: 'rgba(255,255,255,.07)',
   line2: 'rgba(255,255,255,.12)',
   violet: '#8b5cf6',
   violetSoft: 'rgba(139,92,246,.55)',
+  halo: 'rgba(124,58,237,.11)',
   tx: '#ece9f6',
   tm: 'rgba(236,233,246,.66)',
   td: 'rgba(236,233,246,.42)',
   te: 'rgba(236,233,246,.28)',
   g: '#34e89e', o: '#ffb454', r: '#ff5a52',
 }
+const SN_LIGHT: SNPalette = {
+  void: '#f1eefb',
+  panel: 'rgba(124,58,237,.05)',
+  line: 'rgba(28,20,54,.10)',
+  line2: 'rgba(28,20,54,.17)',
+  violet: '#7c3aed',
+  violetSoft: 'rgba(124,58,237,.42)',
+  halo: 'rgba(124,58,237,.10)',
+  tx: '#1b1436',
+  tm: 'rgba(27,20,54,.74)',
+  td: 'rgba(27,20,54,.52)',
+  te: 'rgba(27,20,54,.36)',
+  g: '#0a7d4f', o: '#b4530a', r: '#d23a2e',
+}
 
-function SentinelOrb({ active, score }: { active: boolean; score: number }) {
-  const col = active ? SN.violet : 'rgba(160,160,180,.4)'
+function SentinelOrb({ active, score, SN }: { active: boolean; score: number; SN: SNPalette }) {
   return (
     <div style={{ position: 'relative', width: 176, height: 176, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
       {active && [0, 1, 2].map(i => (
@@ -2276,8 +2290,8 @@ function SentinelOrb({ active, score }: { active: boolean; score: number }) {
         }} />
       ))}
       {/* anneau statique extérieur */}
-      <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', border: `.5px solid ${active ? 'rgba(139,92,246,.25)' : SN.line}` }} />
-      <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: `.5px solid ${active ? 'rgba(139,92,246,.18)' : 'transparent'}` }} />
+      <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', border: `.5px solid ${active ? SN.violetSoft : SN.line}` }} />
+      <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: `.5px solid ${active ? SN.violet + '30' : 'transparent'}` }} />
       {/* cœur */}
       <div style={{
         width: 78, height: 78, borderRadius: '50%',
@@ -2305,6 +2319,8 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
   stats: SessionStats; alerts: AlertRow[]; score: number; rules: TradingRules | null
   plan: string; coachingCards: CoachingCard[]; onActivate: () => void
 }) {
+  const C = useContext(ThemeCtx)
+  const SN = C === C_LIGHT ? SN_LIGHT : SN_DARK
   const isSentinel = plan === 'sentinel'
 
   const [openTime] = useState(() => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
@@ -2404,10 +2420,10 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
   if (!isSentinel) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden', background: SN.void, position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(600px 380px at 50% 18%, rgba(124,58,237,.10), transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(600px 380px at 50% 18%, ${SN.halo}, transparent 70%)`, pointerEvents: 'none' }} />
         {TopBar}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 26px', position: 'relative', zIndex: 1, gap: 26 }}>
-          <SentinelOrb active={false} score={score} />
+          <SentinelOrb active={false} score={score} SN={SN} />
           <div style={{ textAlign: 'center' as const, maxWidth: 440 }}>
             <div style={{ fontSize: 22, fontWeight: 300, color: SN.tx, letterSpacing: -.3, marginBottom: 12 }}>La veille est hors ligne</div>
             <div style={{ fontSize: 13, color: SN.tm, lineHeight: 1.7, fontWeight: 300 }}>
@@ -2443,13 +2459,13 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
   // ── État ACTIF ───────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden', background: SN.void, position: 'relative' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(720px 460px at 22% 30%, rgba(124,58,237,.11), transparent 65%)', pointerEvents: 'none', animation: 'snDrift 16s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(720px 460px at 22% 30%, ${SN.halo}, transparent 65%)`, pointerEvents: 'none', animation: 'snDrift 16s ease-in-out infinite' }} />
       {TopBar}
       <div className="sentinel-grid" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
 
         {/* ── Colonne CŒUR (instruments) ── */}
         <div style={{ borderRight: `.5px solid ${SN.line}`, padding: '24px 22px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <SentinelOrb active score={score} />
+          <SentinelOrb active score={score} SN={SN} />
           <div style={{ fontSize: 9, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginTop: 8, marginBottom: 20 }}>INDICE DE VIGILANCE</div>
 
           <div style={{ width: '100%' }}>
@@ -2490,7 +2506,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
 
           <div ref={streamRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 26px', minHeight: 0 }}>
             {/* Entrée d'initialisation */}
-            <StreamEntry time={openTime} kind="system" label="INITIALISATION">
+            <StreamEntry time={openTime} kind="system" label="INITIALISATION" SN={SN}>
               <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{msgs[0].content}</div>
             </StreamEntry>
 
@@ -2501,6 +2517,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
                 time={card.time}
                 kind={card.alertLevel >= 3 ? 'critical' : 'coaching'}
                 label={`L${card.alertLevel} · ${alertLabel(card.alertType).toUpperCase()}`}
+                SN={SN}
               >
                 <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{card.coaching}</div>
               </StreamEntry>
@@ -2508,20 +2525,20 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
 
             {/* Débrief de fin de session */}
             {debriefMsg && (
-              <StreamEntry time={debriefMsg.time} kind="debrief" label="DÉBRIEF DE SESSION">
-                {renderDebriefTextSN(debriefMsg.content)}
+              <StreamEntry time={debriefMsg.time} kind="debrief" label="DÉBRIEF DE SESSION" SN={SN}>
+                {renderDebriefTextSN(debriefMsg.content, SN)}
               </StreamEntry>
             )}
             {!debriefMsg && msgs.some(m => !m.isDebrief && m !== msgs[0]) && (
               msgs.filter(m => !m.isDebrief && m !== msgs[0]).map((m, i) => (
-                <StreamEntry key={`e${i}`} time={m.time} kind="critical" label="SYSTÈME">
+                <StreamEntry key={`e${i}`} time={m.time} kind="critical" label="SYSTÈME" SN={SN}>
                   <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{m.content}</div>
                 </StreamEntry>
               ))
             )}
 
             {debriefLoading && (
-              <StreamEntry time="" kind="debrief" label="DÉBRIEF EN COURS">
+              <StreamEntry time="" kind="debrief" label="DÉBRIEF EN COURS" SN={SN}>
                 <div style={{ fontSize: 12.5, color: SN.td, fontWeight: 300, display: 'flex', alignItems: 'center', gap: 8 }}>
                   Sentinel rédige le débrief de session
                   <span style={{ display: 'inline-flex', gap: 3 }}>
@@ -2544,8 +2561,8 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
 }
 
 // Une entrée du flux Sentinel : nœud sur une ligne de temps verticale.
-function StreamEntry({ time, kind, label, children }: {
-  time: string; kind: 'system' | 'coaching' | 'critical' | 'debrief'; label: string; children: React.ReactNode
+function StreamEntry({ time, kind, label, children, SN }: {
+  time: string; kind: 'system' | 'coaching' | 'critical' | 'debrief'; label: string; children: React.ReactNode; SN: SNPalette
 }) {
   const nodeCol = kind === 'critical' ? SN.r : kind === 'coaching' ? SN.o : SN.violet
   const isDebrief = kind === 'debrief'
@@ -2558,10 +2575,10 @@ function StreamEntry({ time, kind, label, children }: {
       </div>
       {/* contenu */}
       <div style={{
-        border: `.5px solid ${isDebrief ? 'rgba(139,92,246,.3)' : SN.line}`,
+        border: `.5px solid ${isDebrief ? SN.violetSoft : SN.line}`,
         borderLeft: `2px solid ${nodeCol}`,
         borderRadius: 6,
-        background: isDebrief ? 'rgba(139,92,246,.06)' : SN.panel,
+        background: SN.panel,
         padding: '12px 15px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, gap: 10 }}>
@@ -2575,7 +2592,7 @@ function StreamEntry({ time, kind, label, children }: {
 }
 
 // Variante du rendu débrief aux couleurs Sentinel.
-function renderDebriefTextSN(text: string) {
+function renderDebriefTextSN(text: string, SN: SNPalette) {
   return text.split('\n').map((line, i) => {
     if (!line.trim()) return <div key={i} style={{ height: 5 }} />
     const parts = line.split(/\*\*(.*?)\*\*/g)
