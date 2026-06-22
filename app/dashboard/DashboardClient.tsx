@@ -1081,6 +1081,143 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
   )
 }
 
+// ── EquityCurve — courbe d'évolution du capital (style PnlChart) ────────────────
+// Couleur unique pilotée par le résultat de la SESSION la plus récente (vert si
+// le jour du dernier trade finit positif, rouge sinon), rendue en dégradé + info
+// par trade au survol. Pas de ligne du haut/bas ni de ligne zéro pointillée ;
+// seuls les montants restent dans la gouttière de gauche.
+function EquityCurve({ trades }: { trades: JournalTrade[] }) {
+  const C = useContext(ThemeCtx)
+  const [hover, setHover] = useState<number | null>(null)
+  const GREEN = '#3cc87a', RED = '#dc503c'
+
+  const sorted = [...trades]
+    .filter(t => t.pnl != null)
+    .sort((a, b) => new Date(a.exit_time ?? a.entry_time).getTime() - new Date(b.exit_time ?? b.entry_time).getTime())
+
+  if (sorted.length < 2) {
+    return <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic', padding: '24px 0' }}>Pas encore assez de trades fermés pour tracer la courbe.</div>
+  }
+
+  const dayKey = (t: JournalTrade) => { const d = new Date(t.exit_time ?? t.entry_time); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` }
+  const fmtDT = (iso: string) => new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const fmtD = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+
+  // Points cumulés, ancrés à €0 au départ (pas de marqueur sur l'origine).
+  const pts: { v: number; pnl: number | null; sym: string | null; dir: string | null; t: string }[] =
+    [{ v: 0, pnl: null, sym: null, dir: null, t: '—' }]
+  let cum = 0
+  for (const tr of sorted) {
+    cum += tr.pnl ?? 0
+    pts.push({ v: cum, pnl: tr.pnl ?? null, sym: tr.symbol, dir: tr.direction, t: fmtDT(tr.exit_time ?? tr.entry_time) })
+  }
+
+  // Couleur = résultat net de la session la plus récente.
+  const lastKey = dayKey(sorted[sorted.length - 1])
+  const lastDayResult = sorted.filter(t => dayKey(t) === lastKey).reduce((a, t) => a + (t.pnl ?? 0), 0)
+  const eqCol = lastDayResult > 0 ? GREEN : lastDayResult < 0 ? RED : C.tm
+
+  const W = 600, H = 150, PXL = 46, PXR = 10, PYT = 12, PYB = 22
+  const DW = W - PXL - PXR, DH = H - PYT - PYB
+  const vals = pts.map(p => p.v)
+  const rawMin = Math.min(0, ...vals), rawMax = Math.max(0, ...vals)
+  const rawRange = rawMax - rawMin || 1
+  const grace = rawRange * 0.08
+  const minV = rawMin - grace, maxV = rawMax + grace
+  const range = maxV - minV
+  const n = pts.length
+  const xOf = (i: number) => PXL + (i / (n - 1)) * DW
+  const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
+  const y0 = yOf(0)
+  const zf = Math.max(0, Math.min(1, (y0 - PYT) / DH))   // fraction du zéro → bascule du dégradé
+
+  const xyPts = pts.map((p, i) => [xOf(i), yOf(p.v)] as [number, number])
+  const polyPoints = xyPts.map(([x, y]) => `${x},${y}`).join(' ')
+  const fillPath = `M${xyPts[0][0]} ${xyPts[0][1]} ${xyPts.slice(1).map(([x, y]) => `L${x} ${y}`).join(' ')} L${xOf(n - 1)} ${y0} L${xOf(0)} ${y0} Z`
+
+  // Ticks Y « ronds », équidistants, dans la zone visible.
+  const yTicks = (() => {
+    if (rawRange < 1) return [0]
+    const roughStep = rawRange / 3
+    const mag = Math.pow(10, Math.floor(Math.log10(roughStep)))
+    const norm = roughStep / mag
+    const stp = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag
+    const start = Math.ceil(minV / stp) * stp, end = Math.floor(maxV / stp) * stp
+    const ticks: number[] = []
+    for (let v = start; v <= end + stp * 0.001; v += stp) ticks.push(Math.round(v))
+    return ticks.filter((v, i, a) => a.indexOf(v) === i)
+  })()
+  const fmtY = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`
+
+  // Survol : info uniquement si le curseur est sur la ligne ou dans l'aplat.
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return
+    const xVB = ((e.clientX - rect.left) / rect.width) * W
+    const yVB = ((e.clientY - rect.top) / rect.height) * H
+    if (xVB < PXL || xVB > W - PXR || yVB < PYT || yVB > H - PYB) { setHover(null); return }
+    const fi = Math.max(0, Math.min(n - 1, ((xVB - PXL) / DW) * (n - 1)))
+    const i0 = Math.floor(fi), i1 = Math.min(n - 1, i0 + 1)
+    const yCurve = yOf(pts[i0].v) + (yOf(pts[i1].v) - yOf(pts[i0].v)) * (fi - i0)
+    const TOL = 6
+    if (yVB < Math.min(yCurve, y0) - TOL || yVB > Math.max(yCurve, y0) + TOL) { setHover(null); return }
+    setHover(Math.round(fi))
+  }
+
+  const hp = hover != null ? pts[hover] : null
+  const hx = hover != null ? xOf(hover) : 0
+  const hyV = hover != null ? yOf(pts[hover].v) : 0
+
+  return (
+    <div style={{ height: H, marginTop: 6, position: 'relative' }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
+        <defs>
+          {/* Aplat : dégradé d'une seule teinte, fort loin du zéro, estompé à la ligne du zéro. */}
+          <linearGradient id="eq-fill" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
+            <stop offset={0} stopColor={eqCol} stopOpacity="0.26" />
+            <stop offset={zf} stopColor={eqCol} stopOpacity="0.02" />
+            <stop offset={1} stopColor={eqCol} stopOpacity="0.26" />
+          </linearGradient>
+        </defs>
+        <path d={fillPath} fill="url(#eq-fill)" />
+        <polyline points={polyPoints} fill="none" stroke={eqCol} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        {hover != null && (
+          <g pointerEvents="none">
+            <line x1={hx} y1={PYT} x2={hx} y2={H - PYB} stroke={C.b3} strokeWidth={0.6} strokeDasharray="2 2" />
+            <circle cx={hx} cy={hyV} r={2.8} fill={eqCol} stroke={C.sf} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          </g>
+        )}
+      </svg>
+      {/* Montants — gouttière de gauche, en HTML pour ne pas s'étirer */}
+      {yTicks.map(v => (
+        <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 8, top: `${(Math.max(PYT, Math.min(H - PYB, yOf(v))) / H) * 100}%`, transform: 'translateY(-50%)', textAlign: 'right', fontSize: 9, fontFamily: MONO, color: C.te, lineHeight: 1 }}>{fmtY(v)}</div>
+      ))}
+      {/* Dates début / fin */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'space-between', paddingLeft: `${(PXL / W) * 100}%`, paddingRight: `${(PXR / W) * 100}%`, fontSize: 9, fontFamily: MONO, color: C.te }}>
+        <span>{fmtD(sorted[0].exit_time ?? sorted[0].entry_time)}</span>
+        <span>{fmtD(sorted[sorted.length - 1].exit_time ?? sorted[sorted.length - 1].entry_time)}</span>
+      </div>
+      {hp && (
+        <div style={{
+          position: 'absolute', left: `${Math.max(16, Math.min(84, (hx / W) * 100))}%`, top: `${(hyV / H) * 100}%`,
+          transform: 'translate(-50%, calc(-100% - 9px))', pointerEvents: 'none', zIndex: 5,
+          background: C.sf2, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '5px 8px',
+          whiteSpace: 'nowrap', fontFamily: MONO, fontSize: 9.5, lineHeight: 1.5,
+          boxShadow: '0 4px 14px rgba(0,0,0,.4)',
+        }}>
+          <div style={{ color: C.te, marginBottom: 1 }}>
+            {hp.pnl == null ? 'Début de session' : `${hp.t} · ${hp.sym} ${hp.dir}`}
+          </div>
+          {hp.pnl != null && (
+            <div><span style={{ color: C.te }}>Trade </span><span style={{ color: hp.pnl > 0 ? GREEN : hp.pnl < 0 ? RED : C.tm }}>{fmtY(hp.pnl)}</span></div>
+          )}
+          <div><span style={{ color: C.te }}>Cumul </span><span style={{ color: C.tm }}>{fmtY(hp.v)}</span></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── AnalyticsPanel ─────────────────────────────────────────────────────────────
 function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number }) {
   const C = useContext(ThemeCtx)
@@ -1237,60 +1374,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Évolution du capital</div>
         </div>
-        {equity.length >= 2 ? (() => {
-          const minV = Math.min(0, ...equity), maxV = Math.max(0, ...equity)
-          const range = maxV - minV || 1
-          const n = equity.length
-          const W = 600, H = 150, PXL = 52, PXR = 10, PYT = 12, PYB = 12
-          const DW = W - PXL - PXR, DH = H - PYT - PYB
-          const xOf = (i: number) => PXL + (i / (n - 1)) * DW
-          const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
-          const y0 = yOf(0)
-
-          // Couleur de TOUTE la courbe selon le résultat de la session la plus
-          // récente (le jour du dernier trade) : verte si ce jour finit positif,
-          // rouge s'il finit négatif. Une seule teinte pour tout le graphe.
-          const dayKey = (t: any) => { const d = new Date(t.exit_time ?? t.entry_time); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` }
-          const lastKey = dayKey(jSorted[n - 1])
-          const lastDayResult = jSorted.filter(t => dayKey(t) === lastKey).reduce((a, t) => a + (t.pnl ?? 0), 0)
-          const eqLine = lastDayResult > 0 ? GREEN : lastDayResult < 0 ? RED : C.tm
-          const eqFill = eqLine === GREEN ? 'rgba(46,224,143,.10)' : eqLine === RED ? 'rgba(224,80,60,.10)' : 'rgba(255,255,255,.04)'
-          const pts = equity.map((v, i) => `${xOf(i)},${yOf(v)}`).join(' ')
-          const fillPath = `M${xOf(0)},${y0} ${equity.map((v, i) => `L${xOf(i)},${yOf(v)}`).join(' ')} L${xOf(n - 1)},${y0} Z`
-
-          const ticks = [maxV, 0, minV].filter((v, i, a) => a.findIndex(x => Math.abs(x - v) < range * 0.1) === i)
-          const fy = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`
-          const dOf = (t: any) => new Date(t.exit_time ?? t.entry_time)
-          const fmtD = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
-          return (
-            // height 150 = viewBox H → l'axe vertical n'est pas déformé ; les libellés
-            // sont en HTML (et non en <text> SVG) pour ne pas s'étirer horizontalement.
-            <>
-              <div style={{ height: H, marginTop: 6, position: 'relative' }}>
-                <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
-                  {/* lignes de repère horizontales */}
-                  {ticks.filter(v => v !== 0).map(v => (
-                    <line key={v} x1={PXL} y1={yOf(v)} x2={W - PXR} y2={yOf(v)} stroke={C.b} strokeWidth={0.5} opacity={0.5} />
-                  ))}
-                  {/* ligne zéro */}
-                  <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={C.b3} strokeWidth={0.5} strokeDasharray="4 6" />
-                  <path d={fillPath} fill={eqFill} />
-                  <polyline points={pts} fill="none" stroke={eqLine} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                </svg>
-                {ticks.map(v => (
-                  <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 8, top: Math.max(0, Math.min(H - 10, yOf(v) - 5)), textAlign: 'right', fontSize: 9, fontFamily: MONO, color: C.te, lineHeight: 1 }}>{fy(v)}</div>
-                ))}
-              </div>
-              {/* axe des dates */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, paddingLeft: `${(PXL / W) * 100}%`, paddingRight: `${(PXR / W) * 100}%`, fontSize: 9, fontFamily: MONO, color: C.te }}>
-                <span>{fmtD(dOf(jSorted[0]))}</span>
-                <span>{fmtD(dOf(jSorted[n - 1]))}</span>
-              </div>
-            </>
-          )
-        })() : (
-          <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic', padding: '24px 0' }}>Pas encore assez de trades fermés pour tracer la courbe.</div>
-        )}
+        <EquityCurve trades={jt} />
       </div>
 
       {/* Détails : Par instrument | Comportement */}
