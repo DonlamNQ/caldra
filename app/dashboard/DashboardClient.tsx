@@ -668,13 +668,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
 
-      {/* Message du jour (mindset) — bandeau fin pleine largeur, déplacé hors du
-          feed pour ne plus rogner les alertes dans la sidebar. */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '9px 14px', borderRadius: 10, background: C.sf2, border: `.5px solid ${C.b}` }}>
-        <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO, flexShrink: 0 }}>Message du jour</span>
-        <span style={{ width: '.5px', height: 14, background: C.b, flexShrink: 0 }} />
-        <span style={{ fontSize: 12, color: C.tm, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.4, minWidth: 0 }}>{dailyNote}</span>
-      </div>
+      {/* Message du jour (mindset) — fine ligne discrète, sans cadre : le
+          dashboard reste avant tout pour les données. */}
+      <div style={{ flexShrink: 0, fontSize: 11, color: C.te, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.4, opacity: .8, marginBottom: -2 }}>{dailyNote}</div>
 
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
