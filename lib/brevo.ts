@@ -160,6 +160,59 @@ export async function sendAlertEmail(opts: AlertEmailOpts): Promise<void> {
   }
 }
 
+interface SupportMessageOpts {
+  fromEmail: string
+  fromName?: string
+  subject?: string
+  message: string
+  plan?: string
+}
+
+/**
+ * Envoie un message du formulaire d'aide in-app vers la boîte support.
+ * Retourne true si l'email est parti, false sinon (clé manquante ou erreur HTTP).
+ */
+export async function sendSupportMessage(opts: SupportMessageOpts): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY
+  if (!apiKey || !opts.message) return false
+
+  const supportInbox = process.env.SUPPORT_INBOX_EMAIL || 'contact@getcaldra.com'
+  const subject = opts.subject?.trim()
+    ? `[Support] ${opts.subject.trim()}`
+    : '[Support] Nouveau message depuis le dashboard'
+
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sender: { name: 'Caldra Support', email: 'noreply@getcaldra.com' },
+        to: [{ email: supportInbox }],
+        replyTo: { email: opts.fromEmail, name: opts.fromName || opts.fromEmail },
+        subject,
+        htmlContent: `<!DOCTYPE html><html><body style="font-family:-apple-system,Segoe UI,sans-serif;color:#111827;font-size:14px;line-height:1.6">
+  <p style="margin:0 0 8px"><strong>De :</strong> ${esc(opts.fromName || '')} &lt;${esc(opts.fromEmail)}&gt;</p>
+  ${opts.plan ? `<p style="margin:0 0 8px"><strong>Plan :</strong> ${esc(opts.plan)}</p>` : ''}
+  ${opts.subject ? `<p style="margin:0 0 8px"><strong>Sujet :</strong> ${esc(opts.subject)}</p>` : ''}
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+  <p style="white-space:pre-wrap;margin:0">${esc(opts.message)}</p>
+</body></html>`,
+      }),
+    })
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      console.error(`[brevo] sendSupportMessage HTTP ${res.status}:`, body)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('[brevo] sendSupportMessage fetch error:', err)
+    return false
+  }
+}
+
 export async function sendWebhookAlert(
   webhookUrl: string,
   alertType: string,

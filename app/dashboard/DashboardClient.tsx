@@ -2820,6 +2820,119 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
   )
 }
 
+function SupportPanel({ userEmail }: { userEmail: string }) {
+  const C = useContext(ThemeCtx)
+  const [subject, setSubject] = useState('')
+  const [message, setMessage] = useState('')
+  const [status, setStatus] = useState<'idle'|'sending'|'sent'|'error'>('idle')
+  const [errMsg, setErrMsg] = useState('')
+
+  async function send() {
+    if (!message.trim()) return
+    setStatus('sending'); setErrMsg('')
+    try {
+      const res = await fetch('/api/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, message }),
+      })
+      if (res.ok) {
+        setStatus('sent'); setSubject(''); setMessage('')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setErrMsg(data.error || "Une erreur s'est produite. Écris-nous à contact@getcaldra.com.")
+        setStatus('error')
+      }
+    } catch {
+      setErrMsg("Connexion impossible. Écris-nous à contact@getcaldra.com.")
+      setStatus('error')
+    }
+  }
+
+  const inp: React.CSSProperties = {
+    width: '100%', background: C.bg, border: `.5px solid ${C.b2}`,
+    borderRadius: 8, padding: '11px 14px', color: C.tx, fontSize: 13,
+    fontFamily: SANS, outline: 'none', boxSizing: 'border-box' as const, transition: 'border-color .2s',
+  }
+
+  const Sec = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, marginBottom: 14 }}>
+      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.te, marginBottom: 16 }}>{title}</div>
+      {children}
+    </div>
+  )
+
+  const faq: Array<{ q: string; a: string }> = [
+    { q: 'Comment connecter mon broker ?', a: "Onglet Intégrations : récupère ta clé API pour /api/ingest, branche un webhook Slack/Discord, ou connecte un compte cTrader. Le dashboard se met à jour en temps réel dès qu'un trade arrive." },
+    { q: 'Comment le score de session est-il calculé ?', a: 'Tu pars de 100 et chaque alerte retire des points selon sa gravité (niveau 3 : −18, niveau 2 : −8, niveau 1 : −3). Le score reflète la discipline comportementale de ta session, pas ton P&L.' },
+    { q: 'À quoi servent les alertes ?', a: "Caldra surveille 18 schémas (revenge sizing, re-entrées impulsives, overtrading, drawdown…) et te prévient en direct. Ajuste les seuils dans l'onglet Règles." },
+    { q: 'Mes données sont-elles privées ?', a: 'Oui. Chaque trade est rattaché à ton compte uniquement, isolé par les règles de sécurité Supabase. Tu peux supprimer ton compte et toutes tes données depuis le Profil.' },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Aide</div>
+        <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Aide &amp; support</div>
+        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Une question, un bug, une suggestion — on répond sous 24h.</div>
+      </div>
+      <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
+        <div style={{ maxWidth: 560 }}>
+
+          <Sec title="Questions fréquentes">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {faq.map((f, i) => (
+                <div key={i}>
+                  <div style={{ fontSize: 13, color: C.tx, fontWeight: 500, marginBottom: 4 }}>{f.q}</div>
+                  <div style={{ fontSize: 12.5, color: C.te, lineHeight: 1.6 }}>{f.a}</div>
+                </div>
+              ))}
+            </div>
+          </Sec>
+
+          <Sec title="Nous contacter">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>RÉPONSE ENVOYÉE À</div>
+                <input style={{ ...inp, opacity: .6, cursor: 'not-allowed' }} value={userEmail} readOnly />
+              </div>
+              <div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>SUJET</div>
+                <input style={inp} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Ex. Connexion cTrader, facturation…" />
+              </div>
+              <div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>MESSAGE</div>
+                <textarea
+                  style={{ ...inp, minHeight: 130, resize: 'vertical' as const, fontFamily: SANS }}
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  placeholder="Décris ta question ou ton problème…"
+                />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button
+                  onClick={send}
+                  disabled={status === 'sending' || !message.trim()}
+                  style={{ padding: '9px 22px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: status === 'sending' || !message.trim() ? 'not-allowed' : 'pointer', letterSpacing: .5, opacity: status === 'sending' || !message.trim() ? .5 : 1 }}
+                >
+                  {status === 'sending' ? 'Envoi…' : 'Envoyer'}
+                </button>
+                {status === 'sent'  && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Message envoyé — réponse sous 24h</span>}
+                {status === 'error' && <span style={{ fontSize: 11, color: C.red }}>{errMsg}</span>}
+              </div>
+              <div style={{ fontSize: 11, color: C.td, marginTop: 2 }}>
+                Ou directement : <span style={{ color: C.te }}>contact@getcaldra.com</span>
+              </div>
+            </div>
+          </Sec>
+
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
   { id: 'session',     label: 'Session live' },
@@ -2836,7 +2949,7 @@ const SETTINGS_ITEMS = [
   { id: 'billing',       label: 'Billing' },
 ]
 
-type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'sentinel'
+type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'sentinel' | 'aide'
 
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
@@ -3351,9 +3464,9 @@ export default function DashboardClient({
               onClick={() => setSettingsOpen(o => !o)}
               style={{
                 width: 30, height: 30, borderRadius: '50%',
-                background: settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) ? C.rd : C.sf2,
-                border: `.5px solid ${settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) ? C.rb : C.b}`,
-                color: settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) ? C.red : C.tm,
+                background: settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) || activeTab === 'aide' ? C.rd : C.sf2,
+                border: `.5px solid ${settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) || activeTab === 'aide' ? C.rb : C.b}`,
+                color: settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) || activeTab === 'aide' ? C.red : C.tm,
                 fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: MONO,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0,
                 transition: 'all .15s',
@@ -3388,19 +3501,19 @@ export default function DashboardClient({
                   </button>
                 ))}
                 <div style={{ margin: '5px 10px', borderTop: `.5px solid ${C.b}` }} />
-                <a
-                  href="/support"
+                <button
+                  onClick={() => { setActiveTab('aide'); setSettingsOpen(false) }}
                   style={{
                     display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left',
-                    background: 'transparent', borderRadius: 7, textDecoration: 'none',
-                    color: C.tm, fontSize: 12.5, fontFamily: SANS, cursor: 'pointer',
-                    boxSizing: 'border-box',
+                    background: activeTab === 'aide' ? C.rd : 'transparent', border: 'none', borderRadius: 7,
+                    color: activeTab === 'aide' ? C.red : C.tm, fontSize: 12.5, fontFamily: SANS, cursor: 'pointer',
+                    boxSizing: 'border-box', transition: 'background .12s',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = C.b }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  onMouseEnter={e => { if (activeTab !== 'aide') e.currentTarget.style.background = C.b }}
+                  onMouseLeave={e => { if (activeTab !== 'aide') e.currentTarget.style.background = 'transparent' }}
                 >
                   Aide &amp; support
-                </a>
+                </button>
                 <div style={{ margin: '5px 10px', borderTop: `.5px solid ${C.b}` }} />
                 <button
                   onClick={async () => {
@@ -3442,6 +3555,7 @@ export default function DashboardClient({
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
+            {activeTab === 'aide' && <SupportPanel userEmail={userEmail} />}
             {activeTab === 'sentinel' && (
               <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} plan={plan} coachingCards={coachingCards} />
             )}
