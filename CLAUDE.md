@@ -177,7 +177,7 @@ l'ouverture ET à la fermeture pour les flux closed-only comme cTrader) et ceux 
 | `revenge_sizing` | 2 | entrée | size > last_size × 1.5 après une perte (tout symbole) |
 | `immediate_reentry` | 1 | entrée | < `min_time_between_entries_sec` après la sortie |
 | `overtrading` | 1/2 | entrée | ≥ 80%/100% de `max_trades_per_session` |
-| `averaging_down` | 3 | entrée | renforce une position perdante (même symbole+sens, size ≥ précédente) |
+| `averaging_down` | 3 | entrée | 3e trade même symbole+sens après 2 pertes consécutives sur ce setup (taille indifférente) |
 | `euphoria_sizing` | 2 | entrée | size > last_size × 1.5 après un **gain** |
 | `accelerating_frequency` | 2 | entrée | écart entre entrées < 40% de la médiane, session perdante (≥4 trades) |
 | `end_of_day_desperation` | 2 | entrée | entrée dans les 10 min avant `session_end`, session déjà perdante |

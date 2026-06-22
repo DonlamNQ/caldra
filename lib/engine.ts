@@ -66,7 +66,7 @@ function buildPushContent(a: Alert): { title: string; body: string } {
     case 'news_trading':
       return { title: '📰 Trade pendant news', body: `Tu trades pendant ${d.title} (${d.currency}). Là, c'est le hasard qui décide.` }
     case 'averaging_down':
-      return { title: '🔻 Acharnement directionnel', body: `Tu réattaques ${d.symbol} ${d.direction} juste après une perte. Stop.` }
+      return { title: '🔻 Acharnement directionnel', body: `${d.symbol} ${d.direction} : 2 pertes d'affilée sur ce setup, et tu repars. Stop.` }
     case 'euphoria_sizing':
       return { title: '🚀 Sizing d\'euphorie', body: 'Tu grossis ta taille après un gain. La confiance n\'est pas une stratégie.' }
     case 'overleverage':
@@ -236,28 +236,31 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
   }
 
   // ── 5. ACHARNEMENT DIRECTIONNEL (clé interne: averaging_down) ──────────────
-  // Re-rentrer sur le MÊME instrument, dans le MÊME sens, avec une taille ≥,
-  // juste après que ce trade s'est CLÔTURÉ en perte = s'acharner sur l'idée qui
-  // vient d'échouer. NB : trades séquentiels fermés (pas le renforcement d'une
-  // position encore ouverte — non détectable depuis les deals fermés cTrader).
+  // Re-rentrer une N-ième fois sur le MÊME instrument, dans le MÊME sens, après
+  // DEUX pertes consécutives sur ce même setup = s'entêter sur une idée déjà
+  // invalidée deux fois. Reprendre un setup valide une seule fois après un stop
+  // est du trading normal → on n'alerte qu'à partir de la 2e perte d'affilée.
+  // La taille n'entre pas en compte (l'entêtement, pas le sur-engagement).
+  // NB : trades séquentiels fermés (pas le renforcement d'une position encore
+  // ouverte — non détectable depuis les deals fermés cTrader).
   // Distinct du revenge (qui ne regarde ni le symbole ni le sens).
+  const prev1 = prevTrades[0] ?? null
+  const prev2 = prevTrades[1] ?? null
   if (
-    prevTrade &&
-    (prevTrade.pnl ?? 0) < 0 &&
-    prevTrade.symbol === trade.symbol &&
-    prevTrade.direction === trade.direction &&
-    trade.size >= prevTrade.size
+    prev1 && prev2 &&
+    (prev1.pnl ?? 0) < 0 && (prev2.pnl ?? 0) < 0 &&
+    prev1.symbol === trade.symbol && prev2.symbol === trade.symbol &&
+    prev1.direction === trade.direction && prev2.direction === trade.direction
   ) {
     alerts.push({
       type: 'averaging_down',
       level: 3,
-      message: 'Tu réattaques le même sens juste après une perte',
+      message: 'Tu réattaques le même sens après 2 pertes d\'affilée',
       detail: {
         symbol: trade.symbol,
         direction: trade.direction,
-        previous_size: prevTrade.size,
-        current_size: trade.size,
-        previous_pnl: prevTrade.pnl ?? 0,
+        previous_pnl: prev1.pnl ?? 0,
+        previous_pnl_2: prev2.pnl ?? 0,
       },
     })
   }
