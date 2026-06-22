@@ -658,6 +658,16 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   const C = useContext(ThemeCtx)
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
   const [dailyNote] = useState(() => randomNote())
+  // Message du jour = petit pop-up fermable, une fois par jour (mémorisé localement).
+  const [showNote, setShowNote] = useState(false)
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    if (localStorage.getItem('caldra_note_dismissed') !== today) setShowNote(true)
+  }, [])
+  const dismissNote = () => {
+    localStorage.setItem('caldra_note_dismissed', new Date().toISOString().slice(0, 10))
+    setShowNote(false)
+  }
   const score = computeScore(alerts)
   const streak = consecutiveLosses(trades)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
@@ -667,10 +677,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
-
-      {/* Message du jour (mindset) — fine ligne discrète, sans cadre : le
-          dashboard reste avant tout pour les données. */}
-      <div style={{ flexShrink: 0, fontSize: 11, color: C.te, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.4, opacity: .8, marginBottom: -2 }}>{dailyNote}</div>
 
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
@@ -858,6 +864,28 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           )}
         </div>
       </div>
+
+      {/* Message du jour — pop-up discret, fermable (× ou clic ailleurs disparaît au prochain jour) */}
+      {showNote && (
+        <div style={{
+          position: 'fixed', bottom: 20, right: 20, zIndex: 300, maxWidth: 320,
+          background: C.sf2, border: `.5px solid ${C.b2}`, borderRadius: 12,
+          padding: '14px 16px', boxShadow: '0 12px 40px rgba(0,0,0,.45)',
+          animation: 'fadeUp .35s ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Message du jour</span>
+            <button onClick={dismissNote} aria-label="Fermer" style={{
+              background: 'transparent', border: 'none', color: C.te, cursor: 'pointer',
+              fontSize: 16, lineHeight: 1, padding: 0, marginLeft: 12, fontFamily: SANS,
+            }}
+              onMouseEnter={e => { e.currentTarget.style.color = C.tm }}
+              onMouseLeave={e => { e.currentTarget.style.color = C.te }}
+            >×</button>
+          </div>
+          <div style={{ fontSize: 13, color: C.tm, fontWeight: 300, fontStyle: 'italic', lineHeight: 1.5 }}>{dailyNote}</div>
+        </div>
+      )}
 
     </div>
   )
