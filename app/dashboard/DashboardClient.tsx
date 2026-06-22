@@ -2245,32 +2245,73 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
 interface ChatMsg { role: 'user' | 'assistant'; content: string; time: string; isDebrief?: boolean }
 interface CoachingCard { id: string; alertType: string; alertLevel: number; alertMessage: string; coaching: string; time: string }
 
-function renderDebriefText(text: string, C: Palette) {
-  return text.split('\n').map((line, i) => {
-    if (!line.trim()) return <div key={i} style={{ height: 5 }} />
-    const parts = line.split(/\*\*(.*?)\*\*/g)
-    return (
-      <div key={i} style={{ fontSize: 12, color: C.tm, lineHeight: 1.6, fontWeight: 300, marginBottom: 1 }}>
-        {parts.map((part, j) => j % 2 === 1
-          ? <span key={j} style={{ fontWeight: 600, color: C.tx }}>{part}</span>
-          : part
-        )}
-      </div>
-    )
-  })
+
+// ── Palette signature Sentinel ───────────────────────────────────────────────
+// Surface volontairement distincte du reste de Caldra : un "poste de veille" IA,
+// toujours en mode nuit profonde quel que soit le thème de l'app.
+const SN = {
+  void: '#060509',
+  ink: '#0a0813',
+  panel: 'rgba(139,92,246,.04)',
+  line: 'rgba(255,255,255,.07)',
+  line2: 'rgba(255,255,255,.12)',
+  violet: '#8b5cf6',
+  violetSoft: 'rgba(139,92,246,.55)',
+  tx: '#ece9f6',
+  tm: 'rgba(236,233,246,.66)',
+  td: 'rgba(236,233,246,.42)',
+  te: 'rgba(236,233,246,.28)',
+  g: '#34e89e', o: '#ffb454', r: '#ff5a52',
 }
 
-function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
+function SentinelOrb({ active, score }: { active: boolean; score: number }) {
+  const col = active ? SN.violet : 'rgba(160,160,180,.4)'
+  return (
+    <div style={{ position: 'relative', width: 176, height: 176, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      {active && [0, 1, 2].map(i => (
+        <div key={i} style={{
+          position: 'absolute', width: 120, height: 120, borderRadius: '50%',
+          border: `1px solid ${SN.violetSoft}`,
+          animation: `snRing ${3.4 + i * 0.7}s cubic-bezier(.2,.6,.3,1) ${i * 1.1}s infinite`,
+        }} />
+      ))}
+      {/* anneau statique extérieur */}
+      <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', border: `.5px solid ${active ? 'rgba(139,92,246,.25)' : SN.line}` }} />
+      <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: `.5px solid ${active ? 'rgba(139,92,246,.18)' : 'transparent'}` }} />
+      {/* cœur */}
+      <div style={{
+        width: 78, height: 78, borderRadius: '50%',
+        background: active
+          ? 'radial-gradient(circle at 38% 32%, rgba(167,139,250,.95), rgba(124,58,237,.5) 55%, rgba(76,29,149,.25))'
+          : 'radial-gradient(circle at 38% 32%, rgba(120,120,140,.5), rgba(60,60,75,.3))',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        animation: active ? 'snGlow 3.6s ease-in-out infinite' : 'none',
+        border: `.5px solid ${active ? 'rgba(196,181,253,.5)' : 'rgba(160,160,180,.25)'}`,
+      }}>
+        {active ? (
+          <>
+            <div style={{ fontSize: 26, fontWeight: 300, color: '#fff', lineHeight: 1, letterSpacing: -1, fontFamily: MONO }}>{score}</div>
+            <div style={{ fontSize: 8, color: 'rgba(255,255,255,.6)', fontFamily: MONO, letterSpacing: 1, marginTop: 2 }}>/ 100</div>
+          </>
+        ) : (
+          <div style={{ fontSize: 24, color: 'rgba(220,220,235,.5)' }}>◌</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onActivate }: {
   stats: SessionStats; alerts: AlertRow[]; score: number; rules: TradingRules | null
-  plan: string; coachingCards: CoachingCard[]
+  plan: string; coachingCards: CoachingCard[]; onActivate: () => void
 }) {
-  const C = useContext(ThemeCtx)
   const isSentinel = plan === 'sentinel'
 
+  const [openTime] = useState(() => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
   const [msgs, setMsgs] = useState<ChatMsg[]>([{
     role: 'assistant',
-    content: `Bonjour. Session ouverte. Score comportemental actuel : ${score}/100. ${alerts.length === 0 ? 'Aucune alerte — continuez comme ça.' : `${alerts.length} alerte(s) active(s) — je surveille.`}`,
-    time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    content: `Veille initialisée. Score comportemental : ${score}/100. ${alerts.length === 0 ? 'Aucune alerte — comportement nominal.' : `${alerts.length} signal(aux) actif(s) sous surveillance.`}`,
+    time: openTime,
   }])
 
   // Session end timer pour le debrief proactif
@@ -2317,7 +2358,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
       setDebriefLoading(false)
     }
   }
-  const msgsRef = useRef<HTMLDivElement>(null)
+  const streamRef = useRef<HTMLDivElement>(null)
 
   // Sentinel est PUSH : pas de chat à piloter. Le débrief se déclenche tout seul
   // à la fermeture de session.
@@ -2326,156 +2367,227 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionEnded, debriefDone, debriefFailed, debriefLoading])
 
-  useEffect(() => { msgsRef.current?.scrollTo({ top: msgsRef.current.scrollHeight, behavior: 'smooth' }) }, [msgs])
+  useEffect(() => { streamRef.current?.scrollTo({ top: streamRef.current.scrollHeight, behavior: 'smooth' }) }, [msgs, coachingCards.length, debriefLoading])
 
   const alertsByType = alerts.reduce<Record<string, number>>((acc, a) => {
     const t = a.type ?? ''; if (t) acc[t] = (acc[t] ?? 0) + 1; return acc
   }, {})
   const dominant = Object.entries(alertsByType).sort((a, b) => b[1] - a[1])[0]
+  const vigilanceCol = score >= 70 ? SN.g : score >= 40 ? SN.o : SN.r
+  const debriefMsg = msgs.find(m => m.isDebrief)
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+  // ── Top bar commun (wordmark + statut) ──────────────────────────────────────
+  const TopBar = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px', borderBottom: `.5px solid ${SN.line}`, flexShrink: 0, position: 'relative', zIndex: 2 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ width: 9, height: 9, borderRadius: '50%', background: isSentinel ? SN.violet : 'rgba(160,160,180,.4)', boxShadow: isSentinel ? `0 0 10px 1px ${SN.violetSoft}` : 'none', animation: isSentinel ? 'pulse 2.4s infinite' : 'none' }} />
         <div>
-          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Intelligence artificielle</div>
-          <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Sentinel IA</div>
-          <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Analyse comportementale en temps réel · Debriefing automatique · Coaching personnalisé</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99 }}>
-          <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.red, animation: 'pulse 2s infinite' }} />
-          <span style={{ fontSize: 9.5, color: C.red, fontFamily: MONO, letterSpacing: 1 }}>IA ACTIVE</span>
+          <div style={{ fontSize: 14, fontWeight: 400, letterSpacing: 7, color: SN.tx, fontFamily: MONO }}>SENTINEL</div>
+          <div style={{ fontSize: 8, letterSpacing: 3.5, color: SN.te, fontFamily: MONO, marginTop: 3 }}>POSTE DE VEILLE COMPORTEMENTALE</div>
         </div>
       </div>
-    <div className="sentinel-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-      <div style={{ padding: 26, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div style={{ flex: 1, background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: 400 }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.3),transparent)' }} />
-
-          <div ref={msgsRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 16, minHeight: 0 }}>
-            {msgs.map((m, i) => m.role === 'assistant' ? (
-              <div key={i} style={{
-                background: m.isDebrief ? 'rgba(124,58,237,.07)' : C.sf2,
-                border: `.5px solid ${m.isDebrief ? C.rb : C.b}`,
-                borderLeft: m.isDebrief ? `3px solid ${C.red}` : undefined,
-                borderRadius: '10px 10px 10px 2px', padding: '12px 14px', maxWidth: '90%',
-              }}>
-                {m.isDebrief && (
-                  <div style={{ fontSize: 8.5, color: C.red, letterSpacing: 1.8, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 8 }}>Debrief Sentinel</div>
-                )}
-                {m.isDebrief
-                  ? renderDebriefText(m.content, C)
-                  : <div style={{ fontSize: 12.5, color: C.tm, lineHeight: 1.55, fontWeight: 300 }}>{m.content}</div>
-                }
-                <div style={{ fontSize: 10, color: C.te, fontFamily: MONO, marginTop: 5 }}>{m.time}</div>
-              </div>
-            ) : (
-              <div key={i} style={{ background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: '10px 10px 2px 10px', padding: '12px 14px', maxWidth: '85%', alignSelf: 'flex-end' }}>
-                <div style={{ fontSize: 12.5, color: 'rgba(230,227,240,.95)', lineHeight: 1.55 }}>{m.content}</div>
-              </div>
-            ))}
-            {debriefLoading && (
-              <div style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: '10px 10px 10px 2px', padding: '12px 14px', maxWidth: '85%' }}>
-                <div style={{ fontSize: 12.5, color: C.te, fontStyle: 'italic' }}>Sentinel rédige le débrief de session…</div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ paddingTop: 11, borderTop: `.5px solid ${C.b}`, fontSize: 11, color: C.te, fontStyle: 'italic', lineHeight: 1.5 }}>
-            Sentinel veille en continu : coaching automatique au moment des alertes, et débrief généré à la fermeture de ta session — rien à demander.
-          </div>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 13px', border: `.5px solid ${isSentinel ? 'rgba(139,92,246,.35)' : SN.line2}`, borderRadius: 4, background: isSentinel ? 'rgba(139,92,246,.06)' : 'transparent' }}>
+        <div style={{ width: 5, height: 5, borderRadius: '50%', background: isSentinel ? SN.violet : SN.td, animation: isSentinel ? 'pulse 1.8s infinite' : 'none' }} />
+        <span style={{ fontSize: 9, letterSpacing: 2, fontFamily: MONO, color: isSentinel ? SN.violet : SN.td }}>{isSentinel ? 'EN VEILLE' : 'DORMANT'}</span>
       </div>
-
-      {/* Sentinel sidebar */}
-      <div className="sentinel-sidebar" style={{ borderLeft: `.5px solid ${C.b}`, padding: 20, display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', background: C.sf }}>
-        <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.b}` }}>
-          <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Insights de session</div>
-          {score >= 70 && (
-            <div style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 8, padding: 12, marginBottom: 9, borderLeft: `3px solid ${C.g}` }}>
-              <div style={{ fontSize: 10, fontFamily: MONO, marginBottom: 5, letterSpacing: .3, color: C.g }}>✓ Point fort</div>
-              <div style={{ fontSize: 11.5, color: C.tm, lineHeight: 1.5, fontWeight: 300 }}>Score solide — comportement discipliné depuis le début de session.</div>
-            </div>
-          )}
-          {dominant ? (
-            <div style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 8, padding: 12, borderLeft: `3px solid ${C.o}` }}>
-              <div style={{ fontSize: 10, fontFamily: MONO, marginBottom: 5, letterSpacing: .3, color: C.o }}>⚠ À surveiller</div>
-              <div style={{ fontSize: 11.5, color: C.tm, lineHeight: 1.5, fontWeight: 300 }}>Pattern dominant : {dominant[0].replace(/_/g, ' ')} ({dominant[1]}×). Reste vigilant.</div>
-            </div>
-          ) : score >= 70 ? (
-            <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontWeight: 300 }}>Aucun pattern problématique détecté.</div>
-          ) : null}
-        </div>
-
-        {/* Coaching automatique — cartes générées sur L2+ */}
-        {isSentinel && coachingCards.length > 0 && (
-          <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.b}` }}>
-            <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Coaching automatique</div>
-            {coachingCards.slice(0, 3).map(card => {
-              const lvlCol = card.alertLevel >= 3 ? '#dc3218' : C.o
-              return (
-                <div key={card.id} style={{ background: C.sf2, border: `.5px solid ${C.b}`, borderRadius: 8, padding: 11, marginBottom: 8, borderLeft: `3px solid ${lvlCol}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                    <span style={{ fontSize: 9, fontFamily: MONO, color: lvlCol, letterSpacing: .5 }}>
-                      L{card.alertLevel} · {alertLabel(card.alertType).toUpperCase()}
-                    </span>
-                    <span style={{ fontSize: 9, color: C.te, fontFamily: MONO }}>{card.time}</span>
-                  </div>
-                  <div style={{ fontSize: 11.5, color: C.tm, lineHeight: 1.55, fontWeight: 300 }}>{card.coaching}</div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Debrief auto — fin de session */}
-        {isSentinel && (sessionEnded || debriefDone || debriefLoading) && (
-          <div style={{ padding: '14px 0', borderBottom: `.5px solid ${C.b}` }}>
-            <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Debrief de session</div>
-            {debriefDone ? (
-              <div style={{ fontSize: 11.5, color: C.g, fontWeight: 400 }}>✓ Débrief généré ci-contre.</div>
-            ) : (
-              <div style={{ fontSize: 11.5, color: C.td, fontWeight: 300, lineHeight: 1.5 }}>
-                Session terminée — Sentinel rédige automatiquement ton débrief…
-              </div>
-            )}
-          </div>
-        )}
-
-        <div style={{ padding: '16px 0', borderBottom: `.5px solid ${C.b}` }}>
-          <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Session actuelle</div>
-          {[
-            { k: 'Score', v: `${score} / 100`, c: scoreColor(score, C) },
-            { k: 'P&L', v: fmtEur(stats.total_pnl), c: C.pnl },
-            { k: 'Trades', v: String(stats.total_trades), c: C.tm },
-            { k: 'Alertes', v: String(alerts.length), c: alerts.length > 0 ? C.red : C.td },
-          ].map(({ k, v, c }) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
-              <span style={{ fontSize: 12, color: C.td }}>{k}</span>
-              <span style={{ fontSize: 12.5, fontFamily: MONO, color: c, fontWeight: 500 }}>{v}</span>
-            </div>
-          ))}
-        </div>
-
-        {rules && (
-          <div style={{ padding: '16px 0' }}>
-            <div style={{ fontSize: 10, letterSpacing: .3, color: C.te, marginBottom: 10 }}>Règles actives</div>
-            {[
-              { k: 'Drawdown max', v: `${rules.max_daily_drawdown_pct}%` },
-              { k: 'Max trades', v: String(rules.max_trades_per_session) },
-              { k: 'Fenêtre', v: `${rules.session_start}–${rules.session_end}` },
-            ].map(({ k, v }) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}>
-                <span style={{ fontSize: 12, color: C.td }}>{k}</span>
-                <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
     </div>
   )
+
+  const Readout = ({ label, value, col }: { label: string; value: string; col?: string }) => (
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '8px 0', borderBottom: `.5px solid ${SN.line}` }}>
+      <span style={{ fontSize: 9, letterSpacing: 1.5, color: SN.te, fontFamily: MONO, textTransform: 'uppercase' as const }}>{label}</span>
+      <span style={{ fontSize: 12, fontFamily: MONO, color: col ?? SN.tm, letterSpacing: .3 }}>{value}</span>
+    </div>
+  )
+
+  // ── État DORMANT (plan ≠ sentinel) ───────────────────────────────────────────
+  if (!isSentinel) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden', background: SN.void, position: 'relative' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(600px 380px at 50% 18%, rgba(124,58,237,.10), transparent 70%)', pointerEvents: 'none' }} />
+        {TopBar}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 26px', position: 'relative', zIndex: 1, gap: 26 }}>
+          <SentinelOrb active={false} score={score} />
+          <div style={{ textAlign: 'center' as const, maxWidth: 440 }}>
+            <div style={{ fontSize: 22, fontWeight: 300, color: SN.tx, letterSpacing: -.3, marginBottom: 12 }}>La veille est hors ligne</div>
+            <div style={{ fontSize: 13, color: SN.tm, lineHeight: 1.7, fontWeight: 300 }}>
+              Sentinel observe ta session en continu : coaching automatique au moment précis où un schéma se déclenche, et débrief généré par l&apos;IA à la fermeture — sans rien demander.
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11, width: '100%', maxWidth: 380 }}>
+            {[
+              ['Coaching temps réel', 'Une intervention ciblée dès qu’un comportement à risque apparaît.'],
+              ['Débrief de fin de session', 'Une analyse écrite de ta session, générée automatiquement.'],
+              ['Lecture comportementale profonde', 'Au-delà des alertes : les tendances qui se répètent.'],
+            ].map(([t, d]) => (
+              <div key={t} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '12px 14px', border: `.5px solid ${SN.line}`, borderRadius: 6, background: SN.panel }}>
+                <span style={{ color: SN.violet, fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>◆</span>
+                <div>
+                  <div style={{ fontSize: 12.5, color: SN.tx, fontWeight: 400, marginBottom: 3 }}>{t}</div>
+                  <div style={{ fontSize: 11.5, color: SN.td, lineHeight: 1.5, fontWeight: 300 }}>{d}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={onActivate}
+            style={{ padding: '13px 30px', background: SN.violet, border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, letterSpacing: 1, cursor: 'pointer', fontFamily: MONO, boxShadow: '0 6px 26px rgba(124,58,237,.35)' }}
+          >
+            ACTIVER SENTINEL · 39€/MOIS →
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── État ACTIF ───────────────────────────────────────────────────────────────
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden', background: SN.void, position: 'relative' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(720px 460px at 22% 30%, rgba(124,58,237,.11), transparent 65%)', pointerEvents: 'none', animation: 'snDrift 16s ease-in-out infinite' }} />
+      {TopBar}
+      <div className="sentinel-grid" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+
+        {/* ── Colonne CŒUR (instruments) ── */}
+        <div style={{ borderRight: `.5px solid ${SN.line}`, padding: '24px 22px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <SentinelOrb active score={score} />
+          <div style={{ fontSize: 9, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginTop: 8, marginBottom: 20 }}>INDICE DE VIGILANCE</div>
+
+          <div style={{ width: '100%' }}>
+            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginBottom: 8 }}>ÉTAT DE LA MENACE</div>
+            {dominant ? (
+              <div style={{ padding: '11px 13px', border: `.5px solid rgba(255,180,84,.28)`, borderLeft: `2px solid ${SN.o}`, borderRadius: 5, background: 'rgba(255,180,84,.05)', marginBottom: 18 }}>
+                <div style={{ fontSize: 9, fontFamily: MONO, color: SN.o, letterSpacing: .5, marginBottom: 4 }}>{alertLabel(dominant[0]).toUpperCase()} ×{dominant[1]}</div>
+                <div style={{ fontSize: 11, color: SN.tm, lineHeight: 1.5, fontWeight: 300 }}>Schéma dominant de la session. Vigilance accrue.</div>
+              </div>
+            ) : (
+              <div style={{ padding: '11px 13px', border: `.5px solid rgba(52,232,158,.22)`, borderLeft: `2px solid ${SN.g}`, borderRadius: 5, background: 'rgba(52,232,158,.04)', marginBottom: 18 }}>
+                <div style={{ fontSize: 9, fontFamily: MONO, color: SN.g, letterSpacing: .5, marginBottom: 4 }}>PÉRIMÈTRE DÉGAGÉ</div>
+                <div style={{ fontSize: 11, color: SN.tm, lineHeight: 1.5, fontWeight: 300 }}>Aucun schéma à risque détecté.</div>
+              </div>
+            )}
+
+            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginBottom: 4 }}>RELEVÉ DE SESSION</div>
+            <Readout label="Vigilance" value={`${score} / 100`} col={vigilanceCol} />
+            <Readout label="P&L" value={fmtEur(stats.total_pnl)} col={SN.tm} />
+            <Readout label="Trades" value={String(stats.total_trades)} />
+            <Readout label="Signaux" value={String(alerts.length)} col={alerts.length > 0 ? SN.r : SN.td} />
+            {rules && <>
+              <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, margin: '18px 0 4px' }}>PARAMÈTRES DE GARDE</div>
+              <Readout label="Drawdown max" value={`${rules.max_daily_drawdown_pct}%`} />
+              <Readout label="Max trades" value={String(rules.max_trades_per_session)} />
+              <Readout label="Fenêtre" value={`${rules.session_start}–${rules.session_end}`} />
+            </>}
+          </div>
+        </div>
+
+        {/* ── Flux de TRANSMISSION ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '14px 26px', borderBottom: `.5px solid ${SN.line}`, flexShrink: 0 }}>
+            <span style={{ fontSize: 9, letterSpacing: 2.5, color: SN.td, fontFamily: MONO }}>FLUX DE TRANSMISSION</span>
+            <div style={{ flex: 1, height: '.5px', background: SN.line }} />
+            <span style={{ fontSize: 9, color: SN.te, fontFamily: MONO, letterSpacing: 1 }}>{coachingCards.length + msgs.length} ENTRÉES</span>
+          </div>
+
+          <div ref={streamRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 26px', minHeight: 0 }}>
+            {/* Entrée d'initialisation */}
+            <StreamEntry time={openTime} kind="system" label="INITIALISATION">
+              <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{msgs[0].content}</div>
+            </StreamEntry>
+
+            {/* Coaching temps réel */}
+            {coachingCards.map(card => (
+              <StreamEntry
+                key={card.id}
+                time={card.time}
+                kind={card.alertLevel >= 3 ? 'critical' : 'coaching'}
+                label={`L${card.alertLevel} · ${alertLabel(card.alertType).toUpperCase()}`}
+              >
+                <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{card.coaching}</div>
+              </StreamEntry>
+            ))}
+
+            {/* Débrief de fin de session */}
+            {debriefMsg && (
+              <StreamEntry time={debriefMsg.time} kind="debrief" label="DÉBRIEF DE SESSION">
+                {renderDebriefTextSN(debriefMsg.content)}
+              </StreamEntry>
+            )}
+            {!debriefMsg && msgs.some(m => !m.isDebrief && m !== msgs[0]) && (
+              msgs.filter(m => !m.isDebrief && m !== msgs[0]).map((m, i) => (
+                <StreamEntry key={`e${i}`} time={m.time} kind="critical" label="SYSTÈME">
+                  <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{m.content}</div>
+                </StreamEntry>
+              ))
+            )}
+
+            {debriefLoading && (
+              <StreamEntry time="" kind="debrief" label="DÉBRIEF EN COURS">
+                <div style={{ fontSize: 12.5, color: SN.td, fontWeight: 300, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  Sentinel rédige le débrief de session
+                  <span style={{ display: 'inline-flex', gap: 3 }}>
+                    {[0, 1, 2].map(i => <span key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: SN.violet, animation: `snDot 1.2s ${i * 0.18}s infinite` }} />)}
+                  </span>
+                </div>
+              </StreamEntry>
+            )}
+
+            {coachingCards.length === 0 && !debriefMsg && !debriefLoading && (
+              <div style={{ marginTop: 22, padding: '16px 18px', border: `.5px dashed ${SN.line2}`, borderRadius: 6, fontSize: 11.5, color: SN.td, lineHeight: 1.6, fontWeight: 300 }}>
+                Aucune intervention pour l&apos;instant. Sentinel transmet automatiquement dès qu&apos;un schéma se déclenche, puis rédige le débrief à la fermeture de ta session — rien à demander.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Une entrée du flux Sentinel : nœud sur une ligne de temps verticale.
+function StreamEntry({ time, kind, label, children }: {
+  time: string; kind: 'system' | 'coaching' | 'critical' | 'debrief'; label: string; children: React.ReactNode
+}) {
+  const nodeCol = kind === 'critical' ? SN.r : kind === 'coaching' ? SN.o : SN.violet
+  const isDebrief = kind === 'debrief'
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 14, paddingBottom: 18, animation: 'snStream .4s ease-out' }}>
+      {/* gouttière timeline */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: nodeCol, boxShadow: `0 0 8px 1px ${nodeCol}66`, marginTop: 3, flexShrink: 0 }} />
+        <div style={{ flex: 1, width: '.5px', background: SN.line, marginTop: 5 }} />
+      </div>
+      {/* contenu */}
+      <div style={{
+        border: `.5px solid ${isDebrief ? 'rgba(139,92,246,.3)' : SN.line}`,
+        borderLeft: `2px solid ${nodeCol}`,
+        borderRadius: 6,
+        background: isDebrief ? 'rgba(139,92,246,.06)' : SN.panel,
+        padding: '12px 15px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, gap: 10 }}>
+          <span style={{ fontSize: 8.5, letterSpacing: 1.4, fontFamily: MONO, color: nodeCol, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{label}</span>
+          {time && <span style={{ fontSize: 9, color: SN.te, fontFamily: MONO, flexShrink: 0 }}>{time}</span>}
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// Variante du rendu débrief aux couleurs Sentinel.
+function renderDebriefTextSN(text: string) {
+  return text.split('\n').map((line, i) => {
+    if (!line.trim()) return <div key={i} style={{ height: 5 }} />
+    const parts = line.split(/\*\*(.*?)\*\*/g)
+    return (
+      <div key={i} style={{ fontSize: 12, color: SN.tm, lineHeight: 1.65, fontWeight: 300, marginBottom: 1 }}>
+        {parts.map((part, j) => j % 2 === 1
+          ? <span key={j} style={{ fontWeight: 600, color: SN.tx }}>{part}</span>
+          : part
+        )}
+      </div>
+    )
+  })
 }
 
 // ── Toast notification system ──────────────────────────────────────────────────
@@ -3315,6 +3427,12 @@ export default function DashboardClient({
         @keyframes toastOut{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(28px) scale(.97)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes snRing{0%{transform:scale(.5);opacity:.65}70%{opacity:.1}100%{transform:scale(1.55);opacity:0}}
+        @keyframes snGlow{0%,100%{box-shadow:0 0 26px 3px rgba(124,58,237,.4),inset 0 0 16px rgba(124,58,237,.45)}50%{box-shadow:0 0 44px 9px rgba(124,58,237,.62),inset 0 0 22px rgba(124,58,237,.68)}}
+        @keyframes snScan{0%{transform:translateY(-120%)}100%{transform:translateY(120%)}}
+        @keyframes snStream{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+        @keyframes snDot{0%,20%{opacity:.18}50%{opacity:1}80%,100%{opacity:.18}}
+        @keyframes snDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(2%,-2%)}}
         .tab-nav{display:flex;align-items:center;background:${C.b};border:.5px solid ${C.b};border-radius:13px;padding:4px 5px;gap:3px}
         .tab-btn{display:flex;align-items:center;gap:6px;padding:8px 22px;border-radius:9px;font-size:12.5px;letter-spacing:.3px;color:${C.td};cursor:pointer;border:none;background:none;white-space:nowrap;font-weight:400;font-family:${SANS};transition:color .15s,background .15s,box-shadow .15s}
         .tab-btn:hover{color:${C.tm};background:${C.b}}
@@ -3557,7 +3675,7 @@ export default function DashboardClient({
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
             {activeTab === 'aide' && <SupportPanel userEmail={userEmail} />}
             {activeTab === 'sentinel' && (
-              <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} plan={plan} coachingCards={coachingCards} />
+              <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} plan={plan} coachingCards={coachingCards} onActivate={() => setActiveTab('billing')} />
             )}
           </div>
         </div>
