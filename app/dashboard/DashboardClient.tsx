@@ -410,38 +410,40 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
   for (let i = step; i < n - 1; i += step) xIdxSet.add(i)
   const xIdxs = [...xIdxSet].sort((a, b) => a - b)
 
-  // Survol : on n'affiche l'info QUE si le curseur est sur la ligne ou dans la
-  // zone colorée (la bande entre la courbe et la ligne du zéro) à cette position X.
-  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
+  // Survol/scrub : à la souris on n'affiche l'info QUE si le curseur est sur la
+  // ligne ou dans la zone colorée à cette position X ; au doigt (mobile) on suit
+  // simplement la position X pour que l'info déroule pendant le glissement.
+  const locate = (clientX: number, clientY: number, rect: DOMRect, isTouch: boolean) => {
     if (rect.width === 0 || rect.height === 0) return
-    const xVB = ((e.clientX - rect.left) / rect.width) * W
-    const yVB = ((e.clientY - rect.top) / rect.height) * H
+    const xVB = ((clientX - rect.left) / rect.width) * W
+    const yVB = ((clientY - rect.top) / rect.height) * H
 
     // Hors de la zone de tracé (gouttières / bandeau des heures) → rien.
-    if (xVB < PXL || xVB > W - PXR || yVB < PYT || yVB > H - PYB) { setHover(null); return }
+    if (xVB < PXL || xVB > W - PXR) { setHover(null); return }
 
-    // Hauteur de la courbe interpolée à cette position X.
     const fi = Math.max(0, Math.min(n - 1, ((xVB - PXL) / DW) * (n - 1)))
-    const i0 = Math.floor(fi), i1 = Math.min(n - 1, i0 + 1)
-    const yCurve = yOf(pts[i0].v) + (yOf(pts[i1].v) - yOf(pts[i0].v)) * (fi - i0)
-
-    // Bande colorée = entre la courbe et la ligne du zéro, + tolérance pour la ligne.
-    const TOL = 5
-    const top = Math.min(yCurve, y0) - TOL
-    const bot = Math.max(yCurve, y0) + TOL
-    if (yVB < top || yVB > bot) { setHover(null); return }
-
+    if (!isTouch) {
+      if (yVB < PYT || yVB > H - PYB) { setHover(null); return }
+      // Hauteur de la courbe interpolée à cette position X.
+      const i0 = Math.floor(fi), i1 = Math.min(n - 1, i0 + 1)
+      const yCurve = yOf(pts[i0].v) + (yOf(pts[i1].v) - yOf(pts[i0].v)) * (fi - i0)
+      // Bande colorée = entre la courbe et la ligne du zéro, + tolérance.
+      const TOL = 5
+      if (yVB < Math.min(yCurve, y0) - TOL || yVB > Math.max(yCurve, y0) + TOL) { setHover(null); return }
+    }
     setHover(Math.round(fi))
   }
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => locate(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), false)
+  const onTouch = (e: React.TouchEvent<HTMLDivElement>) => { const t = e.touches[0]; if (t) locate(t.clientX, t.clientY, e.currentTarget.getBoundingClientRect(), true) }
 
   const hp = hover != null ? pts[hover] : null
   const hx = hover != null ? xOf(hover) : 0
   const hyV = hover != null ? yOf(pts[hover].v) : 0
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}
-      onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', touchAction: 'pan-y' }}
+      onMouseMove={onMove} onMouseLeave={() => setHover(null)}
+      onTouchStart={onTouch} onTouchMove={onTouch} onTouchEnd={() => setHover(null)}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
         <defs>
           {/* Ligne : vert au-dessus du zéro, rouge en-dessous (bascule à zf). */}
@@ -1149,27 +1151,35 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
   })()
   const fmtY = (v: number) => v === 0 ? '€0' : `${v > 0 ? '+' : '-'}€${Math.abs(v).toFixed(0)}`
 
-  // Survol : info uniquement si le curseur est sur la ligne ou dans l'aplat.
-  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
+  // Survol/scrub : à la souris, on n'affiche l'info que si le curseur est sur la
+  // ligne ou dans l'aplat ; au doigt (mobile), on suit simplement la position X
+  // (la bande verticale est ignorée → le tooltip déroule pendant le glissement).
+  const locate = (clientX: number, clientY: number, rect: DOMRect, isTouch: boolean) => {
     if (rect.width === 0 || rect.height === 0) return
-    const xVB = ((e.clientX - rect.left) / rect.width) * W
-    const yVB = ((e.clientY - rect.top) / rect.height) * H
-    if (xVB < PXL || xVB > W - PXR || yVB < PYT || yVB > H - PYB) { setHover(null); return }
+    const xVB = ((clientX - rect.left) / rect.width) * W
+    const yVB = ((clientY - rect.top) / rect.height) * H
+    if (xVB < PXL || xVB > W - PXR) { setHover(null); return }
     const fi = Math.max(0, Math.min(n - 1, ((xVB - PXL) / DW) * (n - 1)))
-    const i0 = Math.floor(fi), i1 = Math.min(n - 1, i0 + 1)
-    const yCurve = yOf(pts[i0].v) + (yOf(pts[i1].v) - yOf(pts[i0].v)) * (fi - i0)
-    const TOL = 6
-    if (yVB < Math.min(yCurve, y0) - TOL || yVB > Math.max(yCurve, y0) + TOL) { setHover(null); return }
+    if (!isTouch) {
+      if (yVB < PYT || yVB > H - PYB) { setHover(null); return }
+      const i0 = Math.floor(fi), i1 = Math.min(n - 1, i0 + 1)
+      const yCurve = yOf(pts[i0].v) + (yOf(pts[i1].v) - yOf(pts[i0].v)) * (fi - i0)
+      const TOL = 6
+      if (yVB < Math.min(yCurve, y0) - TOL || yVB > Math.max(yCurve, y0) + TOL) { setHover(null); return }
+    }
     setHover(Math.round(fi))
   }
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => locate(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), false)
+  const onTouch = (e: React.TouchEvent<HTMLDivElement>) => { const t = e.touches[0]; if (t) locate(t.clientX, t.clientY, e.currentTarget.getBoundingClientRect(), true) }
 
   const hp = hover != null ? pts[hover] : null
   const hx = hover != null ? xOf(hover) : 0
   const hyV = hover != null ? yOf(pts[hover].v) : 0
 
   return (
-    <div style={{ height: H, marginTop: 6, position: 'relative' }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+    <div style={{ height: H, marginTop: 6, position: 'relative', touchAction: 'pan-y' }}
+      onMouseMove={onMove} onMouseLeave={() => setHover(null)}
+      onTouchStart={onTouch} onTouchMove={onTouch} onTouchEnd={() => setHover(null)}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
         <defs>
           {/* Aplat : dégradé d'une seule teinte, fort loin du zéro, estompé à la ligne du zéro. */}
