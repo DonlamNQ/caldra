@@ -36,7 +36,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .ea-text{font-size:13px;color:rgba(255,255,255,.7)}
 .ea-text strong{color:#fff;font-weight:600}
 .plan-was{font-size:12px;color:var(--td);text-decoration:line-through;margin-bottom:.25rem}
+.plan-strike{font-size:20px;font-weight:300;color:var(--td);text-decoration:line-through;letter-spacing:0;margin-left:10px;vertical-align:middle}
+.plan-promo-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;background:var(--red);border-radius:5px;padding:3px 8px;vertical-align:middle;margin-left:10px}
 .plan-ea{font-size:12px;color:var(--red);margin-bottom:1.5rem}
+.plan-ea strong{font-weight:700}
 .plan-features{list-style:none;margin-bottom:2rem}
 .plan-features li{font-size:13px;color:rgba(255,255,255,.4);padding:.55rem 0;border-bottom:.5px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:10px}
 .plan-features li:last-child{border-bottom:none}
@@ -82,16 +85,15 @@ export default function PricingPage() {
 
         <div className="ea-banner">
           <span className="ea-tag">Lancement</span>
-          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 100 premiers &middot; Pro &agrave; <strong>14&euro;</strong> &middot; Max &agrave; <strong>28&euro;</strong> &middot; code early adopter au paiement</span>
+          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 100 premiers &middot; Pro &agrave; <strong>14&euro;</strong> &middot; Max &agrave; <strong>28&euro;</strong> &middot; code <strong>START25</strong> au paiement</span>
         </div>
 
         <div className="pricing-grid">
           <div className="plan-card plan-pro">
             <div className="plan-shine"></div>
             <div className="plan-label">Pro</div>
-            <div className="plan-price"><sup>&euro;</sup>19<sub>/mois</sub></div>
-            <div className="plan-ea">14&euro;/mois avec le code early adopter</div>
-            <div className="plan-note">7 jours gratuits &middot; CB requise</div>
+            <div className="plan-price"><sup>&euro;</sup>14<sub>/mois</sub><span className="plan-strike">19&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
+            <div className="plan-ea"><strong>&minus;25&nbsp;% à vie</strong> avec le code START25</div>
             <div className="plan-tagline">Surveillance comportementale compl&egrave;te. Alertes imm&eacute;diates d&egrave;s qu&rsquo;un pattern dangereux est d&eacute;tect&eacute;.</div>
             <ul className="plan-features">
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>11 d&eacute;tecteurs comportementaux</li>
@@ -100,15 +102,14 @@ export default function PricingPage() {
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li>
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique illimité</li>
             </ul>
-            <a href="/signup?plan=pro" className="plan-btn plan-btn-secondary">Essayer Pro 7 jours &rarr;</a>
+            <a href="/signup?plan=pro" className="plan-btn plan-btn-secondary">Essayer 7 jours gratuitement &rarr;</a>
           </div>
 
           <div className="plan-card plan-max">
             <div className="plan-shine plan-shine-red"></div>
             <div className="plan-label plan-label-red">Max</div>
-            <div className="plan-price"><sup>&euro;</sup>38<sub>/mois</sub></div>
-            <div className="plan-ea">28&euro;/mois avec le code early adopter</div>
-            <div className="plan-note">7 jours gratuits &middot; CB requise</div>
+            <div className="plan-price"><sup>&euro;</sup>28<sub>/mois</sub><span className="plan-strike">38&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
+            <div className="plan-ea"><strong>&minus;25&nbsp;% à vie</strong> avec le code START25</div>
             <div className="plan-tagline">Tout le plan Pro, augment&eacute; d&rsquo;un coach IA actif. Analyse, recommandations et debriefing &agrave; chaque session.</div>
             <ul className="plan-features">
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 d&eacute;tecteurs complets</strong></li>
@@ -117,7 +118,7 @@ export default function PricingPage() {
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire IA</strong></li>
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique illimité</strong></li>
             </ul>
-            <a href="/signup?plan=max" className="plan-btn plan-btn-primary">Essayer Max 7 jours &rarr;</a>
+            <a href="/signup?plan=max" className="plan-btn plan-btn-primary">Essayer 7 jours gratuitement &rarr;</a>
           </div>
         </div>
 

@@ -15,14 +15,22 @@ body::after{content:'';position:fixed;bottom:-320px;right:-160px;width:820px;hei
 .reveal.in{opacity:1;transform:none}
 
 /* PROMO BAR */
-.promo-bar{position:fixed;top:0;left:0;right:0;z-index:101;min-height:34px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 11px;background:linear-gradient(90deg,#5b21b6,#8b5cf6,#5b21b6);background-size:200% 100%;animation:promoShine 6s linear infinite;color:#fff;font-size:11.5px;letter-spacing:.4px;padding:6px 18px;text-align:center;box-shadow:0 2px 16px rgba(139,92,246,.4)}
-@keyframes promoShine{0%{background-position:0% 0}100%{background-position:200% 0}}
-.promo-bar b{font-weight:700}
-.promo-code{font-family:'DM Mono',monospace;font-weight:700;background:rgba(255,255,255,.2);border:.5px solid rgba(255,255,255,.45);border-radius:4px;padding:2px 8px;letter-spacing:1.5px}
-.promo-bar a.promo-cta{color:#fff;text-decoration:underline;text-underline-offset:2px;font-weight:600}
+.promo-bar{position:fixed;top:0;left:0;right:0;z-index:101;min-height:42px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px 13px;background:linear-gradient(90deg,#4c1d95,#7c3aed,#a78bfa,#7c3aed,#4c1d95);background-size:220% 100%;animation:promoShine 7s linear infinite;color:#fff;font-size:12.5px;letter-spacing:.3px;padding:7px 18px;text-align:center;box-shadow:0 3px 22px rgba(124,58,237,.45);border-bottom:.5px solid rgba(255,255,255,.18)}
+@keyframes promoShine{0%{background-position:0% 0}100%{background-position:220% 0}}
+.promo-spark{font-size:13px;display:inline-block;animation:promoSpin 4s ease-in-out infinite}
+@keyframes promoSpin{0%,100%{transform:rotate(0) scale(1);opacity:.9}50%{transform:rotate(180deg) scale(1.25);opacity:1}}
+.promo-badge{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:rgba(255,255,255,.16);border:.5px solid rgba(255,255,255,.35);border-radius:100px;padding:3px 10px}
+.promo-bar b{font-weight:800}
+.promo-xtra{opacity:.85;font-weight:400}
+.promo-code{cursor:pointer;font-family:'DM Mono',monospace;font-weight:700;font-size:12px;color:#fff;background:rgba(255,255,255,.14);border:1px dashed rgba(255,255,255,.6);border-radius:6px;padding:3px 10px;letter-spacing:1.5px;display:inline-flex;align-items:center;gap:6px;transition:background .15s,transform .15s}
+.promo-code:hover{background:rgba(255,255,255,.26);transform:translateY(-1px)}
+.promo-code.copied{background:#22c55e;border-color:#22c55e}
+.promo-code svg{width:11px;height:11px;opacity:.85}
+.promo-cta{text-decoration:none;font-weight:700;font-size:12px;background:#fff;color:#6d28d9;border-radius:6px;padding:4px 13px;box-shadow:0 2px 10px rgba(0,0,0,.22);transition:transform .15s,box-shadow .15s}
+.promo-cta:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.32)}
 
 /* NAV */
-nav{position:fixed;top:34px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3.5rem;border-bottom:.5px solid var(--b1);backdrop-filter:blur(24px) saturate(150%);background:linear-gradient(180deg,rgba(6,6,12,.82),rgba(6,6,12,.55))}
+nav{position:fixed;top:42px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3.5rem;border-bottom:.5px solid var(--b1);backdrop-filter:blur(24px) saturate(150%);background:linear-gradient(180deg,rgba(6,6,12,.82),rgba(6,6,12,.55))}
 .n-logo{font-size:13px;font-weight:500;letter-spacing:5px;text-transform:uppercase;color:#fff;text-decoration:none}.n-logo span{color:var(--v)}
 .n-links{display:flex;gap:2.5rem}
 .n-lk{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);text-decoration:none;transition:color .15s}.n-lk:hover{color:#fff}
@@ -234,6 +242,9 @@ h1 em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webk
 .plan-price sup{font-size:22px;vertical-align:super;letter-spacing:0}
 .plan-price sub{font-size:14px;font-weight:400;color:var(--t2);letter-spacing:0}
 .plan-note{font-size:12px;color:var(--t3);margin-bottom:1.5rem}
+.plan-strike{font-size:21px;font-weight:300;color:var(--t3);text-decoration:line-through;letter-spacing:0;margin-left:10px;vertical-align:middle}
+.plan-promo-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:5px;padding:3px 8px;vertical-align:middle;margin-left:10px}
+.plan-promo-line{font-size:12px;color:var(--v2);margin-bottom:1.5rem;font-weight:500}.plan-promo-line strong{font-weight:700;color:#fff}
 .plan-tag{font-size:13px;color:rgba(255,255,255,.45);font-style:italic;line-height:1.6;padding:1rem 0;border-top:.5px solid var(--b1);border-bottom:.5px solid var(--b1);margin-bottom:1.5rem}
 .plan-sent .plan-tag{border-color:rgba(124,58,237,.12)}
 .plan-features{list-style:none;margin-bottom:2rem}
@@ -293,8 +304,9 @@ footer{padding:1.75rem 3.5rem;display:flex;justify-content:space-between;align-i
 @media(max-width:480px){
   html{font-size:14px}
   h1{font-size:clamp(2rem,10vw,3rem);letter-spacing:-1px;line-height:1.1}
-  .promo-bar{font-size:10px;letter-spacing:.2px;gap:7px;padding:6px 10px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
-  .promo-bar a.promo-cta{display:none}
+  .promo-bar{font-size:11px;letter-spacing:.2px;gap:9px;padding:6px 10px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
+  .promo-badge,.promo-xtra,.promo-cta{display:none}
+  .promo-code{font-size:11px;padding:2px 8px}
   .hero-top{padding:6rem 1.25rem 0}
   .hero-sub{font-size:14px}
   .hero-ctas{flex-direction:column;max-width:100%}
@@ -334,7 +346,13 @@ const DETECTORS = [
 
 const HTML = `
 <div class="promo-bar">
-  <span>🎉 <b>Offre de lancement</b> &mdash; &minus;25 % à vie avec le code <span class="promo-code">EARLY100</span></span>
+  <span class="promo-spark">✦</span>
+  <span class="promo-badge">Offre de lancement</span>
+  <span><b>&minus;25 % à vie</b> <span class="promo-xtra">sur ton abonnement, pour toujours</span></span>
+  <button type="button" class="promo-code" onclick="if(navigator.clipboard)navigator.clipboard.writeText('START25');var l=this.querySelector('.pc-l'),b=this;this.classList.add('copied');l.textContent='Copié ✓';setTimeout(function(){b.classList.remove('copied');l.textContent='START25'},1500)">
+    <span class="pc-l">START25</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+  </button>
   <a href="/signup" class="promo-cta">J'en profite →</a>
 </div>
 <div class="glow-top"></div>
@@ -360,7 +378,7 @@ const HTML = `
     <h1>Tu ne vois pas<br>quand tu dérailles.<br><em>Lui si.</em></h1>
     <p class="hero-sub">Caldra analyse chaque trade et détecte les comportements qui détruisent les sessions &mdash; avant que le tilt, le revenge trading ou l'impulsion ne fasse les dégâts.</p>
     <div class="hero-ctas">
-      <a href="/signup" class="cta-main-btn">Essayer 7 jours →</a>
+      <a href="/signup" class="cta-main-btn">Essayer 7 jours gratuitement →</a>
       <a href="/login" class="cta-login-lk">Connexion</a>
     </div>
     <div class="hero-fn">
@@ -621,8 +639,8 @@ const HTML = `
     <div class="sec-h" style="text-align:center">Simple.<br>Rentabilisé au premier trade évité.</div>
     <p style="text-align:center;font-size:13px;color:var(--t2);margin:-.5rem auto 1.75rem;max-width:560px"><span style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;padding:4px 8px;font-weight:600;margin-right:8px">Lancement</span><strong style="color:var(--tx)">−25 % à vie</strong> pour les 100 premiers · Pro à <strong style="color:var(--tx)">14€</strong> · Max à <strong style="color:var(--tx)">28€</strong></p>
     <div class="pricing-grid">
-      <div class="plan plan-pro"><div class="plan-shine plan-sw"></div><div class="plan-lab">Pro</div><div class="plan-price"><sup>€</sup>19<sub>/mois</sub></div><div class="plan-note">7 jours gratuits · Carte bancaire requise</div><div class="plan-tag">Surveillance comportementale complète. Alertes immédiates dès qu'un pattern dangereux est détecté.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>11 détecteurs comportementaux</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard temps réel</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Personnalisation des règles</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique illimité</li></ul><a href="/signup" class="plan-btn plan-btn-sec">Essayer 7 jours →</a></div>
-      <div class="plan plan-sent"><div class="plan-shine plan-sv"></div><div class="plan-lab plan-lab-v">Max</div><div class="plan-price"><sup>€</sup>38<sub>/mois</sub></div><div class="plan-note">7 jours gratuits · Carte bancaire requise</div><div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div><ul class="plan-features"><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 détecteurs complets</strong></li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:rgba(240,237,232,.3)">Tout le plan Pro, plus :</span></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport de fin de session IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique illimité</strong></li></ul><a href="/signup" class="plan-btn plan-btn-pri">Essayer 7 jours →</a></div>
+      <div class="plan plan-pro"><div class="plan-shine plan-sw"></div><div class="plan-lab">Pro</div><div class="plan-price"><sup>€</sup>14<sub>/mois</sub><span class="plan-strike">19€</span><span class="plan-promo-tag">&minus;25 %</span></div><div class="plan-promo-line"><strong>&minus;25 % à vie</strong> avec le code START25</div><div class="plan-tag">Surveillance comportementale complète. Alertes immédiates dès qu'un pattern dangereux est détecté.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>11 détecteurs comportementaux</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard temps réel</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Personnalisation des règles</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique illimité</li></ul><a href="/signup" class="plan-btn plan-btn-sec">Essayer 7 jours gratuitement →</a></div>
+      <div class="plan plan-sent"><div class="plan-shine plan-sv"></div><div class="plan-lab plan-lab-v">Max</div><div class="plan-price"><sup>€</sup>28<sub>/mois</sub><span class="plan-strike">38€</span><span class="plan-promo-tag">&minus;25 %</span></div><div class="plan-promo-line"><strong>&minus;25 % à vie</strong> avec le code START25</div><div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div><ul class="plan-features"><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 détecteurs complets</strong></li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:rgba(240,237,232,.3)">Tout le plan Pro, plus :</span></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport de fin de session IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique illimité</strong></li></ul><a href="/signup" class="plan-btn plan-btn-pri">Essayer 7 jours gratuitement →</a></div>
     </div>
     <p style="text-align:center;margin-top:2rem;font-size:13px;color:var(--t3);font-style:italic">7 jours d'essai gratuit · Carte bancaire requise · Débit automatique à J+7 sauf résiliation</p>
   </div>

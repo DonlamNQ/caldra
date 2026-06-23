@@ -4,7 +4,7 @@
 //   • Produit "Caldra Pro"  + prix 19€/mois
 //   • Produit "Caldra Max"  + prix 38€/mois
 //   • Coupon early adopter  : -25 % à vie, max 100 utilisations
-//   • Code promo associé    : EARLY100 (configurable)
+//   • Code promo associé    : START25 (configurable)
 //   • Webhook endpoint      : 3 events → /api/billing/webhook
 // Puis imprime les variables d'env à coller dans Vercel + .env.local.
 //
@@ -15,7 +15,7 @@
 //
 // Optionnel :
 //   CALDRA_WEBHOOK_URL=https://getcaldra.com/api/billing/webhook  (défaut)
-//   EARLY_PROMO_CODE=EARLY100                                      (défaut)
+//   EARLY_PROMO_CODE=START25                                      (défaut)
 //
 // Réexécutable sans risque : il réutilise ce qui existe déjà (pas de doublons).
 
@@ -46,7 +46,7 @@ if (!KEY) {
 }
 const LIVE = KEY.startsWith('sk_live_')
 const WEBHOOK_URL = process.env.CALDRA_WEBHOOK_URL || 'https://getcaldra.com/api/billing/webhook'
-const PROMO_CODE  = (process.env.EARLY_PROMO_CODE || 'EARLY100').toUpperCase()
+const PROMO_CODE  = (process.env.EARLY_PROMO_CODE || 'START25').toUpperCase()
 
 // Version d'API stable : la dahlia 2026 (défaut de certains comptes) rejette le
 // paramètre `coupon` de promotionCodes.create. On épingle une version connue OK
