@@ -36,6 +36,3 @@ export const MAX_ONLY_DETECTORS = new Set<string>([
   'drawdown_override',
   'news_trading',
 ])
-
-// Rétention d'historique exposée par plan (jours). Pro : 30 j · Max : 6 mois.
-export const HISTORY_DAYS: Record<Plan, number> = { pro: 30, max: 180 }

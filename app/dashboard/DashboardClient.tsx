@@ -2736,12 +2736,12 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'pro', name: 'Pro', price: '19€',
       accent: C.g, accentAlpha: 'rgba(0,209,122,',
-      features: ['11 détecteurs comportementaux', 'Dashboard temps réel', 'Personnalisation des règles', 'Rapport mensuel', 'Historique 30 jours'],
+      features: ['11 détecteurs comportementaux', 'Dashboard temps réel', 'Personnalisation des règles', 'Rapport mensuel', 'Historique illimité'],
     },
     {
       id: 'max', name: 'Max', price: '39€',
       accent: C.red, accentAlpha: `rgba(124,58,237,`,
-      features: ['18 détecteurs complets', 'Tout le Pro inclus', 'Rapport de fin de session IA', 'Rapport hebdomadaire IA', 'Historique 6 mois'],
+      features: ['18 détecteurs complets', 'Tout le Pro inclus', 'Rapport de fin de session IA', 'Rapport hebdomadaire IA', 'Historique illimité'],
     },
   ]
 

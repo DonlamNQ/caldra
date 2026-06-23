@@ -230,8 +230,8 @@ score = 100 - Σ(deductions)
 ### Plans
 | Plan en DB | Nom affiché | Prix | Notes |
 |---|---|---|---|
-| `pro` | Pro | 19€/mois | 11 détecteurs, historique 30 j, rapport mensuel |
-| `max` | Max | 39€/mois | 18 détecteurs, IA (débrief session + rapport hebdo), historique 6 mois |
+| `pro` | Pro | 19€/mois | 11 détecteurs, rapport mensuel, historique illimité |
+| `max` | Max | 39€/mois | 18 détecteurs, IA (débrief session + rapport hebdo), historique illimité |
 
 `STRIPE_PRO_PRICE_ID` → plan `pro` / `STRIPE_MAX_PRICE_ID` → plan `max` (fallback lecture : `STRIPE_SENTINEL_PRICE_ID`).
 
@@ -241,7 +241,7 @@ score = 100 - Σ(deductions)
 - `isMaxPlan(plan)` / `isPaidPlan(plan)` / `normalizePlan(plan)`
 - `MAX_ONLY_DETECTORS` (7) : `revenge_sizing`, `averaging_down`, `euphoria_sizing`, `accelerating_frequency`, `cut_winners_hold_losers`, `drawdown_override`, `news_trading`. Les 11 autres détecteurs sont inclus dès Pro.
 - Filtrage appliqué dans `lib/engine.ts` → `saveAndNotify` (avant `suppressRedundant`) : si `!isMax`, on retire les types `MAX_ONLY_DETECTORS`.
-- `HISTORY_DAYS` (Pro 30 / Max 180) — exposé mais **rétention pas encore enforced** sur les requêtes analytics/calendrier.
+- Historique **illimité sur les deux plans** (pas de rétention par plan — différenciation uniquement sur détecteurs + IA).
 
 ### Trial & codes promo (Stripe)
 - Checkout : `trial_period_days: 7` + `payment_method_collection: 'always'` (CB obligatoire dès l'essai, débit auto à J+7) + `allow_promotion_codes: true`.
