@@ -14,8 +14,15 @@ body::after{content:'';position:fixed;bottom:-320px;right:-160px;width:820px;hei
 .reveal{opacity:0;transform:translateY(26px);transition:opacity .75s cubic-bezier(.16,1,.3,1),transform .75s cubic-bezier(.16,1,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
+/* PROMO BAR */
+.promo-bar{position:fixed;top:0;left:0;right:0;z-index:101;min-height:34px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 11px;background:linear-gradient(90deg,#5b21b6,#8b5cf6,#5b21b6);background-size:200% 100%;animation:promoShine 6s linear infinite;color:#fff;font-size:11.5px;letter-spacing:.4px;padding:6px 18px;text-align:center;box-shadow:0 2px 16px rgba(139,92,246,.4)}
+@keyframes promoShine{0%{background-position:0% 0}100%{background-position:200% 0}}
+.promo-bar b{font-weight:700}
+.promo-code{font-family:'DM Mono',monospace;font-weight:700;background:rgba(255,255,255,.2);border:.5px solid rgba(255,255,255,.45);border-radius:4px;padding:2px 8px;letter-spacing:1.5px}
+.promo-bar a.promo-cta{color:#fff;text-decoration:underline;text-underline-offset:2px;font-weight:600}
+
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3.5rem;border-bottom:.5px solid var(--b1);backdrop-filter:blur(24px) saturate(150%);background:linear-gradient(180deg,rgba(6,6,12,.82),rgba(6,6,12,.55))}
+nav{position:fixed;top:34px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3.5rem;border-bottom:.5px solid var(--b1);backdrop-filter:blur(24px) saturate(150%);background:linear-gradient(180deg,rgba(6,6,12,.82),rgba(6,6,12,.55))}
 .n-logo{font-size:13px;font-weight:500;letter-spacing:5px;text-transform:uppercase;color:#fff;text-decoration:none}.n-logo span{color:var(--v)}
 .n-links{display:flex;gap:2.5rem}
 .n-lk{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);text-decoration:none;transition:color .15s}.n-lk:hover{color:#fff}
@@ -286,7 +293,9 @@ footer{padding:1.75rem 3.5rem;display:flex;justify-content:space-between;align-i
 @media(max-width:480px){
   html{font-size:14px}
   h1{font-size:clamp(2rem,10vw,3rem);letter-spacing:-1px;line-height:1.1}
-  .hero-top{padding:5rem 1.25rem 0}
+  .promo-bar{font-size:10px;letter-spacing:.2px;gap:7px;padding:6px 10px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
+  .promo-bar a.promo-cta{display:none}
+  .hero-top{padding:6rem 1.25rem 0}
   .hero-sub{font-size:14px}
   .hero-ctas{flex-direction:column;max-width:100%}
   .cta-main-btn{width:100%;border-radius:6px;padding:14px}
@@ -324,6 +333,10 @@ const DETECTORS = [
 ]
 
 const HTML = `
+<div class="promo-bar">
+  <span>🎉 <b>Offre de lancement</b> &mdash; &minus;25 % à vie avec le code <span class="promo-code">EARLY100</span></span>
+  <a href="/signup" class="promo-cta">J'en profite →</a>
+</div>
 <div class="glow-top"></div>
 <nav>
   <a href="#" class="n-logo" style="text-decoration:none">Cald<span>ra</span></a>
