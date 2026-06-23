@@ -18,13 +18,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .sdesc{font-size:15px;color:var(--tm);line-height:1.75;max-width:520px;margin-bottom:3rem;font-weight:300}
 .pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:780px;margin:0 auto}
 .plan-card{border-radius:16px;padding:2rem;position:relative;overflow:hidden}
-.plan-pro{background:var(--sf);border:.5px solid var(--b2)}
+.plan-pro{background:linear-gradient(135deg,rgba(255,255,255,.035) 0%,var(--sf) 55%);border:.5px solid rgba(255,255,255,.16)}
 .plan-max{background:linear-gradient(135deg,rgba(124,58,237,.07) 0%,var(--sf) 55%);border:.5px solid rgba(124,58,237,.35)}
 .plan-shine{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
 .plan-shine-red{background:linear-gradient(90deg,transparent,rgba(124,58,237,.6),transparent)}
-.plan-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(232,230,224,.3);margin-bottom:1.5rem}
+.plan-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(232,230,224,.55);margin-bottom:1.5rem}
 .plan-label-red{color:rgba(124,58,237,.7)}
-.plan-price{font-family:'DM Sans',sans-serif;font-size:42px;font-weight:200;color:#fff;letter-spacing:2px;line-height:1;margin-bottom:.25rem}
+.plan-price{font-family:'DM Sans',sans-serif;font-size:42px;font-weight:200;color:#fff;letter-spacing:2px;line-height:1;margin-bottom:1.75rem}
 .plan-price sup{font-size:20px;vertical-align:super;letter-spacing:0}
 .plan-price sub{font-size:14px;font-weight:400;color:var(--tm);letter-spacing:0}
 .plan-note{font-size:12px;color:var(--td);margin-bottom:1.5rem}
@@ -41,14 +41,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .plan-ea{font-size:12px;color:var(--red);margin-bottom:1.5rem}
 .plan-ea strong{font-weight:700}
 .plan-features{list-style:none;margin-bottom:2rem}
-.plan-features li{font-size:13px;color:rgba(255,255,255,.4);padding:.55rem 0;border-bottom:.5px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:10px}
+.plan-features li{font-size:13px;color:rgba(255,255,255,.58);padding:.55rem 0;border-bottom:.5px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px}
 .plan-features li:last-child{border-bottom:none}
 .plan-highlight{color:rgba(255,255,255,.75)!important}
 .plan-highlight strong{font-weight:500}
 .pfc{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .pfc svg{width:9px;height:9px;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.pfc-dim{background:rgba(255,255,255,.05);border:.5px solid rgba(255,255,255,.08)}
-.pfc-dim svg{stroke:rgba(255,255,255,.3)}
+.pfc-dim{background:rgba(255,255,255,.08);border:.5px solid rgba(255,255,255,.14)}
+.pfc-dim svg{stroke:rgba(255,255,255,.55)}
 .pfc-red{background:var(--rd);border:.5px solid var(--rb)}
 .pfc-red svg{stroke:var(--red)}
 .plan-btn{width:100%;padding:12px;border-radius:8px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;display:block;text-align:center;text-decoration:none}
@@ -85,15 +85,14 @@ export default function PricingPage() {
 
         <div className="ea-banner">
           <span className="ea-tag">Lancement</span>
-          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 100 premiers &middot; Pro &agrave; <strong>14&euro;</strong> &middot; Max &agrave; <strong>28&euro;</strong> &middot; code <strong>START25</strong> au paiement</span>
+          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 100 premiers &middot; Pro &agrave; <strong>14,25&euro;</strong> &middot; Max &agrave; <strong>28,50&euro;</strong> &middot; code <strong>START25</strong> au paiement</span>
         </div>
 
         <div className="pricing-grid">
           <div className="plan-card plan-pro">
             <div className="plan-shine"></div>
             <div className="plan-label">Pro</div>
-            <div className="plan-price"><sup>&euro;</sup>14<sub>/mois</sub><span className="plan-strike">19&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
-            <div className="plan-ea"><strong>&minus;25&nbsp;% à vie</strong> avec le code START25</div>
+            <div className="plan-price"><sup>&euro;</sup>14,25<sub>/mois</sub><span className="plan-strike">19&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
             <div className="plan-tagline">Surveillance comportementale compl&egrave;te. Alertes imm&eacute;diates d&egrave;s qu&rsquo;un pattern dangereux est d&eacute;tect&eacute;.</div>
             <ul className="plan-features">
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>11 d&eacute;tecteurs comportementaux</li>
@@ -108,8 +107,7 @@ export default function PricingPage() {
           <div className="plan-card plan-max">
             <div className="plan-shine plan-shine-red"></div>
             <div className="plan-label plan-label-red">Max</div>
-            <div className="plan-price"><sup>&euro;</sup>28<sub>/mois</sub><span className="plan-strike">38&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
-            <div className="plan-ea"><strong>&minus;25&nbsp;% à vie</strong> avec le code START25</div>
+            <div className="plan-price"><sup>&euro;</sup>28,50<sub>/mois</sub><span className="plan-strike">38&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
             <div className="plan-tagline">Tout le plan Pro, augment&eacute; d&rsquo;un coach IA actif. Analyse, recommandations et debriefing &agrave; chaque session.</div>
             <ul className="plan-features">
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 d&eacute;tecteurs complets</strong></li>

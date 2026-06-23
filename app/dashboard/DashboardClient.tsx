@@ -2805,7 +2805,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
 
       {plan === 'free' && (
         <div style={{ marginTop: 14, padding: '11px 16px', background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 8, fontSize: 12, color: C.te, maxWidth: 780 }}>
-          14 jours d'essai gratuit inclus sur Pro et Sentinel — aucune carte requise pour commencer.
+          7 jours d'essai gratuit inclus sur Pro et Max — carte requise, débit automatique à J+7 sauf résiliation.
         </div>
       )}
     </div>
@@ -3104,7 +3104,6 @@ const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
   { id: 'calendrier', label: 'Calendrier' },
   { id: 'analytics',  label: 'Analytics' },
   { id: 'integrations',  label: 'Intégrations' },
-  { id: 'sentinel',   label: 'Sentinel IA', sentinel: true },
 ]
 
 const SETTINGS_ITEMS = [
@@ -3114,7 +3113,7 @@ const SETTINGS_ITEMS = [
   { id: 'billing',       label: 'Billing' },
 ]
 
-type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'sentinel' | 'aide'
+type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'aide'
 
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
@@ -3172,6 +3171,19 @@ export default function DashboardClient({
   const [sentinelPrompt, setSentinelPrompt] = useState<AlertRow | null>(null)
   const [milestone, setMilestone] = useState<number | null>(null)   // jalon de discipline à fêter
   const [coachingCards, setCoachingCards] = useState<CoachingCard[]>([])
+  const [connectHint, setConnectHint] = useState(false)   // invite à connecter une plateforme (aucun trade encore)
+
+  // Affiche l'invite de connexion si aucune plateforme connectée et aucun trade reçu.
+  useEffect(() => {
+    if (ctraderConn || lastTradeAt) return
+    if (typeof window !== 'undefined' && localStorage.getItem('caldra-connect-hint') === 'dismissed') return
+    const t = setTimeout(() => setConnectHint(true), 1200)
+    return () => clearTimeout(t)
+  }, [ctraderConn, lastTradeAt])
+  function dismissConnectHint() {
+    setConnectHint(false)
+    try { localStorage.setItem('caldra-connect-hint', 'dismissed') } catch {}
+  }
 
   const [topbarH, setTopbarH] = useState(0)   // hauteur de la topbar fixe sur mobile → décalage du contenu
   const topbarRef = useRef<HTMLDivElement>(null)
@@ -3202,7 +3214,7 @@ export default function DashboardClient({
   // Keyboard shortcuts: Alt+1…5 for main tabs
   useEffect(() => {
     const map: Record<string, TabId> = {
-      '1': 'session', '2': 'calendrier', '3': 'analytics', '4': 'integrations', '5': 'sentinel'
+      '1': 'session', '2': 'calendrier', '3': 'analytics', '4': 'integrations'
     }
     function onKey(e: KeyboardEvent) {
       if (e.altKey && map[e.key]) { e.preventDefault(); setActiveTab(map[e.key]); setSettingsOpen(false) }
@@ -3546,6 +3558,20 @@ export default function DashboardClient({
         </div>
       )}
 
+      {connectHint && activeTab !== 'integrations' && (
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(124,58,237,.45)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 8px 40px rgba(124,58,237,.22)', maxWidth: 540, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
+          <div style={{ fontSize: 22, flexShrink: 0 }}>🔌</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, color: '#7c3aed', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Dernière étape</div>
+            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.45 }}>Connecte ta plateforme de trading pour que Caldra analyse tes trades en temps réel.</div>
+          </div>
+          <button onClick={() => { setActiveTab('integrations'); dismissConnectHint() }} style={{ background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' as const }}>
+            Aller dans Intégrations
+          </button>
+          <button onClick={dismissConnectHint} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
+        </div>
+      )}
+
       {sentinelPrompt && (
         <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(255,90,61,.45)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 8px 40px rgba(255,90,61,.18)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5a3d', flexShrink: 0, animation: 'pulse 1s infinite' }} />
@@ -3553,9 +3579,6 @@ export default function DashboardClient({
             <div style={{ fontSize: 10, color: '#ff5a3d', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Alerte critique</div>
             <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{sentinelPrompt.message}</div>
           </div>
-          <button onClick={() => { setActiveTab('sentinel'); setSentinelPrompt(null) }} style={{ background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' as const }}>
-            Ouvrir Sentinel
-          </button>
           <button onClick={() => setSentinelPrompt(null)} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
         </div>
       )}
@@ -3721,15 +3744,18 @@ export default function DashboardClient({
             {activeTab === 'analytics' && (
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={tradingRules?.account_size || 10000} />
             )}
-            {activeTab === 'rapports' && <RapportsPanel />}
+            {activeTab === 'rapports' && (
+              <div style={{ overflowY: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {/* Débrief IA de session (plan Max) — plus d'onglet dédié, accès direct ici */}
+                <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} plan={plan} coachingCards={coachingCards} onActivate={() => setActiveTab('billing')} />
+                <RapportsPanel />
+              </div>
+            )}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
             {activeTab === 'aide' && <SupportPanel userEmail={userEmail} />}
-            {activeTab === 'sentinel' && (
-              <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} plan={plan} coachingCards={coachingCards} onActivate={() => setActiveTab('billing')} />
-            )}
           </div>
         </div>
       </div>

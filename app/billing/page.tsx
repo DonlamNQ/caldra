@@ -84,7 +84,7 @@ export default async function BillingPage({
 
           {/* CTA */}
           <Link
-            href={isSuccess ? '/dashboard' : '/dashboard'}
+            href={isSuccess ? '/onboarding' : '/dashboard'}
             style={{
               display: 'block', textAlign: 'center', padding: '11px',
               borderRadius: 8, fontSize: 13, fontWeight: 500, textDecoration: 'none',
@@ -93,7 +93,7 @@ export default async function BillingPage({
               border: isSuccess ? 'none' : `1px solid ${BORD}`,
             }}
           >
-            {isSuccess ? 'Accéder au dashboard →' : '← Retour au dashboard'}
+            {isSuccess ? 'Configurer mon compte →' : '← Retour au dashboard'}
           </Link>
         </div>
 
