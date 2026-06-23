@@ -22,14 +22,16 @@ async function getUser() {
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
   const PRICE_IDS: Record<string, string> = {
-    pro:      process.env.STRIPE_PRO_PRICE_ID!,
-    sentinel: process.env.STRIPE_SENTINEL_PRICE_ID ?? process.env.STRIPE_TEAM_PRICE_ID!,
+    pro: process.env.STRIPE_PRO_PRICE_ID!,
+    max: (process.env.STRIPE_MAX_PRICE_ID ?? process.env.STRIPE_SENTINEL_PRICE_ID ?? process.env.STRIPE_TEAM_PRICE_ID)!,
   }
 
   const { data: { user } } = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { plan } = await req.json()
+  const { plan: rawPlan } = await req.json()
+  // 'sentinel' = ancien nom du plan Max — normalisé pour compat.
+  const plan = rawPlan === 'sentinel' ? 'max' : rawPlan
   const priceId = PRICE_IDS[plan]
   if (!priceId) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
 
@@ -63,6 +65,14 @@ export async function POST(req: NextRequest) {
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
+    // Essai 7 jours, carte bancaire OBLIGATOIRE dès l'inscription : débit
+    // automatique à J+7 sauf résiliation. payment_method_collection 'always'
+    // force la saisie de la CB même pendant la période d'essai.
+    subscription_data: { trial_period_days: 7 },
+    payment_method_collection: 'always',
+    // Champ "code promo" actif au checkout (codes early adopters -25% à vie,
+    // créés comme coupons Stripe duration:forever — voir CLAUDE.md).
+    allow_promotion_codes: true,
     success_url: `${origin}/billing?success=1`,
     cancel_url: `${origin}/billing?canceled=1`,
     metadata: { user_id: user.id, plan },

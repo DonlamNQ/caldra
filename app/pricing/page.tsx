@@ -19,7 +19,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:780px;margin:0 auto}
 .plan-card{border-radius:16px;padding:2rem;position:relative;overflow:hidden}
 .plan-pro{background:var(--sf);border:.5px solid var(--b2)}
-.plan-sentinel{background:linear-gradient(135deg,rgba(124,58,237,.07) 0%,var(--sf) 55%);border:.5px solid rgba(124,58,237,.35)}
+.plan-max{background:linear-gradient(135deg,rgba(124,58,237,.07) 0%,var(--sf) 55%);border:.5px solid rgba(124,58,237,.35)}
 .plan-shine{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
 .plan-shine-red{background:linear-gradient(90deg,transparent,rgba(124,58,237,.6),transparent)}
 .plan-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(232,230,224,.3);margin-bottom:1.5rem}
@@ -30,7 +30,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .plan-note{font-size:12px;color:var(--td);margin-bottom:1.5rem}
 .plan-tagline{font-size:13px;color:rgba(255,255,255,.5);font-style:italic;line-height:1.55;padding:1rem 0;border-top:.5px solid var(--b);border-bottom:.5px solid var(--b);margin-bottom:1.5rem}
 .plan-tagline strong{font-style:normal;font-weight:500;color:rgba(255,255,255,.75)}
-.plan-sentinel .plan-tagline{border-color:rgba(124,58,237,.15)}
+.plan-max .plan-tagline{border-color:rgba(124,58,237,.15)}
+.ea-banner{max-width:780px;margin:0 auto 1rem;border-radius:12px;padding:.85rem 1.25rem;background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(124,58,237,.04));border:.5px solid rgba(124,58,237,.3);display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.ea-tag{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:var(--red);border-radius:4px;padding:4px 8px;font-weight:600}
+.ea-text{font-size:13px;color:rgba(255,255,255,.7)}
+.ea-text strong{color:#fff;font-weight:600}
+.plan-was{font-size:12px;color:var(--td);text-decoration:line-through;margin-bottom:.25rem}
+.plan-ea{font-size:12px;color:var(--red);margin-bottom:1.5rem}
 .plan-features{list-style:none;margin-bottom:2rem}
 .plan-features li{font-size:13px;color:rgba(255,255,255,.4);padding:.55rem 0;border-bottom:.5px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:10px}
 .plan-features li:last-child{border-bottom:none}
@@ -72,47 +78,51 @@ export default function PricingPage() {
       <section style={{ position: 'relative', zIndex: 1, maxWidth: 940, margin: '0 auto', padding: '9rem 2rem 5rem' }}>
         <div className="stag">Tarifs</div>
         <div className="stit">Simple.<br />Rentabilis&eacute; au premier trade &eacute;vit&eacute;.</div>
-        <p className="sdesc">14 jours d&rsquo;essai gratuit. Pas de carte requise.</p>
+        <p className="sdesc">7 jours d&rsquo;essai gratuit sur les deux plans. Carte bancaire requise &mdash; d&eacute;bit automatique &agrave; J+7 sauf r&eacute;siliation.</p>
+
+        <div className="ea-banner">
+          <span className="ea-tag">Lancement</span>
+          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 100 premiers &middot; Pro &agrave; <strong>14&euro;</strong> &middot; Max &agrave; <strong>29&euro;</strong> &middot; code early adopter au paiement</span>
+        </div>
 
         <div className="pricing-grid">
           <div className="plan-card plan-pro">
             <div className="plan-shine"></div>
             <div className="plan-label">Pro</div>
             <div className="plan-price"><sup>&euro;</sup>19<sub>/mois</sub></div>
-            <div className="plan-note">14 jours gratuits &middot; Sans carte requise</div>
+            <div className="plan-ea">14&euro;/mois avec le code early adopter</div>
+            <div className="plan-note">7 jours gratuits &middot; CB requise</div>
             <div className="plan-tagline">Surveillance comportementale compl&egrave;te. Alertes imm&eacute;diates d&egrave;s qu&rsquo;un pattern dangereux est d&eacute;tect&eacute;.</div>
             <ul className="plan-features">
-              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>8 d&eacute;tections comportementales</li>
-              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Alertes temps r&eacute;el (push + desktop)</li>
-              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard comportemental</li>
-              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Connexion cTrader OAuth2</li>
-              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique &amp; analytics 30 jours</li>
-              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Seuils configurables</li>
+              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>11 d&eacute;tecteurs comportementaux</li>
+              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard temps r&eacute;el</li>
+              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Personnalisation des r&egrave;gles</li>
+              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li>
+              <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique 30 jours</li>
             </ul>
-            <a href="/signup" className="plan-btn plan-btn-secondary">Commencer gratuit &rarr;</a>
+            <a href="/signup" className="plan-btn plan-btn-secondary">Essayer Pro 7 jours &rarr;</a>
           </div>
 
-          <div className="plan-card plan-sentinel">
+          <div className="plan-card plan-max">
             <div className="plan-shine plan-shine-red"></div>
-            <div className="plan-label plan-label-red">Sentinel</div>
+            <div className="plan-label plan-label-red">Max</div>
             <div className="plan-price"><sup>&euro;</sup>39<sub>/mois</sub></div>
-            <div className="plan-note">14 jours gratuits &middot; Sans carte requise</div>
+            <div className="plan-ea">29&euro;/mois avec le code early adopter</div>
+            <div className="plan-note">7 jours gratuits &middot; CB requise</div>
             <div className="plan-tagline">Tout le plan Pro, augment&eacute; d&rsquo;un coach IA actif. Analyse, recommandations et debriefing &agrave; chaque session.</div>
             <ul className="plan-features">
+              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 d&eacute;tecteurs complets</strong></li>
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style={{ color: 'rgba(232,230,224,.3)' }}>Tout le plan Pro, plus&nbsp;:</span></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>9e d&eacute;tection&nbsp;: Trade pendant les news</strong></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Coach IA pendant la session</strong></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Debriefing automatique post-session</strong></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Analyse des patterns r&eacute;currents</strong></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique &amp; analytics 180 jours</strong></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Support prioritaire</strong></li>
+              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport de fin de session IA</strong></li>
+              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire IA</strong></li>
+              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique 6 mois</strong></li>
             </ul>
-            <a href="/signup" className="plan-btn plan-btn-primary">Commencer avec Sentinel &rarr;</a>
+            <a href="/signup" className="plan-btn plan-btn-primary">Essayer Max 7 jours &rarr;</a>
           </div>
         </div>
 
         <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: 13, color: 'var(--td)', fontStyle: 'italic' }}>
-          14 jours d&rsquo;essai gratuit sur les deux plans &middot; Pas de carte requise &middot; Annulable &agrave; tout moment
+          7 jours d&rsquo;essai gratuit sur les deux plans &middot; Carte bancaire requise &middot; Annulable &agrave; tout moment avant J+7
         </p>
       </section>
 

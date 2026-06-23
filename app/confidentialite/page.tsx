@@ -52,7 +52,7 @@ export default function Confidentialite() {
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Supabase</strong> — base de données (hébergement UE disponible)</li>
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Vercel</strong> — hébergement de l'application</li>
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Stripe</strong> — traitement des paiements (données de carte jamais stockées)</li>
-          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Anthropic</strong> — analyse IA (plan Sentinel uniquement, données anonymisées)</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Anthropic</strong> — analyse IA (plan Max uniquement, données anonymisées)</li>
         </ul>
 
         <h2>6. Vos droits</h2>

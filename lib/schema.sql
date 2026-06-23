@@ -10,7 +10,7 @@ create extension if not exists "pgcrypto";
 
 create table if not exists user_profiles (
   user_id                 uuid        primary key references auth.users (id) on delete cascade,
-  plan                    text        not null default 'pro' check (plan in ('pro', 'sentinel')),
+  plan                    text        not null default 'pro' check (plan in ('pro', 'max')),
   stripe_customer_id      text        unique,
   stripe_subscription_id  text,
   created_at              timestamptz not null default now(),
@@ -226,4 +226,11 @@ create table if not exists mt5_accounts (
 alter table mt5_accounts enable row level security;
 drop policy if exists "service role full access" on mt5_accounts;
 create policy "service role full access" on mt5_accounts for all using (true) with check (true);
+
+-- v2.8 : renommage du plan 'sentinel' → 'max' (Pro 19€ / Max 39€).
+-- Migre les abonnés existants AVANT de resserrer la contrainte.
+alter table user_profiles drop constraint if exists user_profiles_plan_check;
+update user_profiles set plan = 'max' where plan = 'sentinel';
+update user_profiles set plan = 'pro' where plan not in ('pro', 'max');
+alter table user_profiles add constraint user_profiles_plan_check check (plan in ('pro', 'max'));
 

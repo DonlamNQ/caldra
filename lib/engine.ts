@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendAlertEmail, sendWebhookAlert } from './brevo'
 import { newsConflict } from './economic-calendar'
+import { isMaxPlan, MAX_ONLY_DETECTORS } from './plans'
 
 const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -109,9 +110,13 @@ async function saveAndNotify(
   trade: Trade,
   alerts: Alert[],
   sessionTrades: Trade[],
-  isSentinel: boolean,
+  isMax: boolean,
   rules: Record<string, unknown>
 ): Promise<Alert[]> {
+  // Gating par plan : les 7 détecteurs réservés au plan Max sont retirés pour
+  // les plans Pro/Free. Filtrage AVANT suppressRedundant pour qu'une alerte Pro
+  // ne soit pas masquée par une alerte Max qui, elle, n'aurait pas dû s'afficher.
+  if (!isMax) alerts = alerts.filter(a => !MAX_ONLY_DETECTORS.has(a.type))
   alerts = suppressRedundant(alerts)
   if (alerts.length === 0) return []
 
@@ -412,14 +417,14 @@ export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
 
   if (!rules || !sessionTrades) return []
 
-  const isSentinel = profile?.plan === 'sentinel'
+  const isMax = isMaxPlan(profile?.plan)
   const alerts = entryBehaviorAlerts(trade, rules, sessionTrades)
   const news = await maybeNewsAlert(trade)
   if (news) alerts.push(news)
   const unfamiliar = await maybeUnfamiliarSymbolAlert(trade)
   if (unfamiliar) alerts.push(unfamiliar)
 
-  return saveAndNotify(trade, alerts, sessionTrades, isSentinel, rules)
+  return saveAndNotify(trade, alerts, sessionTrades, isMax, rules)
 }
 
 // ── Alertes à la FERMETURE d'un trade ────────────────────────────────────────
@@ -437,7 +442,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
 
   if (!rules || !sessionTrades) return []
 
-  const isSentinel = profile?.plan === 'sentinel'
+  const isMax = isMaxPlan(profile?.plan)
 
   // Trade fermé sans ouverture préalablement ingérée (ex. cTrader, qui ne poste
   // que des trades fermés) → on fait aussi tourner les détecteurs d'entrée,
@@ -625,7 +630,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
     }
   }
 
-  return saveAndNotify(trade, alerts, sessionTrades, isSentinel, rules)
+  return saveAndNotify(trade, alerts, sessionTrades, isMax, rules)
 }
 
 // Compat — utilisé par l'ancien /api/detect (legacy)

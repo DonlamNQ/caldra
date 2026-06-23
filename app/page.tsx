@@ -312,7 +312,7 @@ footer{padding:1.75rem 3.5rem;display:flex;justify-content:space-between;align-i
 `
 
 const DETECTORS = [
-  {n:'01',name:'Revenge sizing',icon:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',desc:"La taille de position augmente après une perte — chemin le plus court pour exploser une journée. Caldra compare chaque nouvelle ouverture aux positions précédentes.",lv:2,s:false},
+  {n:'01',name:'Revenge sizing',icon:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',desc:"La taille de position augmente après une perte — chemin le plus court pour exploser une journée. Caldra compare chaque nouvelle ouverture aux positions précédentes.",lv:2,s:true},
   {n:'02',name:'Re-entrée immédiate',icon:'<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/>',desc:"Reprendre un trade moins de 2 minutes après la sortie. L'impulsion, pas l'analyse. Caldra mesure l'intervalle exact entre exit et nouvel entry.",lv:1,s:false},
   {n:'03',name:'Série de pertes',icon:'<line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>',desc:"3 pertes consécutives — seuil où l'émotion prend le dessus. Configurable selon ton historique.",lv:2,s:false},
   {n:'04',name:'Alerte drawdown',icon:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',desc:"Perte journalière approchant ou dépassant ta limite. Deux niveaux : préventive à 80%, stop forcé à 100%. Capital configurable.",lv:3,s:false},
@@ -351,8 +351,8 @@ const HTML = `
       <a href="/login" class="cta-login-lk">Connexion</a>
     </div>
     <div class="hero-fn">
-      <span class="hfn">14 jours d'essai</span><div class="hfs"></div>
-      <span class="hfn">Sans carte</span><div class="hfs"></div>
+      <span class="hfn">7 jours d'essai</span><div class="hfs"></div>
+      <span class="hfn">−25 % early adopter</span><div class="hfs"></div>
       <span class="hfn">Disponible maintenant</span>
     </div>
   </div>
@@ -606,11 +606,12 @@ const HTML = `
   <div class="sec-in">
     <div class="sec-tag">Tarifs</div>
     <div class="sec-h" style="text-align:center">Simple.<br>Rentabilisé au premier trade évité.</div>
+    <p style="text-align:center;font-size:13px;color:var(--t2);margin:-.5rem auto 1.75rem;max-width:560px"><span style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;padding:4px 8px;font-weight:600;margin-right:8px">Lancement</span><strong style="color:var(--tx)">−25 % à vie</strong> pour les 100 premiers · Pro à <strong style="color:var(--tx)">14€</strong> · Max à <strong style="color:var(--tx)">29€</strong></p>
     <div class="pricing-grid">
-      <div class="plan plan-pro"><div class="plan-shine plan-sw"></div><div class="plan-lab">Pro</div><div class="plan-price"><sup>€</sup>19<sub>/mois</sub></div><div class="plan-note">14 jours gratuits · Sans carte requise</div><div class="plan-tag">Surveillance comportementale complète. Alertes immédiates dès qu'un pattern dangereux est détecté.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Les 17 détections comportementales</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Alertes temps réel (push + desktop)</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard comportemental</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Connexion cTrader &amp; MT5</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Analytics 30 jours</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Seuils configurables</li></ul><a href="/signup" class="plan-btn plan-btn-sec">Commencer gratuitement →</a></div>
-      <div class="plan plan-sent"><div class="plan-shine plan-sv"></div><div class="plan-lab plan-lab-v">Sentinel</div><div class="plan-price"><sup>€</sup>39<sub>/mois</sub></div><div class="plan-note">14 jours gratuits · Sans carte requise</div><div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:rgba(240,237,232,.3)">Tout le plan Pro, plus :</span></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Coach IA en direct pendant la session</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Debriefing automatique post-session</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Analyse des patterns récurrents</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Recommandations personnalisées par l'IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Analytics 180 jours</strong></li></ul><a href="/signup" class="plan-btn plan-btn-pri">Commencer gratuitement →</a></div>
+      <div class="plan plan-pro"><div class="plan-shine plan-sw"></div><div class="plan-lab">Pro</div><div class="plan-price"><sup>€</sup>19<sub>/mois</sub></div><div class="plan-note">7 jours gratuits · Carte bancaire requise</div><div class="plan-tag">Surveillance comportementale complète. Alertes immédiates dès qu'un pattern dangereux est détecté.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>11 détecteurs comportementaux</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard temps réel</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Personnalisation des règles</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique 30 jours</li></ul><a href="/signup" class="plan-btn plan-btn-sec">Essayer 7 jours →</a></div>
+      <div class="plan plan-sent"><div class="plan-shine plan-sv"></div><div class="plan-lab plan-lab-v">Max</div><div class="plan-price"><sup>€</sup>39<sub>/mois</sub></div><div class="plan-note">7 jours gratuits · Carte bancaire requise</div><div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div><ul class="plan-features"><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 détecteurs complets</strong></li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:rgba(240,237,232,.3)">Tout le plan Pro, plus :</span></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport de fin de session IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique 6 mois</strong></li></ul><a href="/signup" class="plan-btn plan-btn-pri">Essayer 7 jours →</a></div>
     </div>
-    <p style="text-align:center;margin-top:2rem;font-size:13px;color:var(--t3);font-style:italic">14 jours d'essai gratuit · Pas de carte · Annulable à tout moment</p>
+    <p style="text-align:center;margin-top:2rem;font-size:13px;color:var(--t3);font-style:italic">7 jours d'essai gratuit · Carte bancaire requise · Débit automatique à J+7 sauf résiliation</p>
   </div>
 </div>
 
@@ -633,8 +634,8 @@ const HTML = `
   <div style="max-width:640px;margin:0 auto">
     <div class="sec-tag" style="justify-content:center;max-width:none">Disponible maintenant</div>
     <div class="cta-h">Ton prochain tilt<br><em>peut être le dernier.</em></div>
-    <p class="cta-sub">14 jours d'essai gratuit. Pas de carte requise.</p>
-    <a href="/signup" class="cta-main-btn" style="display:inline-flex;max-width:340px;padding:14px 32px;font-size:14px;border-radius:7px;letter-spacing:.3px;margin-bottom:14px">Commencer gratuitement — 14 jours →</a>
+    <p class="cta-sub">7 jours d'essai gratuit. Carte bancaire requise, débit automatique à J+7 sauf résiliation.</p>
+    <a href="/signup" class="cta-main-btn" style="display:inline-flex;max-width:340px;padding:14px 32px;font-size:14px;border-radius:7px;letter-spacing:.3px;margin-bottom:14px">Commencer l'essai — 7 jours →</a>
     <p style="margin-top:.25rem;font-size:12px;color:var(--t3)"><a href="/login" style="color:var(--t3);text-decoration:none">Déjà un compte ? <span style="color:var(--v)">Connexion →</span></a></p>
   </div>
 </div>
@@ -654,7 +655,7 @@ function renderDets(){
   var list=document.getElementById('det-list');if(!list)return;list.innerHTML='';
   DETS.forEach(function(d,i){
     var el=document.createElement('div');el.className='det-item'+(i===0?' act':'');
-    el.innerHTML='<div class="di-n">'+d.n+'</div><span class="di-t">'+d.name+'</span>'+(d.s?'<span class="di-badge">Sentinel</span>':'');
+    el.innerHTML='<div class="di-n">'+d.n+'</div><span class="di-t">'+d.name+'</span>'+(d.s?'<span class="di-badge">Max</span>':'');
     el.addEventListener('click',function(){
       document.querySelectorAll('.det-item').forEach(function(x){x.classList.remove('act')});el.classList.add('act');
       var g=document.getElementById('dd-ghost');if(g)g.textContent=d.n;
