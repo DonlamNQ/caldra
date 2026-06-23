@@ -20,6 +20,24 @@
 // Réexécutable sans risque : il réutilise ce qui existe déjà (pas de doublons).
 
 import Stripe from 'stripe'
+import { readFileSync } from 'node:fs'
+
+// Charge .env.local (gitignoré) si STRIPE_SECRET_KEY n'est pas déjà dans l'env.
+// Évite d'avoir à taper la clé en clair dans le terminal / le chat.
+function loadEnvLocal() {
+  if (process.env.STRIPE_SECRET_KEY) return
+  try {
+    const raw = readFileSync(new URL('../.env.local', import.meta.url), 'utf8')
+    for (const line of raw.split('\n')) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/)
+      if (!m) continue
+      const key = m[1]
+      let val = m[2].trim().replace(/^["']|["']$/g, '')
+      if (!(key in process.env)) process.env[key] = val
+    }
+  } catch { /* pas de .env.local → on lira l'env système */ }
+}
+loadEnvLocal()
 
 const KEY = process.env.STRIPE_SECRET_KEY
 if (!KEY) {
