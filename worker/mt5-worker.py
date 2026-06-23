@@ -52,6 +52,11 @@ CALDRA_INGEST_URL         = os.environ.get("CALDRA_INGEST_URL", "https://caldra-
 MT5_TERMINAL_PATH         = os.environ.get("MT5_TERMINAL_PATH")  # optionnel
 
 POLL_SECONDS = int(os.environ.get("MT5_POLL_SECONDS", "5"))  # poll rapide → réaction ~live
+# Heartbeat "connected" + last_sync_at : on n'écrit PAS dans mt5_accounts à chaque
+# cycle (5s) — un UPDATE inutile par tour = WAL + tuples morts + autovacuum non-stop
+# (épuise le budget Disk IO Supabase pour rien). On n'écrit qu'au plus toutes les
+# HEARTBEAT_SECONDS en régime idle, ou immédiatement sur nouveau trade / 1er passage.
+HEARTBEAT_SECONDS = int(os.environ.get("MT5_HEARTBEAT_SECONDS", "300"))
 KEY = hashlib.sha256(MT5_ENC_KEY.encode()).digest()  # même dérivation que lib/mt5crypto.ts
 
 # Brokers gérés par CE terminal (préfixes de serveur, minuscules). Vide = tous.
@@ -62,6 +67,9 @@ supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 # Dédup par ticket de deal (insensible au fuseau horaire, contrairement au temps).
 # user_id -> set des tickets de sortie déjà traités cette session.
 SEEN = {}
+
+# Dernière écriture heartbeat par compte (user_id -> timestamp) pour throttler set_status.
+LAST_HEARTBEAT = {}
 
 # Backoff des comptes injoignables (broker non installé → -10005 lent). On évite de
 # retenter leur login à CHAQUE tour (ça ralentit toute la boucle) ; on les retente
@@ -129,6 +137,19 @@ def set_status(user_id: str, status: str, synced: bool = False):
         supabase.table("mt5_accounts").update(patch).eq("user_id", user_id).execute()
     except Exception as e:
         print("[mt5] maj statut échec:", e)
+
+
+def heartbeat(user_id: str, force: bool = False):
+    """set_status('connected', synced=True) THROTTLÉ. En régime nominal (pas de
+    nouveau trade), on n'écrit qu'au plus une fois toutes les HEARTBEAT_SECONDS au
+    lieu de chaque cycle (5s) → ~60× moins d'écritures sur mt5_accounts. force=True
+    pour les transitions importantes (1er passage, nouveau trade) qui doivent
+    rafraîchir last_sync_at tout de suite."""
+    nowt = time.time()
+    if not force and nowt - LAST_HEARTBEAT.get(user_id, 0) < HEARTBEAT_SECONDS:
+        return
+    LAST_HEARTBEAT[user_id] = nowt
+    set_status(user_id, "connected", synced=True)
 
 
 def post_trade(ingest_key: str, payload: dict):
@@ -271,7 +292,7 @@ def process_account(row: dict):
     if t_login + t_histo > 5:
         print(f"[mt5] compte {login} lent: login {t_login:.1f}s + histo {t_histo:.1f}s")
     if deals is None:
-        set_status(user_id, "connected", synced=True)
+        heartbeat(user_id)
         return
 
     # Index des deals d'entrée par position_id (entry == DEAL_ENTRY_IN == 0).
@@ -288,11 +309,12 @@ def process_account(row: dict):
     #      du nouveau compte passent pour "nouveaux" → bombardement d'alertes.
     if user_id not in SEEN or row.get("last_sync_at") is None:
         SEEN[user_id] = set(d.ticket for d in out_deals)
-        set_status(user_id, "connected", synced=True)
+        heartbeat(user_id, force=True)   # 1er passage : doit flipper last_sync_at NULL→non-null
         print(f"[mt5] compte {login} connecté — {len(SEEN[user_id])} deals existants ignorés (repère)")
         return
 
     seen = SEEN[user_id]
+    posted = False
     offset = broker_utc_offset(out_deals[0].symbol) if out_deals else 0
     for d in out_deals:
         if d.ticket in seen:
@@ -326,8 +348,9 @@ def process_account(row: dict):
         }
         if payload["entry_price"] > 0 and payload["exit_price"] > 0 and payload["size"] > 0:
             post_trade(ingest_key, payload)
+            posted = True
 
-    set_status(user_id, "connected", synced=True)
+    heartbeat(user_id, force=posted)   # immédiat si nouveau trade, sinon throttlé
 
 
 def main():

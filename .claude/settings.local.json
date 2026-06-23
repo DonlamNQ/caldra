@@ -97,7 +97,8 @@
       "Bash(python -c ' *)",
       "Bash(echo \"C:\\\\\\\\caldra-worker existe \\(VPS\\)\")",
       "Bash(echo \"pas C:\\\\\\\\caldra-worker ici \\(machine dev\\)\")",
-      "Bash(echo \"GET /dashboard -> $\\(curl -s -o /dev/null -w '%{http_code}' -L --max-redirs 0 http://localhost:3000/dashboard\\)\")"
+      "Bash(echo \"GET /dashboard -> $\\(curl -s -o /dev/null -w '%{http_code}' -L --max-redirs 0 http://localhost:3000/dashboard\\)\")",
+      "Bash(py -m py_compile mt5-worker.py)"
     ]
   },
   "hooks": {
