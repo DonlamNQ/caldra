@@ -231,7 +231,7 @@ score = 100 - Σ(deductions)
 | Plan en DB | Nom affiché | Prix | Notes |
 |---|---|---|---|
 | `pro` | Pro | 19€/mois | 11 détecteurs, rapport mensuel, historique illimité |
-| `max` | Max | 39€/mois | 18 détecteurs, IA (débrief session + rapport hebdo), historique illimité |
+| `max` | Max | 38€/mois | 18 détecteurs, IA (débrief session + rapport hebdo), historique illimité |
 
 `STRIPE_PRO_PRICE_ID` → plan `pro` / `STRIPE_MAX_PRICE_ID` → plan `max` (fallback lecture : `STRIPE_SENTINEL_PRICE_ID`).
 
@@ -291,7 +291,7 @@ Exécuter `lib/schema.sql` en entier pour créer les tables, triggers, RLS et re
 
 ## Stripe — configuration requise
 
-1. Créer deux produits (Pro 19€/mois, Sentinel 39€/mois) → copier les Price IDs dans `.env.local` et Vercel
+1. Créer deux produits (Pro 19€/mois, Max 38€/mois) → copier les Price IDs dans `.env.local` et Vercel
 2. Ajouter un webhook endpoint :
    - URL : `https://getcaldra.com/api/billing/webhook`
    - Events : `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
@@ -390,7 +390,7 @@ npx tsc --noEmit     # Vérifie sans compiler (0 erreur attendue)
 - Auth + ingest + alertes fonctionnels
 
 ### ✅ Stripe configuré
-- Produits : Pro 19€/mois (`STRIPE_PRO_PRICE_ID`) + Sentinel 39€/mois (`STRIPE_SENTINEL_PRICE_ID`)
+- Produits : Pro 19€/mois (`STRIPE_PRO_PRICE_ID`) + Max 38€/mois (`STRIPE_MAX_PRICE_ID`)
 - Webhook : `https://getcaldra.com/api/billing/webhook` — secret dans `STRIPE_WEBHOOK_SECRET`
 
 ### ✅ Toutes les features prévues sont terminées

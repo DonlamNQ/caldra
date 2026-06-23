@@ -82,7 +82,7 @@ export default function PricingPage() {
 
         <div className="ea-banner">
           <span className="ea-tag">Lancement</span>
-          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 100 premiers &middot; Pro &agrave; <strong>14&euro;</strong> &middot; Max &agrave; <strong>29&euro;</strong> &middot; code early adopter au paiement</span>
+          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 100 premiers &middot; Pro &agrave; <strong>14&euro;</strong> &middot; Max &agrave; <strong>28&euro;</strong> &middot; code early adopter au paiement</span>
         </div>
 
         <div className="pricing-grid">
@@ -106,8 +106,8 @@ export default function PricingPage() {
           <div className="plan-card plan-max">
             <div className="plan-shine plan-shine-red"></div>
             <div className="plan-label plan-label-red">Max</div>
-            <div className="plan-price"><sup>&euro;</sup>39<sub>/mois</sub></div>
-            <div className="plan-ea">29&euro;/mois avec le code early adopter</div>
+            <div className="plan-price"><sup>&euro;</sup>38<sub>/mois</sub></div>
+            <div className="plan-ea">28&euro;/mois avec le code early adopter</div>
             <div className="plan-note">7 jours gratuits &middot; CB requise</div>
             <div className="plan-tagline">Tout le plan Pro, augment&eacute; d&rsquo;un coach IA actif. Analyse, recommandations et debriefing &agrave; chaque session.</div>
             <ul className="plan-features">
