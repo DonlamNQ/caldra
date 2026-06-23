@@ -360,7 +360,7 @@ const HTML = `
     <h1>Tu ne vois pas<br>quand tu dérailles.<br><em>Lui si.</em></h1>
     <p class="hero-sub">Caldra analyse chaque trade et détecte les comportements qui détruisent les sessions &mdash; avant que le tilt, le revenge trading ou l'impulsion ne fasse les dégâts.</p>
     <div class="hero-ctas">
-      <a href="/signup" class="cta-main-btn">Commencer gratuitement →</a>
+      <a href="/signup" class="cta-main-btn">Essayer 7 jours →</a>
       <a href="/login" class="cta-login-lk">Connexion</a>
     </div>
     <div class="hero-fn">

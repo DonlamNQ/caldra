@@ -45,6 +45,8 @@ export async function POST(req: Request) {
           {
             user_id: userId,
             plan,
+            // Checkout démarre toujours par un essai 7j → accès accordé.
+            subscription_status: 'trialing',
             stripe_customer_id: session.customer as string,
             stripe_subscription_id: session.subscription as string,
           },
@@ -67,7 +69,7 @@ export async function POST(req: Request) {
     if (profile) {
       await service
         .from('user_profiles')
-        .update({ plan, stripe_subscription_id: sub.id })
+        .update({ plan, subscription_status: sub.status, stripe_subscription_id: sub.id })
         .eq('user_id', profile.user_id)
     }
   }
@@ -82,9 +84,12 @@ export async function POST(req: Request) {
       .single()
 
     if (profile) {
+      // Abonnement résilié → on coupe l'accès (le gate renverra au checkout).
+      // On laisse `plan` tel quel (la contrainte interdit NULL) ; c'est
+      // subscription_status qui décide de l'accès.
       await service
         .from('user_profiles')
-        .update({ plan: 'pro', stripe_subscription_id: null })
+        .update({ subscription_status: 'canceled', stripe_subscription_id: null })
         .eq('user_id', profile.user_id)
     }
   }

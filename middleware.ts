@@ -88,6 +88,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // ── Gate "essai gated CB" ───────────────────────────────────────────────────
+  // User connecté mais sans abonnement actif/en essai → renvoyé au checkout.
+  // /billing (page résultat succès/annulé) reste accessible pour ne pas casser
+  // le retour de Stripe pendant que le webhook met à jour le statut.
+  if (user && !isPublic && path !== '/billing') {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('subscription_status')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const status = profile?.subscription_status
+    const entitled = status === 'trialing' || status === 'active' || status === 'past_due'
+    if (!entitled) {
+      const plan = (user.user_metadata as { plan?: string } | undefined)?.plan
+      const checkoutUrl = new URL('/api/billing/checkout', request.url)
+      if (plan === 'pro' || plan === 'max' || plan === 'sentinel') {
+        checkoutUrl.searchParams.set('plan', plan)
+      }
+      return NextResponse.redirect(checkoutUrl)
+    }
+  }
+
   return supabaseResponse
 }
 

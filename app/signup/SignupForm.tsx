@@ -53,6 +53,12 @@ export default function SignupPage() {
     if (password !== confirm) { setError('Les mots de passe ne correspondent pas.'); return }
 
     setLoading(true)
+    // Plan choisi sur la page Tarifs (/signup?plan=pro|max). Mémorisé en
+    // métadonnée pour que le checkout (et le gate après confirmation email)
+    // sache quel abonnement démarrer. Défaut : pro.
+    const rawPlan = new URLSearchParams(window.location.search).get('plan')
+    const plan = rawPlan === 'max' || rawPlan === 'sentinel' ? 'max' : 'pro'
+
     const supabase = createClient()
     const { data, error: authError } = await supabase.auth.signUp({
       email, password,
@@ -61,12 +67,15 @@ export default function SignupPage() {
         data: {
           first_name: firstName.trim(), last_name: lastName.trim(),
           phone: phone.trim(), full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+          plan,
         },
       },
     })
 
     if (authError) { setError(authError.message); setLoading(false); return }
-    if (data.session) { window.location.href = '/onboarding'; return }
+    // Session immédiate (confirmation email désactivée) → direct au checkout CB.
+    // Sinon, l'utilisateur confirme par email puis le gate l'enverra au checkout.
+    if (data.session) { window.location.href = `/api/billing/checkout?plan=${plan}`; return }
     setSent(true); setLoading(false)
   }
 
@@ -85,7 +94,7 @@ export default function SignupPage() {
             </div>
             <p style={{ color: TE, fontSize: 13, lineHeight: 1.75, fontWeight: 300, marginBottom: 16 }}>
               Un email de confirmation a été envoyé à{' '}<span style={{ color: TX }}>{email}</span>.{' '}
-              Clique sur le lien pour activer ton compte et démarrer ton essai de 14 jours.
+              Clique sur le lien pour activer ton compte, puis enregistre ta carte pour démarrer ton essai gratuit de 7 jours.
             </p>
             <div style={{ padding: '12px 14px', background: `${RD}`, border: `.5px solid ${RB}`, borderRadius: 8, marginBottom: 4 }}>
               <p style={{ fontSize: 12, color: TX, lineHeight: 1.6, fontWeight: 300 }}>
@@ -127,7 +136,7 @@ export default function SignupPage() {
 
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.5, color: TX, marginBottom: 5 }}>Créer un compte</div>
-              <div style={{ fontSize: 12.5, color: TE }}>14 jours gratuits · Sans carte requise</div>
+              <div style={{ fontSize: 12.5, color: TE }}>7 jours gratuits · Carte requise · Annulable avant J+7</div>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>

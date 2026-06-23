@@ -234,3 +234,10 @@ update user_profiles set plan = 'max' where plan = 'sentinel';
 update user_profiles set plan = 'pro' where plan not in ('pro', 'max');
 alter table user_profiles add constraint user_profiles_plan_check check (plan in ('pro', 'max'));
 
+-- v2.9 : essai gated par carte bancaire.
+-- `subscription_status` = signal d'accès. NULL = pas d'abonnement → pas d'accès
+-- à l'app (le gate du middleware renvoie au checkout Stripe). Le webhook Stripe
+-- écrit 'trialing' / 'active' (accès) ou 'canceled' / 'past_due' (accès coupé).
+-- `plan` reste 'pro'/'max' (jamais NULL) mais ne suffit plus à donner l'accès.
+alter table user_profiles add column if not exists subscription_status text;
+
