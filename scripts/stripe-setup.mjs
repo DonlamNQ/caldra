@@ -48,7 +48,10 @@ const LIVE = KEY.startsWith('sk_live_')
 const WEBHOOK_URL = process.env.CALDRA_WEBHOOK_URL || 'https://getcaldra.com/api/billing/webhook'
 const PROMO_CODE  = (process.env.EARLY_PROMO_CODE || 'EARLY100').toUpperCase()
 
-const stripe = new Stripe(KEY, { apiVersion: '2026-03-25.dahlia' })
+// Version d'API stable : la dahlia 2026 (défaut de certains comptes) rejette le
+// paramètre `coupon` de promotionCodes.create. On épingle une version connue OK
+// pour toutes les opérations de ce script (sans impact sur l'app, qui pin la sienne).
+const stripe = new Stripe(KEY, { apiVersion: '2024-06-20' })
 
 // ── Produit + prix mensuel EUR, idempotent via metadata.caldra_plan ───────────
 async function ensureProductPrice(planKey, name, amountCents) {
