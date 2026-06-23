@@ -8,9 +8,9 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: Request) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
 
-  const PRICE_TO_PLAN: Record<string, 'pro' | 'sentinel'> = {
-    [process.env.STRIPE_PRO_PRICE_ID!]:      'pro',
-    [process.env.STRIPE_SENTINEL_PRICE_ID!]: 'sentinel',
+  const PRICE_TO_PLAN: Record<string, 'pro' | 'max'> = {
+    [process.env.STRIPE_PRO_PRICE_ID!]: 'pro',
+    [(process.env.STRIPE_MAX_PRICE_ID ?? process.env.STRIPE_SENTINEL_PRICE_ID)!]: 'max',
   }
 
   const service = createClient(
@@ -34,9 +34,11 @@ export async function POST(req: Request) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
     const userId = session.metadata?.user_id
-    const plan = session.metadata?.plan as 'pro' | 'sentinel' | undefined
+    // 'sentinel' = ancien nom du plan Max — normalisé pour compat des sessions en vol.
+    const rawPlan = session.metadata?.plan
+    const plan = rawPlan === 'sentinel' ? 'max' : (rawPlan as 'pro' | 'max' | undefined)
 
-    if (userId && UUID_RE.test(userId) && plan && ['pro', 'sentinel'].includes(plan)) {
+    if (userId && UUID_RE.test(userId) && plan && ['pro', 'max'].includes(plan)) {
       await service
         .from('user_profiles')
         .upsert(

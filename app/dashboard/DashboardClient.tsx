@@ -8,6 +8,7 @@ import type { DaySession } from './page'
 import { alertLabel } from '@/lib/alertLabels'
 import { alertTechnical } from '@/lib/alertTechnical'
 import { randomNote } from '@/lib/coachNotes'
+import { isMaxPlan, isPaidPlan } from '@/lib/plans'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -2320,7 +2321,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
 }) {
   const C = useContext(ThemeCtx)
   const SN = C === C_LIGHT ? SN_LIGHT : SN_DARK
-  const isSentinel = plan === 'sentinel'
+  const isSentinel = isMaxPlan(plan)
 
   const [openTime] = useState(() => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
   const [msgs, setMsgs] = useState<ChatMsg[]>([{
@@ -2439,7 +2440,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
     </div>
   )
 
-  // ── État DORMANT (plan ≠ sentinel) ───────────────────────────────────────────
+  // ── État DORMANT (plan ≠ max) ────────────────────────────────────────────────
   if (!isSentinel) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden', background: SN.void, position: 'relative' }}>
@@ -2729,18 +2730,18 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     } finally { setLoading(null) }
   }
 
-  const isPaid = plan === 'pro' || plan === 'sentinel'
+  const isPaid = isPaidPlan(plan)
 
   const plans = [
     {
       id: 'pro', name: 'Pro', price: '19€',
       accent: C.g, accentAlpha: 'rgba(0,209,122,',
-      features: ['Trades illimités', 'Analytics avancées', 'Calendrier des sessions', 'Rapports exportables'],
+      features: ['11 détecteurs comportementaux', 'Dashboard temps réel', 'Personnalisation des règles', 'Rapport mensuel', 'Historique 30 jours'],
     },
     {
-      id: 'sentinel', name: 'Sentinel', price: '39€',
+      id: 'max', name: 'Max', price: '39€',
       accent: C.red, accentAlpha: `rgba(124,58,237,`,
-      features: ['Tout Pro inclus', 'Débrief IA après chaque session', 'Analyse comportementale profonde', 'Coaching Anthropic personnalisé', 'Accès prioritaire aux nouvelles features'],
+      features: ['18 détecteurs complets', 'Tout le Pro inclus', 'Rapport de fin de session IA', 'Rapport hebdomadaire IA', 'Historique 6 mois'],
     },
   ]
 
@@ -3229,7 +3230,7 @@ export default function DashboardClient({
   }, [dismissToast])
 
   const fetchAlertCoaching = useCallback(async (alert: AlertRow) => {
-    if (plan !== 'sentinel') return
+    if (!isMaxPlan(plan)) return
     const currentAlerts = alertsRef.current
     const currentStats = statsRef.current
     const currentScore = computeScore(currentAlerts)

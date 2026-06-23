@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import Anthropic from '@anthropic-ai/sdk'
+import { isMaxPlan } from '@/lib/plans'
 
 export async function POST(req: NextRequest) {
   const cookieStore = cookies()
@@ -31,8 +32,8 @@ export async function POST(req: NextRequest) {
     .eq('user_id', user.id)
     .single()
 
-  if (profile?.plan !== 'sentinel') {
-    return NextResponse.json({ error: 'Plan Sentinel requis' }, { status: 403 })
+  if (!isMaxPlan(profile?.plan)) {
+    return NextResponse.json({ error: 'Plan Max requis' }, { status: 403 })
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
