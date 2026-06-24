@@ -230,6 +230,8 @@ nav.nav-hidden{transform:translateY(-130px)}
 .pricing{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem;max-width:880px;margin:3.5rem auto 0}
 .plan{border-radius:22px;padding:clamp(1.8rem,3vw,2.6rem);position:relative;overflow:hidden;transition:transform .25s}.plan:hover{transform:translateY(-4px)}
 .plan-pro{background:linear-gradient(160deg,rgba(255,255,255,.045),var(--s1) 58%);border:.5px solid var(--b2)}
+.plan-pro::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent)}
+.plan-pro:hover{border-color:rgba(255,255,255,.2);box-shadow:0 24px 56px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.06)}
 .plan-max{background:linear-gradient(160deg,rgba(139,92,246,.15),var(--s1) 58%);border:.5px solid rgba(139,92,246,.44);box-shadow:0 0 80px rgba(139,92,246,.15),inset 0 1px 0 rgba(255,255,255,.07)}
 .plan-pop{position:absolute;top:1.4rem;right:1.4rem;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:100px;padding:5px 12px}
 .plan-lab{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--t2);margin-bottom:1.5rem}
