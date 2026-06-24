@@ -84,7 +84,7 @@ async function ensureProductPrice(planKey, name, amountCents) {
 
 // ── Coupon -25 % à vie + code promo, idempotents ──────────────────────────────
 async function ensureCouponAndPromo() {
-  const couponId = 'caldra-early-25-forever'
+  const couponId = 'caldra-early-25-cap'
   let coupon
   try {
     coupon = await stripe.coupons.retrieve(couponId)
