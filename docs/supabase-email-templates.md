@@ -28,7 +28,7 @@ Palette : fond `#08080d`, carte `#0f0f16`, accent `#7c3aed`, texte `#e8e6e0`.
           <div style="font-size:16px;font-weight:700;letter-spacing:6px;text-transform:uppercase;color:#fff;">CALD<span style="color:#7c3aed;">RA</span></div>
         </td></tr>
         <tr><td style="padding:28px 40px 8px;">
-          <h1 style="margin:0;font-size:22px;font-weight:600;color:#fff;text-align:center;">Bienvenue 👋</h1>
+          <h1 style="margin:0;font-size:22px;font-weight:600;color:#fff;text-align:center;">Bienvenue</h1>
         </td></tr>
         <tr><td style="padding:0 40px;">
           <p style="margin:0;font-size:14px;line-height:1.7;color:rgba(232,230,224,.6);text-align:center;">
@@ -224,7 +224,7 @@ Palette : fond `#08080d`, carte `#0f0f16`, accent `#7c3aed`, texte `#e8e6e0`.
           <div style="font-size:16px;font-weight:700;letter-spacing:6px;text-transform:uppercase;color:#fff;">CALD<span style="color:#7c3aed;">RA</span></div>
         </td></tr>
         <tr><td style="padding:28px 40px 8px;">
-          <h1 style="margin:0;font-size:22px;font-weight:600;color:#fff;text-align:center;">Tu es invité·e 🎯</h1>
+          <h1 style="margin:0;font-size:22px;font-weight:600;color:#fff;text-align:center;">Tu es invité·e</h1>
         </td></tr>
         <tr><td style="padding:0 40px;">
           <p style="margin:0;font-size:14px;line-height:1.7;color:rgba(232,230,224,.6);text-align:center;">
