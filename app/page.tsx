@@ -55,21 +55,21 @@ nav.nav-hidden{transform:translateY(-130px)}
 
 /* shared */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.5rem,4vw,3.5rem)}
-.sec{position:relative;z-index:1;padding:clamp(4.2rem,9vw,7.6rem) 0}
+.sec{position:relative;z-index:1;padding:clamp(3.8rem,8vw,6.8rem) 0}
 .divider{height:.5px;background:linear-gradient(90deg,transparent,var(--b1) 18%,var(--b1) 82%,transparent);position:relative;z-index:1}
 .tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:1.75rem}
 .tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--v);box-shadow:0 0 10px var(--v)}
-.h2{font-size:clamp(2rem,4vw,3.1rem);font-weight:200;letter-spacing:-1.8px;line-height:1.07;background:linear-gradient(180deg,#fff 40%,rgba(246,244,252,.66));-webkit-background-clip:text;background-clip:text;color:transparent}
+.h2{font-size:clamp(1.85rem,3.5vw,2.8rem);font-weight:200;letter-spacing:-1.6px;line-height:1.08;background:linear-gradient(180deg,#fff 40%,rgba(246,244,252,.66));-webkit-background-clip:text;background-clip:text;color:transparent}
 .h2 em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{font-size:clamp(15px,1.5vw,17px);color:var(--t2);line-height:1.8;font-weight:300;max-width:560px;margin-top:1.4rem}
 .center{text-align:center}.center .tag{margin-left:auto;margin-right:auto}.center .lead{margin-left:auto;margin-right:auto}
 
 /* HERO */
-.hero{position:relative;z-index:1;padding-top:clamp(8rem,14vw,11.5rem);padding-bottom:clamp(3.5rem,7vw,6rem);text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero{position:relative;z-index:1;padding-top:clamp(7rem,13vw,10.5rem);padding-bottom:clamp(3rem,6vw,5.5rem);text-align:center;display:flex;flex-direction:column;align-items:center}
 .hero-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:8px 18px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:2.2rem}
 .hero-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--v);animation:pulse 2s ease-in-out infinite;box-shadow:0 0 10px var(--v)}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
-.hero h1{font-size:clamp(2.7rem,6vw,5.4rem);font-weight:200;line-height:1.03;letter-spacing:-3px;max-width:15ch;margin-bottom:1.7rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1{font-size:clamp(2.5rem,5.4vw,5rem);font-weight:200;line-height:1.04;letter-spacing:-2.8px;max-width:15ch;margin-bottom:1.6rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero h1 em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 32px rgba(139,92,246,.5))}
 .hero-sub{font-size:clamp(15px,1.7vw,19px);color:var(--t2);line-height:1.7;max-width:600px;margin-bottom:2.6rem;font-weight:300}
 .hero-ctas{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
@@ -97,11 +97,13 @@ nav.nav-hidden{transform:translateY(-130px)}
 .pv-chart-sym{font-size:11.5px;font-weight:600;color:#eceaf6;letter-spacing:.3px}
 .pv-chart-sym span{color:var(--t3);font-weight:400;margin-left:7px}
 .pv-chart-tf{font-size:9px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase}
-.pv-chart svg{width:100%;height:118px;display:block}
-.cw-up{stroke:#3ecf8e;stroke-width:1.3;vector-effect:non-scaling-stroke}
-.cw-dn{stroke:#e2503c;stroke-width:1.3;vector-effect:non-scaling-stroke}
+.pv-chart svg{width:100%;height:158px;display:block}
+.cw-up{stroke:#3ecf8e;stroke-width:1.1;vector-effect:non-scaling-stroke}
+.cw-dn{stroke:#e2503c;stroke-width:1.1;vector-effect:non-scaling-stroke}
 .cb-up{fill:#3ecf8e}.cb-dn{fill:#e2503c}
-.cg{stroke:rgba(255,255,255,.05);stroke-width:1;vector-effect:non-scaling-stroke}
+.cv-up{fill:rgba(62,207,142,.3)}.cv-dn{fill:rgba(226,80,60,.3)}
+.cma{fill:none;stroke:#a78bfa;stroke-width:1.4;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.9}
+.cg{stroke:rgba(255,255,255,.045);stroke-width:1;vector-effect:non-scaling-stroke}
 .pv-kpis{display:flex;flex-direction:column;gap:1.1rem}
 .pv-score{display:flex;align-items:center;gap:1.3rem;padding:1.3rem;background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px}
 .pv-score-num{font-size:46px;font-weight:200;letter-spacing:-2px;line-height:1;color:var(--orange)}
@@ -274,7 +276,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 
 /* FINAL CTA */
 .fcta{text-align:center;position:relative;z-index:1;padding:clamp(6rem,12vw,10rem) 0}
-.fcta-h{font-size:clamp(2.5rem,6vw,4.8rem);font-weight:200;letter-spacing:-2.5px;line-height:1.03;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.fcta-h{font-size:clamp(2.3rem,5.4vw,4.4rem);font-weight:200;letter-spacing:-2.2px;line-height:1.04;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
 .fcta-h em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(139,92,246,.5))}
 .fcta-sub{font-size:16px;color:var(--t2);margin-bottom:2.5rem;font-weight:300;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7}
 .fcta-login{margin-top:1.4rem;font-size:13px;color:var(--t3)}.fcta-login a span{color:var(--v2)}
@@ -321,6 +323,40 @@ const DETECTORS = [
   {n:'08',name:'Stop non respecté',icon:'<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',desc:"Position tenue au-delà de ton stop habituel. L'espoir n'est pas une stratégie.",lv:2,s:false},
   {n:'09',name:'Risk dépassé',icon:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',desc:"Sizing dépassant ton risk par trade défini. Tes règles existent pour une raison.",lv:2,s:false},
 ]
+
+function buildCandles() {
+  let seed = 7
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff }
+  const N = 34, W = 600, H = 170, volH = 30, top = 8, bot = H - volH - 6
+  const candles = []
+  let price = 100, min = Infinity, max = -Infinity
+  for (let i = 0; i < N; i++) {
+    const open = price
+    const close = open + (rnd() - 0.44) * 4.2
+    const high = Math.max(open, close) + rnd() * 2.4
+    const low = Math.min(open, close) - rnd() * 2.4
+    candles.push({ open, close, high, low, vol: 0.25 + rnd() })
+    min = Math.min(min, low); max = Math.max(max, high); price = close
+  }
+  const pad = (max - min) * 0.06; min -= pad; max += pad
+  const step = (W - 12) / N, cw = Math.max(3, step * 0.62)
+  const x = i => 6 + i * step + step / 2
+  const y = p => top + (max - p) / (max - min) * (bot - top)
+  const maxVol = Math.max(...candles.map(c => c.vol))
+  let out = ''
+  for (let g = 0; g <= 3; g++) { const gy = (top + (bot - top) * g / 3).toFixed(1); out += `<line class="cg" x1="0" y1="${gy}" x2="${W}" y2="${gy}"/>` }
+  candles.forEach((c, i) => { const vh = (c.vol / maxVol) * volH; out += `<rect class="${c.close >= c.open ? 'cv-up' : 'cv-dn'}" x="${(x(i) - cw / 2).toFixed(1)}" y="${(H - vh).toFixed(1)}" width="${cw.toFixed(1)}" height="${vh.toFixed(1)}"/>` })
+  candles.forEach((c, i) => {
+    const up = c.close >= c.open, cx = x(i).toFixed(1)
+    out += `<line class="${up ? 'cw-up' : 'cw-dn'}" x1="${cx}" y1="${y(c.high).toFixed(1)}" x2="${cx}" y2="${y(c.low).toFixed(1)}"/>`
+    const bt = y(Math.max(c.open, c.close)), bb = y(Math.min(c.open, c.close))
+    out += `<rect class="${up ? 'cb-up' : 'cb-dn'}" x="${(x(i) - cw / 2).toFixed(1)}" y="${bt.toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(1.2, bb - bt).toFixed(1)}"/>`
+  })
+  const ma = candles.map((_, i) => { const k = Math.min(6, i + 1); let s = 0; for (let j = 0; j < k; j++) s += candles[i - j].close; return s / k })
+  out += `<path class="cma" d="${ma.map((m, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(m).toFixed(1)}`).join(' ')}"/>`
+  return out
+}
+const CANDLES = buildCandles()
 
 const HTML = `
 <div class="bg-grid"></div>
@@ -391,21 +427,7 @@ const HTML = `
       <div class="panel-body">
         <div class="pv-chart">
           <div class="pv-chart-hd"><div class="pv-chart-sym">EUR/USD<span>5M · Forex</span></div><div class="pv-chart-tf">Session live</div></div>
-          <svg viewBox="0 0 300 120" preserveAspectRatio="none">
-            <line class="cg" x1="0" y1="30" x2="300" y2="30"/><line class="cg" x1="0" y1="60" x2="300" y2="60"/><line class="cg" x1="0" y1="90" x2="300" y2="90"/>
-            <line class="cw-dn" x1="14" y1="70" x2="14" y2="104"/><rect class="cb-dn" x="10" y="84" width="8" height="16"/>
-            <line class="cw-up" x1="38" y1="60" x2="38" y2="98"/><rect class="cb-up" x="34" y="74" width="8" height="16"/>
-            <line class="cw-up" x1="62" y1="54" x2="62" y2="86"/><rect class="cb-up" x="58" y="64" width="8" height="18"/>
-            <line class="cw-dn" x1="86" y1="58" x2="86" y2="84"/><rect class="cb-dn" x="82" y="66" width="8" height="14"/>
-            <line class="cw-up" x1="110" y1="46" x2="110" y2="76"/><rect class="cb-up" x="106" y="56" width="8" height="16"/>
-            <line class="cw-up" x1="134" y1="38" x2="134" y2="66"/><rect class="cb-up" x="130" y="46" width="8" height="16"/>
-            <line class="cw-dn" x1="158" y1="44" x2="158" y2="72"/><rect class="cb-dn" x="154" y="52" width="8" height="14"/>
-            <line class="cw-up" x1="182" y1="34" x2="182" y2="64"/><rect class="cb-up" x="178" y="42" width="8" height="18"/>
-            <line class="cw-up" x1="206" y1="28" x2="206" y2="54"/><rect class="cb-up" x="202" y="36" width="8" height="14"/>
-            <line class="cw-dn" x1="230" y1="32" x2="230" y2="58"/><rect class="cb-dn" x="226" y="40" width="8" height="14"/>
-            <line class="cw-up" x1="254" y1="22" x2="254" y2="50"/><rect class="cb-up" x="250" y="30" width="8" height="16"/>
-            <line class="cw-up" x1="278" y1="16" x2="278" y2="42"/><rect class="cb-up" x="274" y="24" width="8" height="16"/>
-          </svg>
+          <svg viewBox="0 0 600 170" preserveAspectRatio="none">${CANDLES}</svg>
         </div>
         <div class="pv-grid">
           <div class="pv-kpis">
