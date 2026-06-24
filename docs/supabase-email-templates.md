@@ -248,3 +248,53 @@ Palette : fond `#08080d`, carte `#0f0f16`, accent `#7c3aed`, texte `#e8e6e0`.
 </body>
 </html>
 ```
+
+---
+
+## 6. Reauthentication (code de confirmation)
+
+⚠️ Ce template utilise `{{ .Token }}` (code à 6 chiffres), **pas** `{{ .ConfirmationURL }}`. Supabase envoie un code OTP, pas un lien.
+
+**Subject :** `Ton code de confirmation Caldra`
+
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;padding:0;background:#08080d;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#08080d;padding:40px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#0f0f16;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
+        <tr><td style="height:3px;background:linear-gradient(90deg,transparent,#7c3aed,transparent);"></td></tr>
+        <tr><td style="padding:40px 40px 0;text-align:center;">
+          <div style="font-size:16px;font-weight:700;letter-spacing:6px;text-transform:uppercase;color:#fff;">CALD<span style="color:#7c3aed;">RA</span></div>
+        </td></tr>
+        <tr><td style="padding:28px 40px 8px;">
+          <h1 style="margin:0;font-size:22px;font-weight:600;color:#fff;text-align:center;">Confirme ton identité</h1>
+        </td></tr>
+        <tr><td style="padding:0 40px;">
+          <p style="margin:0;font-size:14px;line-height:1.7;color:rgba(232,230,224,.6);text-align:center;">
+            Saisis ce code pour confirmer ton action. Il expire dans quelques minutes.
+          </p>
+        </td></tr>
+        <tr><td style="padding:28px 40px;text-align:center;">
+          <div style="display:inline-block;background:#08080d;border:1px solid rgba(124,58,237,.4);border-radius:10px;padding:18px 32px;font-size:32px;font-weight:700;letter-spacing:10px;color:#fff;">
+            {{ .Token }}
+          </div>
+        </td></tr>
+        <tr><td style="padding:0 40px 36px;">
+          <p style="margin:0;font-size:12px;line-height:1.6;color:rgba(232,230,224,.3);text-align:center;">
+            Ne partage jamais ce code. L'équipe Caldra ne te le demandera jamais.
+          </p>
+        </td></tr>
+        <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,.06);">
+          <p style="margin:0;font-size:11px;color:rgba(232,230,224,.25);text-align:center;">
+            Tu n'es pas à l'origine de cette demande ? Ignore cet email.
+          </p>
+        </td></tr>
+      </table>
+      <p style="margin:20px 0 0;font-size:11px;color:rgba(232,230,224,.2);">Caldra · Intelligence comportementale pour traders</p>
+    </td></tr>
+  </table>
+</body>
+</html>
+```
