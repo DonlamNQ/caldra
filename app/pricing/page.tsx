@@ -110,9 +110,9 @@ export default function PricingPage() {
             <div className="plan-price"><sup>&euro;</sup>25,50<sub>/mois</sub><span className="plan-strike">34&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
             <div className="plan-tagline">Tout le plan Pro, augment&eacute; d&rsquo;un coach IA actif. Analyse, recommandations et debriefing &agrave; chaque session.</div>
             <ul className="plan-features">
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 d&eacute;tecteurs comportementaux <span style={{ fontWeight: 400, color: 'rgba(232,230,224,.4)' }}>(vs 11)</span></strong></li>
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style={{ color: 'rgba(232,230,224,.3)' }}>Tout le plan Pro inclus, plus&nbsp;:</span></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport de fin de session IA</strong></li>
+              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 d&eacute;tecteurs comportementaux</strong></li>
+              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>D&eacute;brief de session IA</strong></li>
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire IA</strong></li>
             </ul>
             <a href="/signup?plan=max" className="plan-btn plan-btn-primary">Essayer 7 jours gratuitement &rarr;</a>

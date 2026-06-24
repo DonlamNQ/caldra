@@ -90,7 +90,18 @@ nav.nav-hidden{transform:translateY(-130px)}
 .pb-live{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--green)}
 .pb-live .lvdot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.6s ease-in-out infinite}
 .pb-name{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--t2);font-weight:600}.pb-name span{color:var(--v)}
-.panel-body{display:grid;grid-template-columns:1.15fr 1fr;gap:1.1rem;padding:1.4rem}
+.panel-body{display:flex;flex-direction:column;gap:1.1rem;padding:1.4rem}
+.pv-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:1.1rem}
+.pv-chart{background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px;padding:1rem 1.1rem .7rem}
+.pv-chart-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.pv-chart-sym{font-size:11.5px;font-weight:600;color:#eceaf6;letter-spacing:.3px}
+.pv-chart-sym span{color:var(--t3);font-weight:400;margin-left:7px}
+.pv-chart-tf{font-size:9px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase}
+.pv-chart svg{width:100%;height:118px;display:block}
+.cw-up{stroke:#3ecf8e;stroke-width:1.3;vector-effect:non-scaling-stroke}
+.cw-dn{stroke:#e2503c;stroke-width:1.3;vector-effect:non-scaling-stroke}
+.cb-up{fill:#3ecf8e}.cb-dn{fill:#e2503c}
+.cg{stroke:rgba(255,255,255,.05);stroke-width:1;vector-effect:non-scaling-stroke}
 .pv-kpis{display:flex;flex-direction:column;gap:1.1rem}
 .pv-score{display:flex;align-items:center;gap:1.3rem;padding:1.3rem;background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px}
 .pv-score-num{font-size:46px;font-weight:200;letter-spacing:-2px;line-height:1;color:var(--orange)}
@@ -279,7 +290,7 @@ footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-inde
 /* RESPONSIVE */
 @media(max-width:980px){
   .n-links{display:none}
-  .panel-body{grid-template-columns:1fr}
+  .pv-grid{grid-template-columns:1fr}
   .toast{display:none}
   .split{grid-template-columns:1fr}
   .det-grid{grid-template-columns:1fr}.det-detail{display:none}
@@ -378,24 +389,44 @@ const HTML = `
         <span class="pb-live"><span class="lvdot"></span>Live</span>
       </div>
       <div class="panel-body">
-        <div class="pv-kpis">
-          <div class="pv-score">
-            <svg width="64" height="64" viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6"/>
-              <circle cx="32" cy="32" r="26" fill="none" stroke="#dc7e2e" stroke-width="6" stroke-dasharray="163" stroke-dashoffset="62" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:32px 32px"/>
-            </svg>
-            <div><div class="pv-score-num">62</div><div class="pv-score-lbl">Score / 100</div></div>
-          </div>
-          <div class="pv-row">
-            <div class="pv-kpi"><div class="pv-kpi-l">P&amp;L session</div><div class="pv-kpi-v">&minus;€180</div><div class="pv-kpi-s">en cours</div></div>
-            <div class="pv-kpi"><div class="pv-kpi-l">Win rate</div><div class="pv-kpi-v">43%</div><div class="pv-kpi-s">3W · 4L</div></div>
-          </div>
+        <div class="pv-chart">
+          <div class="pv-chart-hd"><div class="pv-chart-sym">EUR/USD<span>5M · Forex</span></div><div class="pv-chart-tf">Session live</div></div>
+          <svg viewBox="0 0 300 120" preserveAspectRatio="none">
+            <line class="cg" x1="0" y1="30" x2="300" y2="30"/><line class="cg" x1="0" y1="60" x2="300" y2="60"/><line class="cg" x1="0" y1="90" x2="300" y2="90"/>
+            <line class="cw-dn" x1="14" y1="70" x2="14" y2="104"/><rect class="cb-dn" x="10" y="84" width="8" height="16"/>
+            <line class="cw-up" x1="38" y1="60" x2="38" y2="98"/><rect class="cb-up" x="34" y="74" width="8" height="16"/>
+            <line class="cw-up" x1="62" y1="54" x2="62" y2="86"/><rect class="cb-up" x="58" y="64" width="8" height="18"/>
+            <line class="cw-dn" x1="86" y1="58" x2="86" y2="84"/><rect class="cb-dn" x="82" y="66" width="8" height="14"/>
+            <line class="cw-up" x1="110" y1="46" x2="110" y2="76"/><rect class="cb-up" x="106" y="56" width="8" height="16"/>
+            <line class="cw-up" x1="134" y1="38" x2="134" y2="66"/><rect class="cb-up" x="130" y="46" width="8" height="16"/>
+            <line class="cw-dn" x1="158" y1="44" x2="158" y2="72"/><rect class="cb-dn" x="154" y="52" width="8" height="14"/>
+            <line class="cw-up" x1="182" y1="34" x2="182" y2="64"/><rect class="cb-up" x="178" y="42" width="8" height="18"/>
+            <line class="cw-up" x1="206" y1="28" x2="206" y2="54"/><rect class="cb-up" x="202" y="36" width="8" height="14"/>
+            <line class="cw-dn" x1="230" y1="32" x2="230" y2="58"/><rect class="cb-dn" x="226" y="40" width="8" height="14"/>
+            <line class="cw-up" x1="254" y1="22" x2="254" y2="50"/><rect class="cb-up" x="250" y="30" width="8" height="16"/>
+            <line class="cw-up" x1="278" y1="16" x2="278" y2="42"/><rect class="cb-up" x="274" y="24" width="8" height="16"/>
+          </svg>
         </div>
-        <div class="pv-alerts">
-          <div class="pv-alerts-l">Alertes en direct</div>
-          <div class="pv-al pv-al-3"><div class="pv-al-dot d-3"></div><div><div class="pv-al-t">STOP — Drawdown max</div><div class="pv-al-s">Ferme la plateforme maintenant.</div></div></div>
-          <div class="pv-al pv-al-2"><div class="pv-al-dot d-2"></div><div><div class="pv-al-t">Revenge sizing ×2.1</div><div class="pv-al-s">1.4 lots vs 0.67 lots.</div></div></div>
-          <div class="pv-al pv-al-1"><div class="pv-al-dot d-1"></div><div><div class="pv-al-t">Re-entrée rapide (87s)</div><div class="pv-al-s">Délai minimum : 120s.</div></div></div>
+        <div class="pv-grid">
+          <div class="pv-kpis">
+            <div class="pv-score">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6"/>
+                <circle cx="32" cy="32" r="26" fill="none" stroke="#dc7e2e" stroke-width="6" stroke-dasharray="163" stroke-dashoffset="62" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:32px 32px"/>
+              </svg>
+              <div><div class="pv-score-num">62</div><div class="pv-score-lbl">Score / 100</div></div>
+            </div>
+            <div class="pv-row">
+              <div class="pv-kpi"><div class="pv-kpi-l">P&amp;L session</div><div class="pv-kpi-v">&minus;€180</div><div class="pv-kpi-s">en cours</div></div>
+              <div class="pv-kpi"><div class="pv-kpi-l">Win rate</div><div class="pv-kpi-v">43%</div><div class="pv-kpi-s">3W · 4L</div></div>
+            </div>
+          </div>
+          <div class="pv-alerts">
+            <div class="pv-alerts-l">Alertes en direct</div>
+            <div class="pv-al pv-al-3"><div class="pv-al-dot d-3"></div><div><div class="pv-al-t">STOP — Drawdown max</div><div class="pv-al-s">Ferme la plateforme maintenant.</div></div></div>
+            <div class="pv-al pv-al-2"><div class="pv-al-dot d-2"></div><div><div class="pv-al-t">Revenge sizing ×2.1</div><div class="pv-al-s">1.4 lots vs 0.67 lots.</div></div></div>
+            <div class="pv-al pv-al-1"><div class="pv-al-dot d-1"></div><div><div class="pv-al-t">Re-entrée rapide (87s)</div><div class="pv-al-s">Délai minimum : 120s.</div></div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -551,9 +582,9 @@ const HTML = `
       <div class="plan-price"><sup>€</sup>25,50<sub>/mois</sub><span class="plan-strike">34€</span><span class="plan-promo-tag">&minus;25 %</span></div>
       <div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div>
       <ul class="plan-features">
-        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>18 détecteurs comportementaux <span style="color:var(--t3);font-weight:400">(vs 11)</span></li>
         <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:var(--t3)">Tout le plan Pro inclus, plus :</span></li>
-        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport de fin de session IA</li>
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>18 détecteurs comportementaux</li>
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Débrief de session IA</li>
         <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport hebdomadaire IA</li>
       </ul>
       <a href="/signup" class="plan-btn plan-btn-pri">Essayer 7 jours gratuitement →</a>
