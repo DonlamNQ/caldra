@@ -55,21 +55,21 @@ nav.nav-hidden{transform:translateY(-130px)}
 
 /* shared */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.5rem,4vw,3.5rem)}
-.sec{position:relative;z-index:1;padding:clamp(3.8rem,8vw,6.8rem) 0}
+.sec{position:relative;z-index:1;padding:clamp(3.4rem,7vw,6.2rem) 0}
 .divider{height:.5px;background:linear-gradient(90deg,transparent,var(--b1) 18%,var(--b1) 82%,transparent);position:relative;z-index:1}
 .tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:1.75rem}
 .tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--v);box-shadow:0 0 10px var(--v)}
-.h2{font-size:clamp(1.85rem,3.5vw,2.8rem);font-weight:200;letter-spacing:-1.6px;line-height:1.08;background:linear-gradient(180deg,#fff 40%,rgba(246,244,252,.66));-webkit-background-clip:text;background-clip:text;color:transparent}
+.h2{font-size:clamp(1.75rem,3.2vw,2.65rem);font-weight:200;letter-spacing:-1.5px;line-height:1.09;background:linear-gradient(180deg,#fff 40%,rgba(246,244,252,.66));-webkit-background-clip:text;background-clip:text;color:transparent}
 .h2 em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{font-size:clamp(15px,1.5vw,17px);color:var(--t2);line-height:1.8;font-weight:300;max-width:560px;margin-top:1.4rem}
 .center{text-align:center}.center .tag{margin-left:auto;margin-right:auto}.center .lead{margin-left:auto;margin-right:auto}
 
 /* HERO */
-.hero{position:relative;z-index:1;padding-top:clamp(7rem,13vw,10.5rem);padding-bottom:clamp(3rem,6vw,5.5rem);text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero{position:relative;z-index:1;padding-top:clamp(6.5rem,12vw,9.8rem);padding-bottom:clamp(2.6rem,5vw,5rem);text-align:center;display:flex;flex-direction:column;align-items:center}
 .hero-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:8px 18px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:2.2rem}
 .hero-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--v);animation:pulse 2s ease-in-out infinite;box-shadow:0 0 10px var(--v)}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
-.hero h1{font-size:clamp(2.5rem,5.4vw,5rem);font-weight:200;line-height:1.04;letter-spacing:-2.8px;max-width:15ch;margin-bottom:1.6rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1{font-size:clamp(2.4rem,5vw,4.6rem);font-weight:200;line-height:1.05;letter-spacing:-2.5px;max-width:15ch;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero h1 em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 32px rgba(139,92,246,.5))}
 .hero-sub{font-size:clamp(15px,1.7vw,19px);color:var(--t2);line-height:1.7;max-width:600px;margin-bottom:2.6rem;font-weight:300}
 .hero-ctas{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
@@ -92,13 +92,6 @@ nav.nav-hidden{transform:translateY(-130px)}
 .pb-name{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--t2);font-weight:600}.pb-name span{color:var(--v)}
 .panel-body{display:flex;flex-direction:column;gap:1.1rem;padding:1.4rem}
 .pv-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:1.1rem}
-.pv-chart{background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px;padding:1rem 1.1rem .7rem}
-.pv-chart-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
-.pv-chart-sym{font-size:11.5px;font-weight:600;color:#eceaf6;letter-spacing:.3px}
-.pv-chart-sym span{color:var(--t3);font-weight:400;margin-left:7px}
-.pv-chart-tf{font-size:9px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase}
-.tv-wrap{height:230px;border-radius:10px;overflow:hidden;border:.5px solid var(--b1);background:#0e0c1a}
-.tv-wrap iframe{display:block;border:0}
 .pv-kpis{display:flex;flex-direction:column;gap:1.1rem}
 .pv-score{display:flex;align-items:center;gap:1.3rem;padding:1.3rem;background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px}
 .pv-score-num{font-size:46px;font-weight:200;letter-spacing:-2px;line-height:1;color:var(--orange)}
@@ -271,7 +264,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 
 /* FINAL CTA */
 .fcta{text-align:center;position:relative;z-index:1;padding:clamp(6rem,12vw,10rem) 0}
-.fcta-h{font-size:clamp(2.3rem,5.4vw,4.4rem);font-weight:200;letter-spacing:-2.2px;line-height:1.04;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.fcta-h{font-size:clamp(2.1rem,5vw,4.1rem);font-weight:200;letter-spacing:-2px;line-height:1.05;margin-bottom:1.4rem;background:linear-gradient(180deg,#fff,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
 .fcta-h em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(139,92,246,.5))}
 .fcta-sub{font-size:16px;color:var(--t2);margin-bottom:2.5rem;font-weight:300;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7}
 .fcta-login{margin-top:1.4rem;font-size:13px;color:var(--t3)}.fcta-login a span{color:var(--v2)}
@@ -386,10 +379,6 @@ const HTML = `
         <span class="pb-live"><span class="lvdot"></span>Live</span>
       </div>
       <div class="panel-body">
-        <div class="pv-chart">
-          <div class="pv-chart-hd"><div class="pv-chart-sym">EUR/USD<span>15M · Forex</span></div><div class="pv-chart-tf">Marché en direct</div></div>
-          <div id="tv-chart" class="tv-wrap"><div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div></div></div>
-        </div>
         <div class="pv-grid">
           <div class="pv-kpis">
             <div class="pv-score">
@@ -691,24 +680,6 @@ export default function Home() {
     s.textContent = src
     document.body.appendChild(s)
     return () => { document.getElementById('caldra-main-init')?.remove() }
-  }, [])
-
-  // Widget TradingView (vrai chart EUR/USD live) dans le panneau hero
-  useEffect(() => {
-    const c = document.querySelector('#tv-chart .tradingview-widget-container') as HTMLElement | null
-    if (!c || c.dataset.loaded) return
-    c.dataset.loaded = '1'
-    const s = document.createElement('script')
-    s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
-    s.async = true
-    s.innerHTML = JSON.stringify({
-      autosize: true, symbol: 'FX:EURUSD', interval: '15', timezone: 'Etc/UTC',
-      theme: 'dark', style: '1', locale: 'fr',
-      hide_top_toolbar: true, hide_side_toolbar: true, hide_legend: false,
-      allow_symbol_change: false, save_image: false, withdateranges: false,
-      backgroundColor: 'rgba(14,12,26,1)', gridColor: 'rgba(255,255,255,0.04)',
-    })
-    c.appendChild(s)
   }, [])
 
   return (
