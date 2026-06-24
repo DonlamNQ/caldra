@@ -19,7 +19,7 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [x] Landing en mode lancement (CTA → /signup, essai 7j — plus de waitlist)
 
 ## 🔴 À finir / confirmer avant lancement
-- [ ] **Stripe en mode LIVE** — confirmer par un **vrai test de paiement** (carte ajoutée le 23/06) : produits Pro/Max + price IDs *live* dans Vercel, webhook *live* qui met bien à jour `user_profiles.plan` + `subscription_status`.
+- [ ] **Stripe en mode LIVE** — prix **Max 34€** créé en live (`price_1TlpYDBJjaZ0wLhVilvNyA1H`), ancien 38€ archivé, coupon START25 plafonné à 25 (`caldra-early-25-cap`). **RESTE : mettre `STRIPE_MAX_PRICE_ID` = nouveau price ID dans Vercel + redeploy**, puis confirmer par un **vrai test de paiement** (webhook met à jour `user_profiles.plan` + `subscription_status`).
 - [x] **cTrader day 1** — OK, validé (worker Railway → `caldra-sable.vercel.app`, ingest fonctionnel).
 - [ ] **MT5 day 1** — worker VPS opérationnel, `MT5_ENC_KEY` identique Vercel+VPS, « Sauvegarder infos compte » coché + Algo Trading vert. Tester une connexion client réelle.
 - [ ] **Test end-to-end complet** : signup → checkout (essai) → onboarding → connexion plateforme → ingest trade → alerte temps réel → dashboard.
