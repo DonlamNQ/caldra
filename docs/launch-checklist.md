@@ -20,7 +20,7 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 
 ## 🔴 À finir / confirmer avant lancement
 - [ ] **Stripe en mode LIVE** — confirmer par un **vrai test de paiement** (carte ajoutée le 23/06) : produits Pro/Max + price IDs *live* dans Vercel, webhook *live* qui met bien à jour `user_profiles.plan` + `subscription_status`.
-- [ ] **cTrader day 1** — worker Railway pointe sur `caldra-sable.vercel.app` (PAS getcaldra.com, bloqué par Cloudflare Bot Fight Mode). Tester un trade réel cTrader → alerte dashboard.
+- [x] **cTrader day 1** — OK, validé (worker Railway → `caldra-sable.vercel.app`, ingest fonctionnel).
 - [ ] **MT5 day 1** — worker VPS opérationnel, `MT5_ENC_KEY` identique Vercel+VPS, « Sauvegarder infos compte » coché + Algo Trading vert. Tester une connexion client réelle.
 - [ ] **Test end-to-end complet** : signup → checkout (essai) → onboarding → connexion plateforme → ingest trade → alerte temps réel → dashboard.
 - [ ] **Purge des données de test** en prod (trades/alertes de test restants).
