@@ -2,8 +2,8 @@
 //
 // Crée (de façon idempotente) :
 //   • Produit "Caldra Pro"  + prix 19€/mois
-//   • Produit "Caldra Max"  + prix 38€/mois
-//   • Coupon early adopter  : -25 % à vie, max 100 utilisations
+//   • Produit "Caldra Max"  + prix 35€/mois
+//   • Coupon early adopter  : -25 % à vie, max 25 utilisations
 //   • Code promo associé    : START25 (configurable)
 //   • Webhook endpoint      : 3 events → /api/billing/webhook
 // Puis imprime les variables d'env à coller dans Vercel + .env.local.
@@ -94,10 +94,10 @@ async function ensureCouponAndPromo() {
       id: couponId,
       percent_off: 25,
       duration: 'forever',
-      max_redemptions: 100,
+      max_redemptions: 25,
       name: 'Early adopter −25 % à vie',
     })
-    console.log(`✓ Coupon ${couponId} créé (−25 % à vie, max 100)`)
+    console.log(`✓ Coupon ${couponId} créé (−25 % à vie, max 25)`)
   }
 
   const existing = await stripe.promotionCodes.list({ code: PROMO_CODE, limit: 1 })
@@ -107,7 +107,7 @@ async function ensureCouponAndPromo() {
     const promo = await stripe.promotionCodes.create({
       coupon: coupon.id,
       code: PROMO_CODE,
-      max_redemptions: 100,
+      max_redemptions: 25,
     })
     console.log(`✓ Code promo ${PROMO_CODE} créé (${promo.id})`)
   }
@@ -136,7 +136,7 @@ async function ensureWebhook() {
 async function main() {
   console.log(`\n=== Configuration Stripe Caldra — mode ${LIVE ? 'LIVE 🔴' : 'TEST 🧪'} ===\n`)
   const proPrice = await ensureProductPrice('pro', 'Caldra Pro', 1900)
-  const maxPrice = await ensureProductPrice('max', 'Caldra Max', 3800)
+  const maxPrice = await ensureProductPrice('max', 'Caldra Max', 3500)
   await ensureCouponAndPromo()
   const whSecret = await ensureWebhook()
 
@@ -148,7 +148,7 @@ async function main() {
   else console.log('STRIPE_WEBHOOK_SECRET=<inchangé — webhook déjà existant>')
   console.log('STRIPE_SECRET_KEY=<ta clé sk_live_… (déjà connue)>')
   console.log('──────────────────────────────────────────────\n')
-  console.log(`Code promo early adopter : ${PROMO_CODE} (−25 % à vie, 100 max)`)
+  console.log(`Code promo early adopter : ${PROMO_CODE} (−25 % à vie, 25 max)`)
   console.log('Reste à faire à la main : activer le compte (infos société) et le Customer Portal (lien plus bas).\n')
 }
 

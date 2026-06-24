@@ -85,7 +85,7 @@ export default function PricingPage() {
 
         <div className="ea-banner">
           <span className="ea-tag">Lancement</span>
-          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 100 premiers &middot; Pro &agrave; <strong>14,25&euro;</strong> &middot; Max &agrave; <strong>28,50&euro;</strong> &middot; code <strong>START25</strong> au paiement</span>
+          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 25 premiers inscrits &middot; Pro &agrave; <strong>14,25&euro;</strong> &middot; Max &agrave; <strong>26,25&euro;</strong> &middot; code <strong>START25</strong> au paiement</span>
         </div>
 
         <div className="pricing-grid">
@@ -107,7 +107,7 @@ export default function PricingPage() {
           <div className="plan-card plan-max">
             <div className="plan-shine plan-shine-red"></div>
             <div className="plan-label plan-label-red">Max</div>
-            <div className="plan-price"><sup>&euro;</sup>28,50<sub>/mois</sub><span className="plan-strike">38&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
+            <div className="plan-price"><sup>&euro;</sup>26,25<sub>/mois</sub><span className="plan-strike">35&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
             <div className="plan-tagline">Tout le plan Pro, augment&eacute; d&rsquo;un coach IA actif. Analyse, recommandations et debriefing &agrave; chaque session.</div>
             <ul className="plan-features">
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 d&eacute;tecteurs complets</strong></li>

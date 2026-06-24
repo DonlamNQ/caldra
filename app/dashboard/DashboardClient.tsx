@@ -2473,7 +2473,7 @@ function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onAct
             onClick={onActivate}
             style={{ padding: '13px 30px', background: SN.violet, border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, letterSpacing: 1, cursor: 'pointer', fontFamily: MONO, boxShadow: '0 6px 26px rgba(124,58,237,.35)' }}
           >
-            ACTIVER SENTINEL · 38€/MOIS →
+            ACTIVER SENTINEL · 35€/MOIS →
           </button>
         </div>
       </div>
@@ -2739,7 +2739,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
       features: ['11 détecteurs comportementaux', 'Dashboard temps réel', 'Personnalisation des règles', 'Rapport mensuel', 'Historique illimité'],
     },
     {
-      id: 'max', name: 'Max', price: '38€',
+      id: 'max', name: 'Max', price: '35€',
       accent: C.red, accentAlpha: `rgba(124,58,237,`,
       features: ['18 détecteurs complets', 'Tout le Pro inclus', 'Rapport de fin de session IA', 'Rapport hebdomadaire IA', 'Historique illimité'],
     },
