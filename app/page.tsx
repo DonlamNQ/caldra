@@ -3,332 +3,296 @@
 import { useEffect } from 'react'
 
 const CSS = `
-*{margin:0;padding:0;box-sizing:border-box;scroll-behavior:smooth}
-:root{--v:#8b5cf6;--v2:#a78bfa;--va:rgba(139,92,246,.1);--vb:rgba(139,92,246,.28);--bg:#06060c;--s1:#0e0e18;--s2:#13131f;--b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);--tx:#f4f2fb;--t2:rgba(244,242,251,.56);--t3:rgba(244,242,251,.28)}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden;line-height:1;position:relative}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(ellipse 90% 55% at 50% -5%,#000,transparent 72%);mask-image:radial-gradient(ellipse 90% 55% at 50% -5%,#000,transparent 72%);pointer-events:none;z-index:0}
-body::after{content:'';position:fixed;bottom:-320px;right:-160px;width:820px;height:720px;background:radial-gradient(ellipse,rgba(91,33,182,.13) 0%,transparent 62%);pointer-events:none;z-index:0;animation:auroraDrift2 22s ease-in-out infinite}
-.glow-top{position:fixed;top:-360px;left:50%;width:1120px;height:780px;background:radial-gradient(ellipse,rgba(139,92,246,.15) 0%,transparent 60%);pointer-events:none;z-index:0;animation:auroraDrift 18s ease-in-out infinite}
-@keyframes auroraDrift{0%,100%{transform:translateX(-50%) translateY(0) scale(1)}50%{transform:translateX(-44%) translateY(26px) scale(1.07)}}
-@keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-44px,-32px) scale(1.1)}}
-.reveal{opacity:0;transform:translateY(26px);transition:opacity .75s cubic-bezier(.16,1,.3,1),transform .75s cubic-bezier(.16,1,.3,1)}
-.reveal.in{opacity:1;transform:none}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200..700&family=DM+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+:root{
+  --v:#8b5cf6;--v2:#a78bfa;--v3:#c4b5fd;--va:rgba(139,92,246,.1);--vb:rgba(139,92,246,.3);
+  --bg:#070510;--s1:#0f0d1c;--s2:#161327;--b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.11);
+  --tx:#f6f4fc;--t2:rgba(246,244,252,.6);--t3:rgba(246,244,252,.34);--t4:rgba(246,244,252,.18);
+  --green:#3ecf8e;--amber:#e0a02e;--orange:#dc7e2e;--red:#e2503c;
+  --maxw:1200px;
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(139,92,246,.32);color:#fff}
+
+/* ambient background */
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:72px 72px;-webkit-mask-image:radial-gradient(ellipse 80% 50% at 50% 0%,#000,transparent 70%);mask-image:radial-gradient(ellipse 80% 50% at 50% 0%,#000,transparent 70%)}
+.bg-aura{position:fixed;z-index:0;pointer-events:none;border-radius:50%;filter:blur(20px)}
+.aura-1{top:-420px;left:50%;width:1300px;height:900px;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(139,92,246,.16),transparent 62%);animation:drift1 20s ease-in-out infinite}
+.aura-2{bottom:-360px;right:-220px;width:900px;height:800px;background:radial-gradient(ellipse,rgba(91,33,182,.13),transparent 64%);animation:drift2 24s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translateX(-50%) translateY(0) scale(1)}50%{transform:translateX(-46%) translateY(30px) scale(1.08)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-36px) scale(1.1)}}
+
+/* reveal */
+[data-reveal]{opacity:0;transform:translateY(34px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)}
+[data-reveal].in{opacity:1;transform:none}
 
 /* PROMO BAR */
-.promo-bar{position:fixed;top:0;left:0;right:0;z-index:101;min-height:42px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px 13px;background:linear-gradient(90deg,#4c1d95,#7c3aed,#a78bfa,#7c3aed,#4c1d95);background-size:220% 100%;animation:promoShine 7s linear infinite;color:#fff;font-size:12.5px;letter-spacing:.3px;padding:7px 18px;text-align:center;box-shadow:0 3px 22px rgba(124,58,237,.45);border-bottom:.5px solid rgba(255,255,255,.18)}
-@keyframes promoShine{0%{background-position:0% 0}100%{background-position:220% 0}}
-.promo-spark{font-size:13px;display:inline-block;animation:promoSpin 4s ease-in-out infinite}
-@keyframes promoSpin{0%,100%{transform:rotate(0) scale(1);opacity:.9}50%{transform:rotate(180deg) scale(1.25);opacity:1}}
-.promo-badge{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:rgba(255,255,255,.16);border:.5px solid rgba(255,255,255,.35);border-radius:100px;padding:3px 10px}
-.promo-bar b{font-weight:800}
-.promo-xtra{opacity:.85;font-weight:400}
-.promo-code{cursor:pointer;font-family:'DM Mono',monospace;font-weight:700;font-size:12px;color:#fff;background:rgba(255,255,255,.14);border:1px dashed rgba(255,255,255,.6);border-radius:6px;padding:3px 10px;letter-spacing:1.5px;display:inline-flex;align-items:center;gap:6px;transition:background .15s,transform .15s}
+.promo-bar{position:fixed;top:0;left:0;right:0;z-index:101;min-height:40px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px 14px;background:linear-gradient(90deg,#4c1d95,#7c3aed,#a78bfa,#7c3aed,#4c1d95);background-size:220% 100%;animation:shine 8s linear infinite;color:#fff;font-size:12.5px;letter-spacing:.2px;padding:7px 18px;text-align:center;border-bottom:.5px solid rgba(255,255,255,.16)}
+@keyframes shine{0%{background-position:0 0}100%{background-position:220% 0}}
+.promo-spark{display:inline-block;animation:spin 4s ease-in-out infinite}
+@keyframes spin{0%,100%{transform:rotate(0) scale(1);opacity:.9}50%{transform:rotate(180deg) scale(1.25);opacity:1}}
+.promo-badge{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:rgba(255,255,255,.16);border:.5px solid rgba(255,255,255,.34);border-radius:100px;padding:3px 10px}
+.promo-bar b{font-weight:800}.promo-xtra{opacity:.82;font-weight:400}
+.promo-code{cursor:pointer;font-family:'DM Mono',monospace;font-weight:700;font-size:12px;color:#fff;background:rgba(255,255,255,.14);border:1px dashed rgba(255,255,255,.6);border-radius:6px;padding:3px 10px;letter-spacing:1.5px;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
 .promo-code:hover{background:rgba(255,255,255,.26);transform:translateY(-1px)}
-.promo-code.copied{background:#22c55e;border-color:#22c55e}
+.promo-code.copied{background:var(--green);border-color:var(--green)}
 .promo-code svg{width:11px;height:11px;opacity:.85}
-.promo-cta{text-decoration:none;font-weight:700;font-size:12px;background:#fff;color:#6d28d9;border-radius:6px;padding:4px 13px;box-shadow:0 2px 10px rgba(0,0,0,.22);transition:transform .15s,box-shadow .15s}
-.promo-cta:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.32)}
+.promo-cta{font-weight:700;font-size:12px;background:#fff;color:#6d28d9;border-radius:6px;padding:4px 13px;transition:all .15s}
+.promo-cta:hover{transform:translateY(-1px)}
 
 /* NAV */
-nav{position:fixed;top:42px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3.5rem;border-bottom:.5px solid var(--b1);backdrop-filter:blur(24px) saturate(150%);background:linear-gradient(180deg,rgba(6,6,12,.82),rgba(6,6,12,.55))}
-.n-logo{font-size:13px;font-weight:500;letter-spacing:5px;text-transform:uppercase;color:#fff;text-decoration:none}.n-logo span{color:var(--v)}
+nav{position:fixed;top:40px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem clamp(1.5rem,4vw,3.5rem);border-bottom:.5px solid var(--b1);backdrop-filter:blur(26px) saturate(150%);background:linear-gradient(180deg,rgba(7,5,16,.84),rgba(7,5,16,.5))}
+.n-logo{font-size:14px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:#fff}.n-logo span{color:var(--v)}
 .n-links{display:flex;gap:2.5rem}
-.n-lk{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);text-decoration:none;transition:color .15s}.n-lk:hover{color:#fff}
-.n-r{display:flex;gap:.625rem;align-items:center}
-.n-login{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);text-decoration:none;padding:7px 14px;border:.5px solid var(--b1);border-radius:3px;transition:all .15s}.n-login:hover{color:#fff;border-color:var(--b2)}
-.n-signup{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-decoration:none;padding:7px 15px;border:.5px solid rgba(139,92,246,.5);border-radius:6px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 4px 18px rgba(139,92,246,.32);transition:all .18s}.n-signup:hover{box-shadow:0 6px 26px rgba(139,92,246,.5);transform:translateY(-1px)}
+.n-lk{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);transition:color .15s}.n-lk:hover{color:#fff}
+.n-r{display:flex;gap:.7rem;align-items:center}
+.n-login{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);padding:8px 15px;border:.5px solid var(--b1);border-radius:6px;transition:all .15s}.n-login:hover{color:#fff;border-color:var(--b2)}
+.n-signup{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;padding:8px 16px;border-radius:6px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 4px 18px rgba(139,92,246,.34);transition:all .18s}.n-signup:hover{box-shadow:0 6px 28px rgba(139,92,246,.52);transform:translateY(-1px)}
 
-/* HERO — centered headline + devices below */
-.hero{min-height:100vh;position:relative;z-index:1;border-bottom:.5px solid var(--b1);overflow:hidden;display:flex;flex-direction:column;align-items:center}
-.hero-top{text-align:center;max-width:660px;margin:0 auto;padding:8.5rem 2rem 0;display:flex;flex-direction:column;align-items:center}
-.hero-devices{display:flex;align-items:flex-end;justify-content:center;gap:2.5rem;margin-top:3.5rem;padding:0 2rem}
-.eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);margin-bottom:2rem;display:inline-flex;align-items:center;gap:8px;padding:7px 15px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px)}
-.eydot{width:4px;height:4px;border-radius:50%;background:var(--v);animation:pulse 2s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
-h1{font-size:clamp(2.9rem,5.4vw,4.7rem);font-weight:200;line-height:1.05;letter-spacing:-2.8px;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff 28%,rgba(244,242,251,.68));-webkit-background-clip:text;background-clip:text;color:transparent}
-h1 em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 24px rgba(139,92,246,.42))}
-.hero-sub{font-size:16px;color:var(--t2);line-height:1.8;max-width:500px;margin-bottom:2.5rem;font-weight:300}
-.wf{display:flex;gap:5px;background:var(--s1);border:.5px solid var(--b2);border-radius:6px;padding:4px;width:100%;max-width:380px}
-.wf input{flex:1;padding:11px 14px;background:transparent;border:none;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}.wf input::placeholder{color:var(--t3)}
-.wf-btn{padding:10px 18px;background:var(--v);border:none;border-radius:4px;color:#fff;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:opacity .15s}.wf-btn:hover{opacity:.85}
-.wf-sm{display:none;margin-top:6px;padding:10px 14px;background:rgba(30,180,100,.07);border:.5px solid rgba(30,180,100,.2);border-radius:6px;color:rgba(80,220,140,.9);font-size:12px;text-align:center;width:100%;max-width:380px}
-.hero-fn{display:flex;align-items:center;gap:1rem;margin-top:.875rem}
-.hfn{font-size:11px;color:var(--t3)}.hfs{width:1px;height:10px;background:var(--b2)}
-.hero-ctas{display:flex;gap:10px;align-items:center;width:100%;max-width:380px}
-.cta-main-btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 26px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:8px;color:#fff;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all .2s;text-decoration:none;flex:1;box-shadow:0 6px 24px rgba(139,92,246,.34),inset 0 1px 0 rgba(255,255,255,.18)}.cta-main-btn:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(139,92,246,.5),inset 0 1px 0 rgba(255,255,255,.25)}
-.cta-login-lk{font-size:12px;color:var(--t3);text-decoration:none;padding:8px 12px;border:.5px solid var(--b1);border-radius:4px;white-space:nowrap;transition:all .15s;flex-shrink:0}.cta-login-lk:hover{color:#fff;border-color:var(--b2)}
+/* shared */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.5rem,4vw,3.5rem)}
+.sec{position:relative;z-index:1;padding:clamp(5rem,11vw,9rem) 0}
+.divider{height:.5px;background:linear-gradient(90deg,transparent,var(--b1) 18%,var(--b1) 82%,transparent);position:relative;z-index:1}
+.tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:1.75rem}
+.tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--v);box-shadow:0 0 10px var(--v)}
+.h2{font-size:clamp(2.1rem,4.4vw,3.5rem);font-weight:200;letter-spacing:-2px;line-height:1.06;background:linear-gradient(180deg,#fff 40%,rgba(246,244,252,.66));-webkit-background-clip:text;background-clip:text;color:transparent}
+.h2 em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:clamp(15px,1.5vw,17px);color:var(--t2);line-height:1.8;font-weight:300;max-width:560px;margin-top:1.4rem}
+.center{text-align:center}.center .tag{margin-left:auto;margin-right:auto}.center .lead{margin-left:auto;margin-right:auto}
 
-/* PHONE MOCKUP */
-.phone-scene{position:relative;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
-.phone-frame{width:210px;height:430px;border-radius:38px;background:#06060f;border:6px solid #16162a;box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 80px rgba(0,0,0,.75),0 12px 30px rgba(0,0,0,.5);overflow:hidden;position:relative}
-.ph-notch-area{height:40px;background:#06060f;position:relative;display:flex;align-items:flex-start;justify-content:center}
-.ph-notch{width:84px;height:24px;background:#16162a;border-radius:0 0 16px 16px}
-.ph-status{position:absolute;top:8px;left:14px;right:14px;display:flex;justify-content:space-between;font-size:9px;font-weight:600;color:rgba(255,255,255,.7)}
-.ph-date{text-align:center;padding:.4rem 0 .2rem;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.5px}
-.ph-notifs{padding:0 7px;display:flex;flex-direction:column;gap:6px}
-.ios-notif{background:rgba(14,14,28,.97);border-radius:13px;padding:10px 11px;display:flex;align-items:flex-start;gap:8px;border:.5px solid rgba(255,255,255,.07)}
-.ios-notif-icon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
-.ios-n-body{flex:1;min-width:0}
-.ios-n-app{font-size:8px;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
-.ios-n-title{font-size:11px;font-weight:600;color:#fff;margin-bottom:2px;line-height:1.25}
-.ios-n-msg{font-size:10px;color:rgba(255,255,255,.4);line-height:1.4}
-.ios-n-time{font-size:9px;color:rgba(255,255,255,.25);flex-shrink:0}
+/* HERO */
+.hero{position:relative;z-index:1;padding-top:clamp(9rem,16vw,13rem);padding-bottom:clamp(4rem,8vw,7rem);text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:8px 18px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:2.2rem}
+.hero-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--v);animation:pulse 2s ease-in-out infinite;box-shadow:0 0 10px var(--v)}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+.hero h1{font-size:clamp(3rem,7vw,6.2rem);font-weight:200;line-height:1.02;letter-spacing:-3.5px;max-width:15ch;margin-bottom:1.8rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1 em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 32px rgba(139,92,246,.5))}
+.hero-sub{font-size:clamp(15px,1.7vw,19px);color:var(--t2);line-height:1.7;max-width:600px;margin-bottom:2.6rem;font-weight:300}
+.hero-ctas{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+.btn-pri{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 30px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:11px;color:#fff;font-size:14px;font-weight:600;transition:all .22s;box-shadow:0 8px 30px rgba(139,92,246,.36),inset 0 1px 0 rgba(255,255,255,.2)}
+.btn-pri:hover{transform:translateY(-2px);box-shadow:0 14px 42px rgba(139,92,246,.54),inset 0 1px 0 rgba(255,255,255,.28)}
+.btn-sec{display:inline-flex;align-items:center;gap:7px;padding:16px 26px;border:.5px solid var(--b2);border-radius:11px;color:var(--t2);font-size:14px;font-weight:500;transition:all .18s}
+.btn-sec:hover{color:#fff;border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.03)}
+.hero-trust{display:flex;align-items:center;gap:1.1rem;margin-top:1.9rem;flex-wrap:wrap;justify-content:center}
+.htrust{font-size:12px;color:var(--t3);display:inline-flex;align-items:center;gap:7px}
+.htrust svg{width:13px;height:13px;stroke:var(--green);fill:none;stroke-width:2.2}
+.htrust-sep{width:1px;height:11px;background:var(--b2)}
 
-/* LAPTOP MOCKUP */
-.laptop-scene{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
-.laptop-screen{width:440px;height:275px;background:#05050d;border-radius:10px 10px 0 0;border:5px solid #181828;border-bottom:2px solid #0d0d1e;box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 80px rgba(0,0,0,.65);overflow:hidden;position:relative}
-.laptop-base{width:480px;height:13px;background:linear-gradient(to bottom,#181828,#0e0e1a);border-radius:0 0 6px 6px}
-.laptop-foot{width:60px;height:3px;background:#0a0a14;margin:0 auto}
-/* browser bar inside laptop */
-.ls-bar{height:24px;background:#04040a;border-bottom:.5px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:5px;padding:0 10px;flex-shrink:0}
-.ls-dot{width:8px;height:8px;border-radius:50%}
-.ls-url{flex:1;margin:0 8px;background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.05);border-radius:3px;height:13px;display:flex;align-items:center;justify-content:center;font-size:7px;color:rgba(255,255,255,.25);letter-spacing:.3px}
-/* app layout inside */
-.ls-app{display:grid;grid-template-columns:96px 1fr;height:calc(100% - 24px)}
-.ls-side{background:#04040a;border-right:.5px solid rgba(255,255,255,.05);padding:.5rem 0;display:flex;flex-direction:column;gap:1px}
-.ls-logo{font-size:6px;letter-spacing:3px;font-weight:600;text-transform:uppercase;color:rgba(255,255,255,.5);padding:.25rem .625rem .5rem;border-bottom:.5px solid rgba(255,255,255,.05);margin-bottom:.25rem}.ls-logo span{color:#7c3aed}
-.ls-logo-sub{font-size:4.5px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.2);padding:.125rem .625rem .375rem}
-.ls-nav-item{display:flex;align-items:center;gap:5px;padding:.3rem .625rem;font-size:8px;color:rgba(255,255,255,.3);position:relative;cursor:pointer}
-.ls-nav-item.act{color:rgba(255,255,255,.8);background:rgba(255,255,255,.04)}.ls-nav-item.act::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1.5px;background:#7c3aed}
-.ls-nav-ic{width:8px;height:8px;flex-shrink:0;opacity:.5}
-.ls-main{padding:.625rem;display:flex;flex-direction:column;gap:.5rem;overflow:hidden;position:relative}
-/* score + kpis row */
-.ls-top{display:grid;grid-template-columns:auto 1fr 1fr;gap:.4rem}
-.ls-score-card{background:#0d0d1a;border:.5px solid rgba(255,255,255,.06);border-radius:6px;padding:.5rem;display:flex;align-items:center;gap:.5rem}
-.ls-score-num{font-size:18px;font-weight:200;letter-spacing:-1.5px;color:#dc8200;line-height:1}
-.ls-score-lbl{font-size:6px;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.3)}
-.ls-kpi{background:#0d0d1a;border:.5px solid rgba(255,255,255,.06);border-radius:6px;padding:.4rem .5rem}
-.ls-kpi-l{font-size:6px;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:2px}
-.ls-kpi-v{font-size:14px;font-weight:200;letter-spacing:-1px;color:#e2e8f0;line-height:1}
-.ls-kpi-s{font-size:6px;color:rgba(255,255,255,.25);margin-top:1px}
-/* bottom grid */
-.ls-bottom{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;flex:1}
-.ls-card{background:#0d0d1a;border:.5px solid rgba(255,255,255,.06);border-radius:6px;padding:.4rem .5rem;overflow:hidden}
-.ls-card-l{font-size:6px;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:.35rem}
-.ls-alert{display:flex;align-items:flex-start;gap:4px;padding:.2rem .3rem;border-radius:3px;margin-bottom:3px}
-.ls-a2{background:rgba(220,130,0,.07);border:.5px solid rgba(220,130,0,.18)}
-.ls-a1{background:rgba(255,200,0,.05);border:.5px solid rgba(255,200,0,.12)}
-.ls-adot{width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:2px}
-.ls-adot-1{background:#ffc800}.ls-adot-2{background:#dc8200}
-.ls-at{font-size:7px;color:rgba(255,255,255,.65);line-height:1.35}
-.ls-tr{display:flex;justify-content:space-between;font-size:7px;padding:2px 0;border-bottom:.5px solid rgba(255,255,255,.04)}.ls-tr:last-child{border-bottom:none}
-.ls-tt{color:rgba(255,255,255,.3)}.ls-tn{color:rgba(255,255,255,.5)}.ls-tp{color:#3cc87a}.ls-tneg{color:#e05050}
-/* macOS notification popup */
-.mac-notif{position:absolute;top:8px;right:8px;width:175px;background:rgba(18,18,32,.98);border-radius:10px;padding:10px 11px;border:.5px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.5);animation:macslide .7s ease,floatup 3s ease-in-out .7s infinite;z-index:10}
-@keyframes macslide{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
-@keyframes floatup{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-.mac-hd{display:flex;align-items:center;gap:6px;margin-bottom:6px}
-.mac-icon{width:20px;height:20px;border-radius:5px;background:linear-gradient(135deg,#7c3aed,#5b21b6);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
-.mac-app{font-size:9px;font-weight:600;color:rgba(255,255,255,.45);flex:1}
-.mac-time{font-size:8px;color:rgba(255,255,255,.3)}
-.mac-title{font-size:11px;font-weight:600;color:#fff;margin-bottom:3px;line-height:1.3}
-.mac-body{font-size:9px;color:rgba(255,255,255,.45);line-height:1.5}
+/* HERO PREVIEW (no device frame) */
+.preview{position:relative;z-index:1;margin-top:clamp(3.5rem,7vw,6rem);width:100%;display:flex;justify-content:center}
+.preview-glow{position:absolute;top:-8%;left:50%;transform:translateX(-50%);width:80%;height:120%;background:radial-gradient(ellipse,rgba(139,92,246,.22),transparent 60%);filter:blur(36px);pointer-events:none}
+.panel{position:relative;width:min(960px,100%);background:linear-gradient(180deg,rgba(22,19,39,.94),rgba(12,10,24,.96));border:.5px solid var(--b2);border-radius:20px;box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;backdrop-filter:blur(10px)}
+.panel-bar{display:flex;align-items:center;gap:.7rem;padding:.95rem 1.3rem;border-bottom:.5px solid var(--b1);background:rgba(0,0,0,.2)}
+.pb-live{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--green)}
+.pb-live .lvdot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.6s ease-in-out infinite}
+.pb-name{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--t2);font-weight:600}.pb-name span{color:var(--v)}
+.panel-body{display:grid;grid-template-columns:1.15fr 1fr;gap:1.1rem;padding:1.4rem}
+.pv-kpis{display:flex;flex-direction:column;gap:1.1rem}
+.pv-score{display:flex;align-items:center;gap:1.3rem;padding:1.3rem;background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px}
+.pv-score-num{font-size:46px;font-weight:200;letter-spacing:-2px;line-height:1;color:var(--orange)}
+.pv-score-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-top:5px}
+.pv-row{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+.pv-kpi{padding:1.05rem 1.2rem;background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px}
+.pv-kpi-l{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+.pv-kpi-v{font-size:26px;font-weight:200;letter-spacing:-1.2px;color:#eceaf6;line-height:1}
+.pv-kpi-s{font-size:10px;color:var(--t3);margin-top:6px}
+.pv-alerts{padding:1.2rem;background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px;display:flex;flex-direction:column}
+.pv-alerts-l{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);margin-bottom:1rem}
+.pv-al{display:flex;align-items:flex-start;gap:10px;padding:.7rem .8rem;border-radius:10px;margin-bottom:.6rem}
+.pv-al:last-child{margin-bottom:0}
+.pv-al-3{background:rgba(226,80,60,.08);border:.5px solid rgba(226,80,60,.22)}
+.pv-al-2{background:rgba(220,126,46,.07);border:.5px solid rgba(220,126,46,.2)}
+.pv-al-1{background:rgba(224,160,46,.06);border:.5px solid rgba(224,160,46,.16)}
+.pv-al-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.d-3{background:var(--red);box-shadow:0 0 8px var(--red)}.d-2{background:var(--orange)}.d-1{background:var(--amber)}
+.pv-al-t{font-size:12.5px;color:#eceaf6;font-weight:500;line-height:1.4}
+.pv-al-s{font-size:11px;color:var(--t3);margin-top:2px;line-height:1.4}
+/* floating toasts */
+.toast{position:absolute;z-index:3;width:230px;background:rgba(20,17,36,.97);border:.5px solid var(--b2);border-radius:13px;padding:.85rem .95rem;box-shadow:0 20px 50px rgba(0,0,0,.55);backdrop-filter:blur(12px)}
+.toast-1{top:14%;left:-30px;animation:floaty 5s ease-in-out infinite}
+.toast-2{bottom:16%;right:-26px;animation:floaty 5.5s ease-in-out .6s infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.toast-hd{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.toast-ic{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.toast-app{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-weight:600}
+.toast-t{font-size:12px;font-weight:600;color:#fff;line-height:1.3;margin-bottom:2px}
+.toast-m{font-size:10.5px;color:var(--t3);line-height:1.4}
 
-@keyframes blk{0%,100%{opacity:1}50%{opacity:.3}}
+/* LOGOS / INTEGRATIONS STRIP */
+.logos{display:flex;align-items:center;justify-content:center;gap:clamp(1.5rem,4vw,3.5rem);flex-wrap:wrap;padding:2.6rem 0}
+.logos-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t4)}
+.logo-item{display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:500;color:var(--t2);letter-spacing:.3px}
+.logo-item .lg-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.logo-item.soon{color:var(--t4)}.logo-item.soon .lg-dot{background:var(--t4)}
 
-/* STATS BAR */
-.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:.5px solid var(--b1);position:relative;z-index:1}
-.sb-item{padding:2rem 3.5rem;border-right:.5px solid var(--b1)}
-.sb-item:last-child{border-right:none}
-.sb-n{font-size:32px;font-weight:200;letter-spacing:-1.5px;color:#fff;line-height:1;margin-bottom:.4rem}
-.sb-n span{color:var(--v)}
-.sb-l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3)}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(1.5rem,4vw,4rem)}
+.stat{text-align:center}
+.stat-n{font-size:clamp(2.6rem,5vw,3.8rem);font-weight:200;letter-spacing:-2px;line-height:1;background:linear-gradient(180deg,#fff,rgba(246,244,252,.6));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat-n span{background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat-l{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-top:.9rem}
 
-/* SPLIT FEATURE (notifications) */
-.split-sec{padding:6rem 3.5rem;border-bottom:.5px solid var(--b1);position:relative;z-index:1}
-.split-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;max-width:1080px;margin:0 auto}
-.notif-stack{position:relative;display:flex;flex-direction:column;gap:.75rem;padding:1rem}
-.notif-card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008));border:.5px solid var(--b2);border-radius:14px;padding:1rem 1.25rem;display:flex;align-items:flex-start;gap:12px;transition:all .2s;backdrop-filter:blur(6px)}.notif-card:hover{transform:translateX(5px);box-shadow:0 14px 34px rgba(0,0,0,.34)}
-.nc-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.nc-body{flex:1}
-.nc-app{font-size:9px;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.nc-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;line-height:1.3}
-.nc-msg{font-size:12px;color:rgba(255,255,255,.4);line-height:1.45}
-.nc-time{font-size:10px;color:rgba(255,255,255,.25);flex-shrink:0;white-space:nowrap}
-.nc-l2{border-color:rgba(220,130,0,.25);background:rgba(220,130,0,.04)}
-.nc-l3{border-color:rgba(220,50,30,.3);background:rgba(220,50,30,.05)}
-.notif-device{display:flex;align-items:center;gap:6px;margin-top:.5rem;padding:0 .5rem}
-.nd-dot{width:5px;height:5px;border-radius:50%;background:#3cc87a}
-.nd-txt{font-size:10px;color:var(--t3);letter-spacing:.5px}
-
-/* SECTION GENERIC */
-.sec{padding:6rem 3.5rem;position:relative;z-index:1;border-bottom:.5px solid var(--b1)}
-.sec-in{max-width:1080px;margin:0 auto}
-.sec-tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v);display:flex;align-items:center;gap:1rem;margin-bottom:3rem}
-.sec-tag::after{content:'';flex:1;max-width:260px;height:.5px;background:var(--b1)}
-.sec-h{font-size:clamp(2rem,3.6vw,3.1rem);font-weight:200;letter-spacing:-1.8px;line-height:1.08;margin-bottom:1.25rem;background:linear-gradient(180deg,#fff,rgba(244,242,251,.7));-webkit-background-clip:text;background-clip:text;color:transparent}
-.sec-d{font-size:15px;color:var(--t2);line-height:1.8;max-width:500px;font-weight:300}
+/* SPLIT (alertes) */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2.5rem,6vw,6rem);align-items:center}
+.notif-stack{display:flex;flex-direction:column;gap:.85rem}
+.notif{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));border:.5px solid var(--b2);border-radius:16px;padding:1.15rem 1.3rem;display:flex;align-items:flex-start;gap:13px;transition:all .25s;backdrop-filter:blur(6px)}
+.notif:hover{transform:translateX(6px);box-shadow:0 18px 42px rgba(0,0,0,.34);border-color:rgba(255,255,255,.18)}
+.notif-ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.notif-b{flex:1}
+.notif-app{font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.notif-t{font-size:14px;font-weight:600;color:#fff;margin-bottom:3px;line-height:1.3}
+.notif-m{font-size:12.5px;color:var(--t3);line-height:1.5}
+.notif-time{font-size:10px;color:var(--t4);flex-shrink:0;white-space:nowrap}
+.notif-3{border-color:rgba(226,80,60,.3);background:rgba(226,80,60,.05)}
+.notif-2{border-color:rgba(220,126,46,.26);background:rgba(220,126,46,.04)}
+.chan-list{margin-top:2rem;display:flex;flex-direction:column;gap:.85rem}
+.chan{display:flex;align-items:center;gap:13px}
+.chan-ic{width:36px;height:36px;border-radius:10px;background:rgba(62,207,142,.08);border:.5px solid rgba(62,207,142,.2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.chan-t{font-size:13.5px;color:var(--t2)}
 
 /* DETECTORS */
-.det-wrap{display:grid;grid-template-columns:1fr 1fr;gap:4rem;margin-top:3.5rem;align-items:start}
-.det-layout{border:.5px solid var(--b1);border-radius:12px;overflow:hidden}
-.det-item{display:flex;align-items:center;gap:.875rem;padding:1rem 1.25rem;border-bottom:.5px solid var(--b1);cursor:pointer;transition:background .15s;user-select:none}
-.det-item:last-child{border-bottom:none}
-.det-item:hover{background:rgba(255,255,255,.02)}
-.det-item.act{background:var(--s1)}.det-item.act .di-n{color:var(--v);border-color:var(--vb)}
-.di-n{width:24px;height:24px;border-radius:50%;border:.5px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--t3);flex-shrink:0;transition:all .15s}
-.di-t{font-size:13px;color:var(--tx);flex:1}
-.di-badge{font-size:8px;padding:2px 7px;background:var(--va);border:.5px solid var(--vb);border-radius:100px;color:var(--v);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0}
-.det-detail{background:var(--s1);border:.5px solid var(--b1);border-radius:12px;padding:2.5rem;position:sticky;top:7rem}
-.dd-ghost{font-size:80px;font-weight:200;letter-spacing:-5px;color:rgba(255,255,255,.03);line-height:1;margin-bottom:1.5rem;user-select:none}
-.dd-ic{width:42px;height:42px;border-radius:8px;background:var(--va);border:.5px solid var(--vb);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem}
-.dd-ic svg{width:18px;height:18px;stroke:var(--v);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.dd-h{font-size:22px;font-weight:500;color:#fff;margin-bottom:.875rem;line-height:1.3}
-.dd-d{font-size:14px;color:var(--t2);line-height:1.8}
-.dd-lv{display:inline-flex;align-items:center;gap:6px;font-size:10px;padding:4px 10px;border-radius:100px;margin-top:1.75rem;letter-spacing:.5px;text-transform:uppercase}
-.dd-l1{background:rgba(255,200,0,.07);border:.5px solid rgba(255,200,0,.18);color:#ffc800}
-.dd-l2{background:rgba(220,130,0,.08);border:.5px solid rgba(220,130,0,.2);color:#dc8200}
-.dd-l3{background:rgba(220,50,30,.08);border:.5px solid rgba(220,50,30,.2);color:#dc3218}
+.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2.5rem,5vw,4rem);align-items:start;margin-top:3.5rem}
+.det-layout{border:.5px solid var(--b1);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.012)}
+.det-item{display:flex;align-items:center;gap:1rem;padding:1.15rem 1.35rem;border-bottom:.5px solid var(--b1);cursor:pointer;transition:background .15s;user-select:none}
+.det-item:last-child{border-bottom:none}.det-item:hover{background:rgba(255,255,255,.025)}
+.det-item.act{background:var(--s1)}.det-item.act .di-n{color:var(--v);border-color:var(--vb);background:var(--va)}
+.di-n{width:28px;height:28px;border-radius:50%;border:.5px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--t3);flex-shrink:0;transition:all .15s;font-family:'DM Mono',monospace}
+.di-t{font-size:14px;color:var(--tx);flex:1}
+.di-badge{font-size:8px;padding:3px 9px;background:var(--va);border:.5px solid var(--vb);border-radius:100px;color:var(--v2);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0}
+.det-detail{background:linear-gradient(180deg,var(--s1),rgba(15,13,28,.6));border:.5px solid var(--b2);border-radius:18px;padding:clamp(1.8rem,3vw,2.8rem);position:sticky;top:7rem;overflow:hidden}
+.dd-ghost{font-size:96px;font-weight:200;letter-spacing:-6px;color:rgba(255,255,255,.035);line-height:1;margin-bottom:1.2rem;font-family:'DM Mono',monospace}
+.dd-ic{width:48px;height:48px;border-radius:12px;background:var(--va);border:.5px solid var(--vb);display:flex;align-items:center;justify-content:center;margin-bottom:1.6rem}
+.dd-ic svg{width:21px;height:21px;stroke:var(--v2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.dd-h{font-size:24px;font-weight:500;color:#fff;margin-bottom:1rem;line-height:1.25}
+.dd-d{font-size:14.5px;color:var(--t2);line-height:1.8}
+.dd-lv{display:inline-flex;align-items:center;gap:7px;font-size:10px;padding:5px 12px;border-radius:100px;margin-top:1.9rem;letter-spacing:.5px;text-transform:uppercase}
+.dd-l1{background:rgba(224,160,46,.08);border:.5px solid rgba(224,160,46,.2);color:var(--amber)}
+.dd-l2{background:rgba(220,126,46,.08);border:.5px solid rgba(220,126,46,.2);color:var(--orange)}
+.dd-l3{background:rgba(226,80,60,.08);border:.5px solid rgba(226,80,60,.2);color:var(--red)}
+.det-more{margin-top:1.4rem;font-size:12.5px;color:var(--t3);line-height:1.7}
 
 /* DEMO */
-.demo-wrap{background:var(--s1);border:.5px solid var(--b2);border-radius:12px;overflow:hidden;margin-top:3.5rem}
-.demo-tb{display:flex;align-items:center;gap:8px;padding:.875rem 1.5rem;border-bottom:.5px solid var(--b1);background:rgba(0,0,0,.15)}
+.demo-wrap{background:linear-gradient(180deg,var(--s1),rgba(12,10,24,.7));border:.5px solid var(--b2);border-radius:18px;overflow:hidden;margin-top:3.5rem;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.demo-tb{display:flex;align-items:center;gap:8px;padding:1rem 1.6rem;border-bottom:.5px solid var(--b1);background:rgba(0,0,0,.18)}
 .demo-ttl{flex:1;text-align:center;font-size:11px;color:var(--t3);letter-spacing:.5px}
-.demo-body{display:grid;grid-template-columns:1fr 300px;min-height:400px}
-.demo-lp{padding:1.5rem;border-right:.5px solid var(--b1)}
-.demo-llab{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:1.25rem}
-.demo-pnl{display:flex;align-items:baseline;gap:8px;margin-bottom:1.5rem}
-.demo-pv{font-size:38px;font-weight:200;letter-spacing:-2px;transition:color .3s}
+.demo-body{display:grid;grid-template-columns:1fr 320px;min-height:420px}
+.demo-lp{padding:1.8rem;border-right:.5px solid var(--b1)}
+.demo-llab{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:1.3rem}
+.demo-pnl{display:flex;align-items:baseline;gap:9px;margin-bottom:1.6rem}
+.demo-pv{font-size:42px;font-weight:200;letter-spacing:-2px;transition:color .3s}
 .demo-pc{font-size:12px;color:var(--t3)}
-.demo-chart{position:relative;height:140px;margin-bottom:1rem}
-.demo-tlab{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:.75rem}
-.demo-tr{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--b1);font-size:12px}.demo-tr:last-child{border-bottom:none}
-.dtt{color:var(--t3)}.dtins{color:var(--t2)}.dtp{color:#3cc87a;font-weight:500}.dtn{color:#e05050;font-weight:500}
-.demo-rp{padding:1.5rem;display:flex;flex-direction:column}
-.demo-rlab{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:.75rem}
-.demo-als{flex:1;display:flex;flex-direction:column;gap:.5rem}
-.ai{display:flex;align-items:flex-start;gap:10px;padding:.75rem .875rem;border-radius:8px;border:.5px solid transparent;animation:sli .3s ease}
-@keyframes sli{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.al1{background:rgba(255,200,0,.04);border-color:rgba(255,200,0,.1)}
-.al2{background:rgba(220,130,0,.06);border-color:rgba(220,130,0,.15)}
-.al3{background:rgba(220,50,30,.08);border-color:rgba(220,50,30,.2)}
-.adot{width:7px;height:7px;border-radius:50%;margin-top:3px;flex-shrink:0}
-.dl1{background:#ffc800}.dl2{background:#dc8200}.dl3{background:#dc3218;animation:blk 1s ease-in-out infinite}
-.ab{flex:1}.at{font-size:12px;font-weight:500;color:#fff;margin-bottom:2px}.as{font-size:11px;color:rgba(255,255,255,.28);line-height:1.4}
-.abg{font-size:9px;padding:2px 7px;border-radius:100px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;flex-shrink:0;margin-top:1px}
-.bl1{background:rgba(255,200,0,.1);color:#ffc800}.bl2{background:rgba(220,130,0,.1);color:#dc8200}.bl3{background:rgba(220,50,30,.12);color:#dc3218}
-.demo-sbtn{margin-top:1rem;width:100%;padding:10px;background:transparent;border:.5px solid var(--vb);border-radius:6px;color:var(--v);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:.5px;transition:background .2s}.demo-sbtn:hover{background:var(--va)}
+.demo-chart{position:relative;height:150px;margin-bottom:1.4rem}
+.demo-tlab{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:.9rem}
+.demo-tr{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:.5px solid var(--b1);font-size:12.5px}.demo-tr:last-child{border-bottom:none}
+.dtt{color:var(--t3)}.dtins{color:var(--t2)}.dtp{color:var(--green);font-weight:500}.dtn{color:var(--red);font-weight:500}
+.demo-rp{padding:1.8rem;display:flex;flex-direction:column;background:rgba(0,0,0,.12)}
+.demo-rlab{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:.9rem}
+.demo-als{flex:1;display:flex;flex-direction:column;gap:.6rem}
+.ai{display:flex;align-items:flex-start;gap:11px;padding:.85rem 1rem;border-radius:11px;border:.5px solid transparent;animation:sli .3s ease}
+@keyframes sli{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.al1{background:rgba(224,160,46,.05);border-color:rgba(224,160,46,.12)}
+.al2{background:rgba(220,126,46,.06);border-color:rgba(220,126,46,.16)}
+.al3{background:rgba(226,80,60,.08);border-color:rgba(226,80,60,.22)}
+.adot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.dl1{background:var(--amber)}.dl2{background:var(--orange)}.dl3{background:var(--red);animation:blk 1s ease-in-out infinite}
+@keyframes blk{0%,100%{opacity:1}50%{opacity:.3}}
+.ab{flex:1}.at{font-size:12.5px;font-weight:500;color:#fff;margin-bottom:3px}.as{font-size:11.5px;color:var(--t3);line-height:1.45}
+.abg{font-size:9px;padding:3px 8px;border-radius:100px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.bl1{background:rgba(224,160,46,.12);color:var(--amber)}.bl2{background:rgba(220,126,46,.12);color:var(--orange)}.bl3{background:rgba(226,80,60,.14);color:var(--red)}
+.demo-sbtn{margin-top:1.2rem;width:100%;padding:13px;background:var(--va);border:.5px solid var(--vb);border-radius:10px;color:var(--v2);font-size:12.5px;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:.5px;transition:all .2s;font-weight:500}.demo-sbtn:hover{background:rgba(139,92,246,.16)}
 
-/* HOW */
-.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:3.5rem;border:.5px solid var(--b1);border-radius:12px;overflow:hidden}
-.step-c{padding:2.5rem;background:var(--s1);transition:background .22s}.step-c:hover{background:var(--s2)}.step-c:not(:last-child){border-right:.5px solid var(--b1)}
-.step-n{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--v);margin-bottom:2rem}
-.step-h{font-size:18px;font-weight:500;color:#fff;margin-bottom:.75rem;line-height:1.35}
-.step-d{font-size:13px;color:var(--t2);line-height:1.7}
-.step-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:1rem}
-.stag-pill{font-size:10px;padding:3px 9px;background:rgba(255,255,255,.04);border:.5px solid var(--b1);border-radius:100px;color:var(--t2);display:flex;align-items:center;gap:4px}
-.stag-dot{width:4px;height:4px;border-radius:50%;background:#3cc87a}
+/* STEPS */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:3.5rem}
+.step{padding:clamp(1.8rem,3vw,2.6rem);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.006));border:.5px solid var(--b1);border-radius:18px;transition:all .25s}
+.step:hover{border-color:var(--b2);transform:translateY(-4px);box-shadow:0 22px 50px rgba(0,0,0,.34)}
+.step-n{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--va);border:.5px solid var(--vb);color:var(--v2);font-family:'DM Mono',monospace;font-size:13px;font-weight:500;margin-bottom:1.6rem}
+.step-h{font-size:19px;font-weight:500;color:#fff;margin-bottom:.8rem;line-height:1.3}
+.step-d{font-size:13.5px;color:var(--t2);line-height:1.75}
+.step-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:1.3rem}
+.stag{font-size:10px;padding:4px 11px;background:rgba(255,255,255,.04);border:.5px solid var(--b1);border-radius:100px;color:var(--t2);display:inline-flex;align-items:center;gap:5px}
+.stag .sd{width:4px;height:4px;border-radius:50%;background:var(--green)}.stag.soon{opacity:.45}
 
 /* TESTIMONIALS */
-.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:3.5rem}
-.testi-c{padding:1.75rem;background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.006));border:.5px solid var(--b1);border-radius:16px;transition:all .25s;backdrop-filter:blur(6px)}.testi-c:hover{border-color:var(--b2);transform:translateY(-3px);box-shadow:0 18px 42px rgba(0,0,0,.36)}
-.testi-stars{color:#f5a623;font-size:11px;letter-spacing:2px;margin-bottom:1rem}
-.testi-q{font-size:13px;color:rgba(255,255,255,.42);line-height:1.65;margin-bottom:1.25rem;font-style:italic}.testi-q strong{color:rgba(255,255,255,.7);font-style:normal}
-.testi-au{display:flex;align-items:center;gap:10px}
-.testi-av{width:32px;height:32px;border-radius:50%;background:var(--s2);border:.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:rgba(255,255,255,.35)}
-.testi-name{font-size:13px;font-weight:500;color:rgba(255,255,255,.65)}.testi-role{font-size:11px;color:var(--t3)}
+.testi{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:3.5rem}
+.tcard{padding:2rem;background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.006));border:.5px solid var(--b1);border-radius:18px;transition:all .25s;backdrop-filter:blur(6px)}
+.tcard:hover{border-color:var(--b2);transform:translateY(-4px);box-shadow:0 22px 50px rgba(0,0,0,.36)}
+.tstars{color:#f5a623;font-size:12px;letter-spacing:2px;margin-bottom:1.2rem}
+.tq{font-size:14px;color:var(--t2);line-height:1.7;margin-bottom:1.5rem}.tq strong{color:#fff;font-weight:600}
+.tau{display:flex;align-items:center;gap:12px}
+.tav{width:38px;height:38px;border-radius:50%;background:var(--s2);border:.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--t2)}
+.tname{font-size:13.5px;font-weight:500;color:#fff}.trole{font-size:11.5px;color:var(--t3)}
 
 /* PRICING */
-.pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:800px;margin:3.5rem auto 0}
-.plan{border-radius:18px;padding:2rem;position:relative;overflow:hidden;transition:transform .25s}.plan:hover{transform:translateY(-3px)}
-.plan-pro{background:linear-gradient(150deg,rgba(255,255,255,.04) 0%,var(--s1) 56%);border:.5px solid rgba(255,255,255,.17)}
-.plan-sent{background:linear-gradient(150deg,rgba(139,92,246,.13) 0%,var(--s1) 56%);border:.5px solid rgba(139,92,246,.42);box-shadow:0 0 70px rgba(139,92,246,.14),inset 0 1px 0 rgba(255,255,255,.06)}
-.plan-shine{position:absolute;top:0;left:0;right:0;height:1px}
-.plan-sw{background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent)}
-.plan-sv{background:linear-gradient(90deg,transparent,rgba(124,58,237,.5),transparent)}
-.plan-lab{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(244,242,251,.55);margin-bottom:1.5rem}
-.plan-lab-v{color:rgba(124,58,237,.7)}
-.plan-price{font-size:44px;font-weight:200;color:#fff;letter-spacing:-1px;line-height:1;margin-bottom:1.5rem}
-.plan-price sup{font-size:22px;vertical-align:super;letter-spacing:0}
-.plan-price sub{font-size:14px;font-weight:400;color:var(--t2);letter-spacing:0}
-.plan-note{font-size:12px;color:var(--t3);margin-bottom:1.5rem}
-.plan-strike{font-size:21px;font-weight:300;color:var(--t3);text-decoration:line-through;letter-spacing:0;margin-left:10px;vertical-align:middle}
-.plan-promo-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:5px;padding:3px 8px;vertical-align:middle;margin-left:10px}
-.plan-promo-line{font-size:12px;color:var(--v2);margin-bottom:1.5rem;font-weight:500}.plan-promo-line strong{font-weight:700;color:#fff}
-.plan-tag{font-size:13px;color:rgba(255,255,255,.45);font-style:italic;line-height:1.6;padding:1rem 0;border-top:.5px solid var(--b1);border-bottom:.5px solid var(--b1);margin-bottom:1.5rem}
-.plan-sent .plan-tag{border-color:rgba(124,58,237,.12)}
+.pricing{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem;max-width:880px;margin:3.5rem auto 0}
+.plan{border-radius:22px;padding:clamp(1.8rem,3vw,2.6rem);position:relative;overflow:hidden;transition:transform .25s}.plan:hover{transform:translateY(-4px)}
+.plan-pro{background:linear-gradient(160deg,rgba(255,255,255,.045),var(--s1) 58%);border:.5px solid var(--b2)}
+.plan-max{background:linear-gradient(160deg,rgba(139,92,246,.15),var(--s1) 58%);border:.5px solid rgba(139,92,246,.44);box-shadow:0 0 80px rgba(139,92,246,.15),inset 0 1px 0 rgba(255,255,255,.07)}
+.plan-pop{position:absolute;top:1.4rem;right:1.4rem;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:100px;padding:5px 12px}
+.plan-lab{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--t2);margin-bottom:1.5rem}
+.plan-max .plan-lab{color:var(--v2)}
+.plan-price{font-size:48px;font-weight:200;color:#fff;letter-spacing:-1.5px;line-height:1;margin-bottom:.5rem;display:flex;align-items:baseline;gap:2px;flex-wrap:wrap}
+.plan-price sup{font-size:24px;vertical-align:super}
+.plan-price sub{font-size:14px;font-weight:400;color:var(--t2)}
+.plan-strike{font-size:21px;font-weight:300;color:var(--t3);text-decoration:line-through;margin-left:8px}
+.plan-promo-tag{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:6px;padding:4px 9px;margin-left:8px;align-self:center}
+.plan-tag{font-size:13px;color:var(--t2);line-height:1.6;padding:1.2rem 0;border-top:.5px solid var(--b1);border-bottom:.5px solid var(--b1);margin:1.5rem 0}
+.plan-max .plan-tag{border-color:rgba(139,92,246,.16)}
 .plan-features{list-style:none;margin-bottom:2rem}
-.plan-features li{font-size:13px;color:rgba(255,255,255,.56);padding:.55rem 0;border-bottom:.5px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px}.plan-features li:last-child{border-bottom:none}
-.plan-hi{color:rgba(255,255,255,.72)!important}
-.pfc{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.pfc svg{width:9px;height:9px;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.pfc-d{background:rgba(255,255,255,.08);border:.5px solid rgba(255,255,255,.14)}.pfc-d svg{stroke:rgba(255,255,255,.55)}
-.pfc-v{background:var(--va);border:.5px solid var(--vb)}.pfc-v svg{stroke:var(--v)}
-.plan-btn{width:100%;padding:12px;border-radius:6px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;letter-spacing:.5px;display:block;text-align:center;text-decoration:none;border:none}
-.plan-btn-sec{background:transparent;border:.5px solid var(--b2)!important;color:rgba(255,255,255,.5)}.plan-btn-sec:hover{border-color:rgba(255,255,255,.25)!important;color:#fff}
-.plan-btn-pri{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;box-shadow:0 6px 22px rgba(139,92,246,.32)}.plan-btn-pri:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(139,92,246,.48)}
+.plan-features li{font-size:13.5px;color:var(--t2);padding:.65rem 0;border-bottom:.5px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:11px}.plan-features li:last-child{border-bottom:none}
+.plan-hi{color:#fff!important;font-weight:500}
+.pfc{width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pfc svg{width:10px;height:10px;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.pfc-d{background:rgba(255,255,255,.07);border:.5px solid rgba(255,255,255,.13)}.pfc-d svg{stroke:var(--t2)}
+.pfc-v{background:var(--va);border:.5px solid var(--vb)}.pfc-v svg{stroke:var(--v2)}
+.plan-btn{width:100%;padding:14px;border-radius:10px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;letter-spacing:.3px;display:block;text-align:center;border:none}
+.plan-btn-sec{background:transparent;border:.5px solid var(--b2);color:var(--t2)}.plan-btn-sec:hover{border-color:rgba(255,255,255,.3);color:#fff}
+.plan-btn-pri{background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;box-shadow:0 8px 26px rgba(139,92,246,.36)}.plan-btn-pri:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(139,92,246,.5)}
+.price-note{text-align:center;margin-top:2rem;font-size:12.5px;color:var(--t3);font-style:italic}
 
 /* STORY */
-.story-sec{padding:6rem 3.5rem;position:relative;z-index:1;border-bottom:.5px solid var(--b1)}
-.story-in{max-width:640px}
-.story-p{font-size:16px;color:rgba(240,237,232,.65);line-height:1.9;font-weight:300;margin-bottom:1.5rem}
-.story-end{font-size:20px;color:#fff;line-height:1.5;font-weight:200;font-style:italic;letter-spacing:-.3px;margin-top:.5rem}
-.story-end em{font-style:normal;color:var(--v)}
+.story{max-width:680px;margin:0 auto}
+.story-p{font-size:16px;color:var(--t2);line-height:1.95;font-weight:300;margin-bottom:1.5rem}
+.story-end{font-size:clamp(20px,2.4vw,26px);color:#fff;line-height:1.45;font-weight:200;font-style:italic;letter-spacing:-.3px;margin-top:1rem}
+.story-end em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-/* CTA */
-.cta-sec{padding:8rem 3.5rem;text-align:center;position:relative;z-index:1}
-.cta-h{font-size:clamp(2.9rem,6.2vw,5.6rem);font-weight:200;letter-spacing:-3px;line-height:1.01;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff,rgba(244,242,251,.66));-webkit-background-clip:text;background-clip:text;color:transparent}
-.cta-h em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 26px rgba(139,92,246,.45))}
-.cta-sub{font-size:17px;color:var(--t2);margin-bottom:2.5rem;font-weight:300}
-.cta-wf{display:flex;gap:5px;background:var(--s1);border:.5px solid var(--b2);border-radius:6px;padding:4px;max-width:380px;margin:0 auto}
+/* FINAL CTA */
+.fcta{text-align:center;position:relative;z-index:1;padding:clamp(6rem,12vw,10rem) 0}
+.fcta-h{font-size:clamp(2.8rem,7vw,5.6rem);font-weight:200;letter-spacing:-3px;line-height:1.02;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.fcta-h em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(139,92,246,.5))}
+.fcta-sub{font-size:16px;color:var(--t2);margin-bottom:2.5rem;font-weight:300;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7}
+.fcta-login{margin-top:1.4rem;font-size:13px;color:var(--t3)}.fcta-login a span{color:var(--v2)}
 
 /* FOOTER */
-footer{padding:1.75rem 3.5rem;display:flex;justify-content:space-between;align-items:center;border-top:.5px solid var(--b1);position:relative;z-index:1}
-.foot-logo{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.15);font-weight:500}.foot-logo span{color:rgba(124,58,237,.3)}
+footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-index:1}
+.foot-in{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.5rem,4vw,3.5rem);display:flex;justify-content:space-between;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.foot-logo{font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--t4);font-weight:600}.foot-logo span{color:rgba(124,58,237,.4)}
 .foot-links{display:flex;gap:2rem}
-.foot-lk{font-size:11px;color:var(--t3);text-decoration:none;letter-spacing:.5px;transition:color .15s}.foot-lk:hover{color:var(--t2)}
-.foot-email{font-size:11px;color:var(--t3)}
+.foot-lk{font-size:11.5px;color:var(--t3);letter-spacing:.5px;transition:color .15s}.foot-lk:hover{color:var(--t2)}
+.foot-email{font-size:11.5px;color:var(--t3)}
 
 /* RESPONSIVE */
-@media(max-width:1024px){
-  .hero-devices{flex-direction:column;align-items:center;gap:2rem}
-  .laptop-screen{width:340px;height:212px}.laptop-base{width:370px}
-  .split-grid{grid-template-columns:1fr}
-  .det-wrap{grid-template-columns:1fr}.det-detail{display:none}
-  .steps-grid{grid-template-columns:1fr}.step-c:not(:last-child){border-right:none;border-bottom:.5px solid var(--b1)}
-  .pricing-grid{grid-template-columns:1fr}
-  .testi-grid{grid-template-columns:1fr}
-  .stats-bar{grid-template-columns:1fr 1fr}.sb-item:nth-child(2){border-right:none}.sb-item:nth-child(3){border-top:.5px solid var(--b1)}.sb-item:nth-child(4){border-right:none;border-top:.5px solid var(--b1)}
-  nav{padding:1.25rem 1.5rem}.n-links{display:none}
-  .sec,.split-sec,.story-sec,.cta-sec{padding:4rem 1.5rem}
-  footer{padding:1.5rem;flex-direction:column;gap:.875rem;text-align:center}
-  .demo-body{grid-template-columns:1fr}
-  .ls-side{display:none}.ls-app{grid-template-columns:1fr}
+@media(max-width:980px){
+  .n-links{display:none}
+  .panel-body{grid-template-columns:1fr}
+  .toast{display:none}
+  .split{grid-template-columns:1fr}
+  .det-grid{grid-template-columns:1fr}.det-detail{display:none}
+  .steps{grid-template-columns:1fr}
+  .testi{grid-template-columns:1fr}
+  .pricing{grid-template-columns:1fr}
+  .demo-body{grid-template-columns:1fr}.demo-lp{border-right:none;border-bottom:.5px solid var(--b1)}
+  .stats{grid-template-columns:1fr 1fr;gap:2.5rem}
 }
-@media(max-width:600px){
-  .wf,.cta-wf{max-width:100%}
-  .stats-bar{grid-template-columns:1fr 1fr}
-  .laptop-screen{width:280px;height:175px}.laptop-base{width:310px}
-  h1{letter-spacing:-1.5px}
-}
-@media(max-width:480px){
-  html{font-size:14px}
-  h1{font-size:clamp(2rem,10vw,3rem);letter-spacing:-1px;line-height:1.1}
-  .promo-bar{font-size:11px;letter-spacing:.2px;gap:9px;padding:6px 10px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
+@media(max-width:560px){
+  .hero h1{letter-spacing:-1.5px}
   .promo-badge,.promo-xtra,.promo-cta{display:none}
-  .promo-code{font-size:11px;padding:2px 8px}
-  .hero-top{padding:6rem 1.25rem 0}
-  .hero-sub{font-size:14px}
-  .hero-ctas{flex-direction:column;max-width:100%}
-  .cta-main-btn{width:100%;border-radius:6px;padding:14px}
-  .cta-login-lk{text-align:center;padding:10px}
-  .sec,.split-sec,.story-sec,.cta-sec{padding:3rem 1.25rem}
-  .sec-in{padding:0}
-  .det-wrap{grid-template-columns:1fr!important}
-  .steps-grid{grid-template-columns:1fr!important}
-  .pricing-grid{grid-template-columns:1fr!important}
-  .testi-grid{grid-template-columns:1fr!important}
-  .stats-bar{grid-template-columns:1fr!important}
-  .sb-item{border-right:none!important;border-top:.5px solid var(--b1)}
-  .sb-item:first-child{border-top:none}
-  nav{padding:1rem 1.25rem}
-  .hero-devices{display:none}
-  footer{padding:1.25rem;font-size:12px}
-  .ls-app{padding:1rem}
-  .n-r a{font-size:12px;padding:6px 12px}
-  .eyebrow{font-size:11px}
-  .story-in{padding:0}
-  .sec-d{font-size:14px}
+  .hero-ctas{flex-direction:column;width:100%;max-width:340px}
+  .btn-pri,.btn-sec{width:100%}
+  .stats{grid-template-columns:1fr;gap:2.2rem}
+  .foot-in{flex-direction:column;text-align:center}
 }
 `
 
@@ -345,6 +309,10 @@ const DETECTORS = [
 ]
 
 const HTML = `
+<div class="bg-grid"></div>
+<div class="bg-aura aura-1"></div>
+<div class="bg-aura aura-2"></div>
+
 <div class="promo-bar">
   <span class="promo-spark">✦</span>
   <span class="promo-badge">Offre de lancement</span>
@@ -355,9 +323,9 @@ const HTML = `
   </button>
   <a href="/signup" class="promo-cta">J'en profite →</a>
 </div>
-<div class="glow-top"></div>
+
 <nav>
-  <a href="#" class="n-logo" style="text-decoration:none">Cald<span>ra</span></a>
+  <a href="#" class="n-logo">Cald<span>ra</span></a>
   <div class="n-links">
     <a class="n-lk" href="#alertes">Alertes</a>
     <a class="n-lk" href="#detecteurs">Détecteurs</a>
@@ -371,310 +339,256 @@ const HTML = `
   </div>
 </nav>
 
-<!-- HERO centré -->
-<div class="hero">
-  <div class="hero-top">
-    <div class="eyebrow"><div class="eydot"></div>Intelligence comportementale &mdash; Temps réel</div>
-    <h1>Tu ne vois pas<br>quand tu dérailles.<br><em>Lui si.</em></h1>
-    <p class="hero-sub">Caldra analyse chaque trade et détecte les comportements qui détruisent les sessions &mdash; avant que le tilt, le revenge trading ou l'impulsion ne fasse les dégâts.</p>
-    <div class="hero-ctas">
-      <a href="/signup" class="cta-main-btn">Essayer 7 jours gratuitement →</a>
-      <a href="/login" class="cta-login-lk">Connexion</a>
-    </div>
-    <div class="hero-fn">
-      <span class="hfn">7 jours d'essai</span><div class="hfs"></div>
-      <span class="hfn">−25 % early adopter</span><div class="hfs"></div>
-      <span class="hfn">Disponible maintenant</span>
-    </div>
+<!-- HERO -->
+<header class="hero wrap">
+  <div class="hero-eyebrow"><span class="dot"></span>Intelligence comportementale &mdash; Temps réel</div>
+  <h1>Tu ne vois pas quand tu dérailles. <em>Lui si.</em></h1>
+  <p class="hero-sub">Caldra analyse chaque trade et détecte les comportements qui détruisent les sessions &mdash; avant que le tilt, le revenge trading ou l'impulsion ne fassent les dégâts.</p>
+  <div class="hero-ctas">
+    <a href="/signup" class="btn-pri">Essayer 7 jours gratuitement →</a>
+    <a href="/login" class="btn-sec">J'ai déjà un compte</a>
+  </div>
+  <div class="hero-trust">
+    <span class="htrust"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>7 jours d'essai</span>
+    <span class="htrust-sep"></span>
+    <span class="htrust"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>&minus;25 % early adopter</span>
+    <span class="htrust-sep"></span>
+    <span class="htrust"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Disponible maintenant</span>
   </div>
 
-  <!-- Phone + Laptop côte à côte -->
-  <div class="hero-devices">
-    <!-- PHONE -->
-    <div class="phone-scene">
-      <div class="phone-frame">
-        <div class="ph-notch-area">
-          <div class="ph-notch"></div>
-          <div class="ph-status"><span>9:41</span><span>●●● 5G</span></div>
+  <!-- PRODUCT PREVIEW (no device frame) -->
+  <div class="preview">
+    <div class="preview-glow"></div>
+    <div class="toast toast-1">
+      <div class="toast-hd"><div class="toast-ic" style="background:rgba(220,126,46,.14)">⚠️</div><div class="toast-app">Caldra Session</div></div>
+      <div class="toast-t">Revenge sizing détecté</div>
+      <div class="toast-m">Sizing ×2.1 après &minus;€140</div>
+    </div>
+    <div class="toast toast-2">
+      <div class="toast-hd"><div class="toast-ic" style="background:rgba(62,207,142,.14)">⚡</div><div class="toast-app">Push · Mobile</div></div>
+      <div class="toast-t">Re-entrée rapide</div>
+      <div class="toast-m">87s après la clôture. Min : 120s.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-bar">
+        <span class="pb-name">Cald<span>ra</span> Session</span>
+        <span class="pb-live"><span class="lvdot"></span>Live</span>
+      </div>
+      <div class="panel-body">
+        <div class="pv-kpis">
+          <div class="pv-score">
+            <svg width="64" height="64" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6"/>
+              <circle cx="32" cy="32" r="26" fill="none" stroke="#dc7e2e" stroke-width="6" stroke-dasharray="163" stroke-dashoffset="62" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:32px 32px"/>
+            </svg>
+            <div><div class="pv-score-num">62</div><div class="pv-score-lbl">Score / 100</div></div>
+          </div>
+          <div class="pv-row">
+            <div class="pv-kpi"><div class="pv-kpi-l">P&amp;L session</div><div class="pv-kpi-v">&minus;€180</div><div class="pv-kpi-s">en cours</div></div>
+            <div class="pv-kpi"><div class="pv-kpi-l">Win rate</div><div class="pv-kpi-v">43%</div><div class="pv-kpi-s">3W · 4L</div></div>
+          </div>
         </div>
-        <div class="ph-date">LUNDI 12 MAI 2026</div>
-        <div class="ph-notifs">
-          <div class="ios-notif" style="border-color:rgba(220,50,30,.25);background:rgba(220,50,30,.05)">
-            <div class="ios-notif-icon" style="background:rgba(220,50,30,.12)">🔴</div>
-            <div class="ios-n-body">
-              <div class="ios-n-app">Caldra Session</div>
-              <div class="ios-n-title">STOP — Drawdown max</div>
-              <div class="ios-n-msg">PnL : −€420. Ferme maintenant.</div>
-            </div>
-            <div class="ios-n-time">now</div>
-          </div>
-          <div class="ios-notif" style="border-color:rgba(220,130,0,.2);background:rgba(220,130,0,.04)">
-            <div class="ios-notif-icon" style="background:rgba(220,130,0,.1)">⚠️</div>
-            <div class="ios-n-body">
-              <div class="ios-n-app">Caldra Session</div>
-              <div class="ios-n-title">Revenge sizing détecté</div>
-              <div class="ios-n-msg">Sizing ×2.1 après −€140</div>
-            </div>
-            <div class="ios-n-time">3 min</div>
-          </div>
-          <div class="ios-notif">
-            <div class="ios-notif-icon" style="background:rgba(255,200,0,.08)">⚡</div>
-            <div class="ios-n-body">
-              <div class="ios-n-app">Caldra Session</div>
-              <div class="ios-n-title">Re-entrée rapide</div>
-              <div class="ios-n-msg">87s après la clôture. Min : 120s.</div>
-            </div>
-            <div class="ios-n-time">11 min</div>
-          </div>
+        <div class="pv-alerts">
+          <div class="pv-alerts-l">Alertes en direct</div>
+          <div class="pv-al pv-al-3"><div class="pv-al-dot d-3"></div><div><div class="pv-al-t">STOP — Drawdown max</div><div class="pv-al-s">Ferme la plateforme maintenant.</div></div></div>
+          <div class="pv-al pv-al-2"><div class="pv-al-dot d-2"></div><div><div class="pv-al-t">Revenge sizing ×2.1</div><div class="pv-al-s">1.4 lots vs 0.67 lots.</div></div></div>
+          <div class="pv-al pv-al-1"><div class="pv-al-dot d-1"></div><div><div class="pv-al-t">Re-entrée rapide (87s)</div><div class="pv-al-s">Délai minimum : 120s.</div></div></div>
         </div>
       </div>
     </div>
+  </div>
+</header>
 
-    <!-- LAPTOP -->
-    <div class="laptop-scene">
-      <div class="laptop-screen">
-        <!-- browser bar -->
-        <div class="ls-bar">
-          <div class="ls-dot" style="background:#ff5f57"></div>
-          <div class="ls-dot" style="background:#ffbd2e"></div>
-          <div class="ls-dot" style="background:#28c840"></div>
-          <div class="ls-url">app.getcaldra.com/dashboard</div>
-        </div>
-        <!-- app -->
-        <div class="ls-app">
-          <div class="ls-side">
-            <div class="ls-logo">Cald<span>ra</span></div>
-            <div class="ls-logo-sub">Session</div>
-            <div class="ls-nav-item act">
-              <svg class="ls-nav-ic" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="0.5" y="0.5" width="4" height="4" rx=".5"/><rect x="7.5" y="0.5" width="4" height="4" rx=".5"/><rect x="0.5" y="7.5" width="4" height="4" rx=".5"/><rect x="7.5" y="7.5" width="4" height="4" rx=".5"/></svg>
-              Dashboard
-            </div>
-            <div class="ls-nav-item">
-              <svg class="ls-nav-ic" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="1.5"/><path d="M6 1v1.5M6 9.5V11M1 6h1.5M9.5 6H11"/></svg>
-              Alertes
-            </div>
-            <div class="ls-nav-item">
-              <svg class="ls-nav-ic" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,9 3.5,5 6,7 8.5,3 11,5"/></svg>
-              Analytics
-            </div>
-            <div class="ls-nav-item" style="margin-top:auto">
-              <svg class="ls-nav-ic" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="4" r="1.75"/><path d="M1 10.5c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5"/></svg>
-              Règles
-            </div>
-          </div>
-          <div class="ls-main">
-            <div class="ls-top">
-              <!-- score ring -->
-              <div class="ls-score-card">
-                <svg width="34" height="34" viewBox="0 0 34 34">
-                  <circle cx="17" cy="17" r="13" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="4"/>
-                  <circle cx="17" cy="17" r="13" fill="none" stroke="#dc8200" stroke-width="4"
-                    stroke-dasharray="82" stroke-dashoffset="33" stroke-linecap="round"
-                    style="transform:rotate(-90deg);transform-origin:17px 17px"/>
-                </svg>
-                <div><div class="ls-score-num">62</div><div class="ls-score-lbl">/ 100</div></div>
-              </div>
-              <div class="ls-kpi">
-                <div class="ls-kpi-l">P&amp;L session</div>
-                <div class="ls-kpi-v" style="color:#e2e8f0">−€180</div>
-                <div class="ls-kpi-s">en cours</div>
-              </div>
-              <div class="ls-kpi">
-                <div class="ls-kpi-l">Win rate</div>
-                <div class="ls-kpi-v" style="color:#e2e8f0">43%</div>
-                <div class="ls-kpi-s">3W · 4L</div>
-              </div>
-            </div>
-            <div class="ls-bottom">
-              <div class="ls-card">
-                <div class="ls-card-l">Alertes</div>
-                <div class="ls-alert ls-a2"><div class="ls-adot ls-adot-2"></div><div class="ls-at">Revenge sizing ×2.1</div></div>
-                <div class="ls-alert ls-a1"><div class="ls-adot ls-adot-1"></div><div class="ls-at">Re-entrée rapide (87s)</div></div>
-                <div class="ls-alert ls-a2"><div class="ls-adot ls-adot-2"></div><div class="ls-at">3 pertes consécutives</div></div>
-              </div>
-              <div class="ls-card">
-                <div class="ls-card-l">Trades du jour</div>
-                <div class="ls-tr"><span class="ls-tt">09:32</span><span class="ls-tn">EUR/USD Long</span><span class="ls-tp">+140</span></div>
-                <div class="ls-tr"><span class="ls-tt">09:51</span><span class="ls-tn">EUR/USD Short</span><span class="ls-tp">+100</span></div>
-                <div class="ls-tr"><span class="ls-tt">10:14</span><span class="ls-tn">EUR/USD Short</span><span class="ls-tneg">−180</span></div>
-                <div class="ls-tr"><span class="ls-tt">10:31</span><span class="ls-tn">EUR/USD Long</span><span class="ls-tneg">−210</span></div>
-              </div>
-            </div>
-            <!-- macOS notification -->
-            <div class="mac-notif">
-              <div class="mac-hd">
-                <div class="mac-icon">C</div>
-                <div class="mac-app">Caldra Session</div>
-                <div class="mac-time">maintenant</div>
-              </div>
-              <div class="mac-title">⚠️ Revenge sizing</div>
-              <div class="mac-body">Sizing ×2.1 après −€140. 1.4 lots vs 0.67 lots.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="laptop-base"><div class="laptop-foot"></div></div>
-    </div>
+<!-- INTEGRATIONS STRIP -->
+<div class="wrap" data-reveal>
+  <div class="logos">
+    <span class="logos-lbl">S'intègre à ta plateforme</span>
+    <span class="logo-item"><span class="lg-dot"></span>cTrader</span>
+    <span class="logo-item"><span class="lg-dot"></span>MetaTrader 5</span>
+    <span class="logo-item soon"><span class="lg-dot"></span>+ d'autres à venir</span>
   </div>
 </div>
+<div class="divider"></div>
 
-<!-- STATS BAR -->
-<div class="stats-bar">
-  <div class="sb-item"><div class="sb-n">17</div><div class="sb-l">Comportements détectés</div></div>
-  <div class="sb-item"><div class="sb-n">3</div><div class="sb-l">Niveaux d'alerte</div></div>
-  <div class="sb-item"><div class="sb-n"><span>&lt;</span>1s</div><div class="sb-l">Temps de détection</div></div>
-  <div class="sb-item"><div class="sb-n">100%</div><div class="sb-l">Automatique</div></div>
-</div>
+<!-- STATS -->
+<section class="sec wrap" data-reveal>
+  <div class="stats">
+    <div class="stat"><div class="stat-n">18</div><div class="stat-l">Comportements détectés</div></div>
+    <div class="stat"><div class="stat-n">3</div><div class="stat-l">Niveaux d'alerte</div></div>
+    <div class="stat"><div class="stat-n"><span>&lt;</span>1s</div><div class="stat-l">Temps de détection</div></div>
+    <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Automatique</div></div>
+  </div>
+</section>
+<div class="divider"></div>
 
-<!-- SPLIT: NOTIFICATIONS -->
-<div class="split-sec" id="alertes">
-  <div class="split-grid">
+<!-- ALERTES -->
+<section class="sec wrap" id="alertes" data-reveal>
+  <div class="split">
     <div>
-      <div class="sec-tag" style="max-width:none">Alertes en temps réel</div>
-      <div class="sec-h">Push. Desktop.<br>En moins d'une seconde.</div>
-      <p class="sec-d" style="margin-top:1.25rem">Dès qu'un pattern dangereux est détecté, tu reçois une notification push sur ton téléphone ET une alerte desktop. Sur iOS, Android et navigateur.</p>
-      <div style="margin-top:2rem;display:flex;flex-direction:column;gap:.75rem">
-        <div style="display:flex;align-items:center;gap:.875rem"><div style="width:32px;height:32px;border-radius:8px;background:rgba(60,200,122,.08);border:.5px solid rgba(60,200,122,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📱</div><div style="font-size:13px;color:var(--t2)">Push iOS &amp; Android via Web Push (VAPID)</div></div>
-        <div style="display:flex;align-items:center;gap:.875rem"><div style="width:32px;height:32px;border-radius:8px;background:rgba(60,200,122,.08);border:.5px solid rgba(60,200,122,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💻</div><div style="font-size:13px;color:var(--t2)">Notification desktop (Chrome, Safari, Firefox)</div></div>
-        <div style="display:flex;align-items:center;gap:.875rem"><div style="width:32px;height:32px;border-radius:8px;background:rgba(60,200,122,.08);border:.5px solid rgba(60,200,122,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💬</div><div style="font-size:13px;color:var(--t2)">Webhook Slack / Discord configurable</div></div>
+      <div class="tag">Alertes en temps réel</div>
+      <div class="h2">Push. Desktop.<br>En moins d'une seconde.</div>
+      <p class="lead">Dès qu'un pattern dangereux est détecté, tu reçois une notification push sur ton téléphone ET une alerte desktop. Sur iOS, Android et navigateur.</p>
+      <div class="chan-list">
+        <div class="chan"><div class="chan-ic">📱</div><div class="chan-t">Push iOS &amp; Android via Web Push (VAPID)</div></div>
+        <div class="chan"><div class="chan-ic">💻</div><div class="chan-t">Notification desktop (Chrome, Safari, Firefox)</div></div>
+        <div class="chan"><div class="chan-ic">💬</div><div class="chan-t">Webhook Slack / Discord configurable</div></div>
       </div>
     </div>
     <div class="notif-stack">
-      <div class="notif-card nc-l3"><div class="nc-icon" style="background:rgba(220,50,30,.12)">🔴</div><div class="nc-body"><div class="nc-app">Caldra Session</div><div class="nc-title">STOP — Drawdown max atteint</div><div class="nc-msg">PnL session : −€420 (−4.2%). Ferme la plateforme maintenant.</div></div><div class="nc-time">maintenant</div></div>
-      <div class="notif-card nc-l2"><div class="nc-icon" style="background:rgba(220,130,0,.1)">⚠️</div><div class="nc-body"><div class="nc-app">Caldra Session</div><div class="nc-title">Revenge sizing détecté</div><div class="nc-msg">Sizing ×2.1 après une perte — 1.4 lots vs 0.67 lots</div></div><div class="nc-time">3 min</div></div>
-      <div class="notif-card"><div class="nc-icon" style="background:rgba(255,200,0,.08)">⚡</div><div class="nc-body"><div class="nc-app">Caldra Session</div><div class="nc-title">Re-entrée rapide</div><div class="nc-msg">87 secondes après la clôture. Délai minimum : 120s.</div></div><div class="nc-time">11 min</div></div>
-      <div class="notif-device"><div class="nd-dot"></div><span class="nd-txt">Push actif · iOS 16.4+ · Android · Desktop</span></div>
+      <div class="notif notif-3"><div class="notif-ic" style="background:rgba(226,80,60,.12)">🔴</div><div class="notif-b"><div class="notif-app">Caldra Session</div><div class="notif-t">STOP — Drawdown max atteint</div><div class="notif-m">PnL session : &minus;€420 (&minus;4.2%). Ferme la plateforme maintenant.</div></div><div class="notif-time">maintenant</div></div>
+      <div class="notif notif-2"><div class="notif-ic" style="background:rgba(220,126,46,.1)">⚠️</div><div class="notif-b"><div class="notif-app">Caldra Session</div><div class="notif-t">Revenge sizing détecté</div><div class="notif-m">Sizing ×2.1 après une perte — 1.4 lots vs 0.67 lots</div></div><div class="notif-time">3 min</div></div>
+      <div class="notif"><div class="notif-ic" style="background:rgba(224,160,46,.08)">⚡</div><div class="notif-b"><div class="notif-app">Caldra Session</div><div class="notif-t">Re-entrée rapide</div><div class="notif-m">87 secondes après la clôture. Délai minimum : 120s.</div></div><div class="notif-time">11 min</div></div>
     </div>
   </div>
-</div>
+</section>
+<div class="divider"></div>
 
 <!-- DÉTECTEURS -->
-<div class="sec" id="detecteurs">
-  <div class="sec-in">
-    <div class="sec-tag">Ce qu'on détecte</div>
-    <div class="det-wrap">
-      <div>
-        <div class="sec-h">Ton empreinte<br>comportementale, en direct.</div>
-        <p class="sec-d" style="margin-bottom:2rem">Chaque trader a des patterns quand il commence à dérailler. Caldra en surveille <strong style="color:var(--tx);font-weight:500">17</strong> — voici les plus parlants.</p>
-        <div class="det-layout" id="det-list"></div>
-        <p style="margin-top:1.25rem;font-size:12px;color:var(--t3);line-height:1.7">+ 8 autres : sizing d'euphorie, acharnement directionnel, sur-exposition, désespoir de fin de session, cadence qui s'emballe, tu coupes tes gains…</p>
-      </div>
-      <div class="det-detail" id="det-detail">
-        <div class="dd-ghost" id="dd-ghost">01</div>
-        <div class="dd-ic"><svg viewBox="0 0 24 24" id="dd-svg"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
-        <div class="dd-h" id="dd-h">Revenge sizing</div>
-        <div class="dd-d" id="dd-d">La taille de position augmente après une perte — chemin le plus court pour exploser une journée. Caldra compare chaque nouvelle ouverture aux positions précédentes.</div>
-        <div class="dd-lv dd-l2" id="dd-lv">Niveau 2 — Alerte orange</div>
-      </div>
+<section class="sec wrap" id="detecteurs" data-reveal>
+  <div class="tag">Ce qu'on détecte</div>
+  <div class="h2">Ton empreinte comportementale,<br><em>en direct.</em></div>
+  <p class="lead">Chaque trader a des patterns quand il commence à dérailler. Caldra en surveille <strong style="color:var(--tx);font-weight:500">18</strong> — voici les plus parlants.</p>
+  <div class="det-grid">
+    <div>
+      <div class="det-layout" id="det-list"></div>
+      <p class="det-more">+ 9 autres : sizing d'euphorie, acharnement directionnel, sur-exposition, désespoir de fin de session, cadence qui s'emballe, tu coupes tes gains et laisses courir tes pertes…</p>
+    </div>
+    <div class="det-detail" id="det-detail">
+      <div class="dd-ghost" id="dd-ghost">01</div>
+      <div class="dd-ic"><svg viewBox="0 0 24 24" id="dd-svg"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <div class="dd-h" id="dd-h">Revenge sizing</div>
+      <div class="dd-d" id="dd-d">La taille de position augmente après une perte — chemin le plus court pour exploser une journée. Caldra compare chaque nouvelle ouverture aux positions précédentes.</div>
+      <div class="dd-lv dd-l2" id="dd-lv">Niveau 2 — Alerte</div>
     </div>
   </div>
-</div>
+</section>
+<div class="divider"></div>
 
 <!-- DEMO -->
-<div class="sec" id="demo">
-  <div class="sec-in">
-    <div class="sec-tag">Démo interactive</div>
-    <div class="sec-h">Vois Caldra en action<br>sur une vraie session.</div>
-    <p class="sec-d">Simule un enchaînement de trades et observe comment Caldra détecte les patterns en temps réel.</p>
-    <div class="demo-wrap">
-      <div class="demo-tb">
-        <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></div>
-        <div style="width:10px;height:10px;border-radius:50%;background:#ffbd2e"></div>
-        <div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div>
-        <div class="demo-ttl">Caldra — Session EUR/USD — 30/03/2026</div>
+<section class="sec wrap" id="demo" data-reveal>
+  <div class="tag">Démo interactive</div>
+  <div class="h2">Vois Caldra en action<br><em>sur une vraie session.</em></div>
+  <p class="lead">Simule un enchaînement de trades et observe comment Caldra détecte les patterns en temps réel.</p>
+  <div class="demo-wrap">
+    <div class="demo-tb">
+      <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:#ffbd2e"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div>
+      <div class="demo-ttl">Caldra — Session EUR/USD</div>
+    </div>
+    <div class="demo-body">
+      <div class="demo-lp">
+        <div class="demo-llab">P&amp;L de session</div>
+        <div class="demo-pnl"><div class="demo-pv" id="dpnl" style="color:var(--green)">+€240</div><div class="demo-pc" id="dpc">Session en cours</div></div>
+        <div class="demo-chart"><canvas id="pc"></canvas></div>
+        <div class="demo-tlab">Derniers trades</div>
+        <div id="tlog">
+          <div class="demo-tr"><span class="dtt">09:32</span><span class="dtins">EUR/USD Long</span><span class="dtp">+€140</span></div>
+          <div class="demo-tr"><span class="dtt">09:51</span><span class="dtins">EUR/USD Short</span><span class="dtp">+€100</span></div>
+        </div>
       </div>
-      <div class="demo-body">
-        <div class="demo-lp">
-          <div class="demo-llab">P&amp;L de session</div>
-          <div class="demo-pnl"><div class="demo-pv" id="dpnl" style="color:#3cc87a">+€240</div><div class="demo-pc" id="dpc">Session en cours</div></div>
-          <div class="demo-chart"><canvas id="pc"></canvas></div>
-          <div class="demo-tlab">Derniers trades</div>
-          <div id="tlog">
-            <div class="demo-tr"><span class="dtt">09:32</span><span class="dtins">EUR/USD Long</span><span class="dtp">+€140</span></div>
-            <div class="demo-tr"><span class="dtt">09:51</span><span class="dtins">EUR/USD Short</span><span class="dtp">+€100</span></div>
-          </div>
-        </div>
-        <div class="demo-rp">
-          <div class="demo-rlab">Alertes Caldra</div>
-          <div class="demo-als" id="ac"><div style="font-size:12px;color:var(--t3);padding:.5rem 0">Aucune alerte — session saine.</div></div>
-          <button class="demo-sbtn" id="sb" onclick="sim()">→ Simuler le trade suivant</button>
-        </div>
+      <div class="demo-rp">
+        <div class="demo-rlab">Alertes Caldra</div>
+        <div class="demo-als" id="ac"><div style="font-size:12px;color:var(--t3);padding:.5rem 0">Aucune alerte — session saine.</div></div>
+        <button class="demo-sbtn" id="sb" onclick="sim()">→ Simuler le trade suivant</button>
       </div>
     </div>
   </div>
-</div>
+</section>
+<div class="divider"></div>
 
 <!-- COMMENT -->
-<div class="sec" id="comment">
-  <div class="sec-in">
-    <div class="sec-tag">Comment ça marche</div>
-    <div class="sec-h">Configure une fois.<br>Il veille toujours.</div>
-    <p class="sec-d">Aucune saisie manuelle. Caldra se connecte à ta plateforme et fait le reste.</p>
-    <div class="steps-grid">
-      <div class="step-c"><div class="step-n">01 — Connecte</div><div class="step-h">Ta plateforme de trading</div><div class="step-d">Connexion directe via API. Tes trades remontent automatiquement — rien à saisir manuellement.</div><div class="step-tags"><span class="stag-pill"><span class="stag-dot"></span>cTrader</span><span class="stag-pill"><span class="stag-dot"></span>MetaTrader 5</span><span class="stag-pill" style="opacity:.4">+ à venir</span></div></div>
-      <div class="step-c"><div class="step-n">02 — Configure</div><div class="step-h">Tes règles et limites</div><div class="step-d">Horaires de session, risk par trade, drawdown max. Tes règles, tes standards — pas des valeurs génériques imposées.</div></div>
-      <div class="step-c"><div class="step-n">03 — Trade</div><div class="step-h">Alerte immédiate si ça déraille</div><div class="step-d">Dès qu'un pattern dangereux est détecté, tu reçois une notification push + desktop en moins d'une seconde.</div></div>
-    </div>
+<section class="sec wrap" id="comment" data-reveal>
+  <div class="tag">Comment ça marche</div>
+  <div class="h2">Configure une fois.<br><em>Il veille toujours.</em></div>
+  <p class="lead">Aucune saisie manuelle. Caldra se connecte à ta plateforme et fait le reste.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">01</div><div class="step-h">Connecte ta plateforme</div><div class="step-d">Connexion directe via API. Tes trades remontent automatiquement — rien à saisir manuellement.</div><div class="step-tags"><span class="stag"><span class="sd"></span>cTrader</span><span class="stag"><span class="sd"></span>MetaTrader 5</span><span class="stag soon">+ à venir</span></div></div>
+    <div class="step"><div class="step-n">02</div><div class="step-h">Configure tes règles</div><div class="step-d">Horaires de session, risk par trade, drawdown max. Tes règles, tes standards — pas des valeurs génériques imposées.</div></div>
+    <div class="step"><div class="step-n">03</div><div class="step-h">Trade, on veille</div><div class="step-d">Dès qu'un pattern dangereux est détecté, tu reçois une notification push + desktop en moins d'une seconde.</div></div>
   </div>
-</div>
+</section>
+<div class="divider"></div>
 
 <!-- AVIS -->
-<div class="sec" id="avis">
-  <div class="sec-in">
-    <div class="sec-tag">Ce qu'ils disent</div>
-    <div class="sec-h">Testé par des vrais traders.</div>
-    <p class="sec-d">Bêta fermée — retours des premiers utilisateurs sur leurs sessions réelles.</p>
-    <div class="testi-grid">
-      <div class="testi-c"><div class="testi-stars">★★★★★</div><p class="testi-q">« J'ai claqué trois semaines de gains en une après-midi à cause du tilt. <strong>Ce genre d'outil j'en avais besoin depuis longtemps.</strong> »</p><div class="testi-au"><div class="testi-av">TM</div><div><div class="testi-name">Thomas M.</div><div class="testi-role">Trader Forex · 3 ans</div></div></div></div>
-      <div class="testi-c"><div class="testi-stars">★★★★★</div><p class="testi-q">« <strong>Je savais même pas que je faisais du revenge sizing.</strong> Ça se voyait pas de l'intérieur. Hâte que ça sorte. »</p><div class="testi-au"><div class="testi-av">KF</div><div><div class="testi-name">KrazoliFX</div><div class="testi-role">Trader CFD/Forex · Paris</div></div></div></div>
-      <div class="testi-c"><div class="testi-stars">★★★★☆</div><p class="testi-q">« J'utilise TradeZella mais c'est toujours après coup. <strong>Avec Caldra l'alerte est arrivée pendant ma session.</strong> C'est pas du tout la même chose. »</p><div class="testi-au"><div class="testi-av">KL</div><div><div class="testi-name">Kevin L.</div><div class="testi-role">Trader Forex · Lyon</div></div></div></div>
-    </div>
+<section class="sec wrap" id="avis" data-reveal>
+  <div class="tag">Ce qu'ils disent</div>
+  <div class="h2">Testé par de vrais traders.</div>
+  <p class="lead">Bêta fermée — retours des premiers utilisateurs sur leurs sessions réelles.</p>
+  <div class="testi">
+    <div class="tcard"><div class="tstars">★★★★★</div><p class="tq">« J'ai claqué trois semaines de gains en une après-midi à cause du tilt. <strong>Ce genre d'outil j'en avais besoin depuis longtemps.</strong> »</p><div class="tau"><div class="tav">TM</div><div><div class="tname">Thomas M.</div><div class="trole">Trader Forex · 3 ans</div></div></div></div>
+    <div class="tcard"><div class="tstars">★★★★★</div><p class="tq">« <strong>Je savais même pas que je faisais du revenge sizing.</strong> Ça se voyait pas de l'intérieur. Hâte que ça sorte. »</p><div class="tau"><div class="tav">KF</div><div><div class="tname">KrazoliFX</div><div class="trole">Trader CFD/Forex · Paris</div></div></div></div>
+    <div class="tcard"><div class="tstars">★★★★☆</div><p class="tq">« J'utilise TradeZella mais c'est toujours après coup. <strong>Avec Caldra l'alerte est arrivée pendant ma session.</strong> C'est pas du tout la même chose. »</p><div class="tau"><div class="tav">KL</div><div><div class="tname">Kevin L.</div><div class="trole">Trader Forex · Lyon</div></div></div></div>
   </div>
-</div>
+</section>
+<div class="divider"></div>
 
 <!-- TARIFS -->
-<div class="sec" id="tarifs">
-  <div class="sec-in">
-    <div class="sec-tag">Tarifs</div>
-    <div class="sec-h" style="text-align:center">Simple.<br>Rentabilisé au premier trade évité.</div>
-    <p style="text-align:center;font-size:13px;color:var(--t2);margin:-.5rem auto 1.75rem;max-width:560px"><span style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;padding:4px 8px;font-weight:600;margin-right:8px">Lancement</span><strong style="color:var(--tx)">−25 % à vie</strong> pour les 100 premiers · Pro à <strong style="color:var(--tx)">14,25€</strong> · Max à <strong style="color:var(--tx)">28,50€</strong></p>
-    <div class="pricing-grid">
-      <div class="plan plan-pro"><div class="plan-shine plan-sw"></div><div class="plan-lab">Pro</div><div class="plan-price"><sup>€</sup>14,25<sub>/mois</sub><span class="plan-strike">19€</span><span class="plan-promo-tag">&minus;25 %</span></div><div class="plan-tag">Surveillance comportementale complète. Alertes immédiates dès qu'un pattern dangereux est détecté.</div><ul class="plan-features"><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>11 détecteurs comportementaux</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard temps réel</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Personnalisation des règles</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique illimité</li></ul><a href="/signup" class="plan-btn plan-btn-sec">Essayer 7 jours gratuitement →</a></div>
-      <div class="plan plan-sent"><div class="plan-shine plan-sv"></div><div class="plan-lab plan-lab-v">Max</div><div class="plan-price"><sup>€</sup>28,50<sub>/mois</sub><span class="plan-strike">38€</span><span class="plan-promo-tag">&minus;25 %</span></div><div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div><ul class="plan-features"><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 détecteurs complets</strong></li><li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:rgba(240,237,232,.3)">Tout le plan Pro, plus :</span></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport de fin de session IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire IA</strong></li><li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Historique illimité</strong></li></ul><a href="/signup" class="plan-btn plan-btn-pri">Essayer 7 jours gratuitement →</a></div>
+<section class="sec wrap center" id="tarifs" data-reveal>
+  <div class="tag">Tarifs</div>
+  <div class="h2">Simple.<br>Rentabilisé au <em>premier trade évité.</em></div>
+  <p class="lead"><strong style="color:var(--tx)">&minus;25 % à vie</strong> pour les 100 premiers · Pro à <strong style="color:var(--tx)">14,25€</strong> · Max à <strong style="color:var(--tx)">28,50€</strong></p>
+  <div class="pricing">
+    <div class="plan plan-pro">
+      <div class="plan-lab">Pro</div>
+      <div class="plan-price"><sup>€</sup>14,25<sub>/mois</sub><span class="plan-strike">19€</span><span class="plan-promo-tag">&minus;25 %</span></div>
+      <div class="plan-tag">Surveillance comportementale complète. Alertes immédiates dès qu'un pattern dangereux est détecté.</div>
+      <ul class="plan-features">
+        <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>11 détecteurs comportementaux</li>
+        <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Dashboard temps réel</li>
+        <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Personnalisation des règles</li>
+        <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li>
+        <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique illimité</li>
+      </ul>
+      <a href="/signup" class="plan-btn plan-btn-sec">Essayer 7 jours gratuitement →</a>
     </div>
-    <p style="text-align:center;margin-top:2rem;font-size:13px;color:var(--t3);font-style:italic">7 jours d'essai gratuit · Carte bancaire requise · Débit automatique à J+7 sauf résiliation</p>
+    <div class="plan plan-max">
+      <div class="plan-pop">Recommandé</div>
+      <div class="plan-lab">Max</div>
+      <div class="plan-price"><sup>€</sup>28,50<sub>/mois</sub><span class="plan-strike">38€</span><span class="plan-promo-tag">&minus;25 %</span></div>
+      <div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div>
+      <ul class="plan-features">
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>18 détecteurs complets</li>
+        <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:var(--t3)">Tout le plan Pro, plus :</span></li>
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport de fin de session IA</li>
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport hebdomadaire IA</li>
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique illimité</li>
+      </ul>
+      <a href="/signup" class="plan-btn plan-btn-pri">Essayer 7 jours gratuitement →</a>
+    </div>
   </div>
-</div>
+  <p class="price-note">7 jours d'essai gratuit · Carte bancaire requise · Débit automatique à J+7 sauf résiliation</p>
+</section>
+<div class="divider"></div>
 
 <!-- HISTOIRE -->
-<div class="story-sec" id="histoire">
-  <div class="sec-in">
-    <div class="sec-tag">L'histoire</div>
-    <div class="sec-h">Une conviction.<br>Un outil.</div>
-    <div class="story-in" style="margin-top:2.5rem">
-      <p class="story-p">Caldra Session est né d'une certitude simple : la psychologie de trader ne s'apprend pas. Elle se construit. Lentement. Sous les graphiques. Dans la pression des positions ouvertes, dans le silence des pertes encaissées, dans les décisions prises à l'instinct quand la raison n'a plus la main.</p>
-      <p class="story-p">On peut lire. On peut comprendre. On peut mémoriser chaque biais cognitif. Et se retrouver exactement dans le même état, la prochaine session, face au même chart, à refaire exactement la même chose.</p>
-      <p class="story-p">Caldra Session n'est pas là pour changer la nature humaine. Il est là pour ce moment précis — celui où un signal extérieur change tout.</p>
-      <div class="story-end">La discipline ne se force pas. <em>Elle se protège.</em></div>
-    </div>
+<section class="sec wrap" id="histoire" data-reveal>
+  <div class="tag">L'histoire</div>
+  <div class="h2">Une conviction.<br><em>Un outil.</em></div>
+  <div class="story" style="margin-top:2.6rem">
+    <p class="story-p">Caldra Session est né d'une certitude simple : la psychologie de trader ne s'apprend pas. Elle se construit. Lentement. Sous les graphiques. Dans la pression des positions ouvertes, dans le silence des pertes encaissées, dans les décisions prises à l'instinct quand la raison n'a plus la main.</p>
+    <p class="story-p">On peut lire. On peut comprendre. On peut mémoriser chaque biais cognitif. Et se retrouver exactement dans le même état, la prochaine session, face au même chart, à refaire exactement la même chose.</p>
+    <p class="story-p">Caldra Session n'est pas là pour changer la nature humaine. Il est là pour ce moment précis — celui où un signal extérieur change tout.</p>
+    <div class="story-end">La discipline ne se force pas. <em>Elle se protège.</em></div>
   </div>
-</div>
+</section>
+<div class="divider"></div>
 
-<!-- CTA -->
-<div class="cta-sec">
-  <div style="max-width:640px;margin:0 auto">
-    <div class="sec-tag" style="justify-content:center;max-width:none">Disponible maintenant</div>
-    <div class="cta-h">Ton prochain tilt<br><em>peut être le dernier.</em></div>
-    <p class="cta-sub">7 jours d'essai gratuit. Carte bancaire requise, débit automatique à J+7 sauf résiliation.</p>
-    <a href="/signup" class="cta-main-btn" style="display:inline-flex;max-width:340px;padding:14px 32px;font-size:14px;border-radius:7px;letter-spacing:.3px;margin-bottom:14px">Commencer l'essai — 7 jours →</a>
-    <p style="margin-top:.25rem;font-size:12px;color:var(--t3)"><a href="/login" style="color:var(--t3);text-decoration:none">Déjà un compte ? <span style="color:var(--v)">Connexion →</span></a></p>
-  </div>
-</div>
+<!-- FINAL CTA -->
+<section class="fcta wrap">
+  <div class="tag" style="margin-left:auto;margin-right:auto">Disponible maintenant</div>
+  <div class="fcta-h">Ton prochain tilt<br><em>peut être le dernier.</em></div>
+  <p class="fcta-sub">7 jours d'essai gratuit. Carte bancaire requise, débit automatique à J+7 sauf résiliation.</p>
+  <a href="/signup" class="btn-pri" style="padding:17px 34px;font-size:15px">Commencer l'essai — 7 jours →</a>
+  <p class="fcta-login"><a href="/login">Déjà un compte ? <span>Connexion →</span></a></p>
+</section>
 
 <footer>
-  <div class="foot-logo">Cald<span>ra</span></div>
-  <div class="foot-links"><a href="/mentions-legales" class="foot-lk">CGU</a><a href="/confidentialite" class="foot-lk">Confidentialité</a><a href="/support" class="foot-lk">Support</a></div>
-  <div class="foot-email">contact@getcaldra.com</div>
+  <div class="foot-in">
+    <div class="foot-logo">Cald<span>ra</span></div>
+    <div class="foot-links"><a href="/mentions-legales" class="foot-lk">CGU</a><a href="/confidentialite" class="foot-lk">Confidentialité</a><a href="/support" class="foot-lk">Support</a></div>
+    <div class="foot-email">contact@getcaldra.com</div>
+  </div>
 </footer>
 
 <script id="caldra-main-js">
@@ -708,14 +622,14 @@ var SCN=[
 function initChart(){
   var canvas=document.getElementById('pc');if(!canvas)return;
   var cx=canvas.getContext('2d');var ex=window.Chart&&Chart.getChart&&Chart.getChart(cx);if(ex)ex.destroy();
-  ch=new Chart(cx,{type:'line',data:{labels:['Ouv.','09:32','09:51'],datasets:[{data:pd,borderColor:'#3cc87a',borderWidth:2,pointRadius:3,pointBackgroundColor:'#3cc87a',fill:true,backgroundColor:'rgba(60,200,122,.06)',tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'rgba(255,255,255,.2)',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'rgba(255,255,255,.2)',font:{size:10},callback:function(v){return '€'+v}}}}}});
+  ch=new Chart(cx,{type:'line',data:{labels:['Ouv.','09:32','09:51'],datasets:[{data:pd,borderColor:'#3ecf8e',borderWidth:2,pointRadius:3,pointBackgroundColor:'#3ecf8e',fill:true,backgroundColor:'rgba(62,207,142,.06)',tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'rgba(255,255,255,.2)',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'rgba(255,255,255,.2)',font:{size:10},callback:function(v){return '€'+v}}}}}});
 }
 function sim(){
   if(simStep>=SCN.length){resetD();return;}
-  var t=SCN[simStep],np=pd[pd.length-1]+t.pnl,col=np>=0?'#3cc87a':'#e05050';
+  var t=SCN[simStep],np=pd[pd.length-1]+t.pnl,col=np>=0?'#3ecf8e':'#e2503c';
   pd.push(np);ch.data.labels.push(t.time);
   ch.data.datasets[0].borderColor=col;ch.data.datasets[0].pointBackgroundColor=col;
-  ch.data.datasets[0].backgroundColor=np>=0?'rgba(60,200,122,.06)':'rgba(224,80,80,.06)';
+  ch.data.datasets[0].backgroundColor=np>=0?'rgba(62,207,142,.06)':'rgba(226,80,60,.06)';
   ch.data.datasets[0].data=pd;ch.update();
   document.getElementById('dpnl').textContent=(np>=0?'+':'')+'€'+np;document.getElementById('dpnl').style.color=col;
   document.getElementById('dpc').textContent=t.time+' — '+t.side;
@@ -733,15 +647,15 @@ function sim(){
 window.sim=sim;
 function resetD(){
   simStep=0;pd=[0,140,240];ch.data.labels=['Ouv.','09:32','09:51'];ch.data.datasets[0].data=pd;
-  ch.data.datasets[0].borderColor='#3cc87a';ch.data.datasets[0].pointBackgroundColor='#3cc87a';ch.data.datasets[0].backgroundColor='rgba(60,200,122,.06)';ch.update();
-  document.getElementById('dpnl').textContent='+€240';document.getElementById('dpnl').style.color='#3cc87a';
+  ch.data.datasets[0].borderColor='#3ecf8e';ch.data.datasets[0].pointBackgroundColor='#3ecf8e';ch.data.datasets[0].backgroundColor='rgba(62,207,142,.06)';ch.update();
+  document.getElementById('dpnl').textContent='+€240';document.getElementById('dpnl').style.color='#3ecf8e';
   document.getElementById('dpc').textContent='Session en cours';
   document.getElementById('tlog').innerHTML='<div class="demo-tr"><span class="dtt">09:32</span><span class="dtins">EUR/USD Long</span><span class="dtp">+€140</span></div><div class="demo-tr"><span class="dtt">09:51</span><span class="dtins">EUR/USD Short</span><span class="dtp">+€100</span></div>';
   document.getElementById('ac').innerHTML='<div style="font-size:12px;color:var(--t3);padding:.5rem 0">Aucune alerte — session saine.</div>';
   document.getElementById('sb').textContent='→ Simuler le trade suivant';
 }
 if(window.Chart){initChart();}else{var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';s.onload=initChart;document.head.appendChild(s);}
-try{var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.1});document.querySelectorAll('.split-sec,.sec,.story-sec,.cta-sec').forEach(function(el){el.classList.add('reveal');io.observe(el);});}catch(e){}
+try{var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});document.querySelectorAll('[data-reveal]').forEach(function(el){io.observe(el);});}catch(e){document.querySelectorAll('[data-reveal]').forEach(function(el){el.classList.add('in');});}
 })();
 </script>
 `
