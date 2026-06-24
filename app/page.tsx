@@ -97,13 +97,8 @@ nav.nav-hidden{transform:translateY(-130px)}
 .pv-chart-sym{font-size:11.5px;font-weight:600;color:#eceaf6;letter-spacing:.3px}
 .pv-chart-sym span{color:var(--t3);font-weight:400;margin-left:7px}
 .pv-chart-tf{font-size:9px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase}
-.pv-chart svg{width:100%;height:158px;display:block}
-.cw-up{stroke:#3ecf8e;stroke-width:1.1;vector-effect:non-scaling-stroke}
-.cw-dn{stroke:#e2503c;stroke-width:1.1;vector-effect:non-scaling-stroke}
-.cb-up{fill:#3ecf8e}.cb-dn{fill:#e2503c}
-.cv-up{fill:rgba(62,207,142,.3)}.cv-dn{fill:rgba(226,80,60,.3)}
-.cma{fill:none;stroke:#a78bfa;stroke-width:1.4;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.9}
-.cg{stroke:rgba(255,255,255,.045);stroke-width:1;vector-effect:non-scaling-stroke}
+.tv-wrap{height:230px;border-radius:10px;overflow:hidden;border:.5px solid var(--b1);background:#0e0c1a}
+.tv-wrap iframe{display:block;border:0}
 .pv-kpis{display:flex;flex-direction:column;gap:1.1rem}
 .pv-score{display:flex;align-items:center;gap:1.3rem;padding:1.3rem;background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:14px}
 .pv-score-num{font-size:46px;font-weight:200;letter-spacing:-2px;line-height:1;color:var(--orange)}
@@ -324,40 +319,6 @@ const DETECTORS = [
   {n:'09',name:'Risk dépassé',icon:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',desc:"Sizing dépassant ton risk par trade défini. Tes règles existent pour une raison.",lv:2,s:false},
 ]
 
-function buildCandles() {
-  let seed = 7
-  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff }
-  const N = 34, W = 600, H = 170, volH = 30, top = 8, bot = H - volH - 6
-  const candles = []
-  let price = 100, min = Infinity, max = -Infinity
-  for (let i = 0; i < N; i++) {
-    const open = price
-    const close = open + (rnd() - 0.44) * 4.2
-    const high = Math.max(open, close) + rnd() * 2.4
-    const low = Math.min(open, close) - rnd() * 2.4
-    candles.push({ open, close, high, low, vol: 0.25 + rnd() })
-    min = Math.min(min, low); max = Math.max(max, high); price = close
-  }
-  const pad = (max - min) * 0.06; min -= pad; max += pad
-  const step = (W - 12) / N, cw = Math.max(3, step * 0.62)
-  const x = i => 6 + i * step + step / 2
-  const y = p => top + (max - p) / (max - min) * (bot - top)
-  const maxVol = Math.max(...candles.map(c => c.vol))
-  let out = ''
-  for (let g = 0; g <= 3; g++) { const gy = (top + (bot - top) * g / 3).toFixed(1); out += `<line class="cg" x1="0" y1="${gy}" x2="${W}" y2="${gy}"/>` }
-  candles.forEach((c, i) => { const vh = (c.vol / maxVol) * volH; out += `<rect class="${c.close >= c.open ? 'cv-up' : 'cv-dn'}" x="${(x(i) - cw / 2).toFixed(1)}" y="${(H - vh).toFixed(1)}" width="${cw.toFixed(1)}" height="${vh.toFixed(1)}"/>` })
-  candles.forEach((c, i) => {
-    const up = c.close >= c.open, cx = x(i).toFixed(1)
-    out += `<line class="${up ? 'cw-up' : 'cw-dn'}" x1="${cx}" y1="${y(c.high).toFixed(1)}" x2="${cx}" y2="${y(c.low).toFixed(1)}"/>`
-    const bt = y(Math.max(c.open, c.close)), bb = y(Math.min(c.open, c.close))
-    out += `<rect class="${up ? 'cb-up' : 'cb-dn'}" x="${(x(i) - cw / 2).toFixed(1)}" y="${bt.toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(1.2, bb - bt).toFixed(1)}"/>`
-  })
-  const ma = candles.map((_, i) => { const k = Math.min(6, i + 1); let s = 0; for (let j = 0; j < k; j++) s += candles[i - j].close; return s / k })
-  out += `<path class="cma" d="${ma.map((m, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(m).toFixed(1)}`).join(' ')}"/>`
-  return out
-}
-const CANDLES = buildCandles()
-
 const HTML = `
 <div class="bg-grid"></div>
 <div class="bg-aura aura-1"></div>
@@ -426,8 +387,8 @@ const HTML = `
       </div>
       <div class="panel-body">
         <div class="pv-chart">
-          <div class="pv-chart-hd"><div class="pv-chart-sym">EUR/USD<span>5M · Forex</span></div><div class="pv-chart-tf">Session live</div></div>
-          <svg viewBox="0 0 600 170" preserveAspectRatio="none">${CANDLES}</svg>
+          <div class="pv-chart-hd"><div class="pv-chart-sym">EUR/USD<span>15M · Forex</span></div><div class="pv-chart-tf">Marché en direct</div></div>
+          <div id="tv-chart" class="tv-wrap"><div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div></div></div>
         </div>
         <div class="pv-grid">
           <div class="pv-kpis">
@@ -730,6 +691,24 @@ export default function Home() {
     s.textContent = src
     document.body.appendChild(s)
     return () => { document.getElementById('caldra-main-init')?.remove() }
+  }, [])
+
+  // Widget TradingView (vrai chart EUR/USD live) dans le panneau hero
+  useEffect(() => {
+    const c = document.querySelector('#tv-chart .tradingview-widget-container') as HTMLElement | null
+    if (!c || c.dataset.loaded) return
+    c.dataset.loaded = '1'
+    const s = document.createElement('script')
+    s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
+    s.async = true
+    s.innerHTML = JSON.stringify({
+      autosize: true, symbol: 'FX:EURUSD', interval: '15', timezone: 'Etc/UTC',
+      theme: 'dark', style: '1', locale: 'fr',
+      hide_top_toolbar: true, hide_side_toolbar: true, hide_legend: false,
+      allow_symbol_change: false, save_image: false, withdateranges: false,
+      backgroundColor: 'rgba(14,12,26,1)', gridColor: 'rgba(255,255,255,0.04)',
+    })
+    c.appendChild(s)
   }, [])
 
   return (
