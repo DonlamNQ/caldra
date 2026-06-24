@@ -301,11 +301,11 @@ footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-inde
 `
 
 const DETECTORS = [
-  {n:'01',name:'Revenge sizing',icon:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',desc:"La taille de position augmente après une perte — chemin le plus court pour exploser une journée. Caldra compare chaque nouvelle ouverture aux positions précédentes.",lv:2,s:true},
+  {n:'01',name:'Revenge sizing',icon:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',desc:"La taille de position augmente après une perte, le chemin le plus court pour exploser une journée. Caldra compare chaque nouvelle ouverture aux positions précédentes.",lv:2,s:true},
   {n:'02',name:'Re-entrée immédiate',icon:'<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/>',desc:"Reprendre un trade moins de 2 minutes après la sortie. L'impulsion, pas l'analyse. Caldra mesure l'intervalle exact entre exit et nouvel entry.",lv:1,s:false},
-  {n:'03',name:'Série de pertes',icon:'<line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>',desc:"3 pertes consécutives — seuil où l'émotion prend le dessus. Configurable selon ton historique.",lv:2,s:false},
+  {n:'03',name:'Série de pertes',icon:'<line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>',desc:"3 pertes consécutives, le seuil où l'émotion prend le dessus. Configurable selon ton historique.",lv:2,s:false},
   {n:'04',name:'Alerte drawdown',icon:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',desc:"Perte journalière approchant ou dépassant ta limite. Deux niveaux : préventive à 80%, stop forcé à 100%. Capital configurable.",lv:3,s:false},
-  {n:'05',name:'Hors session',icon:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',desc:"Trade en dehors de tes horaires définis. Fatigue, ennui, ou opportunisme — rarement de bons états pour entrer en marché.",lv:1,s:false},
+  {n:'05',name:'Hors session',icon:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',desc:"Trade en dehors de tes horaires définis. Fatigue, ennui, ou opportunisme, rarement de bons états pour entrer en marché.",lv:1,s:false},
   {n:'06',name:'Suractivité',icon:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',desc:"Nombre de trades dépassant ta limite de session. Plus tu trades, plus tu trades souvent pire.",lv:2,s:false},
   {n:'07',name:'Trade pendant news',icon:'<path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>',desc:"Entrée dans les 5 minutes d'un événement macro. News + position ouverte = casino. Caldra croise les timestamps avec le calendrier économique.",lv:2,s:true},
   {n:'08',name:'Stop non respecté',icon:'<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',desc:"Position tenue au-delà de ton stop habituel. L'espoir n'est pas une stratégie.",lv:2,s:false},
@@ -345,9 +345,9 @@ const HTML = `
 
 <!-- HERO -->
 <header class="hero wrap">
-  <div class="hero-eyebrow"><span class="dot"></span>Intelligence comportementale &mdash; Temps réel</div>
+  <div class="hero-eyebrow"><span class="dot"></span>Intelligence comportementale · Temps réel</div>
   <h1>Tu ne vois pas quand tu dérailles. <em>Lui si.</em></h1>
-  <p class="hero-sub">Caldra analyse chaque trade et détecte les comportements qui détruisent les sessions &mdash; avant que le tilt, le revenge trading ou l'impulsion ne fassent les dégâts.</p>
+  <p class="hero-sub">Caldra analyse chaque trade et détecte les comportements qui détruisent les sessions, avant que le tilt, le revenge trading ou l'impulsion ne fassent les dégâts.</p>
   <div class="hero-ctas">
     <a href="/signup" class="btn-pri">Essayer 7 jours gratuitement →</a>
     <a href="/login" class="btn-sec">J'ai déjà un compte</a>
@@ -395,7 +395,7 @@ const HTML = `
           </div>
           <div class="pv-alerts">
             <div class="pv-alerts-l">Alertes en direct</div>
-            <div class="pv-al pv-al-3"><div class="pv-al-dot d-3"></div><div><div class="pv-al-t">STOP — Drawdown max</div><div class="pv-al-s">Ferme la plateforme maintenant.</div></div></div>
+            <div class="pv-al pv-al-3"><div class="pv-al-dot d-3"></div><div><div class="pv-al-t">STOP · Drawdown max</div><div class="pv-al-s">Ferme la plateforme maintenant.</div></div></div>
             <div class="pv-al pv-al-2"><div class="pv-al-dot d-2"></div><div><div class="pv-al-t">Revenge sizing ×2.1</div><div class="pv-al-s">1.4 lots vs 0.67 lots.</div></div></div>
             <div class="pv-al pv-al-1"><div class="pv-al-dot d-1"></div><div><div class="pv-al-t">Re-entrée rapide (87s)</div><div class="pv-al-s">Délai minimum : 120s.</div></div></div>
           </div>
@@ -441,8 +441,8 @@ const HTML = `
       </div>
     </div>
     <div class="notif-stack">
-      <div class="notif notif-3"><div class="notif-ic" style="background:rgba(226,80,60,.12)">🔴</div><div class="notif-b"><div class="notif-app">Caldra Session</div><div class="notif-t">STOP — Drawdown max atteint</div><div class="notif-m">PnL session : &minus;€420 (&minus;4.2%). Ferme la plateforme maintenant.</div></div><div class="notif-time">maintenant</div></div>
-      <div class="notif notif-2"><div class="notif-ic" style="background:rgba(220,126,46,.1)">⚠️</div><div class="notif-b"><div class="notif-app">Caldra Session</div><div class="notif-t">Revenge sizing détecté</div><div class="notif-m">Sizing ×2.1 après une perte — 1.4 lots vs 0.67 lots</div></div><div class="notif-time">3 min</div></div>
+      <div class="notif notif-3"><div class="notif-ic" style="background:rgba(226,80,60,.12)">🔴</div><div class="notif-b"><div class="notif-app">Caldra Session</div><div class="notif-t">STOP · Drawdown max atteint</div><div class="notif-m">PnL session : &minus;€420 (&minus;4.2%). Ferme la plateforme maintenant.</div></div><div class="notif-time">maintenant</div></div>
+      <div class="notif notif-2"><div class="notif-ic" style="background:rgba(220,126,46,.1)">⚠️</div><div class="notif-b"><div class="notif-app">Caldra Session</div><div class="notif-t">Revenge sizing détecté</div><div class="notif-m">Sizing ×2.1 après une perte, 1.4 lots vs 0.67 lots</div></div><div class="notif-time">3 min</div></div>
       <div class="notif"><div class="notif-ic" style="background:rgba(224,160,46,.08)">⚡</div><div class="notif-b"><div class="notif-app">Caldra Session</div><div class="notif-t">Re-entrée rapide</div><div class="notif-m">87 secondes après la clôture. Délai minimum : 120s.</div></div><div class="notif-time">11 min</div></div>
     </div>
   </div>
@@ -453,7 +453,7 @@ const HTML = `
 <section class="sec wrap" id="detecteurs" data-reveal>
   <div class="tag">Ce qu'on détecte</div>
   <div class="h2">Ton empreinte comportementale,<br><em>en direct.</em></div>
-  <p class="lead">Chaque trader a des patterns quand il commence à dérailler. Caldra en surveille <strong style="color:var(--tx);font-weight:500">18</strong> — voici les plus parlants.</p>
+  <p class="lead">Chaque trader a des patterns quand il commence à dérailler. Caldra en surveille <strong style="color:var(--tx);font-weight:500">18</strong>, voici les plus parlants.</p>
   <div class="det-grid">
     <div>
       <div class="det-layout" id="det-list"></div>
@@ -463,8 +463,8 @@ const HTML = `
       <div class="dd-ghost" id="dd-ghost">01</div>
       <div class="dd-ic"><svg viewBox="0 0 24 24" id="dd-svg"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
       <div class="dd-h" id="dd-h">Revenge sizing</div>
-      <div class="dd-d" id="dd-d">La taille de position augmente après une perte — chemin le plus court pour exploser une journée. Caldra compare chaque nouvelle ouverture aux positions précédentes.</div>
-      <div class="dd-lv dd-l2" id="dd-lv">Niveau 2 — Alerte</div>
+      <div class="dd-d" id="dd-d">La taille de position augmente après une perte, le chemin le plus court pour exploser une journée. Caldra compare chaque nouvelle ouverture aux positions précédentes.</div>
+      <div class="dd-lv dd-l2" id="dd-lv">Niveau 2 · Alerte</div>
     </div>
   </div>
 </section>
@@ -480,7 +480,7 @@ const HTML = `
       <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></div>
       <div style="width:10px;height:10px;border-radius:50%;background:#ffbd2e"></div>
       <div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div>
-      <div class="demo-ttl">Caldra — Session EUR/USD</div>
+      <div class="demo-ttl">Caldra · Session EUR/USD</div>
     </div>
     <div class="demo-body">
       <div class="demo-lp">
@@ -495,7 +495,7 @@ const HTML = `
       </div>
       <div class="demo-rp">
         <div class="demo-rlab">Alertes Caldra</div>
-        <div class="demo-als" id="ac"><div style="font-size:12px;color:var(--t3);padding:.5rem 0">Aucune alerte — session saine.</div></div>
+        <div class="demo-als" id="ac"><div style="font-size:12px;color:var(--t3);padding:.5rem 0">Aucune alerte · session saine.</div></div>
         <button class="demo-sbtn" id="sb" onclick="sim()">→ Simuler le trade suivant</button>
       </div>
     </div>
@@ -509,8 +509,8 @@ const HTML = `
   <div class="h2">Configure une fois.<br><em>Il veille toujours.</em></div>
   <p class="lead">Aucune saisie manuelle. Caldra se connecte à ta plateforme et fait le reste.</p>
   <div class="steps">
-    <div class="step"><div class="step-n">01</div><div class="step-h">Connecte ta plateforme</div><div class="step-d">Connexion directe via API. Tes trades remontent automatiquement — rien à saisir manuellement.</div><div class="step-tags"><span class="stag"><span class="sd"></span>cTrader</span><span class="stag"><span class="sd"></span>MetaTrader 5</span><span class="stag soon">+ à venir</span></div></div>
-    <div class="step"><div class="step-n">02</div><div class="step-h">Configure tes règles</div><div class="step-d">Horaires de session, risk par trade, drawdown max. Tes règles, tes standards — pas des valeurs génériques imposées.</div></div>
+    <div class="step"><div class="step-n">01</div><div class="step-h">Connecte ta plateforme</div><div class="step-d">Connexion directe via API. Tes trades remontent automatiquement, rien à saisir manuellement.</div><div class="step-tags"><span class="stag"><span class="sd"></span>cTrader</span><span class="stag"><span class="sd"></span>MetaTrader 5</span><span class="stag soon">+ à venir</span></div></div>
+    <div class="step"><div class="step-n">02</div><div class="step-h">Configure tes règles</div><div class="step-d">Horaires de session, risk par trade, drawdown max. Tes règles, tes standards, pas des valeurs génériques imposées.</div></div>
     <div class="step"><div class="step-n">03</div><div class="step-h">Trade, on veille</div><div class="step-d">Dès qu'un pattern dangereux est détecté, tu reçois une notification push + desktop en moins d'une seconde.</div></div>
   </div>
 </section>
@@ -520,7 +520,7 @@ const HTML = `
 <section class="sec wrap" id="avis" data-reveal>
   <div class="tag">Ce qu'ils disent</div>
   <div class="h2">Testé par de vrais traders.</div>
-  <p class="lead">Bêta fermée — retours des premiers utilisateurs sur leurs sessions réelles.</p>
+  <p class="lead">Bêta fermée, retours des premiers utilisateurs sur leurs sessions réelles.</p>
   <div class="testi">
     <div class="tcard"><div class="tstars">★★★★★</div><p class="tq">« J'ai claqué trois semaines de gains en une après-midi à cause du tilt. <strong>Ce genre d'outil j'en avais besoin depuis longtemps.</strong> »</p><div class="tau"><div class="tav">TM</div><div><div class="tname">Thomas M.</div><div class="trole">Trader Forex · 3 ans</div></div></div></div>
     <div class="tcard"><div class="tstars">★★★★★</div><p class="tq">« <strong>Je savais même pas que je faisais du revenge sizing.</strong> Ça se voyait pas de l'intérieur. Hâte que ça sorte. »</p><div class="tau"><div class="tav">KF</div><div><div class="tname">KrazoliFX</div><div class="trole">Trader CFD/Forex · Paris</div></div></div></div>
@@ -573,7 +573,7 @@ const HTML = `
   <div class="story" style="margin-top:2.6rem">
     <p class="story-p">Caldra Session est né d'une certitude simple : la psychologie de trader ne s'apprend pas. Elle se construit. Lentement. Sous les graphiques. Dans la pression des positions ouvertes, dans le silence des pertes encaissées, dans les décisions prises à l'instinct quand la raison n'a plus la main.</p>
     <p class="story-p">On peut lire. On peut comprendre. On peut mémoriser chaque biais cognitif. Et se retrouver exactement dans le même état, la prochaine session, face au même chart, à refaire exactement la même chose.</p>
-    <p class="story-p">Caldra Session n'est pas là pour changer la nature humaine. Il est là pour ce moment précis — celui où un signal extérieur change tout.</p>
+    <p class="story-p">Caldra Session n'est pas là pour changer la nature humaine. Il est là pour ce moment précis, celui où un signal extérieur change tout.</p>
     <div class="story-end">La discipline ne se force pas. <em>Elle se protège.</em></div>
   </div>
 </section>
@@ -584,7 +584,7 @@ const HTML = `
   <div class="tag" style="margin-left:auto;margin-right:auto">Disponible maintenant</div>
   <div class="fcta-h">Ton prochain tilt<br><em>peut être le dernier.</em></div>
   <p class="fcta-sub">7 jours d'essai gratuit. Carte bancaire requise, débit automatique à J+7 sauf résiliation.</p>
-  <a href="/signup" class="btn-pri" style="padding:17px 34px;font-size:15px">Commencer l'essai — 7 jours →</a>
+  <a href="/signup" class="btn-pri" style="padding:17px 34px;font-size:15px">Commencer l'essai · 7 jours →</a>
   <p class="fcta-login"><a href="/login">Déjà un compte ? <span>Connexion →</span></a></p>
 </section>
 
@@ -600,7 +600,7 @@ const HTML = `
 (function(){
 var DETS=${JSON.stringify(DETECTORS)};
 function lvClass(l){return l===1?'dd-l1':l===2?'dd-l2':'dd-l3';}
-function lvLabel(l){return l===1?'Niveau 1 — Info':l===2?'Niveau 2 — Alerte':'Niveau 3 — Critique';}
+function lvLabel(l){return l===1?'Niveau 1 · Info':l===2?'Niveau 2 · Alerte':'Niveau 3 · Critique';}
 function renderDets(){
   var list=document.getElementById('det-list');if(!list)return;list.innerHTML='';
   DETS.forEach(function(d,i){
@@ -622,7 +622,7 @@ var SCN=[
   {time:'10:14',side:'EUR/USD Short',pnl:-180,a:null},
   {time:'10:17',side:'EUR/USD Long (re-entrée)',pnl:-95,a:{l:1,ti:'Re-entrée immédiate détectée',su:'Trade ouvert 3 min après la sortie. Prends une pause.'}},
   {time:'10:31',side:'EUR/USD Long (sizing ×2)',pnl:-210,a:{l:2,ti:'Revenge sizing + 3 pertes consécutives',su:'Taille doublée après série de pertes. Pause recommandée.'}},
-  {time:'10:33',side:'EUR/USD Long',pnl:-320,a:{l:3,ti:'STOP — Ferme la plateforme.',su:'Drawdown critique + série + revenge sizing simultanés.'}}
+  {time:'10:33',side:'EUR/USD Long',pnl:-320,a:{l:3,ti:'STOP · Ferme la plateforme.',su:'Drawdown critique + série + revenge sizing simultanés.'}}
 ];
 function initChart(){
   var canvas=document.getElementById('pc');if(!canvas)return;
@@ -637,7 +637,7 @@ function sim(){
   ch.data.datasets[0].backgroundColor=np>=0?'rgba(62,207,142,.06)':'rgba(226,80,60,.06)';
   ch.data.datasets[0].data=pd;ch.update();
   document.getElementById('dpnl').textContent=(np>=0?'+':'')+'€'+np;document.getElementById('dpnl').style.color=col;
-  document.getElementById('dpc').textContent=t.time+' — '+t.side;
+  document.getElementById('dpc').textContent=t.time+' · '+t.side;
   var log=document.getElementById('tlog'),el=document.createElement('div');el.className='demo-tr';
   el.innerHTML='<span class="dtt">'+t.time+'</span><span class="dtins">'+t.side+'</span><span class="'+(t.pnl>=0?'dtp':'dtn')+'">'+(t.pnl>=0?'+':'')+'€'+t.pnl+'</span>';
   log.appendChild(el);
@@ -656,7 +656,7 @@ function resetD(){
   document.getElementById('dpnl').textContent='+€240';document.getElementById('dpnl').style.color='#3ecf8e';
   document.getElementById('dpc').textContent='Session en cours';
   document.getElementById('tlog').innerHTML='<div class="demo-tr"><span class="dtt">09:32</span><span class="dtins">EUR/USD Long</span><span class="dtp">+€140</span></div><div class="demo-tr"><span class="dtt">09:51</span><span class="dtins">EUR/USD Short</span><span class="dtp">+€100</span></div>';
-  document.getElementById('ac').innerHTML='<div style="font-size:12px;color:var(--t3);padding:.5rem 0">Aucune alerte — session saine.</div>';
+  document.getElementById('ac').innerHTML='<div style="font-size:12px;color:var(--t3);padding:.5rem 0">Aucune alerte · session saine.</div>';
   document.getElementById('sb').textContent='→ Simuler le trade suivant';
 }
 if(window.Chart){initChart();}else{var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';s.onload=initChart;document.head.appendChild(s);}
