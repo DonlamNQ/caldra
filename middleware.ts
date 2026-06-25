@@ -101,12 +101,10 @@ export async function middleware(request: NextRequest) {
     const status = profile?.subscription_status
     const entitled = status === 'trialing' || status === 'active' || status === 'past_due'
     if (!entitled) {
-      const plan = (user.user_metadata as { plan?: string } | undefined)?.plan
-      const checkoutUrl = new URL('/api/billing/checkout', request.url)
-      if (plan === 'pro' || plan === 'max' || plan === 'sentinel') {
-        checkoutUrl.searchParams.set('plan', plan)
-      }
-      return NextResponse.redirect(checkoutUrl)
+      // Page de CHOIX du plan (et non un checkout direct) : sinon les comptes sans
+      // abonnement étaient renvoyés en boucle vers un Stripe Pro par défaut, sans
+      // pouvoir choisir Max. /billing affiche Pro/Max → checkout du plan choisi.
+      return NextResponse.redirect(new URL('/billing', request.url))
     }
   }
 
