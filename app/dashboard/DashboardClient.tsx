@@ -2384,6 +2384,7 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
         position: 'relative', width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer',
         background: open ? C.b2 : 'transparent', color: open ? C.tx : C.td, fontSize: 15,
         display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
+        outline: 'none', WebkitTapHighlightColor: 'transparent',
       }}>
         🧭
         {!seen && (
