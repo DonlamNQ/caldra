@@ -29,3 +29,4 @@ worker/node_modules/
 
 scripts/test-debrief.mjs
 scripts/seed-debrief.mjs
+scripts/prelaunch-cleanup.mjs
