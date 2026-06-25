@@ -546,7 +546,7 @@ const HTML = `
         <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li>
         <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique illimité</li>
       </ul>
-      <a href="/signup" class="plan-btn plan-btn-sec">Essayer 7 jours gratuitement →</a>
+      <a href="/signup?plan=pro" class="plan-btn plan-btn-sec">Essayer 7 jours gratuitement →</a>
     </div>
     <div class="plan plan-max">
       <div class="plan-pop">Recommandé</div>
@@ -559,7 +559,7 @@ const HTML = `
         <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>7 schémas avancés exclusifs</li>
         <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport hebdomadaire</li>
       </ul>
-      <a href="/signup" class="plan-btn plan-btn-pri">Essayer 7 jours gratuitement →</a>
+      <a href="/signup?plan=max" class="plan-btn plan-btn-pri">Essayer 7 jours gratuitement →</a>
     </div>
   </div>
   <p class="price-note">7 jours d'essai gratuit · Carte bancaire requise · Débit automatique à J+7 sauf résiliation</p>

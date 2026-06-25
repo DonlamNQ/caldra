@@ -82,8 +82,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Sur /login ou /signup avec session active → dashboard
+  // Sur /login ou /signup avec session active → dashboard.
+  // Exception : si un plan est passé en query (clic sur un prix de la landing par un
+  // user déjà connecté), on l'envoie direct au checkout du bon plan — pas de détour
+  // par l'écran de choix /billing.
   if ((path === '/login' || path === '/signup') && user) {
+    const plan = request.nextUrl.searchParams.get('plan')
+    if (plan === 'pro' || plan === 'max') {
+      return NextResponse.redirect(new URL(`/api/billing/checkout?plan=${plan}`, request.url))
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
