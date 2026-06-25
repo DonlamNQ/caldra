@@ -55,6 +55,7 @@ export default async function DashboardPage() {
     { data: lastTrade },
     { data: mt5Accounts },
     { data: tradovateAccounts },
+    { data: allAlertTypes },
   ] = await Promise.all([
     service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
       .order('level', { ascending: false }).order('created_at', { ascending: false }),
@@ -75,7 +76,12 @@ export default async function DashboardPage() {
     service.from('trades').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     service.from('mt5_accounts').select('status').eq('user_id', user.id),
     service.from('tradovate_accounts').select('tradovate_account_id').eq('user_id', user.id),
+    service.from('alerts').select('type').eq('user_id', user.id),
   ])
+
+  // Compteurs de patterns sur TOUTE la durée (pour Analytics → Comportement)
+  const allTimePatterns: Record<string, number> = {}
+  for (const r of allAlertTypes ?? []) { const ty = (r as { type?: string }).type; if (ty) allTimePatterns[ty] = (allTimePatterns[ty] ?? 0) + 1 }
 
   // Today
   const safeAlerts: AlertRow[] = todayAlerts ?? []
@@ -180,6 +186,7 @@ export default async function DashboardPage() {
       ctraderPending={ctraderPending}
       lastTradeAt={lastTrade?.created_at ?? null}
       platformConnected={platformConnected}
+      allTimePatterns={allTimePatterns}
     />
   )
 }

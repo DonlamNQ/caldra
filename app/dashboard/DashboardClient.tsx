@@ -81,6 +81,7 @@ interface DashboardClientProps {
   ctraderPending?: boolean
   lastTradeAt: string | null
   platformConnected?: boolean
+  allTimePatterns?: Record<string, number>
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -359,7 +360,7 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-        <text x={PXL - 3} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>€0</text>
+        <text x={PXL - 3} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: SANS }}>€0</text>
       </svg>
     )
   }
@@ -472,11 +473,11 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         {yTicks.map(v => (
           <text key={`t${v}`} x={PXL - 3} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
-            textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>{fmtY(v)}</text>
+            textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: SANS }}>{fmtY(v)}</text>
         ))}
         {xIdxs.map(i => (
           <text key={i} x={Math.max(PXL + 14, Math.min(W - PXR - 14, xOf(i)))}
-            y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="5" style={{ fontFamily: 'var(--font-geist-mono),monospace' }}>
+            y={H - PYB + 12} textAnchor="middle" fill={axisColor} fontSize="5" style={{ fontFamily: SANS }}>
             {pts[i].t}
           </text>
         ))}
@@ -1266,7 +1267,7 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
 }
 
 // ── AnalyticsPanel ─────────────────────────────────────────────────────────────
-function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number }) {
+function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, allTimePatterns }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number; allTimePatterns?: Record<string, number> }) {
   const C = useContext(ThemeCtx)
   // On affiche TOUJOURS la page — même sans aucune donnée. Chaque sous-bloc a son
   // propre état vide (placeholders), donc la structure reste lisible à zéro trade.
@@ -1277,11 +1278,14 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
   const sessionsCritical = sessions.filter(d => d.score < 40).length
   const allAlerts = [...sessions.flatMap(d => d.alerts), ...todayAlerts.map(a => ({ type: a.type ?? '', level: a.level ?? 1 }))]
 
-  const patternCounts: Record<string, number> = {}
+  // Patterns déclenchés sur TOUTE la durée (compteurs all-time fournis par le serveur),
+  // sinon repli sur la fenêtre chargée (30 j).
+  const winCounts: Record<string, number> = {}
   for (const a of allAlerts) {
     const t = a.type ?? ''
-    if (t) patternCounts[t] = (patternCounts[t] ?? 0) + 1
+    if (t) winCounts[t] = (winCounts[t] ?? 0) + 1
   }
+  const patternCounts = (allTimePatterns && Object.keys(allTimePatterns).length) ? allTimePatterns : winCounts
   const patterns = Object.entries(patternCounts).sort((a, b) => b[1] - a[1]).slice(0, 6)
   const maxCount = patterns[0]?.[1] ?? 1
 
@@ -2375,15 +2379,23 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
     const willOpen = !open
     setOpen(willOpen)
     if (willOpen) {
-      if (!store[view]?.text && !store[view]?.loading) load(view)
+      if (avail(view) && !store[view]?.text && !store[view]?.loading) load(view)
       if (!seen) { setSeen(true); try { localStorage.setItem(seenKey, '1') } catch {} }
     }
   }
-  const select = (v: 'day' | '7' | '30') => { setView(v); load(v) }
+  const select = (v: 'day' | '7' | '30') => { setView(v); if (avail(v)) load(v) }
+
+  // Le bilan Semaine n'est dispo qu'en fin de semaine (ven–dim), le bilan Mois qu'au
+  // dernier jour du mois.
+  const now0 = new Date()
+  const dow0 = now0.getDay()
+  const weekAvail = dow0 === 5 || dow0 === 6 || dow0 === 0
+  const monthAvail = now0.getDate() === new Date(now0.getFullYear(), now0.getMonth() + 1, 0).getDate()
+  function avail(v: 'day' | '7' | '30') { return v === '7' ? weekAvail : v === '30' ? monthAvail : true }
 
   const cur = store[view] || {}
   const tabs: Array<{ k: 'day' | '7' | '30'; label: string }> = [
-    { k: 'day', label: 'Aujourd’hui' }, { k: '7', label: '7 jours' }, { k: '30', label: '30 jours' },
+    { k: 'day', label: 'Aujourd’hui' }, { k: '7', label: 'Semaine' }, { k: '30', label: 'Mois' },
   ]
 
   return (
@@ -2423,9 +2435,14 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
             ))}
           </div>
           <div style={{ padding: 14, overflowY: 'auto' }}>
-            {cur.loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse en cours…</div>}
-            {!cur.loading && cur.error && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>{cur.error}</div>}
-            {!cur.loading && cur.text && cur.text.split('\n').map((line, i) => {
+            {!avail(view) && (
+              <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic', lineHeight: 1.5 }}>
+                {view === '7' ? 'Le bilan de la semaine sera disponible en fin de semaine.' : 'Le bilan du mois sera disponible au dernier jour du mois.'}
+              </div>
+            )}
+            {avail(view) && cur.loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse en cours…</div>}
+            {avail(view) && !cur.loading && cur.error && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>{cur.error}</div>}
+            {avail(view) && !cur.loading && cur.text && cur.text.split('\n').map((line, i) => {
               if (!line.trim()) return <div key={i} style={{ height: 6 }} />
               const parts = line.split(/\*\*(.*?)\*\*/g)
               return (
@@ -2914,7 +2931,7 @@ type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
   yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, journalTrades, plan, userMeta,
-  ctraderConnected, ctraderConflict, ctraderPending, lastTradeAt, platformConnected,
+  ctraderConnected, ctraderConflict, ctraderPending, lastTradeAt, platformConnected, allTimePatterns,
 }: DashboardClientProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     typeof window !== 'undefined' ? (localStorage.getItem('caldra-theme') as 'dark' | 'light') ?? 'dark' : 'dark'
@@ -3485,7 +3502,7 @@ export default function DashboardClient({
               <CalendrierPanel sessions={historicalSessions} />
             )}
             {activeTab === 'analytics' && (
-              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={tradingRules?.account_size || 10000} />
+              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={tradingRules?.account_size || 10000} allTimePatterns={allTimePatterns} />
             )}
             {activeTab === 'rapports' && (
               <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />

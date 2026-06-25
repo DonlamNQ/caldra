@@ -54,7 +54,8 @@ export async function POST(_req: NextRequest) {
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const haiku = async (system: string, content: string, maxTokens = 400) => {
-    const msg = await anthropic.messages.create({ model: 'claude-haiku-4-5', max_tokens: maxTokens, system, messages: [{ role: 'user', content }] })
+    // température 0 → sortie quasi déterministe : même débrief quels que soient l'appareil/l'instant.
+    const msg = await anthropic.messages.create({ model: 'claude-haiku-4-5', max_tokens: maxTokens, temperature: 0, system, messages: [{ role: 'user', content }] })
     return (msg.content as any[]).filter(b => b.type === 'text').map(b => b.text).join('').trim()
   }
 
