@@ -15,6 +15,8 @@ const DEFAULTS = {
   account_size: 10000,
   slack_webhook_url: null as string | null,
   tz_offset_hours: 0,
+  max_leverage: 30,
+  require_stop_loss: false,
 }
 
 async function getUser() {
@@ -61,6 +63,8 @@ export async function PUT(req: NextRequest) {
     account_size: Number(body.account_size) || 10000,
     slack_webhook_url: body.slack_webhook_url ? String(body.slack_webhook_url) : null,
     tz_offset_hours: Math.round(Number(body.tz_offset_hours ?? 0)),
+    max_leverage: Number(body.max_leverage) || 30,
+    require_stop_loss: body.require_stop_loss === true || body.require_stop_loss === 'true',
   }
 
   const { data, error } = await service()
@@ -71,7 +75,7 @@ export async function PUT(req: NextRequest) {
 
   if (error) {
     // Retry without optional columns that may not exist yet in older DB schemas
-    const { account_size, slack_webhook_url, tz_offset_hours, ...baseRules } = rules
+    const { account_size, slack_webhook_url, tz_offset_hours, max_leverage, require_stop_loss, ...baseRules } = rules
     const { data: data2, error: error2 } = await service()
       .from('trading_rules')
       .upsert(baseRules, { onConflict: 'user_id' })

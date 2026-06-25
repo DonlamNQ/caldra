@@ -164,6 +164,24 @@ def post_trade(ingest_key: str, payload: dict):
         print("[ingest] erreur réseau:", e)
 
 
+def position_stop_loss(position_id):
+    """Stop-loss (prix) de la position fermée, lu sur ses ordres d'historique.
+    Les deals MT5 ne portent pas le SL — seuls les ordres l'ont. On prend l'ordre
+    d'entrée (le plus ancien) ; repli sur n'importe quel ordre de la position dont
+    le SL est défini. Renvoie None si aucun SL n'a jamais été posé."""
+    try:
+        orders = mt5.history_orders_get(position=position_id)
+    except Exception:
+        orders = None
+    if not orders:
+        return None
+    for o in sorted(orders, key=lambda x: getattr(x, "time_setup", 0)):
+        sl = getattr(o, "sl", 0) or 0
+        if sl > 0:
+            return float(sl)
+    return None
+
+
 def ensure_init(force: bool = False):
     """(Re)connecte le terminal MT5 ; le relance s'il a été fermé."""
     if force or mt5.terminal_info() is None:
@@ -336,6 +354,8 @@ def process_account(row: dict):
         # PnL = colonne "Profit" de MT5 (comme l'EA) — hors commission/swap, pour
         # coller à ce que le trader voit dans son terminal.
         pnl = (d.profit or 0)
+        # Stop-loss planifié (prix) → débloque les détecteurs risk_exceeded / no_stop.
+        sl = position_stop_loss(d.position_id)
         payload = {
             "symbol":      str(d.symbol).strip(),
             "direction":   direction,
@@ -345,6 +365,7 @@ def process_account(row: dict):
             "entry_time":  entry_time,
             "exit_time":   iso(d.time - offset),
             "pnl":         round(float(pnl), 2),
+            "stop_loss":   sl,
         }
         if payload["entry_price"] > 0 and payload["exit_price"] > 0 and payload["size"] > 0:
             post_trade(ingest_key, payload)

@@ -42,6 +42,8 @@ create table if not exists trading_rules (
   session_end                   time        not null default '16:00',
   max_trades_per_session        int         not null default 10,
   max_risk_per_trade_pct        numeric     not null default 1,
+  max_leverage                  numeric     not null default 30,
+  require_stop_loss             boolean     not null default false,
   created_at                    timestamptz not null default now(),
   updated_at                    timestamptz not null default now()
 );
@@ -240,4 +242,10 @@ alter table user_profiles add constraint user_profiles_plan_check check (plan in
 -- écrit 'trialing' / 'active' (accès) ou 'canceled' / 'past_due' (accès coupé).
 -- `plan` reste 'pro'/'max' (jamais NULL) mais ne suffit plus à donner l'accès.
 alter table user_profiles add column if not exists subscription_status text;
+
+-- v2.10 : seuil de levier configurable (détecteur overleverage) + exigence de
+-- stop-loss (détecteur no_stop, opt-in). Lus avec défaut côté engine, donc la
+-- migration n'est pas bloquante — mais sans ces colonnes l'UI ne peut pas les régler.
+alter table trading_rules add column if not exists max_leverage      numeric not null default 30;
+alter table trading_rules add column if not exists require_stop_loss boolean not null default false;
 

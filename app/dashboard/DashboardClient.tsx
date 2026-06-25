@@ -43,6 +43,8 @@ interface TradingRules {
   account_size: number
   slack_webhook_url: string | null
   tz_offset_hours: number
+  max_leverage?: number
+  require_stop_loss?: boolean
 }
 
 interface SessionStats { total_trades: number; total_pnl: number; wins: number; losses: number }
@@ -2123,11 +2125,13 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
     min_time_between_entries_sec: 120, session_start: '09:30',
     session_end: '16:00', max_trades_per_session: 10, max_risk_per_trade_pct: 1,
     account_size: 10000, slack_webhook_url: null, tz_offset_hours: 0,
+    max_leverage: 30, require_stop_loss: false,
   }
   const [rules, setRules] = useState<TradingRules>(initial ?? defaults)
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   function set(k: keyof TradingRules, v: string) { setRules(p => ({ ...p, [k]: v })); setSave('idle') }
+  function setBool(k: keyof TradingRules, v: boolean) { setRules(p => ({ ...p, [k]: v })); setSave('idle') }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
@@ -2184,6 +2188,24 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
             </RuleField>
             <RuleField label="Risk max par trade" unit="%">
               <input style={inputStyle} type="number" min={0.1} max={10} step={0.1} value={rules.max_risk_per_trade_pct} onChange={e => set('max_risk_per_trade_pct', e.target.value)} />
+            </RuleField>
+            <RuleField label="Levier max" unit="×">
+              <input style={inputStyle} type="number" min={1} max={500} step={1} value={rules.max_leverage ?? 30} onChange={e => set('max_leverage', e.target.value)} />
+            </RuleField>
+            <RuleField label="Exiger un stop-loss">
+              <button
+                type="button" role="switch" aria-checked={!!rules.require_stop_loss}
+                onClick={() => setBool('require_stop_loss', !rules.require_stop_loss)}
+                style={{
+                  width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer', padding: 2,
+                  background: rules.require_stop_loss ? C.red : 'rgba(255,255,255,.12)',
+                  display: 'flex', alignItems: 'center',
+                  justifyContent: rules.require_stop_loss ? 'flex-end' : 'flex-start',
+                  transition: 'background .2s',
+                }}
+              >
+                <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', display: 'block' }} />
+              </button>
             </RuleField>
           </RuleGroup>
 
