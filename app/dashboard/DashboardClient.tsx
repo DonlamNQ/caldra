@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
@@ -2314,43 +2315,87 @@ function ToastContainer({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss:
   )
 }
 
-// ── DebriefMenu — icône dans la barre du haut + panneau déroulant (plan Max) ─────
-// Débrief PRÉ-GÉNÉRÉ au chargement : prêt avant même qu'on ouvre le panneau.
-function DebriefMenu() {
+// ── DebriefMenu — icône dans la barre du haut + panneau (plan Max) ───────────────
+// N'apparaît qu'à la FIN de session (heure de fin dépassée + au moins un trade du
+// jour). Débrief généré UNE fois par jour (cache localStorage). Pastille pulsante
+// jusqu'au 1er clic pour attirer l'attention. À minuit (nouveau jour, plus de trade)
+// → l'icône disparaît d'elle-même.
+function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; sessionEnd: string | null }) {
   const C = useContext(ThemeCtx)
+  const today = new Date().toISOString().slice(0, 10)
+  const cacheKey = `caldra_debrief_${today}`
+  const seenKey = `caldra_debrief_seen_${today}`
+
   const [open, setOpen] = useState(false)
   const [debrief, setDebrief] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [seen, setSeen] = useState(true)
+  const [ended, setEnded] = useState(false)
 
+  // Fin de session atteinte ? (re-vérifié chaque minute)
   useEffect(() => {
+    if (!sessionEnd) { setEnded(false); return }
+    const check = () => {
+      const [h, m] = String(sessionEnd).split(':').map(Number)
+      if (isNaN(h)) { setEnded(false); return }
+      const now = new Date(); const end = new Date(); end.setHours(h, m || 0, 0, 0)
+      setEnded(now >= end)
+    }
+    check()
+    const id = setInterval(check, 60_000)
+    return () => clearInterval(id)
+  }, [sessionEnd])
+
+  const visible = tradesToday > 0 && ended
+
+  // Génération 1×/jour : cache localStorage, sinon un seul appel API.
+  useEffect(() => {
+    if (!visible) return
+    try {
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) { setDebrief(cached); setSeen(localStorage.getItem(seenKey) === '1'); return }
+    } catch {}
+    setSeen(false); setLoading(true); setError(null)
     let cancelled = false
     ;(async () => {
       try {
-        const res = await fetch('/api/debrief?latest=1', { method: 'POST' })
+        const res = await fetch('/api/debrief', { method: 'POST' })
         const data = await res.json()
         if (cancelled) return
-        if (res.ok && data.debrief) setDebrief(data.debrief)
+        if (res.ok && data.debrief) { setDebrief(data.debrief); try { localStorage.setItem(cacheKey, data.debrief) } catch {} }
         else setError(data.error ?? 'Aucune session à débriefer.')
       } catch { if (!cancelled) setError('Indisponible pour le moment.') }
       finally { if (!cancelled) setLoading(false) }
     })()
     return () => { cancelled = true }
-  }, [])
+  }, [visible, cacheKey, seenKey])
+
+  if (!visible) return null
+
+  const toggle = () => {
+    setOpen(o => !o)
+    if (!seen) { setSeen(true); try { localStorage.setItem(seenKey, '1') } catch {} }
+  }
 
   return (
     <div style={{ position: 'relative', marginLeft: 6, fontFamily: SANS }}>
-      <button onClick={() => setOpen(o => !o)} title="Débrief de session" style={{
-        width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer',
+      <button onClick={toggle} title="Débrief de session" style={{
+        position: 'relative', width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer',
         background: open ? C.b2 : 'transparent', color: open ? C.tx : C.td, fontSize: 15,
         display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
-      }}>🧭</button>
-      {open && (
+      }}>
+        🧭
+        {!seen && (
+          <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, borderRadius: '50%', background: C.red, boxShadow: `0 0 0 2px ${C.sf}`, animation: 'pulse 1.6s infinite' }} />
+        )}
+      </button>
+      {open && createPortal(
         <div style={{
-          position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 'min(340px, calc(100vw - 24px))',
-          maxHeight: '60vh', display: 'flex', flexDirection: 'column', background: C.sf,
+          position: 'fixed', top: 54, right: 16, width: 'min(360px, calc(100vw - 24px))',
+          maxHeight: '70vh', display: 'flex', flexDirection: 'column', background: C.sf,
           border: `.5px solid ${C.b2}`, borderRadius: 12, overflow: 'hidden',
-          boxShadow: '0 16px 44px rgba(0,0,0,.5)', zIndex: 9997, animation: 'fadeUp .18s ease',
+          boxShadow: '0 16px 44px rgba(0,0,0,.55)', zIndex: 100000, animation: 'fadeUp .18s ease', fontFamily: SANS,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -2360,7 +2405,7 @@ function DebriefMenu() {
             <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: C.te, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 2 }}>✕</button>
           </div>
           <div style={{ padding: 14, overflowY: 'auto' }}>
-            {loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse de ta dernière séance…</div>}
+            {loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse de ta séance…</div>}
             {!loading && error && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>{error}</div>}
             {!loading && debrief && debrief.split('\n').map((line, i) => {
               if (!line.trim()) return <div key={i} style={{ height: 6 }} />
@@ -2372,7 +2417,8 @@ function DebriefMenu() {
               )
             })}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
@@ -3245,7 +3291,7 @@ export default function DashboardClient({
                 </button>
               ))}
             </div>
-            {isMaxPlan(plan) && <DebriefMenu />}
+            {isMaxPlan(plan) && <DebriefMenu tradesToday={stats.total_trades} sessionEnd={tradingRules?.session_end ?? null} />}
           </div>
           {/* Right controls */}
           <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, marginLeft: 'auto', flexShrink: 0, height: 46 }}>
