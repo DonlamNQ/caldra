@@ -189,22 +189,7 @@ section('Endpoints protégés — accès sans session')
   const r = await req('GET', '/api/api-key')
   check('GET /api/api-key sans session → 401', r.status === 401)
 }
-{
-  const r = await req('POST', '/api/sentinel', { body: { messages: [{ role: 'user', content: 'test' }], context: {} } })
-  check('POST /api/sentinel sans session → 401', r.status === 401)
-}
-
-// ─── 5. Sentinel — validation (sans vraie session, teste la route elle-même) ─
-
-section('POST /api/sentinel — validation messages (sans session)')
-
-// Sans session on obtient 401 avant la validation — ces tests
-// vérifient le comportement quand Supabase est bypassé.
-// → En pratique, confirmés lors des tests manuels.
-console.log('  ℹ  Validation interne (max 20 msgs, 500 chars, rôles) vérifiable uniquement en session active.')
-console.log('     Voir checklist manuelle — test_checklist.md')
-
-// ─── 6. CORS /api/ingest ──────────────────────────────────────────────────────
+// ─── CORS /api/ingest ──────────────────────────────────────────────────────
 
 section('OPTIONS /api/ingest — CORS preflight')
 

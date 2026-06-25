@@ -20,7 +20,7 @@ const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
 const FEATURES = [
   { icon: '◈', title: '6 patterns comportementaux', desc: 'Revenge sizing, drawdown, re-entrées, overtrading…' },
   { icon: '◉', title: 'Score de session en temps réel', desc: 'Ton état mental traduit en données exploitables.' },
-  { icon: '◆', title: 'Sentinel IA', desc: 'Analyse et débrief comportemental après chaque session.' },
+  { icon: '◆', title: 'Alertes en temps réel', desc: 'Notifié dès qu\'un schéma à risque se déclenche, à l\'ouverture comme à la clôture.' },
 ]
 
 export default function LoginPage() {

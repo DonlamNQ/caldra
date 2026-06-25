@@ -30,6 +30,8 @@ export interface TradeItem {
 
 export interface WeeklyReportData {
   weekLabel: string
+  periodTitle?: string   // 'RAPPORT HEBDOMADAIRE' (défaut) | 'RAPPORT MENSUEL'
+  bucketUnit?: string    // 'JOUR' (défaut) | 'SEMAINE' — libellé de l'axe du graphe score
   generatedAt: string
   userEmail: string
   days: DayData[]
@@ -308,7 +310,7 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
         <View style={s.header}>
           <View>
             <Text style={s.logo}>CALDRA</Text>
-            <Text style={s.logoSub}>RAPPORT HEBDOMADAIRE</Text>
+            <Text style={s.logoSub}>{data.periodTitle ?? 'RAPPORT HEBDOMADAIRE'}</Text>
           </View>
           <View style={s.headerRight}>
             <Text style={s.weekLabel}>{data.weekLabel}</Text>
@@ -354,7 +356,7 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
         {/* ── Graphiques ─────────────────────────────────────────────── */}
         <View style={[s.section, s.chartsRow]}>
           <View style={s.chartBox}>
-            <Text style={s.chartTitle}>SCORE PAR JOUR</Text>
+            <Text style={s.chartTitle}>SCORE PAR {data.bucketUnit ?? 'JOUR'}</Text>
             <ScoreBarChart days={data.days} />
           </View>
           <View style={[s.chartBox, s.chartBoxLast]}>
@@ -433,7 +435,7 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
           </View>
         ) : (
           <View style={s.emptyState}>
-            <Text style={{ fontSize: 12, color: M }}>Aucun trade cette semaine</Text>
+            <Text style={{ fontSize: 12, color: M }}>Aucun trade sur la période</Text>
           </View>
         )}
 

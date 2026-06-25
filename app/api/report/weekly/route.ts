@@ -8,7 +8,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { WeeklyReport } from '@/lib/pdf/WeeklyReport'
 import type { WeeklyReportData, DayData, AlertTypeData, TradeItem } from '@/lib/pdf/WeeklyReport'
-import { isMaxPlan } from '@/lib/plans'
+import { isMaxPlan, isPaidPlan } from '@/lib/plans'
 
 const ALERT_LABELS: Record<string, string> = {
   revenge_sizing: 'Revenge Sizing',
@@ -83,76 +83,109 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabaseAuth.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Determine week start (Monday)
+  // Période : 'week' (hebdo, plan Max) ou 'month' (mensuel, tous plans payants).
   const { searchParams } = new URL(req.url)
-  const weekStartParam = searchParams.get('week_start')
-  const monday = weekStartParam
-    ? new Date(weekStartParam + 'T00:00:00Z')
-    : getMondayOf(toISODate(new Date()))
-  const sunday = addDays(monday, 6)
+  const period = searchParams.get('period') === 'month' ? 'month' : 'week'
 
   const service = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Rapport hebdomadaire = fonctionnalité plan Max uniquement.
   const { data: profile } = await service
     .from('user_profiles')
     .select('plan')
     .eq('user_id', user.id)
     .single()
-  if (!isMaxPlan(profile?.plan)) {
+  if (period === 'week' && !isMaxPlan(profile?.plan)) {
     return NextResponse.json({ error: 'Le rapport hebdomadaire est réservé au plan Max.' }, { status: 403 })
   }
+  if (period === 'month' && !isPaidPlan(profile?.plan)) {
+    return NextResponse.json({ error: 'Le rapport mensuel nécessite un abonnement.' }, { status: 403 })
+  }
 
-  const weekStartStr = toISODate(monday)
-  const weekEndStr = toISODate(addDays(sunday, 1)) // exclusive upper bound
+  // Plage [rangeStart, rangeEndExcl) + découpage en buckets : un par jour ouvré
+  // (semaine) ou un par semaine (mois), pour garder les graphes lisibles.
+  let rangeStart: Date
+  let rangeEndExcl: Date
+  let periodTitle: string
+  let bucketUnit: string
+  let periodLabel: string
+  const buckets: { label: string; startStr: string; endStr: string }[] = []
+
+  if (period === 'month') {
+    const monthParam = searchParams.get('month') // 'YYYY-MM'
+    const base = monthParam ? new Date(monthParam + '-01T00:00:00Z') : new Date()
+    const y = base.getUTCFullYear(), m = base.getUTCMonth()
+    rangeStart = new Date(Date.UTC(y, m, 1))
+    rangeEndExcl = new Date(Date.UTC(y, m + 1, 1))
+    periodTitle = 'RAPPORT MENSUEL'
+    bucketUnit = 'SEMAINE'
+    periodLabel = rangeStart.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    let ws = new Date(rangeStart), wi = 1
+    while (ws < rangeEndExcl) {
+      const weRaw = addDays(ws, 7)
+      const we = weRaw < rangeEndExcl ? weRaw : rangeEndExcl
+      buckets.push({ label: `S${wi}`, startStr: toISODate(ws), endStr: toISODate(we) })
+      ws = weRaw; wi++
+    }
+  } else {
+    const weekStartParam = searchParams.get('week_start')
+    const monday = weekStartParam
+      ? new Date(weekStartParam + 'T00:00:00Z')
+      : getMondayOf(toISODate(new Date()))
+    rangeStart = monday
+    rangeEndExcl = addDays(monday, 7)
+    periodTitle = 'RAPPORT HEBDOMADAIRE'
+    bucketUnit = 'JOUR'
+    periodLabel = weekLabel(monday)
+    for (let i = 0; i < 7; i++) {
+      const day = addDays(monday, i)
+      const dow = day.getUTCDay()
+      if (dow === 0 || dow === 6) continue // jours ouvrés seulement
+      buckets.push({ label: frLabel(day), startStr: toISODate(day), endStr: toISODate(addDays(day, 1)) })
+    }
+  }
+
+  const rangeStartStr = toISODate(rangeStart)
+  const rangeEndStr = toISODate(rangeEndExcl)
 
   const [{ data: trades }, { data: alerts }] = await Promise.all([
     service
       .from('trades')
       .select('*')
       .eq('user_id', user.id)
-      .gte('entry_time', weekStartStr)
-      .lt('entry_time', weekEndStr)
+      .gte('entry_time', rangeStartStr)
+      .lt('entry_time', rangeEndStr)
       .order('entry_time'),
     service
       .from('alerts')
       .select('*')
       .eq('user_id', user.id)
-      .gte('session_date', weekStartStr)
-      .lt('session_date', weekEndStr)
+      .gte('session_date', rangeStartStr)
+      .lt('session_date', rangeEndStr)
       .order('session_date'),
   ])
 
   const safeTrades = trades ?? []
   const safeAlerts = alerts ?? []
 
-  // Build day-by-day data (Mon–Fri only)
-  const days: DayData[] = []
-  for (let i = 0; i < 7; i++) {
-    const day = addDays(monday, i)
-    const dow = day.getUTCDay() // 0=Sun, 6=Sat
-    if (dow === 0 || dow === 6) continue // skip weekends
-
-    const dateStr = toISODate(day)
-    const dayTrades = safeTrades.filter(t => t.entry_time?.startsWith(dateStr))
-    const dayAlerts = safeAlerts.filter(a => a.session_date === dateStr)
-
-    const wins = dayTrades.filter(t => (t.pnl ?? 0) > 0).length
-    const pnl = dayTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
-
-    days.push({
-      date: dateStr,
-      label: frLabel(day),
-      score: computeScore(dayAlerts),
+  // Données par bucket
+  const days: DayData[] = buckets.map(b => {
+    const bTrades = safeTrades.filter(t => t.entry_time >= b.startStr && t.entry_time < b.endStr)
+    const bAlerts = safeAlerts.filter(a => a.session_date >= b.startStr && a.session_date < b.endStr)
+    const wins = bTrades.filter(t => (t.pnl ?? 0) > 0).length
+    const pnl = bTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
+    return {
+      date: b.startStr,
+      label: b.label,
+      score: computeScore(bAlerts),
       pnl,
-      tradeCount: dayTrades.length,
+      tradeCount: bTrades.length,
       wins,
-      alertCount: dayAlerts.length,
-    })
-  }
+      alertCount: bAlerts.length,
+    }
+  })
 
   // Summary
   const tradingDays = days.filter(d => d.tradeCount > 0)
@@ -201,7 +234,9 @@ export async function GET(req: NextRequest) {
   })
 
   const data: WeeklyReportData = {
-    weekLabel: weekLabel(monday),
+    weekLabel: periodLabel,
+    periodTitle,
+    bucketUnit,
     generatedAt: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
     userEmail: user.email ?? '',
     days,
@@ -219,7 +254,7 @@ export async function GET(req: NextRequest) {
 
   const pdfBuffer = await renderToBuffer(React.createElement(WeeklyReport, { data }) as any)
 
-  const filename = `caldra-rapport-${weekStartStr}.pdf`
+  const filename = `caldra-rapport-${period === 'month' ? 'mensuel' : 'hebdo'}-${rangeStartStr}.pdf`
   return new Response(new Uint8Array(pdfBuffer), {
     headers: {
       'Content-Type': 'application/pdf',

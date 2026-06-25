@@ -183,10 +183,6 @@ async function saveAndNotify(
     return sendPushToUser(trade.user_id, title, body + suffix, topPush.level)
   }).catch(() => {})
 
-  // Le coaching IA n'est plus généré ici (redondant + jamais affiché) : les cartes
-  // de coaching sont produites côté client via /api/sentinel (Haiku), et le débrief
-  // de session via /api/debrief. Voir SentinelPanel.
-
   return alerts
 }
 

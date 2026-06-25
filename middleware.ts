@@ -4,11 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/billing/webhook', '/api/waitlist', '/forgot-password', '/reset-password']
 
 // ── Rate limiting in-memory (par IP) ─────────────────────────────────────────
-// Limites : /api/ingest 60 req/min | /api/waitlist 5 req/min | /api/sentinel 10 req/min
+// Limites : /api/ingest 60 req/min | /api/waitlist 5 req/min | /api/api-key 10 req/min
 const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   '/api/ingest':   { max: 60,  windowMs: 60_000 },
   '/api/waitlist': { max: 5,   windowMs: 60_000 },
-  '/api/sentinel': { max: 10,  windowMs: 60_000 },
   '/api/api-key':  { max: 10,  windowMs: 60_000 },
 }
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()

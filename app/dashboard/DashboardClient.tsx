@@ -1556,7 +1556,9 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
   const [loading, setLoading] = useState<string | null>(null)
   const isMax = isMaxPlan(plan)
 
-  function getWeekMonday(offsetWeeks: number = 0): Date {
+  const toISODate = (d: Date) => d.toISOString().split('T')[0]
+
+  function getWeekMonday(offsetWeeks = 0): Date {
     const now = new Date()
     const dow = now.getDay()
     const diff = dow === 0 ? -6 : 1 - dow
@@ -1565,32 +1567,29 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
     monday.setHours(0, 0, 0, 0)
     return monday
   }
-
-  function toISODate(d: Date): string {
-    return d.toISOString().split('T')[0]
-  }
-
   function frWeekLabel(monday: Date): string {
-    const sunday = new Date(monday)
-    sunday.setDate(monday.getDate() + 6)
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6)
     const fmtStart = monday.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
     const fmtEnd = sunday.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
     return `${fmtStart} – ${fmtEnd}`
   }
+  const getMonthStart = (offsetMonths = 0) => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth() + offsetMonths, 1)
+  }
+  const toISOMonth = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  const frMonthLabel = (d: Date) => d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
-  async function downloadPdf(weekStart: string) {
-    setLoading(weekStart)
+  async function download(key: string, query: string, filename: string) {
+    setLoading(key)
     try {
-      const res = await fetch(`/api/report/weekly?week_start=${weekStart}`)
+      const res = await fetch(`/api/report/weekly?${query}`)
       if (!res.ok) throw new Error('Erreur génération PDF')
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
-      a.download = `caldra-rapport-${weekStart}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+      a.href = url; a.download = filename
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch {
       // silent — user can retry
@@ -1599,98 +1598,76 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
     }
   }
 
-  const currentMonday = getWeekMonday(0)
-  const weeks = [
-    { monday: getWeekMonday(-1), isCurrent: false },
-    { monday: getWeekMonday(-2), isCurrent: false },
-    { monday: getWeekMonday(-3), isCurrent: false },
-    { monday: getWeekMonday(-4), isCurrent: false },
-  ]
+  const months = [getMonthStart(-1), getMonthStart(-2), getMonthStart(-3)]
+  const weeks = [getWeekMonday(-1), getWeekMonday(-2), getWeekMonday(-3), getWeekMonday(-4)]
+
+  const sectionTitle: React.CSSProperties = { fontSize: 10, letterSpacing: 1, color: C.td, textTransform: 'uppercase', fontFamily: MONO, marginBottom: 2 }
+
+  function ReportRow({ icon, title, sub, k, query, filename }: { icon: string; title: string; sub: string; k: string; query: string; filename: string }) {
+    const isLoading = loading === k
+    return (
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20, display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+        <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{icon}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 400, color: C.tx, marginBottom: 3 }}>{title}</div>
+          <div style={{ fontSize: 11, color: C.td }}>{sub}</div>
+        </div>
+        <button onClick={() => download(k, query, filename)} disabled={isLoading} style={{
+          fontSize: 11, padding: '7px 16px', borderRadius: 8, fontFamily: MONO, whiteSpace: 'nowrap',
+          cursor: isLoading ? 'default' : 'pointer', background: isLoading ? 'rgba(124,58,237,.05)' : C.rd,
+          border: `.5px solid ${C.rb}`, color: isLoading ? C.td : C.red, transition: 'all .18s', opacity: isLoading ? .6 : 1,
+        }}>
+          {isLoading ? 'Génération…' : 'Télécharger PDF'}
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Hebdomadaire</div>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Rapports</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Rapports PDF</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Score, PnL, alertes comportementales, journal des trades — généré à la demande.</div>
       </div>
     <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
 
-      {!isMax && (
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${C.red}`, borderRadius: 12, padding: 22, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🔒</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 500, color: C.tx, marginBottom: 3 }}>Réservé au plan Max</div>
-            <div style={{ fontSize: 12, color: C.td }}>Les rapports PDF hebdomadaires (score, PnL, alertes, journal des trades) sont inclus dans le plan Max.</div>
+      {/* Rapports mensuels — inclus dès le plan Pro */}
+      <div style={sectionTitle}>Mensuels</div>
+      {months.map((d, i) => (
+        <ReportRow key={`m${i}`} icon="📅"
+          title={frMonthLabel(d)}
+          sub={i === 0 ? 'Mois précédent' : `Il y a ${i + 1} mois`}
+          k={`month-${toISOMonth(d)}`}
+          query={`period=month&month=${toISOMonth(d)}`}
+          filename={`caldra-rapport-mensuel-${toISOMonth(d)}.pdf`}
+        />
+      ))}
+
+      {/* Rapports hebdomadaires — plan Max */}
+      <div style={{ ...sectionTitle, marginTop: 10 }}>Hebdomadaires</div>
+      {isMax ? (
+        weeks.map((monday, i) => (
+          <ReportRow key={`w${i}`} icon="📋"
+            title={frWeekLabel(monday)}
+            sub={i === 0 ? 'Semaine précédente' : `Il y a ${i + 1} semaines`}
+            k={`week-${toISODate(monday)}`}
+            query={`period=week&week_start=${toISODate(monday)}`}
+            filename={`caldra-rapport-hebdo-${toISODate(monday)}.pdf`}
+          />
+        ))
+      ) : (
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 18, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ fontSize: 12.5, color: C.td, flex: 1 }}>
+            Les rapports <span style={{ color: C.tx }}>hebdomadaires</span> sont inclus dans le plan <span style={{ color: C.tx }}>Max</span> — un suivi plus rapproché, semaine après semaine.
           </div>
-          <button onClick={onUpgrade} style={{ fontSize: 12, padding: '9px 18px', borderRadius: 8, fontFamily: SANS, fontWeight: 500, cursor: 'pointer', background: C.red, border: 'none', color: '#fff', whiteSpace: 'nowrap' as const, flexShrink: 0 }}>
+          <button onClick={onUpgrade} style={{ fontSize: 12, padding: '8px 16px', borderRadius: 8, fontFamily: SANS, fontWeight: 500, cursor: 'pointer', background: C.red, border: 'none', color: '#fff', whiteSpace: 'nowrap' as const, flexShrink: 0 }}>
             Passer à Max
           </button>
         </div>
       )}
-
-      {isMax && (<>
-      {/* Semaine en cours — non disponible */}
-      <div style={{
-        background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20,
-        display: 'flex', alignItems: 'center', gap: 16, opacity: .5,
-      }}>
-        <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-          📋
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 400, color: C.tx, marginBottom: 3 }}>
-            {frWeekLabel(currentMonday)}
-          </div>
-          <div style={{ fontSize: 11, color: C.td }}>Semaine en cours — disponible lundi prochain</div>
-        </div>
-        <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: MONO, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>
-          En cours
-        </span>
-      </div>
-
-      {/* Semaines passées */}
-      {weeks.map(({ monday }, i) => {
-        const weekStart = toISODate(monday)
-        const isLoading = loading === weekStart
-        return (
-          <div key={i} style={{
-            background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20,
-            display: 'flex', alignItems: 'center', gap: 16,
-            transition: 'border-color .18s', position: 'relative', overflow: 'hidden',
-          }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-            <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-              📋
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 400, color: C.tx, marginBottom: 3 }}>
-                {frWeekLabel(monday)}
-              </div>
-              <div style={{ fontSize: 11, color: C.td }}>
-                {i === 0 ? 'Semaine précédente' : `Il y a ${i + 1} semaines`}
-              </div>
-            </div>
-            <button
-              onClick={() => downloadPdf(weekStart)}
-              disabled={isLoading}
-              style={{
-                fontSize: 11, padding: '7px 16px', borderRadius: 8, fontFamily: MONO,
-                whiteSpace: 'nowrap' as const, cursor: isLoading ? 'default' : 'pointer',
-                background: isLoading ? 'rgba(124,58,237,.05)' : C.rd,
-                border: `.5px solid ${C.rb}`,
-                color: isLoading ? C.td : C.red,
-                transition: 'all .18s',
-                opacity: isLoading ? .6 : 1,
-              }}
-            >
-              {isLoading ? 'Génération…' : 'Télécharger PDF'}
-            </button>
-          </div>
-        )
-      })}
-      </>)}
     </div>
     </div>
   )
@@ -2277,408 +2254,6 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
   )
 }
 
-// ── SentinelPanel ──────────────────────────────────────────────────────────────
-interface ChatMsg { role: 'user' | 'assistant'; content: string; time: string; isDebrief?: boolean }
-interface CoachingCard { id: string; alertType: string; alertLevel: number; alertMessage: string; coaching: string; time: string }
-
-
-// ── Palette signature Sentinel ───────────────────────────────────────────────
-// Surface volontairement distincte du reste de Caldra : un "poste de veille" IA.
-// Deux variantes — nuit profonde (sombre) / lavande (clair) — suivant le thème.
-type SNPalette = typeof SN_DARK
-const SN_DARK = {
-  void: '#060509',
-  panel: 'rgba(139,92,246,.04)',
-  line: 'rgba(255,255,255,.07)',
-  line2: 'rgba(255,255,255,.12)',
-  violet: '#8b5cf6',
-  violetSoft: 'rgba(139,92,246,.55)',
-  halo: 'rgba(124,58,237,.11)',
-  tx: '#ece9f6',
-  tm: 'rgba(236,233,246,.66)',
-  td: 'rgba(236,233,246,.42)',
-  te: 'rgba(236,233,246,.28)',
-  g: '#34e89e', o: '#ffb454', r: '#ff5a52',
-}
-const SN_LIGHT: SNPalette = {
-  void: '#f1eefb',
-  panel: 'rgba(124,58,237,.05)',
-  line: 'rgba(28,20,54,.10)',
-  line2: 'rgba(28,20,54,.17)',
-  violet: '#7c3aed',
-  violetSoft: 'rgba(124,58,237,.42)',
-  halo: 'rgba(124,58,237,.10)',
-  tx: '#1b1436',
-  tm: 'rgba(27,20,54,.74)',
-  td: 'rgba(27,20,54,.52)',
-  te: 'rgba(27,20,54,.36)',
-  g: '#0a7d4f', o: '#b4530a', r: '#d23a2e',
-}
-
-function SentinelOrb({ active, score, SN }: { active: boolean; score: number; SN: SNPalette }) {
-  return (
-    <div style={{ position: 'relative', width: 176, height: 176, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      {active && [0, 1, 2].map(i => (
-        <div key={i} style={{
-          position: 'absolute', width: 120, height: 120, borderRadius: '50%',
-          border: `1px solid ${SN.violetSoft}`,
-          animation: `snRing ${3.4 + i * 0.7}s cubic-bezier(.2,.6,.3,1) ${i * 1.1}s infinite`,
-        }} />
-      ))}
-      {/* anneau statique extérieur */}
-      <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', border: `.5px solid ${active ? SN.violetSoft : SN.line}` }} />
-      <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: `.5px solid ${active ? SN.violet + '30' : 'transparent'}` }} />
-      {/* cœur */}
-      <div style={{
-        width: 78, height: 78, borderRadius: '50%',
-        background: active
-          ? 'radial-gradient(circle at 38% 32%, rgba(167,139,250,.95), rgba(124,58,237,.5) 55%, rgba(76,29,149,.25))'
-          : 'radial-gradient(circle at 38% 32%, rgba(120,120,140,.5), rgba(60,60,75,.3))',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        animation: active ? 'snGlow 3.6s ease-in-out infinite' : 'none',
-        border: `.5px solid ${active ? 'rgba(196,181,253,.5)' : 'rgba(160,160,180,.25)'}`,
-      }}>
-        {active ? (
-          <>
-            <div style={{ fontSize: 26, fontWeight: 300, color: '#fff', lineHeight: 1, letterSpacing: -1, fontFamily: MONO }}>{score}</div>
-            <div style={{ fontSize: 8, color: 'rgba(255,255,255,.6)', fontFamily: MONO, letterSpacing: 1, marginTop: 2 }}>/ 100</div>
-          </>
-        ) : (
-          <div style={{ fontSize: 24, color: 'rgba(220,220,235,.5)' }}>◌</div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function SentinelPanel({ stats, alerts, score, rules, plan, coachingCards, onActivate }: {
-  stats: SessionStats; alerts: AlertRow[]; score: number; rules: TradingRules | null
-  plan: string; coachingCards: CoachingCard[]; onActivate: () => void
-}) {
-  const C = useContext(ThemeCtx)
-  const SN = C === C_LIGHT ? SN_LIGHT : SN_DARK
-  const isSentinel = isMaxPlan(plan)
-
-  const [openTime] = useState(() => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
-  const [msgs, setMsgs] = useState<ChatMsg[]>([{
-    role: 'assistant',
-    content: `Veille initialisée. Score comportemental : ${score}/100. ${alerts.length === 0 ? 'Aucune alerte — comportement nominal.' : `${alerts.length} signal(aux) actif(s) sous surveillance.`}`,
-    time: openTime,
-  }])
-
-  // Session end timer pour le debrief proactif
-  const [sessionEnded, setSessionEnded] = useState(false)
-  const [debriefLoading, setDebriefLoading] = useState(false)
-  const [debriefDone, setDebriefDone] = useState(false)
-  const [debriefFailed, setDebriefFailed] = useState(false)   // stoppe les retries après un échec
-
-  useEffect(() => {
-    if (!rules?.session_end || !isSentinel || stats.total_trades === 0) return
-    const [h, m] = rules.session_end.split(':').map(Number)
-    function check() {
-      const now = new Date()
-      const endTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0)
-      if (now >= endTime && !debriefDone) setSessionEnded(true)
-    }
-    check()
-    const id = setInterval(check, 30000)
-    return () => clearInterval(id)
-  }, [rules, isSentinel, stats.total_trades, debriefDone])
-
-  async function triggerDebrief() {
-    setDebriefLoading(true)
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      const res = await fetch('/api/debrief', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: today }),
-      })
-      const data = await res.json()
-      if (data.debrief) {
-        const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-        setMsgs(prev => [...prev, { role: 'assistant', content: data.debrief, time, isDebrief: true }])
-        setDebriefDone(true)
-        setSessionEnded(false)
-      } else {
-        setDebriefFailed(true)   // erreur applicative → on ne réessaie pas en boucle
-        setMsgs(prev => [...prev, { role: 'assistant', content: data.error ?? 'Erreur lors du debrief.', time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }])
-      }
-    } catch {
-      setDebriefFailed(true)   // erreur réseau → on ne réessaie pas en boucle
-      setMsgs(prev => [...prev, { role: 'assistant', content: 'Erreur réseau lors du debrief.', time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }])
-    } finally {
-      setDebriefLoading(false)
-    }
-  }
-  const streamRef = useRef<HTMLDivElement>(null)
-
-  // Sentinel est PUSH : pas de chat à piloter. Le débrief se déclenche tout seul
-  // à la fermeture de session.
-  useEffect(() => {
-    if (sessionEnded && !debriefDone && !debriefFailed && !debriefLoading) triggerDebrief()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionEnded, debriefDone, debriefFailed, debriefLoading])
-
-  useEffect(() => { streamRef.current?.scrollTo({ top: streamRef.current.scrollHeight, behavior: 'smooth' }) }, [msgs, coachingCards.length, debriefLoading])
-
-  const alertsByType = alerts.reduce<Record<string, number>>((acc, a) => {
-    const t = a.type ?? ''; if (t) acc[t] = (acc[t] ?? 0) + 1; return acc
-  }, {})
-  const dominant = Object.entries(alertsByType).sort((a, b) => b[1] - a[1])[0]
-  const debriefMsg = msgs.find(m => m.isDebrief)
-
-  // ── Lecture comportementale (verdict qualitatif de Sentinel, ≠ KPIs bruts) ───
-  const TENSION_TYPES = ['revenge_sizing', 'averaging_down', 'euphoria_sizing', 'accelerating_frequency', 'immediate_reentry', 'end_of_day_desperation', 'drawdown_override']
-  const hasCritical = alerts.some(a => (a.level ?? a.severity ?? 1) >= 3)
-  const hasTension = alerts.some(a => TENSION_TYPES.includes(a.type ?? ''))
-  const verdict =
-    hasCritical
-      ? { label: 'RUPTURE DE DISCIPLINE', tone: SN.r, text: "Plusieurs garde-fous ont sauté. Le risque d'enchaînement impulsif est élevé — s'arrêter maintenant est la décision la plus rentable." }
-    : hasTension
-      ? { label: 'TENSION ÉMOTIONNELLE', tone: SN.o, text: 'Des réactions à chaud apparaissent dans tes entrées. Ralentis et reviens à ton plan avant la prochaine prise.' }
-    : stats.total_trades === 0
-      ? { label: 'EN PLACE', tone: SN.violet, text: "Je me suis positionné sur ta session. J'analyserai chaque entrée dès le premier trade." }
-    : score >= 80
-      ? { label: 'DISCIPLINE MAÎTRISÉE', tone: SN.g, text: 'Comportement aligné avec tes règles depuis le début. Rien à corriger — garde ce rythme.' }
-      : { label: 'SOUS OBSERVATION', tone: SN.violet, text: "Rien d'alarmant, mais je reste attentif aux écarts de cadence et de taille de position." }
-
-  // ── Sous surveillance : proximité des garde-fous (budget de risque consommé) ──
-  const watchItems: Array<{ label: string; detail: string; pct: number }> = []
-  if (rules) {
-    const acct = rules.account_size || 10000
-    const maxLoss = acct * ((rules.max_daily_drawdown_pct ?? 0) / 100)
-    const loss = stats.total_pnl < 0 ? -stats.total_pnl : 0
-    const ddPct = maxLoss > 0 ? Math.min(100, (loss / maxLoss) * 100) : 0
-    watchItems.push({ label: 'Budget de risque', detail: `${Math.round(ddPct)}% consommé`, pct: ddPct })
-    if (rules.max_trades_per_session > 0)
-      watchItems.push({ label: 'Cadence', detail: `${stats.total_trades} / ${rules.max_trades_per_session} trades`, pct: Math.min(100, (stats.total_trades / rules.max_trades_per_session) * 100) })
-  }
-  if (dominant) watchItems.push({ label: 'Schéma récurrent', detail: `${alertLabel(dominant[0])} ×${dominant[1]}`, pct: Math.min(100, dominant[1] * 25) })
-  const watchCol = (p: number) => (p >= 80 ? SN.r : p >= 50 ? SN.o : SN.violet)
-
-  // ── Activité de la veille (méta : ce que Sentinel a produit, pas la session) ──
-  const debriefStatus = debriefDone ? 'Généré ↓' : debriefLoading ? 'En cours…' : sessionEnded ? 'Imminent' : rules?.session_end ? `Prévu · ${rules.session_end}` : 'En fin de session'
-
-  // ── Top bar commun (wordmark + statut) ──────────────────────────────────────
-  const TopBar = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px', borderBottom: `.5px solid ${SN.line}`, flexShrink: 0, position: 'relative', zIndex: 2 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ width: 9, height: 9, borderRadius: '50%', background: isSentinel ? SN.violet : 'rgba(160,160,180,.4)', boxShadow: isSentinel ? `0 0 10px 1px ${SN.violetSoft}` : 'none', animation: isSentinel ? 'pulse 2.4s infinite' : 'none' }} />
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 400, letterSpacing: 7, color: SN.tx, fontFamily: MONO }}>SENTINEL</div>
-          <div style={{ fontSize: 8, letterSpacing: 3.5, color: SN.te, fontFamily: MONO, marginTop: 3 }}>POSTE DE VEILLE COMPORTEMENTALE</div>
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 13px', border: `.5px solid ${isSentinel ? 'rgba(139,92,246,.35)' : SN.line2}`, borderRadius: 4, background: isSentinel ? 'rgba(139,92,246,.06)' : 'transparent' }}>
-        <div style={{ width: 5, height: 5, borderRadius: '50%', background: isSentinel ? SN.violet : SN.td, animation: isSentinel ? 'pulse 1.8s infinite' : 'none' }} />
-        <span style={{ fontSize: 9, letterSpacing: 2, fontFamily: MONO, color: isSentinel ? SN.violet : SN.td }}>{isSentinel ? 'EN VEILLE' : 'DORMANT'}</span>
-      </div>
-    </div>
-  )
-
-  // ── État DORMANT (plan ≠ max) ────────────────────────────────────────────────
-  if (!isSentinel) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden', background: SN.void, position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(600px 380px at 50% 18%, ${SN.halo}, transparent 70%)`, pointerEvents: 'none' }} />
-        {TopBar}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 26px', position: 'relative', zIndex: 1, gap: 26 }}>
-          <SentinelOrb active={false} score={score} SN={SN} />
-          <div style={{ textAlign: 'center' as const, maxWidth: 440 }}>
-            <div style={{ fontSize: 22, fontWeight: 300, color: SN.tx, letterSpacing: -.3, marginBottom: 12 }}>La veille est hors ligne</div>
-            <div style={{ fontSize: 13, color: SN.tm, lineHeight: 1.7, fontWeight: 300 }}>
-              Sentinel observe ta session en continu : coaching automatique au moment précis où un schéma se déclenche, et débrief généré par l&apos;IA à la fermeture — sans rien demander.
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 11, width: '100%', maxWidth: 380 }}>
-            {[
-              ['Coaching temps réel', 'Une intervention ciblée dès qu’un comportement à risque apparaît.'],
-              ['Débrief de fin de session', 'Une analyse écrite de ta session, générée automatiquement.'],
-              ['Lecture comportementale profonde', 'Au-delà des alertes : les tendances qui se répètent.'],
-            ].map(([t, d]) => (
-              <div key={t} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '12px 14px', border: `.5px solid ${SN.line}`, borderRadius: 6, background: SN.panel }}>
-                <span style={{ color: SN.violet, fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>◆</span>
-                <div>
-                  <div style={{ fontSize: 12.5, color: SN.tx, fontWeight: 400, marginBottom: 3 }}>{t}</div>
-                  <div style={{ fontSize: 11.5, color: SN.td, lineHeight: 1.5, fontWeight: 300 }}>{d}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={onActivate}
-            style={{ padding: '13px 30px', background: SN.violet, border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, letterSpacing: 1, cursor: 'pointer', fontFamily: MONO, boxShadow: '0 6px 26px rgba(124,58,237,.35)' }}
-          >
-            ACTIVER SENTINEL · 34€/MOIS →
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── État ACTIF ───────────────────────────────────────────────────────────────
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden', background: SN.void, position: 'relative' }}>
-      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(720px 460px at 22% 30%, ${SN.halo}, transparent 65%)`, pointerEvents: 'none', animation: 'snDrift 16s ease-in-out infinite' }} />
-      {TopBar}
-      <div className="sentinel-grid" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-
-        {/* ── Colonne CŒUR (instruments) ── */}
-        <div style={{ borderRight: `.5px solid ${SN.line}`, padding: '24px 22px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <SentinelOrb active score={score} SN={SN} />
-          <div style={{ fontSize: 9, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginTop: 8, marginBottom: 22 }}>INDICE DE VIGILANCE</div>
-
-          <div style={{ width: '100%' }}>
-            {/* Évaluation — lecture qualitative de Sentinel */}
-            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginBottom: 8 }}>ÉVALUATION</div>
-            <div style={{ padding: '12px 14px', border: `.5px solid ${SN.line}`, borderLeft: `2px solid ${verdict.tone}`, borderRadius: 5, background: SN.panel, marginBottom: 22 }}>
-              <div style={{ fontSize: 9, fontFamily: MONO, color: verdict.tone, letterSpacing: 1, marginBottom: 6 }}>{verdict.label}</div>
-              <div style={{ fontSize: 11.5, color: SN.tm, lineHeight: 1.55, fontWeight: 300 }}>{verdict.text}</div>
-            </div>
-
-            {/* Sous surveillance — proximité des garde-fous */}
-            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, marginBottom: 10 }}>SOUS SURVEILLANCE</div>
-            {watchItems.length > 0 ? watchItems.map(w => {
-              const col = watchCol(w.pct)
-              return (
-                <div key={w.label} style={{ marginBottom: 13 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
-                    <span style={{ fontSize: 11, color: SN.tm, fontWeight: 300 }}>{w.label}</span>
-                    <span style={{ fontSize: 9.5, fontFamily: MONO, color: col, letterSpacing: .3 }}>{w.detail}</span>
-                  </div>
-                  <div style={{ height: 3, borderRadius: 2, background: SN.line, overflow: 'hidden' }}>
-                    <div style={{ width: `${Math.max(3, w.pct)}%`, height: '100%', background: col, borderRadius: 2, transition: 'width .4s' }} />
-                  </div>
-                </div>
-              )
-            }) : (
-              <div style={{ fontSize: 11, color: SN.td, fontWeight: 300, lineHeight: 1.5, marginBottom: 8 }}>Aucun garde-fou défini. Renseigne tes règles pour que je veille dessus.</div>
-            )}
-
-            {/* Activité de la veille — méta sur le travail de Sentinel */}
-            <div style={{ fontSize: 8.5, letterSpacing: 2, color: SN.te, fontFamily: MONO, margin: '20px 0 4px' }}>ACTIVITÉ DE LA VEILLE</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '8px 0', borderBottom: `.5px solid ${SN.line}` }}>
-              <span style={{ fontSize: 11, color: SN.tm, fontWeight: 300 }}>Interventions émises</span>
-              <span style={{ fontSize: 12, fontFamily: MONO, color: coachingCards.length > 0 ? SN.o : SN.td }}>{coachingCards.length}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '8px 0' }}>
-              <span style={{ fontSize: 11, color: SN.tm, fontWeight: 300 }}>Débrief de session</span>
-              <span style={{ fontSize: 11, fontFamily: MONO, color: debriefDone ? SN.g : SN.td, letterSpacing: .3 }}>{debriefStatus}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Flux de TRANSMISSION ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '14px 26px', borderBottom: `.5px solid ${SN.line}`, flexShrink: 0 }}>
-            <span style={{ fontSize: 9, letterSpacing: 2.5, color: SN.td, fontFamily: MONO }}>FLUX DE TRANSMISSION</span>
-            <div style={{ flex: 1, height: '.5px', background: SN.line }} />
-            <span style={{ fontSize: 9, color: SN.te, fontFamily: MONO, letterSpacing: 1 }}>{coachingCards.length + msgs.length} ENTRÉES</span>
-          </div>
-
-          <div ref={streamRef} style={{ flex: 1, overflowY: 'auto', padding: '20px 26px', minHeight: 0 }}>
-            {/* Entrée d'initialisation */}
-            <StreamEntry time={openTime} kind="system" label="INITIALISATION" SN={SN}>
-              <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{msgs[0].content}</div>
-            </StreamEntry>
-
-            {/* Coaching temps réel */}
-            {coachingCards.map(card => (
-              <StreamEntry
-                key={card.id}
-                time={card.time}
-                kind={card.alertLevel >= 3 ? 'critical' : 'coaching'}
-                label={`L${card.alertLevel} · ${alertLabel(card.alertType).toUpperCase()}`}
-                SN={SN}
-              >
-                <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{card.coaching}</div>
-              </StreamEntry>
-            ))}
-
-            {/* Débrief de fin de session */}
-            {debriefMsg && (
-              <StreamEntry time={debriefMsg.time} kind="debrief" label="DÉBRIEF DE SESSION" SN={SN}>
-                {renderDebriefTextSN(debriefMsg.content, SN)}
-              </StreamEntry>
-            )}
-            {!debriefMsg && msgs.some(m => !m.isDebrief && m !== msgs[0]) && (
-              msgs.filter(m => !m.isDebrief && m !== msgs[0]).map((m, i) => (
-                <StreamEntry key={`e${i}`} time={m.time} kind="critical" label="SYSTÈME" SN={SN}>
-                  <div style={{ fontSize: 12.5, color: SN.tm, lineHeight: 1.6, fontWeight: 300 }}>{m.content}</div>
-                </StreamEntry>
-              ))
-            )}
-
-            {debriefLoading && (
-              <StreamEntry time="" kind="debrief" label="DÉBRIEF EN COURS" SN={SN}>
-                <div style={{ fontSize: 12.5, color: SN.td, fontWeight: 300, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  Sentinel rédige le débrief de session
-                  <span style={{ display: 'inline-flex', gap: 3 }}>
-                    {[0, 1, 2].map(i => <span key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: SN.violet, animation: `snDot 1.2s ${i * 0.18}s infinite` }} />)}
-                  </span>
-                </div>
-              </StreamEntry>
-            )}
-
-            {coachingCards.length === 0 && !debriefMsg && !debriefLoading && (
-              <div style={{ marginTop: 22, padding: '16px 18px', border: `.5px dashed ${SN.line2}`, borderRadius: 6, fontSize: 11.5, color: SN.td, lineHeight: 1.6, fontWeight: 300 }}>
-                Aucune intervention pour l&apos;instant. Sentinel transmet automatiquement dès qu&apos;un schéma se déclenche, puis rédige le débrief à la fermeture de ta session — rien à demander.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Une entrée du flux Sentinel : nœud sur une ligne de temps verticale.
-function StreamEntry({ time, kind, label, children, SN }: {
-  time: string; kind: 'system' | 'coaching' | 'critical' | 'debrief'; label: string; children: React.ReactNode; SN: SNPalette
-}) {
-  const nodeCol = kind === 'critical' ? SN.r : kind === 'coaching' ? SN.o : SN.violet
-  const isDebrief = kind === 'debrief'
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 14, paddingBottom: 18, animation: 'snStream .4s ease-out' }}>
-      {/* gouttière timeline */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: nodeCol, boxShadow: `0 0 8px 1px ${nodeCol}66`, marginTop: 3, flexShrink: 0 }} />
-        <div style={{ flex: 1, width: '.5px', background: SN.line, marginTop: 5 }} />
-      </div>
-      {/* contenu */}
-      <div style={{
-        border: `.5px solid ${isDebrief ? SN.violetSoft : SN.line}`,
-        borderLeft: `2px solid ${nodeCol}`,
-        borderRadius: 6,
-        background: SN.panel,
-        padding: '12px 15px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, gap: 10 }}>
-          <span style={{ fontSize: 8.5, letterSpacing: 1.4, fontFamily: MONO, color: nodeCol, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{label}</span>
-          {time && <span style={{ fontSize: 9, color: SN.te, fontFamily: MONO, flexShrink: 0 }}>{time}</span>}
-        </div>
-        {children}
-      </div>
-    </div>
-  )
-}
-
-// Variante du rendu débrief aux couleurs Sentinel.
-function renderDebriefTextSN(text: string, SN: SNPalette) {
-  return text.split('\n').map((line, i) => {
-    if (!line.trim()) return <div key={i} style={{ height: 5 }} />
-    const parts = line.split(/\*\*(.*?)\*\*/g)
-    return (
-      <div key={i} style={{ fontSize: 12, color: SN.tm, lineHeight: 1.65, fontWeight: 300, marginBottom: 1 }}>
-        {parts.map((part, j) => j % 2 === 1
-          ? <span key={j} style={{ fontWeight: 600, color: SN.tx }}>{part}</span>
-          : part
-        )}
-      </div>
-    )
-  })
-}
-
 // ── Toast notification system ──────────────────────────────────────────────────
 interface ToastItem { id: string; alert: AlertRow; exiting: boolean }
 
@@ -3135,7 +2710,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-const TABS: Array<{ id: string; label: string; sentinel?: boolean }> = [
+const TABS: Array<{ id: string; label: string }> = [
   { id: 'session',     label: 'Session live' },
   { id: 'calendrier', label: 'Calendrier' },
   { id: 'analytics',  label: 'Analytics' },
@@ -3204,9 +2779,7 @@ export default function DashboardClient({
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [notifHint, setNotifHint] = useState<string | null>(null)   // message d'aide si l'activation échoue (iOS / permission bloquée)
-  const [sentinelPrompt, setSentinelPrompt] = useState<AlertRow | null>(null)
   const [milestone, setMilestone] = useState<number | null>(null)   // jalon de discipline à fêter
-  const [coachingCards, setCoachingCards] = useState<CoachingCard[]>([])
   const [connectHint, setConnectHint] = useState(false)   // invite à connecter une plateforme (aucun trade encore)
 
   // Affiche l'invite de connexion si aucune plateforme connectée et aucun trade reçu.
@@ -3228,10 +2801,6 @@ export default function DashboardClient({
   const notifReset = useRef<ReturnType<typeof setTimeout> | null>(null)
   const channelRef = useRef<any>(null)
   const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
-  const statsRef = useRef(stats)
-  const alertsRef = useRef(alerts)
-  useEffect(() => { statsRef.current = stats }, [stats])
-  useEffect(() => { alertsRef.current = alerts }, [alerts])
 
   const initials = userMeta.first_name
     ? `${userMeta.first_name[0]}${userMeta.last_name?.[0] ?? ''}`.toUpperCase()
@@ -3277,37 +2846,6 @@ export default function DashboardClient({
     toastTimers.current.set(id, timer)
   }, [dismissToast])
 
-  const fetchAlertCoaching = useCallback(async (alert: AlertRow) => {
-    if (!isMaxPlan(plan)) return
-    const currentAlerts = alertsRef.current
-    const currentStats = statsRef.current
-    const currentScore = computeScore(currentAlerts)
-    const recentTypes = [...new Set(currentAlerts.slice(0, 10).map((a: AlertRow) => a.type ?? '').filter(Boolean))]
-    const typeFmt = (alert.type ?? '').replace(/_/g, ' ')
-    const prompt = `L${alert.level} ${typeFmt} : "${alert.message}". Que faire maintenant ?`
-    try {
-      const res = await fetch('/api/sentinel', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          context: { score: currentScore, pnl: currentStats.total_pnl, totalTrades: currentStats.total_trades, alertCount: currentAlerts.length, alertTypes: recentTypes, rules: tradingRules },
-        }),
-      })
-      if (!res.ok) return
-      const data = await res.json()
-      if (data.content) {
-        setCoachingCards(prev => [{
-          id: `c-${Date.now()}`,
-          alertType: alert.type ?? '',
-          alertLevel: alert.level ?? 2,
-          alertMessage: alert.message,
-          coaching: data.content,
-          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        }, ...prev].slice(0, 5))
-      }
-    } catch {}
-  }, [plan, tradingRules])
-
   const score = computeScore(alerts)
   const disciplineStreak = computeDisciplineStreak(historicalSessions)
 
@@ -3341,8 +2879,6 @@ export default function DashboardClient({
         if (a.session_date && a.session_date !== today) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
-        if ((a.level ?? 1) >= 3) setSentinelPrompt(a)
-        if ((a.level ?? 1) >= 2) fetchAlertCoaching(a)
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `user_id=eq.${userId}` }, (payload) => {
         const t = payload.new as TradeRow & { user_id?: string }
@@ -3356,7 +2892,7 @@ export default function DashboardClient({
       })
       .subscribe(s => setConnected(s === 'SUBSCRIBED'))
     return () => { channelRef.current?.unsubscribe() }
-  }, [userId, today, addToast, fetchAlertCoaching])
+  }, [userId, today, addToast])
 
   // Topbar fixe sur mobile : on mesure sa hauteur (variable car elle passe sur 2 lignes)
   // pour décaler le contenu d'autant. Sur desktop la topbar reste dans le flux → 0.
@@ -3538,8 +3074,6 @@ export default function DashboardClient({
         .tab-btn{display:flex;align-items:center;gap:6px;padding:8px 22px;border-radius:9px;font-size:12.5px;letter-spacing:.3px;color:${C.td};cursor:pointer;border:none;background:none;white-space:nowrap;font-weight:400;font-family:${SANS};transition:color .15s,background .15s,box-shadow .15s}
         .tab-btn:hover{color:${C.tm};background:${C.b}}
         .tab-btn.active{color:${C.tx};background:${C.b2};font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.14)}
-        .tab-sentinel{color:rgba(124,58,237,.55)!important}
-        .tab-sentinel.active{color:${C.red}!important;background:rgba(124,58,237,.14)!important;box-shadow:0 0 0 .5px rgba(124,58,237,.26),0 2px 8px rgba(0,0,0,.22)!important}
         textarea,input{box-sizing:border-box}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
@@ -3562,8 +3096,6 @@ export default function DashboardClient({
           .resp-grid-2{grid-template-columns:1fr!important}
           .kpi-grid{grid-template-columns:repeat(2,1fr)!important}
           .session-main-grid{grid-template-columns:1fr!important}
-          .sentinel-grid{grid-template-columns:1fr!important}
-          .sentinel-sidebar{display:none!important}
           .rules-grid{grid-template-columns:1fr!important}
           .main-layout>*:first-child{overflow:visible!important;height:auto!important;border-radius:12px!important;margin:10px!important}
           .main-layout>*:first-child>div{height:auto!important;overflow:visible!important}
@@ -3608,17 +3140,6 @@ export default function DashboardClient({
         </div>
       )}
 
-      {sentinelPrompt && (
-        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(255,90,61,.45)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 8px 40px rgba(255,90,61,.18)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5a3d', flexShrink: 0, animation: 'pulse 1s infinite' }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, color: '#ff5a3d', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Alerte critique</div>
-            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{sentinelPrompt.message}</div>
-          </div>
-          <button onClick={() => setSentinelPrompt(null)} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
-        </div>
-      )}
-
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
         {/* ── Top bar ── */}
@@ -3653,11 +3174,10 @@ export default function DashboardClient({
               {TABS.map(tab => (
                 <button
                   key={tab.id}
-                  className={`tab-btn${tab.sentinel ? ' tab-sentinel' : ''}${activeTab === tab.id ? ' active' : ''}`}
+                  className={`tab-btn${activeTab === tab.id ? ' active' : ''}`}
                   onClick={() => { setActiveTab(tab.id as TabId); setSettingsOpen(false) }}
                 >
                   {tab.label}
-                  {tab.sentinel && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: C.red, marginLeft: 4, verticalAlign: 'middle', animation: 'pulse 2s infinite' }} />}
                 </button>
               ))}
             </div>
@@ -3781,11 +3301,7 @@ export default function DashboardClient({
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={tradingRules?.account_size || 10000} />
             )}
             {activeTab === 'rapports' && (
-              <div style={{ overflowY: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                {/* Débrief IA de session (plan Max) — plus d'onglet dédié, accès direct ici */}
-                <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} plan={plan} coachingCards={coachingCards} onActivate={() => setActiveTab('billing')} />
-                <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
-              </div>
+              <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
             )}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
