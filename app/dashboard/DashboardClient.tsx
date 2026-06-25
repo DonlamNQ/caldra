@@ -2140,7 +2140,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
 
   function RuleGroup({ title, desc, accent, children }: { title: string; desc: string; accent: string; children: React.ReactNode }) {
     return (
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${accent}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: C.tx, marginBottom: 3 }}>{title}</div>
         <div style={{ fontSize: 11, color: C.td, marginBottom: 18 }}>{desc}</div>
         {children}
@@ -2765,6 +2765,27 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
     { q: 'Mes données sont-elles privées ?', a: 'Oui. Chaque trade est rattaché à ton compte uniquement, isolé par les règles de sécurité Supabase. Tu peux supprimer ton compte et toutes tes données depuis le Profil.' },
   ]
 
+  const detectors: Array<{ label: string; desc: string; max?: boolean }> = [
+    { label: 'Hors horaires', desc: 'Trade ouvert en dehors de ta fenêtre de session.' },
+    { label: 'Re-entrée immédiate', desc: 'Tu te repositionnes trop vite après une sortie.' },
+    { label: 'Overtrading', desc: 'Tu approches ou dépasses ton nombre max de trades.' },
+    { label: 'Désespoir de fin de session', desc: 'Trade dans les dernières minutes, déjà en perte.' },
+    { label: 'Actif inhabituel', desc: 'Symbole hors de tes instruments habituels.' },
+    { label: 'Pertes consécutives', desc: 'Série de pertes d’affilée sur la session.' },
+    { label: 'Drawdown', desc: 'Tu approches ou atteins ta limite de perte du jour.' },
+    { label: 'Stop non respecté', desc: 'Perte réalisée au-delà de ton risque par trade.' },
+    { label: 'Risk dépassé', desc: 'Position trop grande pour ton risque par trade.' },
+    { label: 'Sur-exposition', desc: 'Levier au-delà de ton seuil maximum.' },
+    { label: 'Aucun stop', desc: 'Trade fermé sans stop-loss (option à activer).' },
+    { label: 'Revenge sizing', desc: 'Tu augmentes ta taille après une perte.', max: true },
+    { label: 'Sizing d’euphorie', desc: 'Tu augmentes ta taille après un gain.', max: true },
+    { label: 'Acharnement directionnel', desc: 'Tu réattaques le même sens après 2 pertes.', max: true },
+    { label: 'Cadence qui s’emballe', desc: 'Tes entrées s’accélèrent alors que tu perds.', max: true },
+    { label: 'Tu coupes tes gains', desc: 'Gagnants tenus bien moins longtemps que les perdants.', max: true },
+    { label: 'Drawdown franchi', desc: 'Tu continues à trader après avoir dépassé ta limite.', max: true },
+    { label: 'Trade pendant news', desc: 'Entrée à ±10 min d’une news à fort impact.', max: true },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
@@ -2817,6 +2838,24 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
                 <div key={i} style={{ paddingBottom: i < faq.length - 1 ? 14 : 0, borderBottom: i < faq.length - 1 ? `.5px solid rgba(255,255,255,.04)` : 'none' }}>
                   <div style={{ fontSize: 13, color: C.tx, fontWeight: 500, marginBottom: 5 }}>{f.q}</div>
                   <div style={{ fontSize: 12.5, color: C.te, lineHeight: 1.6 }}>{f.a}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Les 18 détecteurs */}
+          <Card title="Les 18 détecteurs surveillés">
+            <div style={{ fontSize: 12, color: C.te, lineHeight: 1.5, marginBottom: 16 }}>
+              Caldra repère ces schémas en direct. Les seuils chiffrés se règlent dans l&apos;onglet Règles ; les autres tournent sur une logique fixe. <span style={{ color: C.red, fontFamily: MONO, fontSize: 10 }}>MAX</span> = inclus dans le plan Max.
+            </div>
+            <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              {detectors.map((d, i) => (
+                <div key={i}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <span style={{ fontSize: 12.5, color: C.tx, fontWeight: 500 }}>{d.label}</span>
+                    {d.max && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px', fontFamily: MONO }}>MAX</span>}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.45 }}>{d.desc}</div>
                 </div>
               ))}
             </div>
