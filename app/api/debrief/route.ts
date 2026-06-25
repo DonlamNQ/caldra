@@ -5,7 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import Anthropic from '@anthropic-ai/sdk'
-import { isMaxPlan } from '@/lib/plans'
+import { isMaxPlan, isVip } from '@/lib/plans'
 import { alertLabel } from '@/lib/alertLabels'
 
 // Débrief de session HYBRIDE : les chiffres sont calculés ici (exacts, jamais
@@ -45,7 +45,7 @@ export async function POST(_req: NextRequest) {
 
   const { data: profile } = await service
     .from('user_profiles').select('plan').eq('user_id', user.id).single()
-  if (!isMaxPlan(profile?.plan)) {
+  if (!isMaxPlan(profile?.plan) && !isVip(user.email)) {
     return NextResponse.json({ error: 'Le débrief de session est réservé au plan Max.' }, { status: 403 })
   }
   if (!process.env.ANTHROPIC_API_KEY) {

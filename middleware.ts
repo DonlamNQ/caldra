@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isVip } from '@/lib/plans'
 
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/support', '/mentions-legales', '/confidentialite', '/auth/callback', '/api/billing/webhook', '/api/waitlist', '/forgot-password', '/reset-password']
 
@@ -107,7 +108,7 @@ export async function middleware(request: NextRequest) {
 
     const status = profile?.subscription_status
     const entitled = status === 'trialing' || status === 'active' || status === 'past_due'
-    if (!entitled) {
+    if (!entitled && !isVip(user.email)) {
       // Pas de page de billing dédiée : on renvoie vers la page de tarifs existante.
       // Ses boutons Pro/Max portent le plan → un user connecté part droit au checkout
       // du bon plan (cf. raccourci /login|/signup?plan ci-dessus).

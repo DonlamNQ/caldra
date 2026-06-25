@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import DashboardClient from './DashboardClient'
+import { isVip } from '@/lib/plans'
 import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
 
@@ -172,7 +173,7 @@ export default async function DashboardPage() {
       apiKeyPrefix={apiKey?.key_prefix ?? null}
       historicalSessions={historicalSessions}
       journalTrades={journalTrades}
-      plan={profile?.plan ?? 'free'}
+      plan={isVip(user.email) ? 'max' : (profile?.plan ?? 'free')}
       userMeta={{ first_name: meta.first_name, last_name: meta.last_name, phone: meta.phone }}
       ctraderConnected={ctraderConnected}
       ctraderConflict={ctraderConflict}

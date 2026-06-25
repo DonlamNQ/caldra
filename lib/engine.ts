@@ -1,12 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendAlertEmail, sendWebhookAlert } from './brevo'
 import { newsConflict } from './economic-calendar'
-import { isMaxPlan, MAX_ONLY_DETECTORS } from './plans'
+import { isMaxPlan, MAX_ONLY_DETECTORS, isVip } from './plans'
 
 const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+// Compte VIP (email) → traité comme plan Max (les 18 détecteurs), sans abonnement.
+async function isVipUser(userId: string): Promise<boolean> {
+  try {
+    const { data } = await getSupabase().auth.admin.getUserById(userId)
+    return isVip(data?.user?.email)
+  } catch { return false }
+}
 
 export type Trade = {
   id: string
@@ -413,7 +421,7 @@ export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
 
   if (!rules || !sessionTrades) return []
 
-  const isMax = isMaxPlan(profile?.plan)
+  const isMax = isMaxPlan(profile?.plan) || await isVipUser(trade.user_id)
   const alerts = entryBehaviorAlerts(trade, rules, sessionTrades)
   const news = await maybeNewsAlert(trade)
   if (news) alerts.push(news)
@@ -438,7 +446,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
 
   if (!rules || !sessionTrades) return []
 
-  const isMax = isMaxPlan(profile?.plan)
+  const isMax = isMaxPlan(profile?.plan) || await isVipUser(trade.user_id)
 
   // Trade fermé sans ouverture préalablement ingérée (ex. cTrader, qui ne poste
   // que des trades fermés) → on fait aussi tourner les détecteurs d'entrée,

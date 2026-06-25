@@ -36,3 +36,15 @@ export const MAX_ONLY_DETECTORS = new Set<string>([
   'drawdown_override',
   'news_trading',
 ])
+
+// Comptes VIP : accès complet et traités comme plan Max, SANS abonnement Stripe.
+// Bypass du gate d'abonnement + déblocage des fonctionnalités Max.
+export const VIP_EMAILS = new Set<string>([
+  'alhamkone@gmail.com',
+  'samsam.kone@gmail.com',
+])
+
+/** true si l'email est un compte VIP (accès illimité, plan Max forcé). */
+export function isVip(email: string | null | undefined): boolean {
+  return !!email && VIP_EMAILS.has(email.trim().toLowerCase())
+}

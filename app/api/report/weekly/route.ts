@@ -8,7 +8,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { WeeklyReport } from '@/lib/pdf/WeeklyReport'
 import type { WeeklyReportData, DayData, AlertTypeData, TradeItem } from '@/lib/pdf/WeeklyReport'
-import { isMaxPlan, isPaidPlan } from '@/lib/plans'
+import { isMaxPlan, isPaidPlan, isVip } from '@/lib/plans'
 
 const ALERT_LABELS: Record<string, string> = {
   revenge_sizing: 'Revenge Sizing',
@@ -97,10 +97,11 @@ export async function GET(req: NextRequest) {
     .select('plan')
     .eq('user_id', user.id)
     .single()
-  if (period === 'week' && !isMaxPlan(profile?.plan)) {
+  const vip = isVip(user.email)
+  if (period === 'week' && !isMaxPlan(profile?.plan) && !vip) {
     return NextResponse.json({ error: 'Le rapport hebdomadaire est réservé au plan Max.' }, { status: 403 })
   }
-  if (period === 'month' && !isPaidPlan(profile?.plan)) {
+  if (period === 'month' && !isPaidPlan(profile?.plan) && !vip) {
     return NextResponse.json({ error: 'Le rapport mensuel nécessite un abonnement.' }, { status: 403 })
   }
 
