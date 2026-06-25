@@ -2484,19 +2484,6 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
       </div>
     <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 760 }}>
 
-      {/* Plan actuel — résumé */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${isPaid ? (isMaxPlan(plan) ? C.red : C.g) : C.b3}`, borderRadius: 12, padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, marginBottom: 6 }}>TON PLAN ACTUEL</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-            <span style={{ fontSize: 22, fontWeight: 500, color: C.tx, textTransform: 'capitalize' as const }}>{isMaxPlan(plan) ? 'Max' : isPaid ? 'Pro' : 'Free'}</span>
-            <span style={{ fontSize: 14, color: C.td }}>{isMaxPlan(plan) ? '34€/mois' : isPaid ? '19€/mois' : 'gratuit'}</span>
-          </div>
-        </div>
-        <span style={{ padding: '4px 12px', borderRadius: 99, fontSize: 10, letterSpacing: 1, fontFamily: MONO, color: isPaid ? C.g : C.te, background: isPaid ? 'rgba(0,209,122,.08)' : 'rgba(255,255,255,.04)', border: `.5px solid ${isPaid ? 'rgba(0,209,122,.25)' : C.b}` }}>{isPaid ? 'ACTIF' : 'AUCUN ABONNEMENT'}</span>
-      </div>
-
       {/* Comparer / changer de plan */}
       <div style={{ fontSize: 10, letterSpacing: 1, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>{isPaid ? 'Changer de plan' : 'Choisir un plan'}</div>
       <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
