@@ -653,11 +653,10 @@ function Sidebar({ score, alerts, stats, rules }: {
 }
 
 // ── SessionPanel ───────────────────────────────────────────────────────────────
-function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected, debrief, canDebrief, onGenerateDebrief, debriefLoading, debriefError }: {
+function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected }: {
   trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats
   yesterdayStats: { score: number; pnl: number; alerts: number } | null
-  yesterdayTrend: number | null; rules: TradingRules | null; connected?: boolean; debrief?: string | null
-  canDebrief?: boolean; onGenerateDebrief?: () => void; debriefLoading?: boolean; debriefError?: string | null
+  yesterdayTrend: number | null; rules: TradingRules | null; connected?: boolean
 }) {
   const C = useContext(ThemeCtx)
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
@@ -681,37 +680,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
-
-      {/* Débrief de session (plan Max) — généré à la clôture, archivé ici */}
-      {debrief && (
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${C.red}`, borderRadius: 12, padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>Débrief de session</div>
-          {debrief.split('\n').map((line, i) => {
-            if (!line.trim()) return <div key={i} style={{ height: 5 }} />
-            const parts = line.split(/\*\*(.*?)\*\*/g)
-            return (
-              <div key={i} style={{ fontSize: 13, color: C.tm, lineHeight: 1.65, fontWeight: 300, marginBottom: 2 }}>
-                {parts.map((p, j) => j % 2 === 1 ? <span key={j} style={{ fontWeight: 600, color: C.tx }}>{p}</span> : p)}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Génération manuelle du débrief (plan Max / VIP) */}
-      {!debrief && canDebrief && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end' }}>
-          {debriefError && <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>{debriefError}</span>}
-          <button onClick={onGenerateDebrief} disabled={debriefLoading} style={{
-            fontSize: 12, padding: '8px 16px', borderRadius: 8, fontFamily: MONO,
-            cursor: debriefLoading ? 'default' : 'pointer', background: C.sf,
-            border: `.5px solid ${C.b2}`, color: C.tm, opacity: debriefLoading ? .6 : 1,
-          }}>
-            {debriefLoading ? 'Génération du débrief…' : '🧭 Générer le débrief de ma dernière session'}
-          </button>
-        </div>
-      )}
 
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
@@ -1588,6 +1556,22 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
   const [loading, setLoading] = useState<string | null>(null)
   const isMax = isMaxPlan(plan)
 
+  // Débrief IA de la dernière session (à la demande, plan Max)
+  const [debrief, setDebrief] = useState<string | null>(null)
+  const [dbLoading, setDbLoading] = useState(false)
+  const [dbError, setDbError] = useState<string | null>(null)
+  async function genDebrief() {
+    setDbLoading(true); setDbError(null)
+    try {
+      const res = await fetch('/api/debrief?latest=1', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.debrief) setDebrief(data.debrief)
+      else setDbError(data.error ?? 'Aucune session à débriefer pour le moment.')
+    } catch {
+      setDbError('Erreur réseau — réessaie.')
+    } finally { setDbLoading(false) }
+  }
+
   const toISODate = (d: Date) => d.toISOString().split('T')[0]
 
   function getWeekMonday(offsetWeeks = 0): Date {
@@ -1665,6 +1649,36 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Score, PnL, alertes comportementales, journal des trades — généré à la demande.</div>
       </div>
     <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
+
+      {/* Débrief IA de la dernière session — à la demande (plan Max) */}
+      {isMax && (
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${C.red}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: debrief ? 14 : 0 }}>
+            <div>
+              <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 3 }}>Débrief de session</div>
+              <div style={{ fontSize: 12, color: C.te }}>Un bilan de ta dernière séance, posé et basé sur tes chiffres.</div>
+            </div>
+            <button onClick={genDebrief} disabled={dbLoading} style={{
+              fontSize: 12, padding: '8px 16px', borderRadius: 8, fontFamily: MONO, whiteSpace: 'nowrap' as const,
+              cursor: dbLoading ? 'default' : 'pointer', background: dbLoading ? 'rgba(124,58,237,.05)' : C.rd,
+              border: `.5px solid ${C.rb}`, color: dbLoading ? C.td : C.red, flexShrink: 0, opacity: dbLoading ? .7 : 1,
+            }}>
+              {dbLoading ? 'Génération…' : debrief ? 'Régénérer' : 'Générer le débrief'}
+            </button>
+          </div>
+          {dbError && <div style={{ fontSize: 12, color: C.td, fontStyle: 'italic' }}>{dbError}</div>}
+          {debrief && debrief.split('\n').map((line, i) => {
+            if (!line.trim()) return <div key={i} style={{ height: 5 }} />
+            const parts = line.split(/\*\*(.*?)\*\*/g)
+            return (
+              <div key={i} style={{ fontSize: 13, color: C.tm, lineHeight: 1.65, fontWeight: 300, marginBottom: 2 }}>
+                {parts.map((p, j) => j % 2 === 1 ? <span key={j} style={{ fontWeight: 600, color: C.tx }}>{p}</span> : p)}
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Rapports mensuels — inclus dès le plan Pro */}
       <div style={sectionTitle}>Mensuels</div>
@@ -2826,47 +2840,6 @@ export default function DashboardClient({
     try { localStorage.setItem('caldra-connect-hint', 'dismissed') } catch {}
   }
 
-  // Débrief de session (plan Max) : à la clôture (heure de fin dépassée + au moins
-  // un trade), génère UNE fois un débrief hybride et fait apparaître la bannière.
-  const [debrief, setDebrief] = useState<string | null>(null)
-  const [debriefBanner, setDebriefBanner] = useState(false)
-  const debriefTried = useRef(false)
-  useEffect(() => {
-    if (!isMaxPlan(plan) || !tradingRules?.session_end || stats.total_trades === 0) return
-    const run = async () => {
-      if (debriefTried.current) return
-      const [eh, em] = String(tradingRules.session_end).split(':').map(Number)
-      if (isNaN(eh)) return
-      const now = new Date()
-      const end = new Date(); end.setHours(eh, em || 0, 0, 0)
-      if (now < end) return
-      debriefTried.current = true
-      try {
-        const res = await fetch('/api/debrief', { method: 'POST' })
-        const data = await res.json()
-        if (res.ok && data.debrief) { setDebrief(data.debrief); setDebriefBanner(true) }
-      } catch {}
-    }
-    run()
-    const id = setInterval(run, 60_000)
-    return () => clearInterval(id)
-  }, [plan, tradingRules, stats.total_trades])
-
-  // Génération manuelle : débrief de la DERNIÈRE journée tradée (?latest=1).
-  const [debriefLoading, setDebriefLoading] = useState(false)
-  const [debriefError, setDebriefError] = useState<string | null>(null)
-  const generateDebrief = useCallback(async () => {
-    setDebriefLoading(true); setDebriefError(null)
-    try {
-      const res = await fetch('/api/debrief?latest=1', { method: 'POST' })
-      const data = await res.json()
-      if (res.ok && data.debrief) { setDebrief(data.debrief); setDebriefBanner(false) }
-      else setDebriefError(data.error ?? 'Aucune session à débriefer.')
-    } catch {
-      setDebriefError('Erreur réseau.')
-    } finally { setDebriefLoading(false) }
-  }, [])
-
   const [topbarH, setTopbarH] = useState(0)   // hauteur de la topbar fixe sur mobile → décalage du contenu
   const topbarRef = useRef<HTMLDivElement>(null)
 
@@ -3213,20 +3186,6 @@ export default function DashboardClient({
         </div>
       )}
 
-      {debriefBanner && debrief && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(220,80,60,.45)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 8px 40px rgba(0,0,0,.45)', maxWidth: 540, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
-          <div style={{ fontSize: 22, flexShrink: 0 }}>🧭</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, color: '#dc503c', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Débrief prêt</div>
-            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.45 }}>Ta session est close — ton débrief de discipline est disponible.</div>
-          </div>
-          <button onClick={() => { setActiveTab('session'); setDebriefBanner(false) }} style={{ background: '#dc503c', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' as const }}>
-            Voir le débrief
-          </button>
-          <button onClick={() => setDebriefBanner(false)} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
-        </div>
-      )}
-
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: C.bg, fontFamily: SANS, color: C.tx }}>
 
         {/* ── Top bar ── */}
@@ -3379,7 +3338,7 @@ export default function DashboardClient({
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
-              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} connected={!!platformConnected || ctraderConn} debrief={debrief} canDebrief={isMaxPlan(plan)} onGenerateDebrief={generateDebrief} debriefLoading={debriefLoading} debriefError={debriefError} />
+              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} connected={!!platformConnected || ctraderConn} />
             )}
             {activeTab === 'calendrier' && (
               <CalendrierPanel sessions={historicalSessions} />
