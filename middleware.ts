@@ -82,16 +82,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Sur /login ou /signup avec session active → dashboard.
-  // Exception : si un plan est passé en query (clic sur un prix de la landing par un
-  // user déjà connecté), on l'envoie direct au checkout du bon plan — pas de détour
-  // par l'écran de choix /billing.
+  // Sur /login ou /signup avec session active : on NE redirige PAS vers le dashboard
+  // (ça renvoyait les comptes sans abonnement vers /pricing au lieu d'afficher le
+  // formulaire). On laisse la page s'afficher → permet de se connecter à un autre
+  // compte. Seule exception : un plan passé en query (clic sur un prix par un user
+  // déjà connecté) → checkout direct du bon plan.
   if ((path === '/login' || path === '/signup') && user) {
     const plan = request.nextUrl.searchParams.get('plan')
     if (plan === 'pro' || plan === 'max') {
       return NextResponse.redirect(new URL(`/api/billing/checkout?plan=${plan}`, request.url))
     }
-    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // ── Gate "essai gated CB" ───────────────────────────────────────────────────
