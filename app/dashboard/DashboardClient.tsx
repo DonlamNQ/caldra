@@ -79,6 +79,7 @@ interface DashboardClientProps {
   ctraderConflict?: boolean
   ctraderPending?: boolean
   lastTradeAt: string | null
+  platformConnected?: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -652,10 +653,10 @@ function Sidebar({ score, alerts, stats, rules }: {
 }
 
 // ── SessionPanel ───────────────────────────────────────────────────────────────
-function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules }: {
+function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected }: {
   trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats
   yesterdayStats: { score: number; pnl: number; alerts: number } | null
-  yesterdayTrend: number | null; rules: TradingRules | null
+  yesterdayTrend: number | null; rules: TradingRules | null; connected?: boolean
 }) {
   const C = useContext(ThemeCtx)
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
@@ -746,7 +747,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {sortedTrades.length === 0 ? (
             <div style={{ fontSize: 12, color: C.te, fontStyle: 'italic', fontWeight: 300, padding: '10px 0' }}>
-              Aucun trade aujourd'hui — connectez votre plateforme via l'onglet Intégrations.
+              {connected
+                ? "Aucun trade aujourd'hui pour l'instant."
+                : "Aucun trade aujourd'hui — connectez votre plateforme via l'onglet Intégrations."}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -1091,9 +1094,9 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
             <span style={{ fontSize: 11, letterSpacing: .3, color: C.td, display: 'block', marginBottom: 10 }}>Stats du mois</span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {[
-                { val: String(avgScore), lbl: 'Score moy.', col: scoreColor(avgScore, C) },
+                { val: String(avgScore), lbl: 'Score moy.', col: C.tm },
                 { val: String(sessions.length), lbl: 'Sessions', col: C.tm },
-                { val: String(critical), lbl: 'Critiques', col: critical > 0 ? C.red : C.te },
+                { val: String(critical), lbl: 'Critiques', col: C.tm },
                 { val: fmtEur(totalPnl), lbl: 'P&L total', col: C.pnl },
               ].map((item, i) => (
                 <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px' }}>
@@ -3135,7 +3138,7 @@ type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
   yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, journalTrades, plan, userMeta,
-  ctraderConnected, ctraderConflict, ctraderPending, lastTradeAt,
+  ctraderConnected, ctraderConflict, ctraderPending, lastTradeAt, platformConnected,
 }: DashboardClientProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     typeof window !== 'undefined' ? (localStorage.getItem('caldra-theme') as 'dark' | 'light') ?? 'dark' : 'dark'
@@ -3753,7 +3756,7 @@ export default function DashboardClient({
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
-              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} />
+              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} connected={!!platformConnected || ctraderConn} />
             )}
             {activeTab === 'calendrier' && (
               <CalendrierPanel sessions={historicalSessions} />

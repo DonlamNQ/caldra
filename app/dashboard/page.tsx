@@ -52,6 +52,8 @@ export default async function DashboardPage() {
     { data: profile },
     { data: ctraderAccount },
     { data: lastTrade },
+    { data: mt5Accounts },
+    { data: tradovateAccounts },
   ] = await Promise.all([
     service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
       .order('level', { ascending: false }).order('created_at', { ascending: false }),
@@ -70,6 +72,8 @@ export default async function DashboardPage() {
     service.from('user_profiles').select('plan').eq('user_id', user.id).single(),
     service.from('ctrader_accounts').select('id, status, ctid_trader_account_id').eq('user_id', user.id),
     service.from('trades').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    service.from('mt5_accounts').select('status').eq('user_id', user.id),
+    service.from('tradovate_accounts').select('tradovate_account_id').eq('user_id', user.id),
   ])
 
   // Today
@@ -149,6 +153,12 @@ export default async function DashboardPage() {
   const ctraderConnected = ctraderResolved
   const ctraderPending = liveRows.length > 0 && !ctraderResolved
 
+  // "Plateforme connectée" = au moins une intégration active (cTrader/MT5/Tradovate)
+  // OU au moins un trade déjà reçu. Sert à masquer l'invite "connectez votre plateforme".
+  const mt5Connected = (mt5Accounts ?? []).some((r: { status?: string }) => r.status === 'connected')
+  const tvConnected = (tradovateAccounts ?? []).some((r: { tradovate_account_id?: number | null }) => r.tradovate_account_id != null)
+  const platformConnected = ctraderConnected || mt5Connected || tvConnected || !!lastTrade
+
   return (
     <DashboardClient
       userId={user.id}
@@ -168,6 +178,7 @@ export default async function DashboardPage() {
       ctraderConflict={ctraderConflict}
       ctraderPending={ctraderPending}
       lastTradeAt={lastTrade?.created_at ?? null}
+      platformConnected={platformConnected}
     />
   )
 }
