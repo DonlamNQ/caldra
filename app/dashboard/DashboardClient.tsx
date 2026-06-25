@@ -1267,7 +1267,7 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
 }
 
 // ── AnalyticsPanel ─────────────────────────────────────────────────────────────
-function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, allTimePatterns }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number; allTimePatterns?: Record<string, number> }) {
+function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, allTimePatterns, plan }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number; allTimePatterns?: Record<string, number>; plan?: string }) {
   const C = useContext(ThemeCtx)
   // On affiche TOUJOURS la page — même sans aucune donnée. Chaque sous-bloc a son
   // propre état vide (placeholders), donc la structure reste lisible à zéro trade.
@@ -1286,7 +1286,11 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, all
     if (t) winCounts[t] = (winCounts[t] ?? 0) + 1
   }
   const patternCounts = (allTimePatterns && Object.keys(allTimePatterns).length) ? allTimePatterns : winCounts
-  const patterns = Object.entries(patternCounts).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  const allPatternEntries = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])
+  // Pro : 5 schémas max · Max : tous.
+  const patIsMax = isMaxPlan(plan)
+  const patterns = allPatternEntries.slice(0, patIsMax ? 12 : 5)
+  const hiddenPatterns = patIsMax ? 0 : Math.max(0, allPatternEntries.length - 5)
   const maxCount = patterns[0]?.[1] ?? 1
 
   const totalTrades = sessions.reduce((s, d) => s + d.tradeCount, 0)
@@ -1498,6 +1502,11 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, all
                   </div>
                 )
               })}
+            </div>
+          )}
+          {hiddenPatterns > 0 && (
+            <div style={{ fontSize: 11, color: C.te, marginTop: 10, fontStyle: 'italic' }}>
+              + {hiddenPatterns} autre{hiddenPatterns > 1 ? 's' : ''} schéma{hiddenPatterns > 1 ? 's' : ''} · visibles avec le plan <span style={{ color: C.tm }}>Max</span>
             </div>
           )}
         </div>
@@ -2390,7 +2399,8 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
   const now0 = new Date()
   const dow0 = now0.getDay()
   const weekAvail = dow0 === 5 || dow0 === 6 || dow0 === 0
-  const monthAvail = now0.getDate() === new Date(now0.getFullYear(), now0.getMonth() + 1, 0).getDate()
+  const lastDom = new Date(now0.getFullYear(), now0.getMonth() + 1, 0).getDate()
+  const monthAvail = now0.getDate() >= lastDom - 1   // avant-dernier jour ou après
   function avail(v: 'day' | '7' | '30') { return v === '7' ? weekAvail : v === '30' ? monthAvail : true }
 
   const cur = store[view] || {}
@@ -2437,7 +2447,7 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
           <div style={{ padding: 14, overflowY: 'auto' }}>
             {!avail(view) && (
               <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic', lineHeight: 1.5 }}>
-                {view === '7' ? 'Le bilan de la semaine sera disponible en fin de semaine.' : 'Le bilan du mois sera disponible au dernier jour du mois.'}
+                {view === '7' ? 'Le bilan hebdomadaire sera disponible en fin de semaine.' : "Le bilan mensuel sera disponible à l'avant-dernier jour du mois."}
               </div>
             )}
             {avail(view) && cur.loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse en cours…</div>}
@@ -3502,7 +3512,7 @@ export default function DashboardClient({
               <CalendrierPanel sessions={historicalSessions} />
             )}
             {activeTab === 'analytics' && (
-              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={tradingRules?.account_size || 10000} allTimePatterns={allTimePatterns} />
+              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={tradingRules?.account_size || 10000} allTimePatterns={allTimePatterns} plan={plan} />
             )}
             {activeTab === 'rapports' && (
               <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
