@@ -2314,50 +2314,55 @@ function ToastContainer({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss:
   )
 }
 
-// ── DebriefWidget — bulle flottante ouvrable/fermable (plan Max) ─────────────────
-function DebriefWidget() {
+// ── DebriefMenu — icône dans la barre du haut + panneau déroulant (plan Max) ─────
+// Débrief PRÉ-GÉNÉRÉ au chargement : prêt avant même qu'on ouvre le panneau.
+function DebriefMenu() {
   const C = useContext(ThemeCtx)
   const [open, setOpen] = useState(false)
   const [debrief, setDebrief] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  async function generate() {
-    setLoading(true); setError(null)
-    try {
-      const res = await fetch('/api/debrief?latest=1', { method: 'POST' })
-      const data = await res.json()
-      if (res.ok && data.debrief) setDebrief(data.debrief)
-      else setError(data.error ?? 'Aucune session à débriefer pour le moment.')
-    } catch {
-      setError('Erreur réseau — réessaie.')
-    } finally { setLoading(false) }
-  }
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/debrief?latest=1', { method: 'POST' })
+        const data = await res.json()
+        if (cancelled) return
+        if (res.ok && data.debrief) setDebrief(data.debrief)
+        else setError(data.error ?? 'Aucune session à débriefer.')
+      } catch { if (!cancelled) setError('Indisponible pour le moment.') }
+      finally { if (!cancelled) setLoading(false) }
+    })()
+    return () => { cancelled = true }
+  }, [])
 
   return (
-    <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 9997, fontFamily: SANS }}>
+    <div style={{ position: 'relative', marginLeft: 6, fontFamily: SANS }}>
+      <button onClick={() => setOpen(o => !o)} title="Débrief de session" style={{
+        width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer',
+        background: open ? C.b2 : 'transparent', color: open ? C.tx : C.td, fontSize: 15,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
+      }}>🧭</button>
       {open && (
         <div style={{
-          position: 'absolute', bottom: 64, right: 0, width: 'min(380px, calc(100vw - 32px))',
-          maxHeight: '70vh', display: 'flex', flexDirection: 'column', background: C.sf,
-          border: `.5px solid ${C.b2}`, borderRadius: 16, overflow: 'hidden',
-          boxShadow: '0 18px 50px rgba(0,0,0,.5)', animation: 'fadeUp .22s ease',
+          position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 'min(340px, calc(100vw - 24px))',
+          maxHeight: '60vh', display: 'flex', flexDirection: 'column', background: C.sf,
+          border: `.5px solid ${C.b2}`, borderRadius: 12, overflow: 'hidden',
+          boxShadow: '0 16px 44px rgba(0,0,0,.5)', zIndex: 9997, animation: 'fadeUp .18s ease',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 15 }}>🧭</span>
-              <span style={{ fontSize: 13, fontWeight: 500, color: C.tx }}>Débrief de session</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ fontSize: 14 }}>🧭</span>
+              <span style={{ fontSize: 12.5, fontWeight: 500, color: C.tx }}>Débrief de session</span>
             </div>
-            <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: C.te, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
+            <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: C.te, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 2 }}>✕</button>
           </div>
-          <div style={{ padding: 16, overflowY: 'auto' }}>
-            {!debrief && !error && (
-              <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5, marginBottom: 14 }}>
-                Un bilan posé de ta dernière séance, basé sur tes chiffres.
-              </div>
-            )}
-            {error && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic', marginBottom: 14 }}>{error}</div>}
-            {debrief && debrief.split('\n').map((line, i) => {
+          <div style={{ padding: 14, overflowY: 'auto' }}>
+            {loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse de ta dernière séance…</div>}
+            {!loading && error && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>{error}</div>}
+            {!loading && debrief && debrief.split('\n').map((line, i) => {
               if (!line.trim()) return <div key={i} style={{ height: 6 }} />
               const parts = line.split(/\*\*(.*?)\*\*/g)
               return (
@@ -2366,24 +2371,9 @@ function DebriefWidget() {
                 </div>
               )
             })}
-            <button onClick={generate} disabled={loading} style={{
-              marginTop: (debrief || error) ? 14 : 0, width: '100%', padding: '10px', borderRadius: 8,
-              fontSize: 12.5, fontFamily: MONO, cursor: loading ? 'default' : 'pointer',
-              background: loading ? 'rgba(124,58,237,.05)' : C.rd, border: `.5px solid ${C.rb}`,
-              color: loading ? C.td : C.red, opacity: loading ? .7 : 1,
-            }}>
-              {loading ? 'Génération…' : debrief ? 'Régénérer' : 'Générer le débrief'}
-            </button>
           </div>
         </div>
       )}
-      <button onClick={() => setOpen(o => !o)} title="Débrief de session" style={{
-        width: 52, height: 52, borderRadius: '50%', border: 'none', cursor: 'pointer',
-        background: C.red, color: '#fff', fontSize: 22, boxShadow: '0 8px 24px rgba(220,80,60,.4)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {open ? '✕' : '🧭'}
-      </button>
     </div>
   )
 }
@@ -3255,6 +3245,7 @@ export default function DashboardClient({
                 </button>
               ))}
             </div>
+            {isMaxPlan(plan) && <DebriefMenu />}
           </div>
           {/* Right controls */}
           <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, marginLeft: 'auto', flexShrink: 0, height: 46 }}>
@@ -3387,7 +3378,6 @@ export default function DashboardClient({
       </div>
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-      {isMaxPlan(plan) && <DebriefWidget />}
     </>
     </ThemeCtx.Provider>
   )
