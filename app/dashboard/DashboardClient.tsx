@@ -10,6 +10,7 @@ import { alertLabel } from '@/lib/alertLabels'
 import { alertTechnical } from '@/lib/alertTechnical'
 import { randomNote } from '@/lib/coachNotes'
 import { isMaxPlan, isPaidPlan } from '@/lib/plans'
+import { DETECTOR_DEFS } from '@/lib/detectors'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -2156,8 +2157,14 @@ namespace CaldraBot
 }
 
 // ── ReglesPanel ────────────────────────────────────────────────────────────────
-function ReglesPanel({ initial }: { initial: TradingRules | null }) {
+function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: string }) {
   const C = useContext(ThemeCtx)
+  const isMaxRules = isMaxPlan(plan)
+  const [detCfg, setDetCfg] = useState<Record<string, any>>((initial as any)?.detector_config || {})
+  const detEnabled = (type: string) => detCfg[type]?.enabled !== false
+  const setDetEnabled = (type: string, v: boolean) => { setDetCfg(p => ({ ...p, [type]: { ...p[type], enabled: v } })); setSave('idle') }
+  const detThresh = (type: string, key: string, def: number) => { const x = Number(detCfg[type]?.[key]); return isFinite(x) && x > 0 ? x : def }
+  const setDetThresh = (type: string, key: string, v: string) => { setDetCfg(p => ({ ...p, [type]: { ...p[type], [key]: v === '' ? undefined : Number(v) } })); setSave('idle') }
   const defaults: TradingRules = {
     max_daily_drawdown_pct: 3, max_consecutive_losses: 3,
     min_time_between_entries_sec: 120, session_start: '09:30',
@@ -2173,7 +2180,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
-    const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rules) })
+    const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...rules, detector_config: detCfg }) })
     setSave(res.ok ? 'saved' : 'error')
     if (res.ok) setTimeout(() => setSave('idle'), 3000)
   }
@@ -2283,6 +2290,40 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
             </RuleField>
           </RuleGroup>
         </div>
+
+        {/* Détecteurs — on/off + seuils (plan Max) */}
+        <RuleGroup title="Détecteurs" desc="Active ou coupe chaque détecteur, et ajuste ses seuils." accent="">
+          {!isMaxRules ? (
+            <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>Le réglage individuel des 18 détecteurs (marche/arrêt + seuils) est inclus dans le plan <span style={{ color: C.tx }}>Max</span>.</div>
+          ) : (
+            <div>
+              {DETECTOR_DEFS.map(d => {
+                const on = detEnabled(d.type)
+                return (
+                  <div key={d.type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
+                    <span style={{ fontSize: 12.5, color: on ? C.tm : C.te, display: 'flex', alignItems: 'center', gap: 7 }}>
+                      {d.label}
+                      {d.max && <span style={{ fontSize: 8, letterSpacing: 1, color: C.te, border: `.5px solid ${C.b2}`, borderRadius: 4, padding: '1px 4px' }}>MAX</span>}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {on && d.thresholds?.map(th => (
+                        <span key={th.key} style={{ display: 'flex', alignItems: 'center', gap: 4 }} title={th.label}>
+                          <input type="number" min={th.min} max={th.max} step={th.step} value={detThresh(d.type, th.key, th.def)} onChange={e => setDetThresh(d.type, th.key, e.target.value)} style={{ ...inputStyle, width: 58 }} />
+                          {th.unit && <span style={{ fontSize: 10, color: C.te }}>{th.unit}</span>}
+                        </span>
+                      ))}
+                      <button type="button" onClick={() => setDetEnabled(d.type, !on)} style={{
+                        width: 34, height: 19, borderRadius: 10, border: 'none', cursor: 'pointer', padding: 2, flexShrink: 0,
+                        background: on ? C.red : 'rgba(255,255,255,.12)', display: 'flex', alignItems: 'center',
+                        justifyContent: on ? 'flex-end' : 'flex-start', transition: 'background .2s',
+                      }}><span style={{ width: 15, height: 15, borderRadius: '50%', background: '#fff', display: 'block' }} /></button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </RuleGroup>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <button type="submit" disabled={save === 'saving'} style={{
@@ -3551,7 +3592,7 @@ export default function DashboardClient({
               <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
             )}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} plan={plan} initialTgToken={tradingRules?.telegram_bot_token ?? null} initialTgChat={tradingRules?.telegram_chat_id ?? null} />}
-            {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
+            {activeTab === 'regles' && <ReglesPanel initial={tradingRules} plan={plan} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} plan={plan} />}
             {activeTab === 'aide' && <SupportPanel userEmail={userEmail} />}

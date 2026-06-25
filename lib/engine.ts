@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendAlertEmail, sendWebhookAlert, sendTelegramAlert } from './brevo'
 import { newsConflict } from './economic-calendar'
 import { isMaxPlan, MAX_ONLY_DETECTORS, isVip } from './plans'
+import { detectorEnabled, detectorThreshold } from './detectors'
 
 const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -125,6 +126,9 @@ async function saveAndNotify(
   // les plans Pro/Free. Filtrage AVANT suppressRedundant pour qu'une alerte Pro
   // ne soit pas masquée par une alerte Max qui, elle, n'aurait pas dû s'afficher.
   if (!isMax) alerts = alerts.filter(a => !MAX_ONLY_DETECTORS.has(a.type))
+  // Détecteurs désactivés par l'utilisateur (config Max) → retirés.
+  const detCfg = (rules.detector_config as any) || {}
+  alerts = alerts.filter(a => detectorEnabled(detCfg, a.type))
   alerts = suppressRedundant(alerts)
   if (alerts.length === 0) return []
 
@@ -206,6 +210,7 @@ async function saveAndNotify(
 // trades fermés → analyzeOpenTrade n'est jamais appelé pour ces comptes).
 function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTrades: Trade[]): Alert[] {
   const alerts: Alert[] = []
+  const cfg = (rules.detector_config as any) || {}
   const prevTrades = sessionTrades.filter((t: Trade) => t.id !== trade.id)
   const prevTrade = prevTrades[0] ?? null
 
@@ -224,7 +229,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
   }
 
   // ── 2. REVENGE SIZING ─────────────────────────────────────────────────────
-  if (prevTrade && (prevTrade.pnl ?? 0) < 0 && trade.size > prevTrade.size * 1.5) {
+  if (prevTrade && (prevTrade.pnl ?? 0) < 0 && trade.size > prevTrade.size * detectorThreshold(cfg, 'revenge_sizing', 'ratio', 1.5)) {
     alerts.push({
       type: 'revenge_sizing',
       level: 2,
@@ -281,28 +286,25 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
   const sameSetup = prevTrades.filter(
     (t: Trade) => t.symbol === trade.symbol && t.direction === trade.direction
   )
-  const prev1 = sameSetup[0] ?? null
-  const prev2 = sameSetup[1] ?? null
-  if (
-    prev1 && prev2 &&
-    (prev1.pnl ?? 0) < 0 && (prev2.pnl ?? 0) < 0
-  ) {
+  const needLosses = Math.round(detectorThreshold(cfg, 'averaging_down', 'losses', 2))
+  const lastN = sameSetup.slice(0, needLosses)
+  if (lastN.length === needLosses && lastN.every((t: Trade) => (t.pnl ?? 0) < 0)) {
     alerts.push({
       type: 'averaging_down',
       level: 3,
-      message: 'Tu réattaques le même sens après 2 pertes d\'affilée',
+      message: `Tu réattaques le même sens après ${needLosses} perte${needLosses > 1 ? 's' : ''} d'affilée`,
       detail: {
         symbol: trade.symbol,
         direction: trade.direction,
-        previous_pnl: prev1.pnl ?? 0,
-        previous_pnl_2: prev2.pnl ?? 0,
+        losses: needLosses,
+        previous_pnls: lastN.map((t: Trade) => t.pnl ?? 0),
       },
     })
   }
 
   // ── 6. SIZING D'EUPHORIE ──────────────────────────────────────────────────
   // Taille qui gonfle après un GAIN (excès de confiance) — miroir du revenge.
-  if (prevTrade && (prevTrade.pnl ?? 0) > 0 && trade.size > prevTrade.size * 1.5) {
+  if (prevTrade && (prevTrade.pnl ?? 0) > 0 && trade.size > prevTrade.size * detectorThreshold(cfg, 'euphoria_sizing', 'ratio', 1.5)) {
     alerts.push({
       type: 'euphoria_sizing',
       level: 2,
@@ -350,7 +352,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
     if (!isNaN(endH)) {
       const minsToEnd = (endH * 60 + (endM || 0)) - localMins
       const priorPnl = prevTrades.reduce((s: number, t: Trade) => s + (t.pnl || 0), 0)
-      if (minsToEnd >= 0 && minsToEnd <= 10 && priorPnl < 0) {
+      if (minsToEnd >= 0 && minsToEnd <= detectorThreshold(cfg, 'end_of_day_desperation', 'minutes', 10) && priorPnl < 0) {
         alerts.push({
           type: 'end_of_day_desperation',
           level: 2,
@@ -370,8 +372,8 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
 
 // Détecteur "Trade pendant news" — croise l'heure d'entrée avec le calendrier
 // économique (événements à fort impact ±10 min sur la devise du symbole).
-async function maybeNewsAlert(trade: Trade): Promise<Alert | null> {
-  const news = await newsConflict(trade.entry_time, trade.symbol)
+async function maybeNewsAlert(trade: Trade, windowMin = 10): Promise<Alert | null> {
+  const news = await newsConflict(trade.entry_time, trade.symbol, windowMin)
   if (!news) return null
   return {
     type: 'news_trading',
@@ -429,7 +431,7 @@ export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
 
   const isMax = isMaxPlan(profile?.plan) || await isVipUser(trade.user_id)
   const alerts = entryBehaviorAlerts(trade, rules, sessionTrades)
-  const news = await maybeNewsAlert(trade)
+  const news = await maybeNewsAlert(trade, detectorThreshold((rules as any).detector_config, 'news_trading', 'window', 10))
   if (news) alerts.push(news)
   const unfamiliar = await maybeUnfamiliarSymbolAlert(trade)
   if (unfamiliar) alerts.push(unfamiliar)
@@ -459,7 +461,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
   // sinon overtrading / outside_session / revenge / re-entrée ne se déclenchent jamais.
   if (includeEntryChecks) {
     alerts.push(...entryBehaviorAlerts(trade, rules, sessionTrades))
-    const news = await maybeNewsAlert(trade)
+    const news = await maybeNewsAlert(trade, detectorThreshold((rules as any).detector_config, 'news_trading', 'window', 10))
     if (news) alerts.push(news)
     const unfamiliar = await maybeUnfamiliarSymbolAlert(trade)
     if (unfamiliar) alerts.push(unfamiliar)

@@ -46,6 +46,7 @@ create table if not exists trading_rules (
   require_stop_loss             boolean     not null default false,
   telegram_bot_token            text,
   telegram_chat_id              text,
+  detector_config               jsonb       not null default '{}'::jsonb,
   created_at                    timestamptz not null default now(),
   updated_at                    timestamptz not null default now()
 );
@@ -254,4 +255,7 @@ alter table trading_rules add column if not exists require_stop_loss boolean not
 -- v2.11 : alertes Telegram (canal plan Max) — bot token + chat id fournis par l'user.
 alter table trading_rules add column if not exists telegram_bot_token text;
 alter table trading_rules add column if not exists telegram_chat_id   text;
+
+-- v2.12 : détecteurs configurables (Max) — on/off + seuils par détecteur (jsonb).
+alter table trading_rules add column if not exists detector_config jsonb not null default '{}'::jsonb;
 
