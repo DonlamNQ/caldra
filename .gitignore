@@ -28,3 +28,4 @@ worker/__pycache__/
 worker/node_modules/
 
 scripts/test-debrief.mjs
+scripts/seed-debrief.mjs
