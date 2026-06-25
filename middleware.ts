@@ -108,10 +108,10 @@ export async function middleware(request: NextRequest) {
     const status = profile?.subscription_status
     const entitled = status === 'trialing' || status === 'active' || status === 'past_due'
     if (!entitled) {
-      // Page de CHOIX du plan (et non un checkout direct) : sinon les comptes sans
-      // abonnement étaient renvoyés en boucle vers un Stripe Pro par défaut, sans
-      // pouvoir choisir Max. /billing affiche Pro/Max → checkout du plan choisi.
-      return NextResponse.redirect(new URL('/billing', request.url))
+      // Pas de page de billing dédiée : on renvoie vers la page de tarifs existante.
+      // Ses boutons Pro/Max portent le plan → un user connecté part droit au checkout
+      // du bon plan (cf. raccourci /login|/signup?plan ci-dessus).
+      return NextResponse.redirect(new URL('/pricing', request.url))
     }
   }
 

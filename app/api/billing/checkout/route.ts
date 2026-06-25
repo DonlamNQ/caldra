@@ -144,7 +144,7 @@ export async function GET(req: NextRequest) {
     payment_method_collection: 'always',
     allow_promotion_codes: true,
     success_url: `${origin}/billing?success=1`,
-    cancel_url: `${origin}/billing?canceled=1`,
+    cancel_url: `${origin}/pricing?canceled=1`,
     metadata: { user_id: user.id, plan },
   })
 
