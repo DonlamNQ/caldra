@@ -2794,10 +2794,11 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Aide &amp; support</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Une question, un bug, une suggestion — on répond sous 24h.</div>
       </div>
-      <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 620 }}>
+      <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
+       <div style={{ maxWidth: 940, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Formulaire de contact */}
+        {/* Contact + FAQ côte à côte */}
+        <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
           <Card title="Nous contacter">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
@@ -2811,7 +2812,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
               <div>
                 <div style={fieldLbl}>MESSAGE</div>
                 <textarea
-                  style={{ ...inp, minHeight: 140, resize: 'vertical' as const, fontFamily: SANS }}
+                  style={{ ...inp, minHeight: 160, resize: 'vertical' as const, fontFamily: SANS }}
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   placeholder="Décris ta question ou ton problème…"
@@ -2831,7 +2832,6 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
             </div>
           </Card>
 
-          {/* FAQ */}
           <Card title="Questions fréquentes">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {faq.map((f, i) => (
@@ -2842,25 +2842,25 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
               ))}
             </div>
           </Card>
-
-          {/* Les 18 détecteurs */}
-          <Card title="Les 18 détecteurs surveillés">
-            <div style={{ fontSize: 12, color: C.te, lineHeight: 1.5, marginBottom: 16 }}>
-              Caldra repère ces schémas en direct. Les seuils chiffrés se règlent dans l&apos;onglet Règles ; les autres tournent sur une logique fixe. <span style={{ color: C.red, fontFamily: MONO, fontSize: 10 }}>MAX</span> = inclus dans le plan Max.
-            </div>
-            <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              {detectors.map((d, i) => (
-                <div key={i}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontSize: 12.5, color: C.tx, fontWeight: 500 }}>{d.label}</span>
-                    {d.max && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px', fontFamily: MONO }}>MAX</span>}
-                  </div>
-                  <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.45 }}>{d.desc}</div>
-                </div>
-              ))}
-            </div>
-          </Card>
         </div>
+
+        {/* Les 18 détecteurs — pleine largeur */}
+        <Card title="Les 18 détecteurs surveillés">
+          <div style={{ fontSize: 12, color: C.te, lineHeight: 1.5, marginBottom: 16 }}>
+            Caldra repère ces schémas en direct. Les seuils chiffrés se règlent dans l&apos;onglet Règles ; les autres tournent sur une logique fixe. <span style={{ color: C.red, fontFamily: MONO, fontSize: 10 }}>MAX</span> = inclus dans le plan Max.
+          </div>
+          <div className="detectors-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            {detectors.map((d, i) => (
+              <div key={i}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 12.5, color: C.tx, fontWeight: 500 }}>{d.label}</span>
+                  {d.max && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px', fontFamily: MONO }}>MAX</span>}
+                </div>
+                <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.45 }}>{d.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
 
         {/* Contact direct */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' as const }}>
@@ -2871,6 +2871,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
           </div>
           <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>Réponse sous 24 h ouvrées</span>
         </div>
+       </div>
       </div>
     </div>
   )
@@ -3261,6 +3262,7 @@ export default function DashboardClient({
           .panel-container{overflow:visible!important;height:auto!important;min-height:0!important;flex:none!important;display:block!important}
           .panel-container>*{height:auto!important;min-height:0!important;overflow:visible!important;flex:none!important}
           .resp-grid-2{grid-template-columns:1fr!important}
+          .detectors-grid{grid-template-columns:repeat(2,1fr)!important}
           .kpi-grid{grid-template-columns:repeat(2,1fr)!important}
           .session-main-grid{grid-template-columns:1fr!important}
           .rules-grid{grid-template-columns:1fr!important}
