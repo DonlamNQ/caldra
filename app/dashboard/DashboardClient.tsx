@@ -1264,16 +1264,11 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
 // ── AnalyticsPanel ─────────────────────────────────────────────────────────────
 function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number }) {
   const C = useContext(ThemeCtx)
-  if (sessions.length === 0) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: C.te, fontSize: 13, fontFamily: MONO }}>
-        // aucune donnée historique disponible
-      </div>
-    )
-  }
+  // On affiche TOUJOURS la page — même sans aucune donnée. Chaque sous-bloc a son
+  // propre état vide (placeholders), donc la structure reste lisible à zéro trade.
 
   const totalPnl = sessions.reduce((s, d) => s + d.pnl, 0)
-  const avgScore = Math.round(sessions.reduce((s, d) => s + d.score, 0) / sessions.length)
+  const avgScore = sessions.length > 0 ? Math.round(sessions.reduce((s, d) => s + d.score, 0) / sessions.length) : 0
   const sessionsAbove80 = sessions.filter(d => d.score >= 80).length
   const sessionsCritical = sessions.filter(d => d.score < 40).length
   const allAlerts = [...sessions.flatMap(d => d.alerts), ...todayAlerts.map(a => ({ type: a.type ?? '', level: a.level ?? 1 }))]
@@ -1358,7 +1353,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
       <div style={{ padding: '18px 24px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
         <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Performance</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Analytics</div>
-        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Données sur les {sessions.length} dernières sessions</div>
+        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>{sessions.length > 0 ? `Données sur les ${sessions.length} dernières sessions` : 'Aucune session encore — tes métriques se rempliront au fil de tes trades'}</div>
       </div>
 
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
