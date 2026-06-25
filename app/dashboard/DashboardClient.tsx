@@ -148,7 +148,7 @@ function LiveClock() {
     const update = () => setTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
     update(); const id = setInterval(update, 1000); return () => clearInterval(id)
   }, [])
-  return <span style={{ fontFamily: MONO, fontSize: 11, color: C.td }}>{time}</span>
+  return <span style={{ fontFamily: SANS, fontSize: 11, color: C.td }}>{time}</span>
 }
 
 // ── ScoreRingSvg ───────────────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ function ScoreRingSvg({ score }: { score: number }) {
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: col, transition: 'color .5s' }}>{score}</span>
-        <span style={{ fontSize: 9, color: C.te, fontFamily: MONO, marginTop: 2 }}>/ 100</span>
+        <span style={{ fontSize: 9, color: C.te, fontFamily: SANS, marginTop: 2 }}>/ 100</span>
       </div>
     </div>
   )
@@ -219,8 +219,8 @@ function BehavioralRadar({ sizing, risk, reentry, drawdown, discipline }: {
         const vc = v >= 70 ? C.g : v >= 40 ? C.o : C.tm
         return (
           <g key={i}>
-            <text x={x} y={y - 3} textAnchor={anchor} fontSize={10} fill={C.td} fontFamily={MONO}>{labels[i]}</text>
-            <text x={x} y={y + 10} textAnchor={anchor} fontSize={11} fill={vc} fontWeight="600" fontFamily={MONO}>{v}</text>
+            <text x={x} y={y - 3} textAnchor={anchor} fontSize={10} fill={C.td} fontFamily={SANS}>{labels[i]}</text>
+            <text x={x} y={y + 10} textAnchor={anchor} fontSize={11} fill={vc} fontWeight="600" fontFamily={SANS}>{v}</text>
           </g>
         )
       })}
@@ -497,7 +497,7 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
           position: 'absolute', left: `${Math.max(16, Math.min(84, (hx / W) * 100))}%`, top: `${(hyV / H) * 100}%`,
           transform: 'translate(-50%, calc(-100% - 9px))', pointerEvents: 'none', zIndex: 5,
           background: C.sf2, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '5px 8px',
-          whiteSpace: 'nowrap', fontFamily: MONO, fontSize: 9.5, lineHeight: 1.45,
+          whiteSpace: 'nowrap', fontFamily: SANS, fontSize: 9.5, lineHeight: 1.45,
           boxShadow: '0 4px 14px rgba(0,0,0,.4)',
         }}>
           <div style={{ color: C.te, marginBottom: 1 }}>
@@ -542,14 +542,14 @@ function Sidebar({ score, alerts, stats, rules }: {
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
-        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: MONO }}>Profil comportemental</span>
+        <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: SANS }}>Profil comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ScoreRingSvg score={score} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8,
               padding: '5px 12px', borderRadius: 99, fontSize: 10, letterSpacing: .7,
-              fontFamily: MONO,
+              fontFamily: SANS,
               background: statusCls === 'ok' ? 'rgba(0,209,122,.1)' : statusCls === 'warn' ? 'rgba(255,171,0,.1)' : 'rgba(124,58,237,.12)',
               border: `.5px solid ${statusCls === 'ok' ? 'rgba(0,209,122,.28)' : statusCls === 'warn' ? 'rgba(255,171,0,.3)' : C.rb}`,
               color: statusCls === 'ok' ? C.g : statusCls === 'warn' ? C.o : C.red,
@@ -572,7 +572,7 @@ function Sidebar({ score, alerts, stats, rules }: {
       {rules && (
         <div style={{ padding: '8px 20px 8px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: C.td }}>Fenêtre</span>
-          <span style={{ fontSize: 11, color: C.tm, fontFamily: MONO }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
+          <span style={{ fontSize: 11, color: C.tm, fontFamily: SANS }}>{rules.session_start.slice(0,5)}–{rules.session_end.slice(0,5)}</span>
         </div>
       )}
 
@@ -582,9 +582,9 @@ function Sidebar({ score, alerts, stats, rules }: {
       {/* Alertes — heatmap + feed (flex:1 pour remplir l'espace) */}
       <div style={{ padding: '14px 20px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Alertes</span>
+          <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: SANS }}>Alertes</span>
           {alerts.length > 0 && (
-            <span style={{ fontSize: 9, fontFamily: MONO, padding: '2px 9px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, animation: 'pulse 2s infinite' }}>
+            <span style={{ fontSize: 9, fontFamily: SANS, padding: '2px 9px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, animation: 'pulse 2s infinite' }}>
               {alerts.length}
             </span>
           )}
@@ -628,12 +628,12 @@ function Sidebar({ score, alerts, stats, rules }: {
                   <div key={a.type} style={{ padding: '8px 10px', borderRadius: 6, background: `${aCol}1a`, borderLeft: `3px solid ${aCol}`, flexShrink: 0, transition: 'all .3s' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                        <span style={{ fontSize: 10, color: aCol, fontFamily: MONO, fontWeight: 600, letterSpacing: .3 }}>L{lvl} · {alertLabel(a.type)}</span>
+                        <span style={{ fontSize: 10, color: aCol, fontFamily: SANS, fontWeight: 600, letterSpacing: .3 }}>L{lvl} · {alertLabel(a.type)}</span>
                         {a.count > 1 && (
-                          <span style={{ fontSize: 9, fontFamily: MONO, fontWeight: 600, color: aCol, background: `${aCol}1e`, border: `.5px solid ${aCol}55`, borderRadius: 99, padding: '1px 6px', lineHeight: 1.3, flexShrink: 0 }}>×{a.count}</span>
+                          <span style={{ fontSize: 9, fontFamily: SANS, fontWeight: 600, color: aCol, background: `${aCol}1e`, border: `.5px solid ${aCol}55`, borderRadius: 99, padding: '1px 6px', lineHeight: 1.3, flexShrink: 0 }}>×{a.count}</span>
                         )}
                       </span>
-                      {a.created_at && <span style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, flexShrink: 0 }}>{fmtTime(a.created_at)}</span>}
+                      {a.created_at && <span style={{ fontSize: 9.5, color: C.te, fontFamily: SANS, flexShrink: 0 }}>{fmtTime(a.created_at)}</span>}
                     </div>
                     <div style={{ fontSize: 12.5, color: C.tm, fontWeight: 300, lineHeight: 1.35 }}>{a.message}</div>
                     {alertTechnical(a.type, a.detail) && (
@@ -689,7 +689,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 18px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
           <div>
-            <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 5 }}>P&L</div>
+            <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 5 }}>P&L</div>
             <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
               {fmtEur(stats.total_pnl)}
             </div>
@@ -702,22 +702,22 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             { k: 'Consécutives', v: String(streak), warn: streak >= 2 },
           ] as { k: string; v: string; sub?: string; warn?: boolean }[]).map(({ k, v, sub, warn }) => (
             <div key={k}>
-              <div style={{ fontSize: 8.5, color: C.te, fontFamily: MONO, letterSpacing: .8, marginBottom: 2 }}>{k}</div>
+              <div style={{ fontSize: 8.5, color: C.te, fontFamily: SANS, letterSpacing: .8, marginBottom: 2 }}>{k}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                <span style={{ fontSize: 18, fontFamily: MONO, color: C.td }}>{v}</span>
-                {sub && <span style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>{sub}</span>}
+                <span style={{ fontSize: 18, fontFamily: SANS, color: C.td }}>{v}</span>
+                {sub && <span style={{ fontSize: 10.5, color: C.te, fontFamily: SANS }}>{sub}</span>}
               </div>
             </div>
           ))}
           {yesterdayStats && (
             <div style={{ borderTop: `.5px solid ${C.b}`, paddingTop: 8 }}>
-              <div style={{ fontSize: 8.5, color: C.te, fontFamily: MONO, letterSpacing: .8, marginBottom: 4 }}>J−1</div>
+              <div style={{ fontSize: 8.5, color: C.te, fontFamily: SANS, letterSpacing: .8, marginBottom: 4 }}>J−1</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
                 <span style={{ fontSize: 14, color: C.pnl }}>{fmtEur(yesterdayStats.pnl)}</span>
-                <span style={{ fontSize: 11, fontFamily: MONO, color: scoreColor(yesterdayStats.score, C) }}>{yesterdayStats.score} pts</span>
+                <span style={{ fontSize: 11, fontFamily: SANS, color: scoreColor(yesterdayStats.score, C) }}>{yesterdayStats.score} pts</span>
               </div>
               {yesterdayStats.alerts > 0 && (
-                <div style={{ fontSize: 9, color: C.te, fontFamily: MONO, marginTop: 2 }}>{yesterdayStats.alerts} alerte{yesterdayStats.alerts > 1 ? 's' : ''}</div>
+                <div style={{ fontSize: 9, color: C.te, fontFamily: SANS, marginTop: 2 }}>{yesterdayStats.alerts} alerte{yesterdayStats.alerts > 1 ? 's' : ''}</div>
               )}
             </div>
           )}
@@ -726,12 +726,12 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         {/* Chart card */}
         <div style={{ background: C.sf, borderTop: `.5px solid ${C.b}`, borderLeft: `.5px solid ${C.b}`, borderRight: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
-          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Ligne de session</div>
+          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: SANS }}>Ligne de session</div>
           <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
-          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: MONO }}>Courbe P&L</div>
+          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: SANS }}>Courbe P&L</div>
           <div style={{ flex: 1, minHeight: 120 }}>
             <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} />
           </div>
@@ -742,8 +742,8 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 12 }}>
-          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Session tape</span>
-          {trades.length > 0 && <span style={{ fontSize: 9, fontFamily: MONO, color: C.te }}>{trades.length} trade{trades.length > 1 ? 's' : ''}</span>}
+          <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: SANS }}>Session tape</span>
+          {trades.length > 0 && <span style={{ fontSize: 9, fontFamily: SANS, color: C.te }}>{trades.length} trade{trades.length > 1 ? 's' : ''}</span>}
         </div>
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {sortedTrades.length === 0 ? (
@@ -777,7 +777,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                       {/* Time + connector line */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, width: 44 }}>
-                        <span style={{ fontSize: 11, color: C.te, fontFamily: MONO, paddingTop: 8, lineHeight: 1 }}>
+                        <span style={{ fontSize: 11, color: C.te, fontFamily: SANS, paddingTop: 8, lineHeight: 1 }}>
                           {fmtTime(t.entry_time)}
                         </span>
                         {i < sortedTrades.length - 1 && (
@@ -810,12 +810,12 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                             {t.direction === 'long' ? '▲' : '▼'} ×{t.size}
                           </span>
                           {isOpen && (
-                            <span style={{ fontSize: 8, padding: '1px 5px', background: 'rgba(255,171,0,.08)', border: '.5px solid rgba(255,171,0,.22)', color: C.o, borderRadius: 99, fontFamily: MONO, flexShrink: 0 }}>
+                            <span style={{ fontSize: 8, padding: '1px 5px', background: 'rgba(255,171,0,.08)', border: '.5px solid rgba(255,171,0,.22)', color: C.o, borderRadius: 99, fontFamily: SANS, flexShrink: 0 }}>
                               live
                             </span>
                           )}
                           {ls && (
-                            <span style={{ fontSize: 8, padding: '1px 5px', fontFamily: MONO, background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.dot, borderRadius: 99, flexShrink: 0 }}>
+                            <span style={{ fontSize: 8, padding: '1px 5px', fontFamily: SANS, background: ls.bg, border: `.5px solid ${ls.border}`, color: ls.dot, borderRadius: 99, flexShrink: 0 }}>
                               L{lvl}
                             </span>
                           )}
@@ -849,14 +849,14 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
                           return fields
                         })().map(({ label, val }) => (
                           <div key={label}>
-                            <div style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, marginBottom: 1 }}>{label}</div>
-                            <div style={{ fontSize: 11, color: C.tm, fontFamily: MONO }}>{val}</div>
+                            <div style={{ fontSize: 9.5, color: C.te, fontFamily: SANS, marginBottom: 1 }}>{label}</div>
+                            <div style={{ fontSize: 11, color: C.tm, fontFamily: SANS }}>{val}</div>
                           </div>
                         ))}
                         {tradeAlerts.slice(0, 2).map((a, ai) => (
                           <div key={ai}>
-                            <div style={{ fontSize: 9.5, color: C.te, fontFamily: MONO, marginBottom: 1 }}>Alerte</div>
-                            <div style={{ fontSize: 10.5, fontFamily: MONO, color: (a.level ?? 1) >= 3 ? '#dc3218' : (a.level ?? 1) >= 2 ? C.red : C.o }}>
+                            <div style={{ fontSize: 9.5, color: C.te, fontFamily: SANS, marginBottom: 1 }}>Alerte</div>
+                            <div style={{ fontSize: 10.5, fontFamily: SANS, color: (a.level ?? 1) >= 3 ? '#dc3218' : (a.level ?? 1) >= 2 ? C.red : C.o }}>
                               L{a.level ?? 1} — {alertLabel(a.type)}
                             </div>
                           </div>
@@ -880,7 +880,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           animation: 'fadeUp .35s ease',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>Message du jour</span>
+            <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: SANS }}>Message du jour</span>
             <button onClick={dismissNote} aria-label="Fermer" style={{
               background: 'transparent', border: 'none', color: C.te, cursor: 'pointer',
               fontSize: 16, lineHeight: 1, padding: 0, marginLeft: 12, fontFamily: SANS,
@@ -944,7 +944,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Historique</div>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Historique</div>
           <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Calendrier des sessions</div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -989,7 +989,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
             if (isWeekend || !s) {
               return (
                 <div key={d} style={{ minHeight: 68, borderRadius: 9, border: `.5px solid ${C.b2}`, background: C.sf2, display: 'flex', flexDirection: 'column', padding: 9, opacity: isWeekend ? 0.3 : 0.45 }}>
-                  <div style={{ fontSize: 11, color: C.td, fontFamily: MONO }}>{d}</div>
+                  <div style={{ fontSize: 11, color: C.td, fontFamily: SANS }}>{d}</div>
                 </div>
               )
             }
@@ -1008,7 +1008,7 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                 outline: isSelected ? '1.5px solid rgba(124,58,237,.5)' : 'none', outlineOffset: 1,
               }}>
                 {s.alertCount > 0 && <div style={{ position: 'absolute', top: 7, right: 7, width: 5, height: 5, borderRadius: '50%', background: C.red }} />}
-                <div style={{ fontSize: 11, color: C.te, fontFamily: MONO, marginBottom: 4 }}>{d}</div>
+                <div style={{ fontSize: 11, color: C.te, fontFamily: SANS, marginBottom: 4 }}>{d}</div>
                 <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -1, lineHeight: 1, marginBottom: 2, color: col }}>{s.score}</div>
                 <div style={{ fontSize: 10, color: C.td }}>{fmtEur(s.pnl)}</div>
               </div>
@@ -1036,12 +1036,12 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
               ].map(({ k, v }) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
                   <span style={{ fontSize: 12, color: C.td }}>{k}</span>
-                  <span style={{ fontSize: 12.5, fontFamily: MONO, color: C.tm, fontWeight: 500 }}>{v}</span>
+                  <span style={{ fontSize: 12.5, fontFamily: SANS, color: C.tm, fontWeight: 500 }}>{v}</span>
                 </div>
               ))}
               {selectedSession.alerts.slice(0, 2).map((a, i) => (
                 <div key={i} style={{ padding: '8px 10px', borderRadius: 7, marginTop: 8, border: `.5px solid ${a.level >= 3 ? 'rgba(220,50,24,.25)' : a.level >= 2 ? C.rb : 'rgba(255,171,0,.18)'}`, background: a.level >= 3 ? 'rgba(220,50,24,.08)' : a.level >= 2 ? C.rd : 'rgba(255,171,0,.06)' }}>
-                  <div style={{ fontSize: 10, fontFamily: MONO, marginBottom: 3, color: a.level >= 3 ? '#dc3218' : a.level >= 2 ? C.red : C.o }}>L{a.level} · {a.type}</div>
+                  <div style={{ fontSize: 10, fontFamily: SANS, marginBottom: 3, color: a.level >= 3 ? '#dc3218' : a.level >= 2 ? C.red : C.o }}>L{a.level} · {a.type}</div>
                   <div style={{ fontSize: 11.5, color: C.tm, lineHeight: 1.4, fontWeight: 300 }}>{a.message}</div>
                 </div>
               ))}
@@ -1066,8 +1066,8 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
               return (
                 <div key={w.lbl} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px', marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: C.td }}>{w.lbl} <span style={{ fontFamily: MONO, color: C.pnl }}>· {fmtEur(wPnl)}</span></span>
-                    <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: col }}>{avg}</span>
+                    <span style={{ fontSize: 11, color: C.td }}>{w.lbl} <span style={{ fontFamily: SANS, color: C.pnl }}>· {fmtEur(wPnl)}</span></span>
+                    <span style={{ fontSize: 13, fontFamily: SANS, fontWeight: 500, color: col }}>{avg}</span>
                   </div>
                   <div style={{ height: 2, background: 'rgba(255,255,255,.05)', borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
                     <div style={{ height: '100%', width: `${avg}%`, background: col, borderRadius: 2, transition: 'width .5s' }} />
@@ -1075,13 +1075,13 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                   <div style={{ display: 'flex', gap: 5 }}>
                     {w.days.map(d => {
                       const ds = sessionByDate[cellDate(d)]
-                      if (!ds) return <div key={d} style={{ width: 40, height: 40, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b2}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, opacity: .4 }}><span style={{ fontSize: 8.5, color: C.td, fontFamily: MONO }}>{d}</span></div>
+                      if (!ds) return <div key={d} style={{ width: 40, height: 40, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b2}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, opacity: .4 }}><span style={{ fontSize: 8.5, color: C.td, fontFamily: SANS }}>{d}</span></div>
                       const dc = scoreColor(ds.score, C)
                       const dbg = ds.score >= 70 ? 'rgba(0,209,122,' : ds.score >= 40 ? 'rgba(255,171,0,' : 'rgba(255,90,61,'
                       return (
                         <div key={d} onClick={() => setSelectedDate(cellDate(d))} style={{ width: 40, height: 40, borderRadius: 8, background: `${dbg}.14)`, border: `.5px solid ${dbg}.35)`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', transition: 'filter .15s' }}>
-                          <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: dc }}>{ds.score}</span>
-                          <span style={{ fontSize: 8.5, color: C.td, fontFamily: MONO }}>{d}</span>
+                          <span style={{ fontSize: 13, fontFamily: SANS, fontWeight: 500, color: dc }}>{ds.score}</span>
+                          <span style={{ fontSize: 8.5, color: C.td, fontFamily: SANS }}>{d}</span>
                         </div>
                       )
                     })}
@@ -1237,10 +1237,10 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
       </svg>
       {/* Montants — gouttière de gauche, en HTML pour ne pas s'étirer */}
       {yTicks.map(v => (
-        <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 8, top: `${(Math.max(PYT, Math.min(H - PYB, yOf(v))) / H) * 100}%`, transform: 'translateY(-50%)', textAlign: 'right', fontSize: 9, fontFamily: MONO, color: C.te, lineHeight: 1 }}>{fmtY(v)}</div>
+        <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 8, top: `${(Math.max(PYT, Math.min(H - PYB, yOf(v))) / H) * 100}%`, transform: 'translateY(-50%)', textAlign: 'right', fontSize: 9, fontFamily: SANS, color: C.te, lineHeight: 1 }}>{fmtY(v)}</div>
       ))}
       {/* Dates début / fin */}
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'space-between', paddingLeft: `${(PXL / W) * 100}%`, paddingRight: `${(PXR / W) * 100}%`, fontSize: 9, fontFamily: MONO, color: C.te }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'space-between', paddingLeft: `${(PXL / W) * 100}%`, paddingRight: `${(PXR / W) * 100}%`, fontSize: 9, fontFamily: SANS, color: C.te }}>
         <span>{fmtD(sorted[0].exit_time ?? sorted[0].entry_time)}</span>
         <span>{fmtD(sorted[sorted.length - 1].exit_time ?? sorted[sorted.length - 1].entry_time)}</span>
       </div>
@@ -1249,7 +1249,7 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
           position: 'absolute', left: `${Math.max(16, Math.min(84, (hx / W) * 100))}%`, top: `${(hyV / H) * 100}%`,
           transform: 'translate(-50%, calc(-100% - 9px))', pointerEvents: 'none', zIndex: 5,
           background: C.sf2, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '5px 8px',
-          whiteSpace: 'nowrap', fontFamily: MONO, fontSize: 9.5, lineHeight: 1.5,
+          whiteSpace: 'nowrap', fontFamily: SANS, fontSize: 9.5, lineHeight: 1.5,
           boxShadow: '0 4px 14px rgba(0,0,0,.4)',
         }}>
           <div style={{ color: C.te, marginBottom: 1 }}>
@@ -1355,7 +1355,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
 
       {/* Header */}
       <div style={{ padding: '18px 24px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Performance</div>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Performance</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Analytics</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>{sessions.length > 0 ? `Données sur les ${sessions.length} dernières sessions` : 'Aucune session encore — tes métriques se rempliront au fil de tes trades'}</div>
       </div>
@@ -1390,14 +1390,14 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
                   )
                 })()}
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>{it.lbl}</div>
+                  <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>{it.lbl}</div>
                   <div style={{ fontSize: 21, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: C.tm }}>{it.frac}%</div>
                   <div style={{ fontSize: 10, color: C.td, marginTop: 4 }}>{it.sub}</div>
                 </div>
               </>
             ) : (
               <>
-                <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 8 }}>{it.lbl}</div>
+                <div style={{ fontSize: 9, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 8 }}>{it.lbl}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <span style={{ fontSize: 25, fontWeight: 300, letterSpacing: -1, lineHeight: 1, color: it.col }}>{it.val}</span>
                   {it.arrow === 'up' && <span style={{ fontSize: 14, lineHeight: 1, color: GREEN }}>↑</span>}
@@ -1427,15 +1427,15 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Par instrument</div>
-            <div style={{ fontSize: 9.5, color: C.te, fontFamily: MONO }}>barre = ampleur du P&L</div>
+            <div style={{ fontSize: 9.5, color: C.te, fontFamily: SANS }}>barre = ampleur du P&L</div>
           </div>
           {bySymbol.length === 0 ? (
             <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun trade fermé.</div>
           ) : bySymbol.slice(0, 6).map(([sym, d]) => (
             <div key={sym} style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 12, color: C.td, fontFamily: MONO }}>{sym} <span style={{ color: C.te }}>· {d.n} tr.</span></span>
-                <span style={{ fontSize: 12, fontFamily: MONO, color: C.tx, fontWeight: 600 }}>{fmtEur(d.pnl)}</span>
+                <span style={{ fontSize: 12, color: C.td, fontFamily: SANS }}>{sym} <span style={{ color: C.te }}>· {d.n} tr.</span></span>
+                <span style={{ fontSize: 12, fontFamily: SANS, color: C.tx, fontWeight: 600 }}>{fmtEur(d.pnl)}</span>
               </div>
               <div style={{ height: 5, background: 'rgba(255,255,255,.05)', borderRadius: 3, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${Math.abs(d.pnl) / symMaxAbs * 100}%`, background: BAR, borderRadius: 3 }} />
@@ -1449,7 +1449,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
           ] as any[]).map(({ k, v, col }) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
               <span style={{ fontSize: 12.5, color: C.td }}>{k}</span>
-              <span style={{ fontSize: 12.5, fontFamily: MONO, color: col, fontWeight: 500 }}>{v}</span>
+              <span style={{ fontSize: 12.5, fontFamily: SANS, color: col, fontWeight: 500 }}>{v}</span>
             </div>
           ))}
         </div>
@@ -1459,9 +1459,9 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Comportement</div>
-            <div style={{ fontSize: 10.5, color: C.te, fontFamily: MONO }}>score moy. <span style={{ color: scoreColor(avgScore, C), fontWeight: 600 }}>{avgScore}</span></div>
+            <div style={{ fontSize: 10.5, color: C.te, fontFamily: SANS }}>score moy. <span style={{ color: scoreColor(avgScore, C), fontWeight: 600 }}>{avgScore}</span></div>
           </div>
-          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 10 }}>Score moyen par jour</div>
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 10 }}>Score moyen par jour</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 16 }}>
             {dayNames.map((name, i) => {
               const ds = byDow[i] ?? []
@@ -1470,13 +1470,13 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
               const dbg = avg !== null ? (avg >= 70 ? 'rgba(0,209,122,' : avg >= 40 ? 'rgba(255,171,0,' : 'rgba(255,90,61,') : 'rgba(255,255,255,'
               return (
                 <div key={name} style={{ borderRadius: 7, height: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: `${dbg}.09)`, border: `.5px solid ${dbg}.22)` }}>
-                  <span style={{ fontSize: 13, fontFamily: MONO, fontWeight: 500, color: col }}>{avg ?? '—'}</span>
-                  <span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: MONO }}>{name}</span>
+                  <span style={{ fontSize: 13, fontFamily: SANS, fontWeight: 500, color: col }}>{avg ?? '—'}</span>
+                  <span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: SANS }}>{name}</span>
                 </div>
               )
             })}
           </div>
-          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 10 }}>Patterns déclenchés</div>
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 10 }}>Patterns déclenchés</div>
           {patterns.length === 0 ? (
             <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun pattern — excellent travail.</div>
           ) : (
@@ -1490,7 +1490,7 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
                     <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,.05)', borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: col, borderRadius: 2 }} />
                     </div>
-                    <span style={{ fontSize: 12, color: C.tm, fontFamily: MONO, width: 28, textAlign: 'right' as const, fontWeight: 500 }}>{count}×</span>
+                    <span style={{ fontSize: 12, color: C.tm, fontFamily: SANS, width: 28, textAlign: 'right' as const, fontWeight: 500 }}>{count}×</span>
                   </div>
                 )
               })}
@@ -1513,8 +1513,8 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
             return rows.map(r => (
               <div key={r.k} style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <span style={{ fontSize: 12.5, color: C.td }}>{r.k} <span style={{ color: C.te, fontFamily: MONO }}>· {r.w}% · {r.n} tr.</span></span>
-                  <span style={{ fontSize: 12.5, fontFamily: MONO, color: pnlCol(r.pnl), fontWeight: 600 }}>{fmtEur(r.pnl)}</span>
+                  <span style={{ fontSize: 12.5, color: C.td }}>{r.k} <span style={{ color: C.te, fontFamily: SANS }}>· {r.w}% · {r.n} tr.</span></span>
+                  <span style={{ fontSize: 12.5, fontFamily: SANS, color: pnlCol(r.pnl), fontWeight: 600 }}>{fmtEur(r.pnl)}</span>
                 </div>
                 <div style={{ height: 8, background: 'rgba(255,255,255,.05)', borderRadius: 4, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${Math.abs(r.pnl) / m * 100}%`, background: BAR, borderRadius: 4 }} />
@@ -1534,9 +1534,9 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
                   const v = dowPnl[i], h = Math.abs(v) / m * 60, up = v >= 0
                   return (
                     <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
-                      <span style={{ fontSize: 9, fontFamily: MONO, color: pnlCol(v), marginBottom: 3 }}>{v >= 0 ? '+' : ''}{Math.round(v)}</span>
+                      <span style={{ fontSize: 9, fontFamily: SANS, color: pnlCol(v), marginBottom: 3 }}>{v >= 0 ? '+' : ''}{Math.round(v)}</span>
                       <div style={{ width: '66%', height: Math.max(2, h), background: up ? GREEN : RED, borderRadius: 2, opacity: 0.9 }} />
-                      <span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: MONO, marginTop: 5 }}>{name}</span>
+                      <span style={{ fontSize: 8.5, color: 'rgba(255,255,255,.3)', fontFamily: SANS, marginTop: 5 }}>{name}</span>
                     </div>
                   )
                 })}
@@ -1556,21 +1556,6 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
   const C = useContext(ThemeCtx)
   const [loading, setLoading] = useState<string | null>(null)
   const isMax = isMaxPlan(plan)
-
-  // Analyse des patterns récurrents (Max) — débrief hebdo / mensuel à la demande
-  const [pat, setPat] = useState<string | null>(null)
-  const [patPeriod, setPatPeriod] = useState<'week' | 'month'>('week')
-  const [patLoading, setPatLoading] = useState(false)
-  const [patError, setPatError] = useState<string | null>(null)
-  async function genPatterns(p: 'week' | 'month') {
-    setPatPeriod(p); setPatLoading(true); setPatError(null); setPat(null)
-    try {
-      const res = await fetch(`/api/debrief?period=${p}`, { method: 'POST' })
-      const data = await res.json()
-      if (res.ok && data.debrief) setPat(data.debrief)
-      else setPatError(data.error ?? 'Analyse indisponible.')
-    } catch { setPatError('Erreur réseau — réessaie.') } finally { setPatLoading(false) }
-  }
 
   const toISODate = (d: Date) => d.toISOString().split('T')[0]
 
@@ -1617,7 +1602,7 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
   const months = [getMonthStart(-1), getMonthStart(-2), getMonthStart(-3)]
   const weeks = [getWeekMonday(-1), getWeekMonday(-2), getWeekMonday(-3), getWeekMonday(-4)]
 
-  const sectionTitle: React.CSSProperties = { fontSize: 10, letterSpacing: 1, color: C.td, textTransform: 'uppercase', fontFamily: MONO, marginBottom: 2 }
+  const sectionTitle: React.CSSProperties = { fontSize: 10, letterSpacing: 1, color: C.td, textTransform: 'uppercase', fontFamily: SANS, marginBottom: 2 }
 
   function ReportRow({ icon, title, sub, k, query, filename }: { icon: string; title: string; sub: string; k: string; query: string; filename: string }) {
     const isLoading = loading === k
@@ -1630,7 +1615,7 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
           <div style={{ fontSize: 11, color: C.td }}>{sub}</div>
         </div>
         <button onClick={() => download(k, query, filename)} disabled={isLoading} style={{
-          fontSize: 11, padding: '7px 16px', borderRadius: 8, fontFamily: MONO, whiteSpace: 'nowrap',
+          fontSize: 11, padding: '7px 16px', borderRadius: 8, fontFamily: SANS, whiteSpace: 'nowrap',
           cursor: isLoading ? 'default' : 'pointer', background: isLoading ? 'rgba(124,58,237,.05)' : C.rd,
           border: `.5px solid ${C.rb}`, color: isLoading ? C.td : C.red, transition: 'all .18s', opacity: isLoading ? .6 : 1,
         }}>
@@ -1644,49 +1629,11 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Rapports</div>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Rapports</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Rapports PDF</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Score, PnL, alertes comportementales, journal des trades — généré à la demande.</div>
       </div>
     <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
-
-      {/* Patterns récurrents — analyse IA hebdo/mensuelle (plan Max) */}
-      {isMax && (
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${C.red}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: pat || patLoading || patError ? 14 : 0, flexWrap: 'wrap' as const }}>
-            <div>
-              <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 3 }}>Patterns récurrents</div>
-              <div style={{ fontSize: 12, color: C.te }}>Analyse de tes schémas sur la durée, avec un plan d&apos;action.</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {(['week', 'month'] as const).map(p => {
-                const active = patPeriod === p && !!pat
-                return (
-                  <button key={p} onClick={() => genPatterns(p)} disabled={patLoading} style={{
-                    fontSize: 11.5, padding: '7px 14px', borderRadius: 8, fontFamily: MONO, whiteSpace: 'nowrap' as const,
-                    cursor: patLoading ? 'default' : 'pointer', background: active ? C.rd : 'transparent',
-                    border: `.5px solid ${active ? C.rb : C.b2}`, color: active ? C.red : C.td, opacity: patLoading ? .6 : 1,
-                  }}>
-                    {p === 'week' ? '7 jours' : '30 jours'}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          {patLoading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse de tes {patPeriod === 'week' ? '7' : '30'} derniers jours…</div>}
-          {!patLoading && patError && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>{patError}</div>}
-          {!patLoading && pat && pat.split('\n').map((line, i) => {
-            if (!line.trim()) return <div key={i} style={{ height: 6 }} />
-            const parts = line.split(/\*\*(.*?)\*\*/g)
-            return (
-              <div key={i} style={{ fontSize: 13, color: C.tm, lineHeight: 1.7, fontWeight: 300, marginBottom: 3 }}>
-                {parts.map((p, j) => j % 2 === 1 ? <span key={j} style={{ fontWeight: 600, color: C.tx }}>{p}</span> : p)}
-              </div>
-            )
-          })}
-        </div>
-      )}
 
       {/* Rapports mensuels — inclus dès le plan Pro */}
       <div style={sectionTitle}>Mensuels</div>
@@ -1967,7 +1914,7 @@ namespace CaldraBot
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Connecteurs</div>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Connecteurs</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Intégrations</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
       </div>
@@ -1995,7 +1942,7 @@ namespace CaldraBot
 
         {prefix ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 7, padding: '10px 14px', marginBottom: 12 }}>
-            <code style={{ color: C.tm, fontSize: 12, fontFamily: MONO }}>
+            <code style={{ color: C.tm, fontSize: 12, fontFamily: SANS }}>
               {prefix}<span style={{ opacity: .3 }}>{'•'.repeat(18)}</span>
             </code>
             <div style={{ display: 'flex', gap: 7, flexShrink: 0 }}>
@@ -2020,7 +1967,7 @@ namespace CaldraBot
           <div style={{ background: 'rgba(16,185,129,.05)', border: '.5px solid rgba(16,185,129,.18)', borderRadius: 7, padding: '10px 14px', marginBottom: 4 }}>
             <div style={{ color: 'rgba(16,185,129,.75)', fontSize: 11, marginBottom: 8, fontFamily: SANS }}>⚠ Copiez maintenant — ne sera plus visible.</div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <code style={{ flex: 1, color: 'rgba(134,239,172,.85)', fontSize: 11, fontFamily: MONO, wordBreak: 'break-all' as const, background: 'rgba(16,185,129,.04)', padding: '7px 10px', borderRadius: 5, border: '.5px solid rgba(16,185,129,.14)' }}>{newKey}</code>
+              <code style={{ flex: 1, color: 'rgba(134,239,172,.85)', fontSize: 11, fontFamily: SANS, wordBreak: 'break-all' as const, background: 'rgba(16,185,129,.04)', padding: '7px 10px', borderRadius: 5, border: '.5px solid rgba(16,185,129,.14)' }}>{newKey}</code>
               <button onClick={copyKey} style={{ padding: '7px 12px', background: 'rgba(16,185,129,.09)', border: '.5px solid rgba(16,185,129,.22)', borderRadius: 5, color: 'rgba(16,185,129,.8)', fontSize: 9, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, flexShrink: 0 }}>{keyCopied ? '✓ Copié' : 'Copier'}</button>
             </div>
           </div>
@@ -2036,7 +1983,7 @@ namespace CaldraBot
           {/* MetaTrader 5 — connexion par identifiants (page dédiée) */}
           <IntCard>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>MT5</div>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>MT5</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>MetaTrader 5</div>
                 <div style={{ fontSize: 10.5, color: C.td }}>Vantage, IC Markets, XM, FTMO…</div>
@@ -2060,7 +2007,7 @@ namespace CaldraBot
             </div>
 
             {mt5Has && mt5Info && (
-              <div style={{ fontSize: 11, fontFamily: MONO, color: C.te, marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontFamily: SANS, color: C.te, marginBottom: 12 }}>
                 {mt5Info.login} · {mt5Info.server}
               </div>
             )}
@@ -2086,7 +2033,7 @@ namespace CaldraBot
           {/* cTrader OAuth */}
           <IntCard>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>CT</div>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>CT</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>cTrader</div>
                 <div style={{ fontSize: 10.5, color: C.td }}>Pepperstone, IC Markets, FxPro, Eightcap…</div>
@@ -2137,17 +2084,17 @@ namespace CaldraBot
           {/* Tradovate */}
           <IntCard style={{ opacity: .5 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: MONO, flexShrink: 0 }}>TRD</div>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>TRD</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Tradovate</div>
                 <div style={{ fontSize: 10.5, color: C.td }}>Futures US</div>
               </div>
-              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: MONO, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
+              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: SANS, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 7 }}>
               {(['Télécharge le script Caldra pour Tradovate.', 'Colle ta clé API dans les paramètres du script.', 'Lance le script — chaque trade est envoyé automatiquement.'] as string[]).map((t, i) => (
                 <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.red, fontFamily: SANS, flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
                   <div style={{ fontSize: 11, color: C.td, lineHeight: 1.5 }}>{t}</div>
                 </div>
               ))}
@@ -2187,7 +2134,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
 
   const inputStyle: React.CSSProperties = {
     background: 'rgba(255,255,255,.05)', border: `.5px solid ${C.b2}`, borderRadius: 6,
-    padding: '7px 11px', fontSize: 13, fontFamily: MONO, color: C.tx, width: 80,
+    padding: '7px 11px', fontSize: 13, fontFamily: SANS, color: C.tx, width: 80,
     textAlign: 'right', outline: 'none', transition: 'border-color .2s',
   }
 
@@ -2207,7 +2154,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
         <span style={{ fontSize: 12.5, color: C.tm }}>{label}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {children}
-          {unit && <span style={{ fontSize: 11, color: C.te, fontFamily: MONO, width: 26 }}>{unit}</span>}
+          {unit && <span style={{ fontSize: 11, color: C.te, fontFamily: SANS, width: 26 }}>{unit}</span>}
         </div>
       </div>
     )
@@ -2217,7 +2164,7 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 28px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Configuration</div>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Configuration</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Règles de session</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Ces seuils définissent quand Caldra déclenche une alerte. Modifiables à tout moment.</div>
       </div>
@@ -2299,8 +2246,8 @@ function ReglesPanel({ initial }: { initial: TradingRules | null }) {
           }}>
             {save === 'saving' ? 'Enregistrement…' : 'Sauvegarder les règles'}
           </button>
-          {save === 'saved' && <span style={{ color: C.g, fontSize: 11, fontFamily: MONO }}>✓ Mis à jour</span>}
-          {save === 'error' && <span style={{ color: C.red, fontSize: 11, fontFamily: MONO }}>Erreur — réessayez</span>}
+          {save === 'saved' && <span style={{ color: C.g, fontSize: 11, fontFamily: SANS }}>✓ Mis à jour</span>}
+          {save === 'error' && <span style={{ color: C.red, fontSize: 11, fontFamily: SANS }}>Erreur — réessayez</span>}
         </div>
       </form>
     </div>
@@ -2344,17 +2291,17 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
         <div style={{ width: 5, height: 5, background: cfg.dot, flexShrink: 0 }} />
         <span style={{
           color: cfg.color, fontSize: 9, fontWeight: 600, letterSpacing: '.18em',
-          fontFamily: MONO, background: cfg.bg, border: `1px solid ${cfg.border}`,
+          fontFamily: SANS, background: cfg.bg, border: `1px solid ${cfg.border}`,
           padding: '1px 5px',
         }}>{cfg.label}</span>
         <span style={{
-          color: 'rgba(216,213,232,.32)', fontSize: 8.5, fontFamily: MONO,
+          color: 'rgba(216,213,232,.32)', fontSize: 8.5, fontFamily: SANS,
           letterSpacing: '.06em', flex: 1, overflow: 'hidden',
           textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
         }}>{type}</span>
         <span style={{ color: 'rgba(216,213,232,.2)', fontSize: 11 }}>✕</span>
       </div>
-      <p style={{ margin: 0, color: 'rgba(216,213,232,.72)', fontSize: 11.5, lineHeight: 1.55, fontFamily: MONO }}>{toast.alert.message}</p>
+      <p style={{ margin: 0, color: 'rgba(216,213,232,.72)', fontSize: 11.5, lineHeight: 1.55, fontFamily: SANS }}>{toast.alert.message}</p>
     </div>
   )
 }
@@ -2369,24 +2316,21 @@ function ToastContainer({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss:
 }
 
 // ── DebriefMenu — icône dans la barre du haut + panneau (plan Max) ───────────────
-// N'apparaît qu'à la FIN de session (heure de fin dépassée + au moins un trade du
-// jour). Débrief généré UNE fois par jour (cache localStorage). Pastille pulsante
-// jusqu'au 1er clic pour attirer l'attention. À minuit (nouveau jour, plus de trade)
-// → l'icône disparaît d'elle-même.
+// Hub des débriefs IA : Aujourd'hui (auto à la clôture, caché en cache) + 7 jours +
+// 60 jours (à la demande). Pastille pulsante quand le débrief du jour est prêt,
+// jusqu'au 1er clic. Toujours accessible (les 7/60 j ne dépendent pas de la session).
 function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; sessionEnd: string | null }) {
   const C = useContext(ThemeCtx)
   const today = new Date().toISOString().slice(0, 10)
-  const cacheKey = `caldra_debrief_${today}`
   const seenKey = `caldra_debrief_seen_${today}`
+  const dayCacheKey = `caldra_debrief_${today}`
 
   const [open, setOpen] = useState(false)
-  const [debrief, setDebrief] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [view, setView] = useState<'day' | '7' | '30'>('day')
+  const [store, setStore] = useState<Record<string, { text?: string; loading?: boolean; error?: string }>>({})
   const [seen, setSeen] = useState(true)
   const [ended, setEnded] = useState(false)
 
-  // Fin de session atteinte ? (re-vérifié chaque minute)
   useEffect(() => {
     if (!sessionEnd) { setEnded(false); return }
     const check = () => {
@@ -2400,68 +2344,88 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
     return () => clearInterval(id)
   }, [sessionEnd])
 
-  const visible = tradesToday > 0 && ended
+  const dailyReady = tradesToday > 0 && ended
 
-  // Génération 1×/jour : cache localStorage, sinon un seul appel API.
-  useEffect(() => {
-    if (!visible) return
+  const load = async (v: 'day' | '7' | '30') => {
+    if (store[v]?.text || store[v]?.loading) return
+    setStore(s => ({ ...s, [v]: { loading: true } }))
+    const query = v === 'day' ? '?latest=1' : `?period=${v}`
     try {
-      const cached = localStorage.getItem(cacheKey)
-      if (cached) { setDebrief(cached); setSeen(localStorage.getItem(seenKey) === '1'); return }
-    } catch {}
-    setSeen(false); setLoading(true); setError(null)
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch('/api/debrief', { method: 'POST' })
-        const data = await res.json()
-        if (cancelled) return
-        if (res.ok && data.debrief) { setDebrief(data.debrief); try { localStorage.setItem(cacheKey, data.debrief) } catch {} }
-        else setError(data.error ?? 'Aucune session à débriefer.')
-      } catch { if (!cancelled) setError('Indisponible pour le moment.') }
-      finally { if (!cancelled) setLoading(false) }
-    })()
-    return () => { cancelled = true }
-  }, [visible, cacheKey, seenKey])
+      const res = await fetch(`/api/debrief${query}`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.debrief) {
+        setStore(s => ({ ...s, [v]: { text: data.debrief } }))
+        if (v === 'day') { try { localStorage.setItem(dayCacheKey, data.debrief) } catch {} }
+      } else setStore(s => ({ ...s, [v]: { error: data.error ?? 'Indisponible pour le moment.' } }))
+    } catch { setStore(s => ({ ...s, [v]: { error: 'Erreur réseau — réessaie.' } })) }
+  }
 
-  if (!visible) return null
+  // Débrief du jour pré-généré à la clôture (cache localStorage) + pastille d'attention.
+  useEffect(() => {
+    if (!dailyReady) return
+    let cached: string | null = null
+    try { cached = localStorage.getItem(dayCacheKey) } catch {}
+    if (cached) { setStore(s => ({ ...s, day: { text: cached! } })); try { setSeen(localStorage.getItem(seenKey) === '1') } catch {} ; return }
+    setSeen(false)
+    load('day')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dailyReady])
 
   const toggle = () => {
-    setOpen(o => !o)
-    if (!seen) { setSeen(true); try { localStorage.setItem(seenKey, '1') } catch {} }
+    const willOpen = !open
+    setOpen(willOpen)
+    if (willOpen) {
+      if (!store[view]?.text && !store[view]?.loading) load(view)
+      if (!seen) { setSeen(true); try { localStorage.setItem(seenKey, '1') } catch {} }
+    }
   }
+  const select = (v: 'day' | '7' | '30') => { setView(v); load(v) }
+
+  const cur = store[view] || {}
+  const tabs: Array<{ k: 'day' | '7' | '30'; label: string }> = [
+    { k: 'day', label: 'Aujourd’hui' }, { k: '7', label: '7 jours' }, { k: '30', label: '30 jours' },
+  ]
 
   return (
     <div style={{ position: 'relative', marginLeft: 6, fontFamily: SANS }}>
-      <button onClick={toggle} title="Débrief de session" style={{
+      <button onClick={toggle} title="Débriefs IA" style={{
         position: 'relative', width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer',
         background: open ? C.b2 : 'transparent', color: open ? C.tx : C.td, fontSize: 15,
         display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
         outline: 'none', WebkitTapHighlightColor: 'transparent',
       }}>
         🧭
-        {!seen && (
+        {!seen && dailyReady && (
           <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, borderRadius: '50%', background: C.red, boxShadow: `0 0 0 2px ${C.sf}`, animation: 'pulse 1.6s infinite' }} />
         )}
       </button>
       {open && createPortal(
         <div style={{
-          position: 'fixed', top: 54, right: 16, width: 'min(360px, calc(100vw - 24px))',
-          maxHeight: '70vh', display: 'flex', flexDirection: 'column', background: C.sf,
+          position: 'fixed', top: 54, right: 16, width: 'min(380px, calc(100vw - 24px))',
+          maxHeight: '72vh', display: 'flex', flexDirection: 'column', background: C.sf,
           border: `.5px solid ${C.b2}`, borderRadius: 12, overflow: 'hidden',
           boxShadow: '0 16px 44px rgba(0,0,0,.55)', zIndex: 100000, animation: 'fadeUp .18s ease', fontFamily: SANS,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <span style={{ fontSize: 14 }}>🧭</span>
-              <span style={{ fontSize: 12.5, fontWeight: 500, color: C.tx }}>Débrief de session</span>
+              <span style={{ fontSize: 12.5, fontWeight: 500, color: C.tx }}>Débriefs IA</span>
             </div>
             <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: C.te, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 2 }}>✕</button>
           </div>
+          <div style={{ display: 'flex', gap: 6, padding: '10px 14px 0', flexShrink: 0 }}>
+            {tabs.map(tb => (
+              <button key={tb.k} onClick={() => select(tb.k)} style={{
+                flex: 1, fontSize: 11.5, padding: '6px 0', borderRadius: 7, cursor: 'pointer', fontFamily: SANS,
+                background: view === tb.k ? C.b2 : 'transparent', border: `.5px solid ${view === tb.k ? C.b2 : C.b}`,
+                color: view === tb.k ? C.tx : C.td, transition: 'all .15s', outline: 'none',
+              }}>{tb.label}</button>
+            ))}
+          </div>
           <div style={{ padding: 14, overflowY: 'auto' }}>
-            {loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse de ta séance…</div>}
-            {!loading && error && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>{error}</div>}
-            {!loading && debrief && debrief.split('\n').map((line, i) => {
+            {cur.loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse en cours…</div>}
+            {!cur.loading && cur.error && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>{cur.error}</div>}
+            {!cur.loading && cur.text && cur.text.split('\n').map((line, i) => {
               if (!line.trim()) return <div key={i} style={{ height: 6 }} />
               const parts = line.split(/\*\*(.*?)\*\*/g)
               return (
@@ -2525,7 +2489,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Abonnement</div>
+          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Abonnement</div>
           <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Billing</div>
           <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Plan actuel : <span style={{ color: C.tm, fontWeight: 500, textTransform: 'capitalize' }}>{plan}</span></div>
         </div>
@@ -2538,7 +2502,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 760 }}>
 
       {/* Comparer / changer de plan */}
-      <div style={{ fontSize: 10, letterSpacing: 1, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>{isPaid ? 'Changer de plan' : 'Choisir un plan'}</div>
+      <div style={{ fontSize: 10, letterSpacing: 1, color: C.td, textTransform: 'uppercase' as const, fontFamily: SANS }}>{isPaid ? 'Changer de plan' : 'Choisir un plan'}</div>
       <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {plans.map(p => {
           const isCurrent = plan === p.id
@@ -2665,7 +2629,7 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
   const Card = ({ title, accent, children }: { title: string; accent?: string; children: React.ReactNode }) => (
     <div style={{ background: C.sf, border: `.5px solid ${accent ?? C.b}`, ...(accent ? { borderLeft: `3px solid ${accent}` } : {}), borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: accent ?? C.te, marginBottom: 16, fontFamily: MONO }}>{title}</div>
+      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: accent ?? C.te, marginBottom: 16, fontFamily: SANS }}>{title}</div>
       {children}
     </div>
   )
@@ -2680,7 +2644,7 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Compte</div>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Compte</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Profil</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Gère tes informations, ta sécurité et ton compte.</div>
       </div>
@@ -2694,7 +2658,7 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
           <div style={{ fontSize: 15, fontWeight: 500, color: C.tx, marginBottom: 2 }}>{fullName || 'Ton profil'}</div>
           <div style={{ fontSize: 12, color: C.te, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{userEmail}</div>
         </div>
-        <span style={{ padding: '4px 11px', borderRadius: 99, fontSize: 10, letterSpacing: 1, fontFamily: MONO, color: planColor, background: `${planColor}14`, border: `.5px solid ${planColor}33`, flexShrink: 0 }}>Plan {planLabel}</span>
+        <span style={{ padding: '4px 11px', borderRadius: 99, fontSize: 10, letterSpacing: 1, fontFamily: SANS, color: planColor, background: `${planColor}14`, border: `.5px solid ${planColor}33`, flexShrink: 0 }}>Plan {planLabel}</span>
         <button onClick={logout} style={{ padding: '8px 14px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 8, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', flexShrink: 0 }}>Se déconnecter</button>
       </div>
 
@@ -2713,7 +2677,7 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
                   {emailSave === 'saving' ? '…' : 'Changer'}
                 </button>
               </div>
-              {emailSave === 'sent'  && <div style={{ fontSize: 11, color: C.g, marginTop: 5, fontFamily: MONO }}>✓ Lien de confirmation envoyé</div>}
+              {emailSave === 'sent'  && <div style={{ fontSize: 11, color: C.g, marginTop: 5, fontFamily: SANS }}>✓ Lien de confirmation envoyé</div>}
               {emailSave === 'error' && <div style={{ fontSize: 11, color: C.red, marginTop: 5 }}>Erreur — réessaie</div>}
             </div>
             <div>
@@ -2724,8 +2688,8 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
               <button onClick={saveProfile} disabled={save === 'saving'} style={{ padding: '9px 20px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, opacity: save === 'saving' ? .6 : 1 }}>
                 {save === 'saving' ? 'Enregistrement…' : 'Sauvegarder'}
               </button>
-              {save === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Sauvegardé</span>}
-              {save === 'error'  && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
+              {save === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: SANS }}>✓ Sauvegardé</span>}
+              {save === 'error'  && <span style={{ fontSize: 11, color: C.red, fontFamily: SANS }}>Erreur</span>}
             </div>
           </div>
         </Card>
@@ -2738,8 +2702,8 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
           <button onClick={sendPasswordReset} disabled={pwSave === 'saving'} style={{ padding: '9px 18px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .3, opacity: pwSave === 'saving' ? .6 : 1 }}>
             {pwSave === 'saving' ? 'Envoi…' : 'Recevoir un lien de réinitialisation'}
           </button>
-          {pwSave === 'sent'  && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Lien envoyé — vérifie ta boîte mail</span>}
-          {pwSave === 'error' && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur — réessaie</span>}
+          {pwSave === 'sent'  && <span style={{ fontSize: 11, color: C.g, fontFamily: SANS }}>✓ Lien envoyé — vérifie ta boîte mail</span>}
+          {pwSave === 'error' && <span style={{ fontSize: 11, color: C.red, fontFamily: SANS }}>Erreur — réessaie</span>}
         </div>
       </Card>
 
@@ -2806,7 +2770,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
   const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.te, marginBottom: 16, fontFamily: MONO }}>{title}</div>
+      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.te, marginBottom: 16, fontFamily: SANS }}>{title}</div>
       {children}
     </div>
   )
@@ -2843,7 +2807,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Aide</div>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Aide</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Aide &amp; support</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Une question, un bug, une suggestion — on répond sous 24h.</div>
       </div>
@@ -2879,7 +2843,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
                 >
                   {status === 'sending' ? 'Envoi…' : 'Envoyer'}
                 </button>
-                {status === 'sent'  && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Envoyé — réponse sous 24h</span>}
+                {status === 'sent'  && <span style={{ fontSize: 11, color: C.g, fontFamily: SANS }}>✓ Envoyé — réponse sous 24h</span>}
                 {status === 'error' && <span style={{ fontSize: 11, color: C.red }}>{errMsg}</span>}
               </div>
             </div>
@@ -2900,14 +2864,14 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
         {/* Les 18 détecteurs — pleine largeur */}
         <Card title="Les 18 détecteurs surveillés">
           <div style={{ fontSize: 12, color: C.te, lineHeight: 1.5, marginBottom: 16 }}>
-            Caldra repère ces schémas en direct. Les seuils chiffrés se règlent dans l&apos;onglet Règles ; les autres tournent sur une logique fixe. <span style={{ color: C.red, fontFamily: MONO, fontSize: 10 }}>MAX</span> = inclus dans le plan Max.
+            Caldra repère ces schémas en direct. Les seuils chiffrés se règlent dans l&apos;onglet Règles ; les autres tournent sur une logique fixe. <span style={{ color: C.red, fontFamily: SANS, fontSize: 10 }}>MAX</span> = inclus dans le plan Max.
           </div>
           <div className="detectors-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             {detectors.map((d, i) => (
               <div key={i}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                   <span style={{ fontSize: 12.5, color: C.tx, fontWeight: 500 }}>{d.label}</span>
-                  {d.max && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px', fontFamily: MONO }}>MAX</span>}
+                  {d.max && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px', fontFamily: SANS }}>MAX</span>}
                 </div>
                 <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.45 }}>{d.desc}</div>
               </div>
@@ -2920,9 +2884,9 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
           <span style={{ fontSize: 18 }}>✉️</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12.5, color: C.tm }}>Tu préfères l'email direct ?</div>
-            <a href="mailto:contact@getcaldra.com" style={{ fontSize: 12.5, color: C.red, textDecoration: 'none', fontFamily: MONO }}>contact@getcaldra.com</a>
+            <a href="mailto:contact@getcaldra.com" style={{ fontSize: 12.5, color: C.red, textDecoration: 'none', fontFamily: SANS }}>contact@getcaldra.com</a>
           </div>
-          <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>Réponse sous 24 h ouvrées</span>
+          <span style={{ fontSize: 11, color: C.te, fontFamily: SANS }}>Réponse sous 24 h ouvrées</span>
         </div>
        </div>
       </div>
@@ -3330,7 +3294,7 @@ export default function DashboardClient({
         <div style={{ position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(0,209,122,.45)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 8px 40px rgba(0,209,122,.16)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
           <div style={{ fontSize: 22, flexShrink: 0 }}>🏆</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, color: '#00d17a', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Jalon atteint</div>
+            <div style={{ fontSize: 10, color: '#00d17a', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: SANS }}>Jalon atteint</div>
             <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>Bravo — {milestone} sessions maîtrisées d'affilée. Garde le cap.</div>
           </div>
           <button onClick={dismissMilestone} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
@@ -3341,7 +3305,7 @@ export default function DashboardClient({
         <div style={{ position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(124,58,237,.45)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 8px 40px rgba(124,58,237,.16)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
           <div style={{ fontSize: 20, flexShrink: 0 }}>🔔</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, color: '#7c3aed', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Notifications</div>
+            <div style={{ fontSize: 10, color: '#7c3aed', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: SANS }}>Notifications</div>
             <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>{notifHint}</div>
           </div>
           <button onClick={() => setNotifHint(null)} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
@@ -3352,7 +3316,7 @@ export default function DashboardClient({
         <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(124,58,237,.45)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 8px 40px rgba(124,58,237,.22)', maxWidth: 540, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
           <div style={{ fontSize: 22, flexShrink: 0 }}>🔌</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, color: '#7c3aed', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: MONO }}>Dernière étape</div>
+            <div style={{ fontSize: 10, color: '#7c3aed', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: SANS }}>Dernière étape</div>
             <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.45 }}>Connecte ta plateforme de trading pour que Caldra analyse tes trades en temps réel.</div>
           </div>
           <button onClick={() => { setActiveTab('integrations'); dismissConnectHint() }} style={{ background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, padding: '8px 14px', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' as const }}>
@@ -3376,16 +3340,16 @@ export default function DashboardClient({
             {notifPerm === 'granted' ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d17a' }} />
-                <span className="date-lbl" style={{ fontSize: 10, color: C.td, fontFamily: MONO }}>Notifications actives</span>
+                <span className="date-lbl" style={{ fontSize: 10, color: C.td, fontFamily: SANS }}>Notifications actives</span>
               </div>
             ) : notifPerm === 'denied' ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#475569' }} />
-                <span className="date-lbl" style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>Notifications désactivées</span>
+                <span className="date-lbl" style={{ fontSize: 10, color: C.te, fontFamily: SANS }}>Notifications désactivées</span>
               </div>
             ) : (
               <button onClick={requestNotifPermission}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, fontSize: 10, fontFamily: MONO, cursor: 'pointer', animation: 'pulse 2s infinite' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: C.rd, border: `.5px solid ${C.rb}`, borderRadius: 99, color: C.red, fontSize: 10, fontFamily: SANS, cursor: 'pointer', animation: 'pulse 2s infinite' }}>
                 🔔 <span className="date-lbl">Activer les notifications</span>
               </button>
             )}
@@ -3407,10 +3371,10 @@ export default function DashboardClient({
           </div>
           {/* Right controls */}
           <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, marginLeft: 'auto', flexShrink: 0, height: 46 }}>
-            <span className="date-lbl" style={{ fontSize: 10, color: C.te, fontFamily: MONO }}>{displayDate}</span>
+            <span className="date-lbl" style={{ fontSize: 10, color: C.te, fontFamily: SANS }}>{displayDate}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', background: connected ? 'rgba(0,209,122,.06)' : C.rg, border: `.5px solid ${connected ? 'rgba(0,209,122,.18)' : C.rb}`, borderRadius: 99 }}>
               <div style={{ width: 5, height: 5, borderRadius: '50%', background: connected ? C.g : C.red, animation: 'pulse 1.8s infinite' }} />
-              <span style={{ fontSize: 9, color: connected ? C.g : C.red, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: MONO }}>{connected ? 'Live' : 'Sync'}</span>
+              <span style={{ fontSize: 9, color: connected ? C.g : C.red, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: SANS }}>{connected ? 'Live' : 'Sync'}</span>
             </div>
             <button
               onClick={toggleTheme}
@@ -3423,7 +3387,7 @@ export default function DashboardClient({
               <button
                 onClick={triggerInstall}
                 title="Installer Caldra comme application"
-                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.red, fontFamily: MONO, background: 'rgba(124,58,237,.06)', border: `.5px solid rgba(124,58,237,.2)`, padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: C.red, fontFamily: SANS, background: 'rgba(124,58,237,.06)', border: `.5px solid rgba(124,58,237,.2)`, padding: '4px 10px', cursor: 'pointer', transition: 'all .2s', letterSpacing: .3 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,.1)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'rgba(124,58,237,.06)' }}
               >
@@ -3440,7 +3404,7 @@ export default function DashboardClient({
                 background: settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) || activeTab === 'aide' ? C.rd : C.sf2,
                 border: `.5px solid ${settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) || activeTab === 'aide' ? C.rb : C.b}`,
                 color: settingsOpen || SETTINGS_ITEMS.some(s => s.id === activeTab) || activeTab === 'aide' ? C.red : C.tm,
-                fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: MONO,
+                fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: SANS,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: 0,
                 transition: 'all .15s',
               }}

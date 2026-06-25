@@ -63,9 +63,9 @@ export async function POST(_req: NextRequest) {
   const { data: rules } = await service.from('trading_rules').select('*').eq('user_id', user.id).single()
   const accountSize = Number(rules?.account_size) || 10000
 
-  // ══ PATTERNS RÉCURRENTS — débrief hebdo (7 j) ou mensuel (30 j) ════════════════
-  if (period === 'week' || period === 'month') {
-    const nbDays = period === 'week' ? 7 : 30
+  // ══ DÉBRIEF DE PÉRIODE — 7 jours ou 30 jours (en plus du quotidien) ════════════
+  if (period === '7' || period === '30') {
+    const nbDays = Number(period)
     const start = new Date(Date.now() - (nbDays - 1) * 86_400_000).toISOString().slice(0, 10)
 
     const [{ data: trades }, { data: alerts }] = await Promise.all([
@@ -75,7 +75,7 @@ export async function POST(_req: NextRequest) {
     const t = trades ?? []
     const a = alerts ?? []
     if (t.length < 4) {
-      return NextResponse.json({ error: `Pas assez de trades sur ${period === 'week' ? 'la semaine' : 'le mois'} pour une analyse.` }, { status: 400 })
+      return NextResponse.json({ error: `Pas assez de trades sur ${nbDays} jours pour une analyse.` }, { status: 400 })
     }
 
     const dayOf = (iso: string) => iso.slice(0, 10)
@@ -118,7 +118,7 @@ export async function POST(_req: NextRequest) {
       ddBreachDays > 0 ? `Limite de drawdown dépassée sur ${ddBreachDays} jour(s)` : `Limite de drawdown respectée chaque jour`,
     ].filter(Boolean).join('\n')
 
-    const systemP = `Tu es le mentor de Caldra : posé, bienveillant, factuel. On te fournit les FAITS EXACTS d'une PÉRIODE de trading (${period === 'week' ? 'la semaine' : 'le mois'}).
+    const systemP = `Tu es le mentor de Caldra : posé, bienveillant, factuel. On te fournit les FAITS EXACTS d'une PÉRIODE de trading (les ${nbDays} derniers jours).
 Règles :
 - N'invente AUCUN chiffre. Utilise UNIQUEMENT les faits fournis, ne recalcule rien.
 - Ton calme et constructif, JAMAIS accusateur ni culpabilisant. Tournures neutres.
