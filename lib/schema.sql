@@ -44,6 +44,8 @@ create table if not exists trading_rules (
   max_risk_per_trade_pct        numeric     not null default 1,
   max_leverage                  numeric     not null default 30,
   require_stop_loss             boolean     not null default false,
+  telegram_bot_token            text,
+  telegram_chat_id              text,
   created_at                    timestamptz not null default now(),
   updated_at                    timestamptz not null default now()
 );
@@ -248,4 +250,8 @@ alter table user_profiles add column if not exists subscription_status text;
 -- migration n'est pas bloquante — mais sans ces colonnes l'UI ne peut pas les régler.
 alter table trading_rules add column if not exists max_leverage      numeric not null default 30;
 alter table trading_rules add column if not exists require_stop_loss boolean not null default false;
+
+-- v2.11 : alertes Telegram (canal plan Max) — bot token + chat id fournis par l'user.
+alter table trading_rules add column if not exists telegram_bot_token text;
+alter table trading_rules add column if not exists telegram_chat_id   text;
 

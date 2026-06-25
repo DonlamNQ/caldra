@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { sendAlertEmail, sendWebhookAlert } from './brevo'
+import { sendAlertEmail, sendWebhookAlert, sendTelegramAlert } from './brevo'
 import { newsConflict } from './economic-calendar'
 import { isMaxPlan, MAX_ONLY_DETECTORS, isVip } from './plans'
 
@@ -149,6 +149,9 @@ async function saveAndNotify(
     const { data: authData } = await supabase.auth.admin.getUserById(trade.user_id)
     const userEmail = authData?.user?.email ?? null
     const webhookUrl: string | null = (rules.slack_webhook_url as string) ?? null
+    // Telegram = canal Max uniquement (bot token + chat id fournis par l'utilisateur).
+    const tgToken: string | null = isMax ? ((rules.telegram_bot_token as string) ?? null) : null
+    const tgChat: string | null = isMax ? ((rules.telegram_chat_id as string) ?? null) : null
 
     // Anti-spam email : 1 seul mail par TYPE d'alerte critique et par session.
     // Si une alerte de ce type a déjà été émise aujourd'hui (level ≥ 3), on ne
@@ -175,6 +178,9 @@ async function saveAndNotify(
         ? sendWebhookAlert(webhookUrl, a.type, a.level, a.message, today)
         : Promise.resolve()
       ),
+      ...(tgToken && tgChat
+        ? hotAlerts.map(a => sendTelegramAlert(tgToken, tgChat, a.type, a.level, a.message, today))
+        : []),
     ])
   }
 

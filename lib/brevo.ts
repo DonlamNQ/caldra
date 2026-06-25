@@ -249,3 +249,23 @@ export async function sendWebhookAlert(
     body: JSON.stringify(body),
   }).catch(() => {})
 }
+
+// Alerte Telegram (Bot API) — l'utilisateur fournit son bot token + chat id.
+export async function sendTelegramAlert(
+  botToken: string,
+  chatId: string,
+  alertType: string,
+  level: number,
+  message: string,
+  sessionDate: string
+): Promise<void> {
+  if (!botToken || !chatId) return
+  const emoji = level >= 3 ? '🔴' : level >= 2 ? '🟠' : '🟡'
+  const typeFmt = alertType.replace(/_/g, ' ').toUpperCase()
+  const text = `${emoji} *L${level} · ${typeFmt}*\n${message}\n\nCaldra · Session ${sessionDate}`
+  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown', disable_web_page_preview: true }),
+  }).catch(() => {})
+}

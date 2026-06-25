@@ -44,6 +44,8 @@ interface TradingRules {
   account_size: number
   slack_webhook_url: string | null
   tz_offset_hours: number
+  telegram_bot_token?: string | null
+  telegram_chat_id?: string | null
   max_leverage?: number
   require_stop_loss?: boolean
 }
@@ -1688,7 +1690,7 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
 }
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
-function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, ctraderConflict, ctraderPending, userId, lastTradeAt }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; ctraderConflict?: boolean; ctraderPending?: boolean; userId: string; lastTradeAt: string | null }) {
+function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, ctraderConflict, ctraderPending, userId, lastTradeAt, plan, initialTgToken, initialTgChat }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; ctraderConflict?: boolean; ctraderPending?: boolean; userId: string; lastTradeAt: string | null; plan?: string; initialTgToken?: string | null; initialTgChat?: string | null }) {
   const C = useContext(ThemeCtx)
 
   // Indicateur de santé : « est-ce que Caldra reçoit bien tes trades ? »
@@ -1708,6 +1710,10 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
   const [keyConfirm, setKeyConfirm] = useState(false)
   const hasKey = !!prefix
   const [webhookUrl, setWebhookUrl] = useState(initialWebhook ?? '')
+  const [tgToken, setTgToken] = useState(initialTgToken ?? '')
+  const [tgChat, setTgChat] = useState(initialTgChat ?? '')
+  const intIsMax = isMaxPlan(plan)
+  const notifInp: React.CSSProperties = { width: '100%', background: C.bg, border: `.5px solid ${C.b2}`, borderRadius: 8, padding: '10px 13px', color: C.tx, fontSize: 12.5, fontFamily: SANS, outline: 'none', boxSizing: 'border-box' }
 
   const [webhookSave, setWebhookSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
@@ -1896,7 +1902,7 @@ namespace CaldraBot
       const res = await fetch('/api/rules', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...current, slack_webhook_url: webhookUrl || null }),
+        body: JSON.stringify({ ...current, slack_webhook_url: webhookUrl || null, telegram_bot_token: (intIsMax && tgToken) || null, telegram_chat_id: (intIsMax && tgChat) || null }),
       })
       setWebhookSave(res.ok ? 'saved' : 'error')
       if (res.ok) setTimeout(() => setWebhookSave('idle'), 3000)
@@ -1938,6 +1944,33 @@ namespace CaldraBot
         <div style={{ width: 7, height: 7, borderRadius: '50%', background: health.dot, flexShrink: 0 }} />
         <div style={{ fontSize: 12, color: health.color, lineHeight: 1.5 }}>{health.text}</div>
       </div>
+
+      {/* ── Alertes externes ── */}
+      <IntCard style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx, marginBottom: 4 }}>Alertes externes</div>
+        <div style={{ fontSize: 12, color: C.te, marginBottom: 16, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app. Webhook Slack ou Discord pour tous, Telegram pour le plan Max.</div>
+
+        <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>WEBHOOK SLACK OU DISCORD</div>
+        <input style={notifInp} value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://hooks.slack.com/…  ou  https://discord.com/api/webhooks/…" />
+
+        <div style={{ marginTop: 16, opacity: intIsMax ? 1 : .55 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+            <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.te }}>TELEGRAM</span>
+            {!intIsMax && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px' }}>MAX</span>}
+          </div>
+          <input style={notifInp} disabled={!intIsMax} value={tgToken} onChange={e => setTgToken(e.target.value)} placeholder="Bot token (créé via @BotFather)" />
+          <input style={{ ...notifInp, marginTop: 8 }} disabled={!intIsMax} value={tgChat} onChange={e => setTgChat(e.target.value)} placeholder="Chat ID (obtenu via @userinfobot)" />
+          {!intIsMax && <div style={{ fontSize: 11, color: C.te, marginTop: 6 }}>Le canal Telegram est inclus dans le plan Max.</div>}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
+          <button onClick={saveWebhook} disabled={webhookSave === 'saving'} style={{ padding: '9px 20px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: webhookSave === 'saving' ? 'not-allowed' : 'pointer', opacity: webhookSave === 'saving' ? .6 : 1 }}>
+            {webhookSave === 'saving' ? 'Enregistrement…' : 'Enregistrer'}
+          </button>
+          {webhookSave === 'saved' && <span style={{ fontSize: 11, color: C.g }}>✓ Enregistré</span>}
+          {webhookSave === 'error' && <span style={{ fontSize: 11, color: C.red }}>Erreur — réessaie</span>}
+        </div>
+      </IntCard>
 
       {/* ── Clé API ── */}
       <IntCard style={{ marginBottom: 16 }}>
@@ -3517,7 +3550,7 @@ export default function DashboardClient({
             {activeTab === 'rapports' && (
               <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
             )}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} plan={plan} initialTgToken={tradingRules?.telegram_bot_token ?? null} initialTgChat={tradingRules?.telegram_chat_id ?? null} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} plan={plan} />}
