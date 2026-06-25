@@ -1945,33 +1945,6 @@ namespace CaldraBot
         <div style={{ fontSize: 12, color: health.color, lineHeight: 1.5 }}>{health.text}</div>
       </div>
 
-      {/* ── Alertes externes ── */}
-      <IntCard style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx, marginBottom: 4 }}>Alertes externes</div>
-        <div style={{ fontSize: 12, color: C.te, marginBottom: 16, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app. Webhook Slack ou Discord pour tous, Telegram pour le plan Max.</div>
-
-        <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>WEBHOOK SLACK OU DISCORD</div>
-        <input style={notifInp} value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://hooks.slack.com/…  ou  https://discord.com/api/webhooks/…" />
-
-        <div style={{ marginTop: 16, opacity: intIsMax ? 1 : .55 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-            <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.te }}>TELEGRAM</span>
-            {!intIsMax && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px' }}>MAX</span>}
-          </div>
-          <input style={notifInp} disabled={!intIsMax} value={tgToken} onChange={e => setTgToken(e.target.value)} placeholder="Bot token (créé via @BotFather)" />
-          <input style={{ ...notifInp, marginTop: 8 }} disabled={!intIsMax} value={tgChat} onChange={e => setTgChat(e.target.value)} placeholder="Chat ID (obtenu via @userinfobot)" />
-          {!intIsMax && <div style={{ fontSize: 11, color: C.te, marginTop: 6 }}>Le canal Telegram est inclus dans le plan Max.</div>}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
-          <button onClick={saveWebhook} disabled={webhookSave === 'saving'} style={{ padding: '9px 20px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: webhookSave === 'saving' ? 'not-allowed' : 'pointer', opacity: webhookSave === 'saving' ? .6 : 1 }}>
-            {webhookSave === 'saving' ? 'Enregistrement…' : 'Enregistrer'}
-          </button>
-          {webhookSave === 'saved' && <span style={{ fontSize: 11, color: C.g }}>✓ Enregistré</span>}
-          {webhookSave === 'error' && <span style={{ fontSize: 11, color: C.red }}>Erreur — réessaie</span>}
-        </div>
-      </IntCard>
-
       {/* ── Clé API ── */}
       <IntCard style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -2149,6 +2122,33 @@ namespace CaldraBot
 
         </div>
       </div>
+
+      {/* ── Alertes externes ── (sous les plateformes) */}
+      <IntCard style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx, marginBottom: 4 }}>Alertes externes</div>
+        <div style={{ fontSize: 12, color: C.te, marginBottom: 16, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app. Webhook Slack ou Discord pour tous, Telegram pour le plan Max.</div>
+
+        <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>WEBHOOK SLACK OU DISCORD</div>
+        <input style={notifInp} value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://hooks.slack.com/…  ou  https://discord.com/api/webhooks/…" />
+
+        <div style={{ marginTop: 16, opacity: intIsMax ? 1 : .55 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+            <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.te }}>TELEGRAM</span>
+            {!intIsMax && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px' }}>MAX</span>}
+          </div>
+          <input style={notifInp} disabled={!intIsMax} value={tgToken} onChange={e => setTgToken(e.target.value)} placeholder="Bot token (créé via @BotFather)" />
+          <input style={{ ...notifInp, marginTop: 8 }} disabled={!intIsMax} value={tgChat} onChange={e => setTgChat(e.target.value)} placeholder="Chat ID (obtenu via @userinfobot)" />
+          {!intIsMax && <div style={{ fontSize: 11, color: C.te, marginTop: 6 }}>Le canal Telegram est inclus dans le plan Max.</div>}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
+          <button onClick={saveWebhook} disabled={webhookSave === 'saving'} style={{ padding: '9px 20px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: webhookSave === 'saving' ? 'not-allowed' : 'pointer', opacity: webhookSave === 'saving' ? .6 : 1 }}>
+            {webhookSave === 'saving' ? 'Enregistrement…' : 'Enregistrer'}
+          </button>
+          {webhookSave === 'saved' && <span style={{ fontSize: 11, color: C.g }}>✓ Enregistré</span>}
+          {webhookSave === 'error' && <span style={{ fontSize: 11, color: C.red }}>Erreur — réessaie</span>}
+        </div>
+      </IntCard>
 
     </div>
     </div>
