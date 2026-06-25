@@ -301,6 +301,22 @@ async function refreshAccounts() {
   }
 }
 
+// POST vers /api/ingest (un trade ouvert OU fermé selon le payload). Toujours sûr :
+// log l'échec, ne jette jamais.
+async function sendToIngest(state, ingestKey, payload, label) {
+  try {
+    const r = await fetch(CALDRA_INGEST_URL, {
+      method:  'POST',
+      headers: { 'content-type': 'application/json', 'x-caldra-key': ingestKey },
+      body:    JSON.stringify(payload),
+    })
+    if (!r.ok) console.error('[ingest] échec', r.status, await r.text())
+    else       console.log(`[ingest:${state.env}] ${label}`)
+  } catch (e) {
+    console.error('[ingest] erreur réseau', e?.message)
+  }
+}
+
 async function handleExecution(state, event) {
   const ctid = Number(event.ctidTraderAccountId)
   const ctx  = state.authed.get(ctid)
@@ -311,14 +327,37 @@ async function handleExecution(state, event) {
 
   // Opening/increasing deal — memorise entry timestamp + stop-loss for later
   if (!deal.closePositionDetail) {
-    if (deal.positionId) {
-      state.openPositions.set(Number(deal.positionId), {
-        entry_time: deal.executionTimestamp
-          ? new Date(Number(deal.executionTimestamp)).toISOString()
-          : new Date().toISOString(),
-        // Le stop-loss vit sur la position (prix). Présent si attaché à l'ordre.
-        stop_loss: event.position?.stopLoss != null ? Number(event.position.stopLoss) : null,
-      })
+    const positionId = Number(deal.positionId)
+    if (!positionId) return
+    const firstOpen = !state.openPositions.has(positionId)
+    state.openPositions.set(positionId, {
+      entry_time: deal.executionTimestamp
+        ? new Date(Number(deal.executionTimestamp)).toISOString()
+        : new Date().toISOString(),
+      // Le stop-loss vit sur la position (prix). Présent si attaché à l'ordre.
+      stop_loss: event.position?.stopLoss != null ? Number(event.position.stopLoss) : null,
+    })
+
+    // Premier deal d'ouverture de cette position → ALERTE D'ENTRÉE EN TEMPS RÉEL.
+    // On poste un trade "ouvert" (sans exit/pnl) → /api/ingest lance analyzeOpenTrade
+    // (hors-session, revenge sizing, overtrading…). À la fermeture, le POST de clôture
+    // retrouve ce trade (même symbol+direction+entry_time) et le complète — pas de doublon.
+    // Les deals de renforcement (même positionId) ne re-postent pas.
+    if (firstOpen) {
+      const symbol    = state.symbolNames.get(`${ctid}:${deal.symbolId}`) || String(deal.symbolId)
+      const direction = deal.tradeSide === 'BUY' ? 'long' : 'short'
+      const lotSize   = await getLotSize(state, ctid, deal.symbolId)
+      const size      = lotSize ? (+deal.volume || 0) / lotSize : (+deal.volume || 0) / 100
+      const op        = state.openPositions.get(positionId)
+      const entryPx   = +deal.executionPrice || 0
+      if (entryPx > 0 && size > 0) {
+        await sendToIngest(state, ctx.ingestKey, {
+          symbol, direction, size,
+          entry_price: entryPx,
+          entry_time:  op.entry_time,
+          stop_loss:   op.stop_loss,
+        }, `OPEN ${symbol} ${direction}`)
+      }
     }
     return
   }
@@ -356,20 +395,7 @@ async function handleExecution(state, event) {
     stop_loss,
   }
 
-  try {
-    const r = await fetch(CALDRA_INGEST_URL, {
-      method:  'POST',
-      headers: { 'content-type': 'application/json', 'x-caldra-key': ctx.ingestKey },
-      body:    JSON.stringify(payload),
-    })
-    if (!r.ok) {
-      console.error('[ingest] échec', r.status, await r.text())
-    } else {
-      console.log(`[ingest:${state.env}] ${symbol} ${direction} pnl=${pnl.toFixed(2)}`)
-    }
-  } catch (e) {
-    console.error('[ingest] erreur réseau', e?.message)
-  }
+  await sendToIngest(state, ctx.ingestKey, payload, `${symbol} ${direction} pnl=${pnl.toFixed(2)}`)
 }
 
 // La lib n'expose AUCUN événement de déconnexion (socket onClose vide) et ses

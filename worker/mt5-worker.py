@@ -68,6 +68,10 @@ supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 # user_id -> set des tickets de sortie déjà traités cette session.
 SEEN = {}
 
+# Dédup des positions OUVERTES déjà signalées (alerte d'entrée temps réel).
+# user_id -> set des tickets de position déjà postés comme "ouverts".
+SEEN_OPEN = {}
+
 # Dernière écriture heartbeat par compte (user_id -> timestamp) pour throttler set_status.
 LAST_HEARTBEAT = {}
 
@@ -327,6 +331,11 @@ def process_account(row: dict):
     #      du nouveau compte passent pour "nouveaux" → bombardement d'alertes.
     if user_id not in SEEN or row.get("last_sync_at") is None:
         SEEN[user_id] = set(d.ticket for d in out_deals)
+        # Repère aussi les positions DÉJÀ ouvertes → on n'alerte pas dessus à la (re)connexion.
+        try:
+            SEEN_OPEN[user_id] = set(p.ticket for p in (mt5.positions_get() or []))
+        except Exception:
+            SEEN_OPEN[user_id] = set()
         heartbeat(user_id, force=True)   # 1er passage : doit flipper last_sync_at NULL→non-null
         print(f"[mt5] compte {login} connecté — {len(SEEN[user_id])} deals existants ignorés (repère)")
         return
@@ -369,6 +378,33 @@ def process_account(row: dict):
         }
         if payload["entry_price"] > 0 and payload["exit_price"] > 0 and payload["size"] > 0:
             post_trade(ingest_key, payload)
+            posted = True
+
+    # ── Positions OUVERTES nouvelles → ALERTE D'ENTRÉE EN TEMPS RÉEL ──────────────
+    # On poste un trade "ouvert" (sans exit/pnl) → /api/ingest lance analyzeOpenTrade
+    # (hors-session, revenge sizing, overtrading…). À la fermeture, le deal de sortie
+    # complétera ce même trade (même symbol+direction+entry_time) sans créer de doublon.
+    try:
+        positions = mt5.positions_get() or []
+    except Exception:
+        positions = []
+    seen_open = SEEN_OPEN.setdefault(user_id, set())
+    for p in positions:
+        if p.ticket in seen_open:
+            continue
+        seen_open.add(p.ticket)
+        poff = broker_utc_offset(p.symbol)
+        sl = float(p.sl) if getattr(p, "sl", 0) and p.sl > 0 else None
+        open_payload = {
+            "symbol":      str(p.symbol).strip(),
+            "direction":   "long" if p.type == 0 else "short",   # 0=BUY → long, 1=SELL → short
+            "size":        float(p.volume),
+            "entry_price": float(p.price_open),
+            "entry_time":  iso(p.time - poff),
+            "stop_loss":   sl,
+        }
+        if open_payload["entry_price"] > 0 and open_payload["size"] > 0:
+            post_trade(ingest_key, open_payload)
             posted = True
 
     heartbeat(user_id, force=posted)   # immédiat si nouveau trade, sinon throttlé
