@@ -2482,7 +2482,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
           </button>
         )}
       </div>
-    <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 760 }}>
 
       {/* Plan actuel — résumé */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${isPaid ? (isMaxPlan(plan) ? C.red : C.g) : C.b3}`, borderRadius: 12, padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
@@ -2557,10 +2557,8 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
   const [lastName,  setLastName]  = useState(userMeta.last_name  ?? '')
   const [phone,     setPhone]     = useState(userMeta.phone      ?? '')
   const [save,      setSave]      = useState<'idle'|'saving'|'saved'|'error'>('idle')
-  const [pwSave,    setPwSave]    = useState<'idle'|'saving'|'saved'|'error'>('idle')
+  const [pwSave,    setPwSave]    = useState<'idle'|'saving'|'sent'|'error'>('idle')
   const [emailSave, setEmailSave] = useState<'idle'|'saving'|'sent'|'error'>('idle')
-  const [newPw,     setNewPw]     = useState('')
-  const [confirmPw, setConfirmPw] = useState('')
   const [email,     setEmail]     = useState(userEmail)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting,  setDeleting]  = useState(false)
@@ -2577,14 +2575,13 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
     } catch { setSave('error') }
   }
 
-  async function changePassword() {
-    if (newPw.length < 8 || newPw !== confirmPw) return
+  async function sendPasswordReset() {
     setPwSave('saving')
     try {
       const { createClient } = await import('@/lib/supabase/client')
-      const { error } = await createClient().auth.updateUser({ password: newPw })
-      setPwSave(error ? 'error' : 'saved')
-      if (!error) { setNewPw(''); setConfirmPw(''); setTimeout(() => setPwSave('idle'), 2500) }
+      const { error } = await createClient().auth.resetPasswordForEmail(userEmail, { redirectTo: `${window.location.origin}/reset-password` })
+      setPwSave(error ? 'error' : 'sent')
+      if (!error) setTimeout(() => setPwSave('idle'), 5000)
     } catch { setPwSave('error') }
   }
 
@@ -2647,7 +2644,7 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Profil</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Gère tes informations, ta sécurité et ton compte.</div>
       </div>
-    <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 600 }}>
 
       {/* Résumé du compte */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 22px', display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
@@ -2661,9 +2658,8 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
         <button onClick={logout} style={{ padding: '8px 14px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 8, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', flexShrink: 0 }}>Se déconnecter</button>
       </div>
 
-      {/* Infos personnelles + Sécurité, côte à côte */}
-      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
-        <Card title="Informations personnelles">
+      {/* Informations personnelles */}
+      <Card title="Informations personnelles">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div><div style={fieldLbl}>PRÉNOM</div><input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Prénom" /></div>
@@ -2694,22 +2690,18 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
           </div>
         </Card>
 
-        <Card title="Sécurité">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={fieldLbl}>NOUVEAU MOT DE PASSE</div>
-            <input type="password" style={inp} value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="8 caractères minimum" autoComplete="new-password" />
-            <input type="password" style={{ ...inp, borderColor: confirmPw && confirmPw !== newPw ? 'rgba(224,80,80,.4)' : undefined }} value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Confirmer le mot de passe" autoComplete="new-password" />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
-              <button onClick={changePassword} disabled={pwSave === 'saving' || newPw.length < 8 || newPw !== confirmPw} style={{ padding: '9px 20px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, opacity: (newPw.length < 8 || newPw !== confirmPw) ? .35 : 1 }}>
-                {pwSave === 'saving' ? 'Mise à jour…' : 'Mettre à jour'}
-              </button>
-              {pwSave === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Mis à jour</span>}
-              {pwSave === 'error'  && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
-            </div>
-            <div style={{ fontSize: 11, color: C.te, lineHeight: 1.5, marginTop: 4 }}>Choisis un mot de passe unique. Tu seras toujours connecté sur cet appareil après le changement.</div>
-          </div>
-        </Card>
-      </div>
+      <Card title="Sécurité">
+        <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.55, marginBottom: 14 }}>
+          Le mot de passe se modifie via un lien sécurisé envoyé à <span style={{ color: C.tm }}>{userEmail}</span>.
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' as const }}>
+          <button onClick={sendPasswordReset} disabled={pwSave === 'saving'} style={{ padding: '9px 18px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .3, opacity: pwSave === 'saving' ? .6 : 1 }}>
+            {pwSave === 'saving' ? 'Envoi…' : 'Recevoir un lien de réinitialisation'}
+          </button>
+          {pwSave === 'sent'  && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Lien envoyé — vérifie ta boîte mail</span>}
+          {pwSave === 'error' && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur — réessaie</span>}
+        </div>
+      </Card>
 
       {/* Zone dangereuse */}
       <Card title="Zone dangereuse" accent="rgba(224,80,80,.4)">
@@ -2794,9 +2786,9 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Aide &amp; support</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Une question, un bug, une suggestion — on répond sous 24h.</div>
       </div>
-      <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 620 }}>
 
-        <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Formulaire de contact */}
           <Card title="Nous contacter">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
