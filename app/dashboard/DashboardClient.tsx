@@ -1551,9 +1551,10 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize }: {
 }
 
 // ── RapportsPanel ──────────────────────────────────────────────────────────────
-function RapportsPanel() {
+function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => void }) {
   const C = useContext(ThemeCtx)
   const [loading, setLoading] = useState<string | null>(null)
+  const isMax = isMaxPlan(plan)
 
   function getWeekMonday(offsetWeeks: number = 0): Date {
     const now = new Date()
@@ -1616,6 +1617,20 @@ function RapportsPanel() {
       </div>
     <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
 
+      {!isMax && (
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${C.red}`, borderRadius: 12, padding: 22, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🔒</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 500, color: C.tx, marginBottom: 3 }}>Réservé au plan Max</div>
+            <div style={{ fontSize: 12, color: C.td }}>Les rapports PDF hebdomadaires (score, PnL, alertes, journal des trades) sont inclus dans le plan Max.</div>
+          </div>
+          <button onClick={onUpgrade} style={{ fontSize: 12, padding: '9px 18px', borderRadius: 8, fontFamily: SANS, fontWeight: 500, cursor: 'pointer', background: C.red, border: 'none', color: '#fff', whiteSpace: 'nowrap' as const, flexShrink: 0 }}>
+            Passer à Max
+          </button>
+        </div>
+      )}
+
+      {isMax && (<>
       {/* Semaine en cours — non disponible */}
       <div style={{
         background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20,
@@ -1675,6 +1690,7 @@ function RapportsPanel() {
           </div>
         )
       })}
+      </>)}
     </div>
     </div>
   )
@@ -3768,7 +3784,7 @@ export default function DashboardClient({
               <div style={{ overflowY: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {/* Débrief IA de session (plan Max) — plus d'onglet dédié, accès direct ici */}
                 <SentinelPanel stats={stats} alerts={alerts} score={score} rules={tradingRules} plan={plan} coachingCards={coachingCards} onActivate={() => setActiveTab('billing')} />
-                <RapportsPanel />
+                <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
               </div>
             )}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} />}

@@ -8,6 +8,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { WeeklyReport } from '@/lib/pdf/WeeklyReport'
 import type { WeeklyReportData, DayData, AlertTypeData, TradeItem } from '@/lib/pdf/WeeklyReport'
+import { isMaxPlan } from '@/lib/plans'
 
 const ALERT_LABELS: Record<string, string> = {
   revenge_sizing: 'Revenge Sizing',
@@ -94,6 +95,16 @@ export async function GET(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // Rapport hebdomadaire = fonctionnalité plan Max uniquement.
+  const { data: profile } = await service
+    .from('user_profiles')
+    .select('plan')
+    .eq('user_id', user.id)
+    .single()
+  if (!isMaxPlan(profile?.plan)) {
+    return NextResponse.json({ error: 'Le rapport hebdomadaire est réservé au plan Max.' }, { status: 403 })
+  }
 
   const weekStartStr = toISODate(monday)
   const weekEndStr = toISODate(addDays(sunday, 1)) // exclusive upper bound
