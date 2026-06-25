@@ -1556,22 +1556,6 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
   const [loading, setLoading] = useState<string | null>(null)
   const isMax = isMaxPlan(plan)
 
-  // Débrief IA de la dernière session (à la demande, plan Max)
-  const [debrief, setDebrief] = useState<string | null>(null)
-  const [dbLoading, setDbLoading] = useState(false)
-  const [dbError, setDbError] = useState<string | null>(null)
-  async function genDebrief() {
-    setDbLoading(true); setDbError(null)
-    try {
-      const res = await fetch('/api/debrief?latest=1', { method: 'POST' })
-      const data = await res.json()
-      if (res.ok && data.debrief) setDebrief(data.debrief)
-      else setDbError(data.error ?? 'Aucune session à débriefer pour le moment.')
-    } catch {
-      setDbError('Erreur réseau — réessaie.')
-    } finally { setDbLoading(false) }
-  }
-
   const toISODate = (d: Date) => d.toISOString().split('T')[0]
 
   function getWeekMonday(offsetWeeks = 0): Date {
@@ -1649,36 +1633,6 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Score, PnL, alertes comportementales, journal des trades — généré à la demande.</div>
       </div>
     <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
-
-      {/* Débrief IA de la dernière session — à la demande (plan Max) */}
-      {isMax && (
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${C.red}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: debrief ? 14 : 0 }}>
-            <div>
-              <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 3 }}>Débrief de session</div>
-              <div style={{ fontSize: 12, color: C.te }}>Un bilan de ta dernière séance, posé et basé sur tes chiffres.</div>
-            </div>
-            <button onClick={genDebrief} disabled={dbLoading} style={{
-              fontSize: 12, padding: '8px 16px', borderRadius: 8, fontFamily: MONO, whiteSpace: 'nowrap' as const,
-              cursor: dbLoading ? 'default' : 'pointer', background: dbLoading ? 'rgba(124,58,237,.05)' : C.rd,
-              border: `.5px solid ${C.rb}`, color: dbLoading ? C.td : C.red, flexShrink: 0, opacity: dbLoading ? .7 : 1,
-            }}>
-              {dbLoading ? 'Génération…' : debrief ? 'Régénérer' : 'Générer le débrief'}
-            </button>
-          </div>
-          {dbError && <div style={{ fontSize: 12, color: C.td, fontStyle: 'italic' }}>{dbError}</div>}
-          {debrief && debrief.split('\n').map((line, i) => {
-            if (!line.trim()) return <div key={i} style={{ height: 5 }} />
-            const parts = line.split(/\*\*(.*?)\*\*/g)
-            return (
-              <div key={i} style={{ fontSize: 13, color: C.tm, lineHeight: 1.65, fontWeight: 300, marginBottom: 2 }}>
-                {parts.map((p, j) => j % 2 === 1 ? <span key={j} style={{ fontWeight: 600, color: C.tx }}>{p}</span> : p)}
-              </div>
-            )
-          })}
-        </div>
-      )}
 
       {/* Rapports mensuels — inclus dès le plan Pro */}
       <div style={sectionTitle}>Mensuels</div>
@@ -2360,6 +2314,80 @@ function ToastContainer({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss:
   )
 }
 
+// ── DebriefWidget — bulle flottante ouvrable/fermable (plan Max) ─────────────────
+function DebriefWidget() {
+  const C = useContext(ThemeCtx)
+  const [open, setOpen] = useState(false)
+  const [debrief, setDebrief] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function generate() {
+    setLoading(true); setError(null)
+    try {
+      const res = await fetch('/api/debrief?latest=1', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.debrief) setDebrief(data.debrief)
+      else setError(data.error ?? 'Aucune session à débriefer pour le moment.')
+    } catch {
+      setError('Erreur réseau — réessaie.')
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 9997, fontFamily: SANS }}>
+      {open && (
+        <div style={{
+          position: 'absolute', bottom: 64, right: 0, width: 'min(380px, calc(100vw - 32px))',
+          maxHeight: '70vh', display: 'flex', flexDirection: 'column', background: C.sf,
+          border: `.5px solid ${C.b2}`, borderRadius: 16, overflow: 'hidden',
+          boxShadow: '0 18px 50px rgba(0,0,0,.5)', animation: 'fadeUp .22s ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15 }}>🧭</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.tx }}>Débrief de session</span>
+            </div>
+            <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: C.te, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
+          </div>
+          <div style={{ padding: 16, overflowY: 'auto' }}>
+            {!debrief && !error && (
+              <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5, marginBottom: 14 }}>
+                Un bilan posé de ta dernière séance, basé sur tes chiffres.
+              </div>
+            )}
+            {error && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic', marginBottom: 14 }}>{error}</div>}
+            {debrief && debrief.split('\n').map((line, i) => {
+              if (!line.trim()) return <div key={i} style={{ height: 6 }} />
+              const parts = line.split(/\*\*(.*?)\*\*/g)
+              return (
+                <div key={i} style={{ fontSize: 13, color: C.tm, lineHeight: 1.7, fontWeight: 300, marginBottom: 3 }}>
+                  {parts.map((p, j) => j % 2 === 1 ? <span key={j} style={{ fontWeight: 600, color: C.tx }}>{p}</span> : p)}
+                </div>
+              )
+            })}
+            <button onClick={generate} disabled={loading} style={{
+              marginTop: (debrief || error) ? 14 : 0, width: '100%', padding: '10px', borderRadius: 8,
+              fontSize: 12.5, fontFamily: MONO, cursor: loading ? 'default' : 'pointer',
+              background: loading ? 'rgba(124,58,237,.05)' : C.rd, border: `.5px solid ${C.rb}`,
+              color: loading ? C.td : C.red, opacity: loading ? .7 : 1,
+            }}>
+              {loading ? 'Génération…' : debrief ? 'Régénérer' : 'Générer le débrief'}
+            </button>
+          </div>
+        </div>
+      )}
+      <button onClick={() => setOpen(o => !o)} title="Débrief de session" style={{
+        width: 52, height: 52, borderRadius: '50%', border: 'none', cursor: 'pointer',
+        background: C.red, color: '#fff', fontSize: 22, boxShadow: '0 8px 24px rgba(220,80,60,.4)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {open ? '✕' : '🧭'}
+      </button>
+    </div>
+  )
+}
+
 // ── BillingPanel ───────────────────────────────────────────────────────────────
 function BillingPanel({ plan: initialPlan }: { plan: string }) {
   const C = useContext(ThemeCtx)
@@ -2398,7 +2426,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'max', name: 'Max', price: '34€',
       accent: C.red, accentAlpha: `rgba(124,58,237,`,
-      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', '7 schémas avancés exclusifs', 'Rapport hebdomadaire'],
+      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', 'Débrief de session', 'Rapport hebdomadaire'],
     },
   ]
 
@@ -3359,6 +3387,7 @@ export default function DashboardClient({
       </div>
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      {isMaxPlan(plan) && <DebriefWidget />}
     </>
     </ThemeCtx.Provider>
   )
