@@ -52,9 +52,94 @@ export async function POST(_req: NextRequest) {
     return NextResponse.json({ error: 'Débrief indisponible.' }, { status: 503 })
   }
 
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const haiku = async (system: string, content: string, maxTokens = 400) => {
+    const msg = await anthropic.messages.create({ model: 'claude-haiku-4-5', max_tokens: maxTokens, system, messages: [{ role: 'user', content }] })
+    return (msg.content as any[]).filter(b => b.type === 'text').map(b => b.text).join('').trim()
+  }
+
+  const sp = new URL(_req.url).searchParams
+  const period = sp.get('period')
+  const { data: rules } = await service.from('trading_rules').select('*').eq('user_id', user.id).single()
+  const accountSize = Number(rules?.account_size) || 10000
+
+  // ══ PATTERNS RÉCURRENTS — débrief hebdo (7 j) ou mensuel (30 j) ════════════════
+  if (period === 'week' || period === 'month') {
+    const nbDays = period === 'week' ? 7 : 30
+    const start = new Date(Date.now() - (nbDays - 1) * 86_400_000).toISOString().slice(0, 10)
+
+    const [{ data: trades }, { data: alerts }] = await Promise.all([
+      service.from('trades').select('symbol, pnl, entry_time').eq('user_id', user.id).gte('entry_time', start).order('entry_time'),
+      service.from('alerts').select('type, level, session_date').eq('user_id', user.id).gte('session_date', start),
+    ])
+    const t = trades ?? []
+    const a = alerts ?? []
+    if (t.length < 4) {
+      return NextResponse.json({ error: `Pas assez de trades sur ${period === 'week' ? 'la semaine' : 'le mois'} pour une analyse.` }, { status: 400 })
+    }
+
+    const dayOf = (iso: string) => iso.slice(0, 10)
+    const tradingDays = new Set(t.map(x => dayOf(x.entry_time)))
+    const totalPnl = t.reduce((s, x) => s + (x.pnl ?? 0), 0)
+    const wins = t.filter(x => (x.pnl ?? 0) > 0).length
+    const winRate = t.length ? Math.round((wins / t.length) * 100) : 0
+
+    // Score moyen par jour tradé
+    const alertsByDay: Record<string, { level?: number | null }[]> = {}
+    for (const al of a) { const d = al.session_date as string; if (d) (alertsByDay[d] ||= []).push(al) }
+    const dayScores = [...tradingDays].map(d => computeScore(alertsByDay[d] ?? []))
+    const avgScore = dayScores.length ? Math.round(dayScores.reduce((s, v) => s + v, 0) / dayScores.length) : 100
+
+    // P&L par jour → meilleur / pire jour + jours en drawdown
+    const pnlByDay: Record<string, number> = {}
+    for (const x of t) { const d = dayOf(x.entry_time); pnlByDay[d] = (pnlByDay[d] ?? 0) + (x.pnl ?? 0) }
+    const dayList = Object.entries(pnlByDay)
+    const best = dayList.reduce((m, e) => (m == null || e[1] > m[1] ? e : m), null as [string, number] | null)
+    const worst = dayList.reduce((m, e) => (m == null || e[1] < m[1] ? e : m), null as [string, number] | null)
+    let ddBreachDays = 0
+    if (rules?.max_daily_drawdown_pct) for (const [, p] of dayList) {
+      if (Math.abs(Math.min(0, p) / accountSize) * 100 >= rules.max_daily_drawdown_pct) ddBreachDays++
+    }
+
+    // Schémas récurrents : nb d'occurrences + nb de jours distincts
+    const cnt: Record<string, number> = {}
+    const daysOfType: Record<string, Set<string>> = {}
+    for (const al of a) { const ty = al.type; if (!ty) continue; cnt[ty] = (cnt[ty] ?? 0) + 1; (daysOfType[ty] ||= new Set()).add(al.session_date as string) }
+    const patterns = Object.entries(cnt).sort((x, y) => y[1] - x[1]).slice(0, 4)
+      .map(([ty, n]) => `${alertLabel(ty)} : ${n}× sur ${daysOfType[ty].size} jour(s)`)
+
+    const facts = [
+      `Période analysée : ${nbDays} derniers jours · ${tradingDays.size} jours tradés`,
+      `Score de discipline moyen : ${avgScore}/100`,
+      `P&L net : ${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}€`,
+      `${t.length} trades · win rate ${winRate}%`,
+      patterns.length ? `Schémas récurrents : ${patterns.join(' ; ')}` : `Aucun schéma à risque récurrent`,
+      best && worst ? `Meilleur jour : ${best[0]} (${best[1] >= 0 ? '+' : ''}${best[1].toFixed(0)}€) · Pire jour : ${worst[0]} (${worst[1].toFixed(0)}€)` : null,
+      ddBreachDays > 0 ? `Limite de drawdown dépassée sur ${ddBreachDays} jour(s)` : `Limite de drawdown respectée chaque jour`,
+    ].filter(Boolean).join('\n')
+
+    const systemP = `Tu es le mentor de Caldra : posé, bienveillant, factuel. On te fournit les FAITS EXACTS d'une PÉRIODE de trading (${period === 'week' ? 'la semaine' : 'le mois'}).
+Règles :
+- N'invente AUCUN chiffre. Utilise UNIQUEMENT les faits fournis, ne recalcule rien.
+- Ton calme et constructif, JAMAIS accusateur ni culpabilisant. Tournures neutres.
+- Aucune métaphore dramatisante, aucun emoji.
+- Identifie le ou les 1-2 SCHÉMAS RÉCURRENTS les plus marquants (ceux qui reviennent sur plusieurs jours) et leur effet probable.
+- En français, tutoiement, 4 à 6 phrases pour l'analyse.
+- Termine OBLIGATOIREMENT par un plan d'action de 1 à 2 points concrets et réalistes pour la période suivante, chacun sur sa ligne préfixée par "• ".
+- Tu peux mettre en gras (**…**) 1 ou 2 termes clés.`
+
+    try {
+      const debrief = await haiku(systemP, `Faits de la période :\n${facts}`, 500)
+      if (!debrief) return NextResponse.json({ error: 'Analyse vide.' }, { status: 502 })
+      return NextResponse.json({ debrief, period, avgScore, totalPnl })
+    } catch {
+      return NextResponse.json({ error: "Erreur lors de l'analyse." }, { status: 502 })
+    }
+  }
+
+  // ══ DÉBRIEF DE SESSION (jour) ══════════════════════════════════════════════════
   // Jour ciblé : ?date=YYYY-MM-DD précis, ?latest=1 = dernière journée avec trades,
   // sinon aujourd'hui (déclenchement auto à la clôture).
-  const sp = new URL(_req.url).searchParams
   const dateParam = sp.get('date')
   let day = new Date().toISOString().split('T')[0]
   if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
@@ -67,10 +152,9 @@ export async function POST(_req: NextRequest) {
   }
   const dayEnd = `${day}T23:59:59.999Z`
 
-  const [{ data: trades }, { data: alerts }, { data: rules }] = await Promise.all([
+  const [{ data: trades }, { data: alerts }] = await Promise.all([
     service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', day).lte('entry_time', dayEnd).order('entry_time'),
     service.from('alerts').select('type, level').eq('user_id', user.id).eq('session_date', day),
-    service.from('trading_rules').select('*').eq('user_id', user.id).single(),
   ])
 
   const t = trades ?? []
@@ -96,7 +180,6 @@ export async function POST(_req: NextRequest) {
   let streak = 0
   for (const x of sorted) { if ((x.pnl ?? 0) < 0) streak++; else break }
 
-  const accountSize = Number(rules?.account_size) || 10000
   const ddPct = Math.abs(Math.min(0, totalPnl) / accountSize) * 100
   const breaches: string[] = []
   if (rules?.max_trades_per_session && t.length >= rules.max_trades_per_session)
@@ -126,15 +209,7 @@ Règles :
 - Tu peux mettre en gras (**…**) 1 ou 2 termes clés au maximum.`
 
   try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 350,
-      system,
-      messages: [{ role: 'user', content: `Faits de la session du jour :\n${factsList}` }],
-    })
-    const debrief = (msg.content as any[])
-      .filter(b => b.type === 'text').map(b => b.text).join('').trim()
+    const debrief = await haiku(system, `Faits de la session du jour :\n${factsList}`, 350)
     if (!debrief) return NextResponse.json({ error: 'Débrief vide.' }, { status: 502 })
     return NextResponse.json({ debrief, score, totalPnl })
   } catch {

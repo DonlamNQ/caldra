@@ -1557,6 +1557,21 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
   const [loading, setLoading] = useState<string | null>(null)
   const isMax = isMaxPlan(plan)
 
+  // Analyse des patterns récurrents (Max) — débrief hebdo / mensuel à la demande
+  const [pat, setPat] = useState<string | null>(null)
+  const [patPeriod, setPatPeriod] = useState<'week' | 'month'>('week')
+  const [patLoading, setPatLoading] = useState(false)
+  const [patError, setPatError] = useState<string | null>(null)
+  async function genPatterns(p: 'week' | 'month') {
+    setPatPeriod(p); setPatLoading(true); setPatError(null); setPat(null)
+    try {
+      const res = await fetch(`/api/debrief?period=${p}`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.debrief) setPat(data.debrief)
+      else setPatError(data.error ?? 'Analyse indisponible.')
+    } catch { setPatError('Erreur réseau — réessaie.') } finally { setPatLoading(false) }
+  }
+
   const toISODate = (d: Date) => d.toISOString().split('T')[0]
 
   function getWeekMonday(offsetWeeks = 0): Date {
@@ -1634,6 +1649,44 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Score, PnL, alertes comportementales, journal des trades — généré à la demande.</div>
       </div>
     <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
+
+      {/* Patterns récurrents — analyse IA hebdo/mensuelle (plan Max) */}
+      {isMax && (
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${C.red}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: pat || patLoading || patError ? 14 : 0, flexWrap: 'wrap' as const }}>
+            <div>
+              <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 3 }}>Patterns récurrents</div>
+              <div style={{ fontSize: 12, color: C.te }}>Analyse de tes schémas sur la durée, avec un plan d&apos;action.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(['week', 'month'] as const).map(p => {
+                const active = patPeriod === p && !!pat
+                return (
+                  <button key={p} onClick={() => genPatterns(p)} disabled={patLoading} style={{
+                    fontSize: 11.5, padding: '7px 14px', borderRadius: 8, fontFamily: MONO, whiteSpace: 'nowrap' as const,
+                    cursor: patLoading ? 'default' : 'pointer', background: active ? C.rd : 'transparent',
+                    border: `.5px solid ${active ? C.rb : C.b2}`, color: active ? C.red : C.td, opacity: patLoading ? .6 : 1,
+                  }}>
+                    {p === 'week' ? '7 jours' : '30 jours'}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          {patLoading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse de tes {patPeriod === 'week' ? '7' : '30'} derniers jours…</div>}
+          {!patLoading && patError && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>{patError}</div>}
+          {!patLoading && pat && pat.split('\n').map((line, i) => {
+            if (!line.trim()) return <div key={i} style={{ height: 6 }} />
+            const parts = line.split(/\*\*(.*?)\*\*/g)
+            return (
+              <div key={i} style={{ fontSize: 13, color: C.tm, lineHeight: 1.7, fontWeight: 300, marginBottom: 3 }}>
+                {parts.map((p, j) => j % 2 === 1 ? <span key={j} style={{ fontWeight: 600, color: C.tx }}>{p}</span> : p)}
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Rapports mensuels — inclus dès le plan Pro */}
       <div style={sectionTitle}>Mensuels</div>
