@@ -1289,8 +1289,8 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, all
   const allPatternEntries = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])
   // Pro : 5 schémas max · Max : tous.
   const patIsMax = isMaxPlan(plan)
-  const patterns = allPatternEntries.slice(0, patIsMax ? 12 : 5)
-  const hiddenPatterns = patIsMax ? 0 : Math.max(0, allPatternEntries.length - 5)
+  const patterns = allPatternEntries.slice(0, patIsMax ? 12 : 3)
+  const hiddenPatterns = patIsMax ? 0 : Math.max(0, allPatternEntries.length - 3)
   const maxCount = patterns[0]?.[1] ?? 1
 
   const totalTrades = sessions.reduce((s, d) => s + d.tradeCount, 0)
