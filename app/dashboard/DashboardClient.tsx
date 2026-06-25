@@ -2482,9 +2482,24 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
           </button>
         )}
       </div>
-    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 780 }}>
+      {/* Plan actuel — résumé */}
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderLeft: `3px solid ${isPaid ? (isMaxPlan(plan) ? C.red : C.g) : C.b3}`, borderRadius: 12, padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: MONO, marginBottom: 6 }}>TON PLAN ACTUEL</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <span style={{ fontSize: 22, fontWeight: 500, color: C.tx, textTransform: 'capitalize' as const }}>{isMaxPlan(plan) ? 'Max' : isPaid ? 'Pro' : 'Free'}</span>
+            <span style={{ fontSize: 14, color: C.td }}>{isMaxPlan(plan) ? '34€/mois' : isPaid ? '19€/mois' : 'gratuit'}</span>
+          </div>
+        </div>
+        <span style={{ padding: '4px 12px', borderRadius: 99, fontSize: 10, letterSpacing: 1, fontFamily: MONO, color: isPaid ? C.g : C.te, background: isPaid ? 'rgba(0,209,122,.08)' : 'rgba(255,255,255,.04)', border: `.5px solid ${isPaid ? 'rgba(0,209,122,.25)' : C.b}` }}>{isPaid ? 'ACTIF' : 'AUCUN ABONNEMENT'}</span>
+      </div>
+
+      {/* Comparer / changer de plan */}
+      <div style={{ fontSize: 10, letterSpacing: 1, color: C.td, textTransform: 'uppercase' as const, fontFamily: MONO }}>{isPaid ? 'Changer de plan' : 'Choisir un plan'}</div>
+      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {plans.map(p => {
           const isCurrent = plan === p.id
           return (
@@ -2525,18 +2540,18 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
         })}
       </div>
 
-      {plan === 'free' && (
-        <div style={{ marginTop: 14, padding: '11px 16px', background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 8, fontSize: 12, color: C.te, maxWidth: 780 }}>
-          7 jours d'essai gratuit inclus sur Pro et Max — carte requise, débit automatique à J+7 sauf résiliation.
-        </div>
-      )}
+      <div style={{ padding: '11px 16px', background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 8, fontSize: 12, color: C.te }}>
+        {isPaid
+          ? "Gère ou résilie ton abonnement à tout moment via « Gérer l'abonnement » (portail Stripe sécurisé)."
+          : '7 jours d\'essai gratuit inclus sur Pro et Max — carte requise, débit automatique à J+7 sauf résiliation.'}
+      </div>
     </div>
     </div>
   )
 }
 
 // ── ProfilPanel ─────────────────────────────────────────────────────────────────
-function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { first_name?: string; last_name?: string; phone?: string } }) {
+function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMeta: { first_name?: string; last_name?: string; phone?: string }; plan: string }) {
   const C = useContext(ThemeCtx)
   const [firstName, setFirstName] = useState(userMeta.first_name ?? '')
   const [lastName,  setLastName]  = useState(userMeta.last_name  ?? '')
@@ -2609,43 +2624,53 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
     fontFamily: SANS, outline: 'none', boxSizing: 'border-box' as const, transition: 'border-color .2s',
   }
 
-  const Sec = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, marginBottom: 14 }}>
-      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.te, marginBottom: 16 }}>{title}</div>
+  const fieldLbl: React.CSSProperties = { fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }
+  const Card = ({ title, accent, children }: { title: string; accent?: string; children: React.ReactNode }) => (
+    <div style={{ background: C.sf, border: `.5px solid ${accent ?? C.b}`, ...(accent ? { borderLeft: `3px solid ${accent}` } : {}), borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: accent ?? C.te, marginBottom: 16, fontFamily: MONO }}>{title}</div>
       {children}
     </div>
   )
 
+  const initials = (firstName || lastName) ? `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase() : userEmail.slice(0, 2).toUpperCase()
+  const fullName = `${firstName} ${lastName}`.trim()
+  const isMax = isMaxPlan(plan)
+  const planLabel = isMax ? 'Max' : plan === 'pro' ? 'Pro' : 'Free'
+  const planColor = isMax ? C.red : plan === 'pro' ? C.g : C.te
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Compte</div>
-          <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Profil</div>
-          <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>{userEmail}</div>
-        </div>
-        <button onClick={logout} style={{ padding: '8px 16px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 8, color: C.te, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .3, transition: 'all .18s' }}>
-          Se déconnecter
-        </button>
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: MONO, marginBottom: 4 }}>Compte</div>
+        <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Profil</div>
+        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Gère tes informations, ta sécurité et ton compte.</div>
       </div>
-    <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
+    <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      <div style={{ maxWidth: 520 }}>
-        <Sec title="Informations personnelles">
+      {/* Résumé du compte */}
+      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 22px', display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+        <div style={{ width: 52, height: 52, borderRadius: '50%', flexShrink: 0, background: C.sf2, border: `.5px solid ${C.b2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 500, color: C.tx, letterSpacing: .5 }}>{initials}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: C.tx, marginBottom: 2 }}>{fullName || 'Ton profil'}</div>
+          <div style={{ fontSize: 12, color: C.te, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{userEmail}</div>
+        </div>
+        <span style={{ padding: '4px 11px', borderRadius: 99, fontSize: 10, letterSpacing: 1, fontFamily: MONO, color: planColor, background: `${planColor}14`, border: `.5px solid ${planColor}33`, flexShrink: 0 }}>Plan {planLabel}</span>
+        <button onClick={logout} style={{ padding: '8px 14px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 8, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', flexShrink: 0 }}>Se déconnecter</button>
+      </div>
+
+      {/* Infos personnelles + Sécurité, côte à côte */}
+      <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
+        <Card title="Informations personnelles">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div>
-                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>PRÉNOM</div>
-                <input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Prénom" />
-              </div>
-              <div>
-                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>NOM</div>
-                <input style={inp} value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Nom" />
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div><div style={fieldLbl}>PRÉNOM</div><input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Prénom" /></div>
+              <div><div style={fieldLbl}>NOM</div><input style={inp} value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Nom" /></div>
             </div>
             <div>
-              <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>EMAIL</div>
+              <div style={fieldLbl}>EMAIL</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input style={inp} value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemple.com" type="email" />
                 <button onClick={changeEmail} disabled={emailSave === 'saving' || email === userEmail} style={{ padding: '0 14px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap' as const, opacity: email === userEmail ? .3 : 1 }}>
@@ -2656,10 +2681,10 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
               {emailSave === 'error' && <div style={{ fontSize: 11, color: C.red, marginTop: 5 }}>Erreur — réessaie</div>}
             </div>
             <div>
-              <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>TÉLÉPHONE</div>
+              <div style={fieldLbl}>TÉLÉPHONE</div>
               <input style={inp} value={phone} onChange={e => setPhone(e.target.value)} placeholder="+33 6 00 00 00 00" />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
               <button onClick={saveProfile} disabled={save === 'saving'} style={{ padding: '9px 20px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, opacity: save === 'saving' ? .6 : 1 }}>
                 {save === 'saving' ? 'Enregistrement…' : 'Sauvegarder'}
               </button>
@@ -2667,41 +2692,44 @@ function ProfilPanel({ userEmail, userMeta }: { userEmail: string; userMeta: { f
               {save === 'error'  && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
             </div>
           </div>
-        </Sec>
+        </Card>
 
-        <Sec title="Mot de passe">
+        <Card title="Sécurité">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input type="password" style={inp} value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="Nouveau mot de passe (8 min)" autoComplete="new-password" />
-            <input type="password" style={{ ...inp, borderColor: confirmPw && confirmPw !== newPw ? 'rgba(224,80,80,.4)' : undefined }} value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Confirmer" autoComplete="new-password" />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={fieldLbl}>NOUVEAU MOT DE PASSE</div>
+            <input type="password" style={inp} value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="8 caractères minimum" autoComplete="new-password" />
+            <input type="password" style={{ ...inp, borderColor: confirmPw && confirmPw !== newPw ? 'rgba(224,80,80,.4)' : undefined }} value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Confirmer le mot de passe" autoComplete="new-password" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
               <button onClick={changePassword} disabled={pwSave === 'saving' || newPw.length < 8 || newPw !== confirmPw} style={{ padding: '9px 20px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 7, color: C.td, fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5, opacity: (newPw.length < 8 || newPw !== confirmPw) ? .35 : 1 }}>
-                {pwSave === 'saving' ? 'Mise à jour…' : 'Changer le mot de passe'}
+                {pwSave === 'saving' ? 'Mise à jour…' : 'Mettre à jour'}
               </button>
               {pwSave === 'saved' && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Mis à jour</span>}
               {pwSave === 'error'  && <span style={{ fontSize: 11, color: C.red, fontFamily: MONO }}>Erreur</span>}
             </div>
+            <div style={{ fontSize: 11, color: C.te, lineHeight: 1.5, marginTop: 4 }}>Choisis un mot de passe unique. Tu seras toujours connecté sur cet appareil après le changement.</div>
           </div>
-        </Sec>
-
-        <div style={{ background: C.sf, border: '.5px solid rgba(224,80,80,.18)', borderLeft: '3px solid rgba(224,80,80,.4)', borderRadius: 12, padding: 22, marginBottom: 14 }}>
-          <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: 'rgba(224,80,80,.5)', marginBottom: 14 }}>Zone dangereuse</div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              style={{ ...inp, maxWidth: 200, borderColor: deleteConfirm === 'SUPPRIMER' ? 'rgba(224,80,80,.4)' : undefined }}
-              value={deleteConfirm}
-              onChange={e => setDeleteConfirm(e.target.value)}
-              placeholder='Tape "SUPPRIMER"'
-            />
-            <button
-              onClick={deleteAccount}
-              disabled={deleteConfirm !== 'SUPPRIMER' || deleting}
-              style={{ padding: '9px 18px', background: deleteConfirm === 'SUPPRIMER' ? 'rgba(224,80,80,.12)' : 'transparent', border: '.5px solid rgba(224,80,80,.25)', borderRadius: 7, color: 'rgba(224,80,80,.7)', fontSize: 11, fontFamily: SANS, cursor: deleteConfirm === 'SUPPRIMER' ? 'pointer' : 'not-allowed', opacity: deleteConfirm !== 'SUPPRIMER' ? .35 : 1, whiteSpace: 'nowrap' as const }}
-            >
-              {deleting ? 'Suppression…' : 'Supprimer mon compte'}
-            </button>
-          </div>
-        </div>
+        </Card>
       </div>
+
+      {/* Zone dangereuse */}
+      <Card title="Zone dangereuse" accent="rgba(224,80,80,.4)">
+        <div style={{ fontSize: 12, color: C.td, lineHeight: 1.5, marginBottom: 14 }}>Action définitive : tes trades, alertes et règles seront effacés. Ton abonnement, lui, doit être résilié séparément depuis Billing.</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' as const }}>
+          <input
+            style={{ ...inp, maxWidth: 220, borderColor: deleteConfirm === 'SUPPRIMER' ? 'rgba(224,80,80,.4)' : undefined }}
+            value={deleteConfirm}
+            onChange={e => setDeleteConfirm(e.target.value)}
+            placeholder='Tape "SUPPRIMER"'
+          />
+          <button
+            onClick={deleteAccount}
+            disabled={deleteConfirm !== 'SUPPRIMER' || deleting}
+            style={{ padding: '11px 18px', background: deleteConfirm === 'SUPPRIMER' ? 'rgba(224,80,80,.12)' : 'transparent', border: '.5px solid rgba(224,80,80,.25)', borderRadius: 7, color: 'rgba(224,80,80,.75)', fontSize: 11, fontFamily: SANS, cursor: deleteConfirm === 'SUPPRIMER' ? 'pointer' : 'not-allowed', opacity: deleteConfirm !== 'SUPPRIMER' ? .35 : 1, whiteSpace: 'nowrap' as const }}
+          >
+            {deleting ? 'Suppression…' : 'Supprimer mon compte'}
+          </button>
+        </div>
+      </Card>
     </div>
     </div>
   )
@@ -2742,9 +2770,11 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
     fontFamily: SANS, outline: 'none', boxSizing: 'border-box' as const, transition: 'border-color .2s',
   }
 
-  const Sec = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, marginBottom: 14 }}>
-      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.te, marginBottom: 16 }}>{title}</div>
+  const fieldLbl: React.CSSProperties = { fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }
+  const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.te, marginBottom: 16, fontFamily: MONO }}>{title}</div>
       {children}
     </div>
   )
@@ -2764,34 +2794,24 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Aide &amp; support</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Une question, un bug, une suggestion — on répond sous 24h.</div>
       </div>
-      <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
-        <div style={{ maxWidth: 560 }}>
+      <div style={{ padding: 26, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          <Sec title="Questions fréquentes">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {faq.map((f, i) => (
-                <div key={i}>
-                  <div style={{ fontSize: 13, color: C.tx, fontWeight: 500, marginBottom: 4 }}>{f.q}</div>
-                  <div style={{ fontSize: 12.5, color: C.te, lineHeight: 1.6 }}>{f.a}</div>
-                </div>
-              ))}
-            </div>
-          </Sec>
-
-          <Sec title="Nous contacter">
+        <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
+          {/* Formulaire de contact */}
+          <Card title="Nous contacter">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>RÉPONSE ENVOYÉE À</div>
+                <div style={fieldLbl}>RÉPONSE ENVOYÉE À</div>
                 <input style={{ ...inp, opacity: .6, cursor: 'not-allowed' }} value={userEmail} readOnly />
               </div>
               <div>
-                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>SUJET</div>
+                <div style={fieldLbl}>SUJET</div>
                 <input style={inp} value={subject} onChange={e => setSubject(e.target.value)} placeholder="Ex. Connexion cTrader, facturation…" />
               </div>
               <div>
-                <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>MESSAGE</div>
+                <div style={fieldLbl}>MESSAGE</div>
                 <textarea
-                  style={{ ...inp, minHeight: 130, resize: 'vertical' as const, fontFamily: SANS }}
+                  style={{ ...inp, minHeight: 140, resize: 'vertical' as const, fontFamily: SANS }}
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   placeholder="Décris ta question ou ton problème…"
@@ -2805,15 +2825,33 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
                 >
                   {status === 'sending' ? 'Envoi…' : 'Envoyer'}
                 </button>
-                {status === 'sent'  && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Message envoyé — réponse sous 24h</span>}
+                {status === 'sent'  && <span style={{ fontSize: 11, color: C.g, fontFamily: MONO }}>✓ Envoyé — réponse sous 24h</span>}
                 {status === 'error' && <span style={{ fontSize: 11, color: C.red }}>{errMsg}</span>}
               </div>
-              <div style={{ fontSize: 11, color: C.td, marginTop: 2 }}>
-                Ou directement : <span style={{ color: C.te }}>contact@getcaldra.com</span>
-              </div>
             </div>
-          </Sec>
+          </Card>
 
+          {/* FAQ */}
+          <Card title="Questions fréquentes">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {faq.map((f, i) => (
+                <div key={i} style={{ paddingBottom: i < faq.length - 1 ? 14 : 0, borderBottom: i < faq.length - 1 ? `.5px solid rgba(255,255,255,.04)` : 'none' }}>
+                  <div style={{ fontSize: 13, color: C.tx, fontWeight: 500, marginBottom: 5 }}>{f.q}</div>
+                  <div style={{ fontSize: 12.5, color: C.te, lineHeight: 1.6 }}>{f.a}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Contact direct */}
+        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' as const }}>
+          <span style={{ fontSize: 18 }}>✉️</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12.5, color: C.tm }}>Tu préfères l'email direct ?</div>
+            <a href="mailto:contact@getcaldra.com" style={{ fontSize: 12.5, color: C.red, textDecoration: 'none', fontFamily: MONO }}>contact@getcaldra.com</a>
+          </div>
+          <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>Réponse sous 24 h ouvrées</span>
         </div>
       </div>
     </div>
@@ -3418,7 +3456,7 @@ export default function DashboardClient({
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} />}
             {activeTab === 'regles' && <ReglesPanel initial={tradingRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
-            {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} />}
+            {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} plan={plan} />}
             {activeTab === 'aide' && <SupportPanel userEmail={userEmail} />}
           </div>
         </div>
