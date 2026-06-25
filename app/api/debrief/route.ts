@@ -52,10 +52,24 @@ export async function POST(_req: NextRequest) {
     return NextResponse.json({ error: 'Débrief indisponible.' }, { status: 503 })
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  // Jour ciblé : ?date=YYYY-MM-DD précis, ?latest=1 = dernière journée avec trades,
+  // sinon aujourd'hui (déclenchement auto à la clôture).
+  const sp = new URL(_req.url).searchParams
+  const dateParam = sp.get('date')
+  let day = new Date().toISOString().split('T')[0]
+  if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    day = dateParam
+  } else if (sp.get('latest') === '1') {
+    const { data: lt } = await service.from('trades')
+      .select('entry_time').eq('user_id', user.id)
+      .order('entry_time', { ascending: false }).limit(1).maybeSingle()
+    if (lt?.entry_time) day = lt.entry_time.split('T')[0]
+  }
+  const dayEnd = `${day}T23:59:59.999Z`
+
   const [{ data: trades }, { data: alerts }, { data: rules }] = await Promise.all([
-    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', today).order('entry_time'),
-    service.from('alerts').select('type, level').eq('user_id', user.id).eq('session_date', today),
+    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', day).lte('entry_time', dayEnd).order('entry_time'),
+    service.from('alerts').select('type, level').eq('user_id', user.id).eq('session_date', day),
     service.from('trading_rules').select('*').eq('user_id', user.id).single(),
   ])
 

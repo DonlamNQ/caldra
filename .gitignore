@@ -26,3 +26,5 @@ worker/*.log
 worker/backoff.json
 worker/__pycache__/
 worker/node_modules/
+
+scripts/test-debrief.mjs

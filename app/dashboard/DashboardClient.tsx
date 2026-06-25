@@ -653,10 +653,11 @@ function Sidebar({ score, alerts, stats, rules }: {
 }
 
 // ── SessionPanel ───────────────────────────────────────────────────────────────
-function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected, debrief }: {
+function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected, debrief, canDebrief, onGenerateDebrief, debriefLoading, debriefError }: {
   trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats
   yesterdayStats: { score: number; pnl: number; alerts: number } | null
   yesterdayTrend: number | null; rules: TradingRules | null; connected?: boolean; debrief?: string | null
+  canDebrief?: boolean; onGenerateDebrief?: () => void; debriefLoading?: boolean; debriefError?: string | null
 }) {
   const C = useContext(ThemeCtx)
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
@@ -695,6 +696,20 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Génération manuelle du débrief (plan Max / VIP) */}
+      {!debrief && canDebrief && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end' }}>
+          {debriefError && <span style={{ fontSize: 11, color: C.te, fontFamily: MONO }}>{debriefError}</span>}
+          <button onClick={onGenerateDebrief} disabled={debriefLoading} style={{
+            fontSize: 12, padding: '8px 16px', borderRadius: 8, fontFamily: MONO,
+            cursor: debriefLoading ? 'default' : 'pointer', background: C.sf,
+            border: `.5px solid ${C.b2}`, color: C.tm, opacity: debriefLoading ? .6 : 1,
+          }}>
+            {debriefLoading ? 'Génération du débrief…' : '🧭 Générer le débrief de ma dernière session'}
+          </button>
         </div>
       )}
 
@@ -2837,6 +2852,21 @@ export default function DashboardClient({
     return () => clearInterval(id)
   }, [plan, tradingRules, stats.total_trades])
 
+  // Génération manuelle : débrief de la DERNIÈRE journée tradée (?latest=1).
+  const [debriefLoading, setDebriefLoading] = useState(false)
+  const [debriefError, setDebriefError] = useState<string | null>(null)
+  const generateDebrief = useCallback(async () => {
+    setDebriefLoading(true); setDebriefError(null)
+    try {
+      const res = await fetch('/api/debrief?latest=1', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.debrief) { setDebrief(data.debrief); setDebriefBanner(false) }
+      else setDebriefError(data.error ?? 'Aucune session à débriefer.')
+    } catch {
+      setDebriefError('Erreur réseau.')
+    } finally { setDebriefLoading(false) }
+  }, [])
+
   const [topbarH, setTopbarH] = useState(0)   // hauteur de la topbar fixe sur mobile → décalage du contenu
   const topbarRef = useRef<HTMLDivElement>(null)
 
@@ -3349,7 +3379,7 @@ export default function DashboardClient({
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
-              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} connected={!!platformConnected || ctraderConn} debrief={debrief} />
+              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} connected={!!platformConnected || ctraderConn} debrief={debrief} canDebrief={isMaxPlan(plan)} onGenerateDebrief={generateDebrief} debriefLoading={debriefLoading} debriefError={debriefError} />
             )}
             {activeTab === 'calendrier' && (
               <CalendrierPanel sessions={historicalSessions} />
