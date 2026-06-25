@@ -33,11 +33,61 @@ async function loadEvents(): Promise<EcoEvent[]> {
   }
 }
 
-// Devises impliquées par un symbole. Paire forex standard (6 lettres) → 2 devises.
-// Pour les symboles non-forex (indices, métaux), on ne sait pas mapper → [].
+// Indices / matières premières → devise de l'économie sous-jacente. Les news à
+// fort impact sur cette devise font bouger l'indice : un trader DAX est exposé
+// aux chiffres de la zone euro, un trader US30 aux chiffres US, etc. Clé = symbole
+// normalisé (majuscules, sans séparateur). Couvre les alias courtiers les plus
+// répandus (MT5, cTrader, IG, OANDA…).
+const INDEX_CURRENCY: Record<string, string> = {
+  // — États-Unis (USD) —
+  US30: 'USD', DJ30: 'USD', DJI30: 'USD', DJI: 'USD', DOW: 'USD', WS30: 'USD', YM: 'USD',
+  US500: 'USD', SPX500: 'USD', SP500: 'USD', SPX: 'USD', ES: 'USD',
+  US100: 'USD', NAS100: 'USD', USTEC: 'USD', NDX: 'USD', NQ: 'USD', NASDAQ: 'USD',
+  US2000: 'USD', RUSSELL2000: 'USD', RUSSELL: 'USD', RUT: 'USD', RTY: 'USD',
+  // — Zone euro (EUR) —
+  GER40: 'EUR', GER30: 'EUR', DE40: 'EUR', DE30: 'EUR', DAX40: 'EUR', DAX: 'EUR',
+  FRA40: 'EUR', FR40: 'EUR', CAC40: 'EUR', CAC: 'EUR',
+  EU50: 'EUR', EUSTX50: 'EUR', STOXX50: 'EUR', ESTX50: 'EUR', SX5E: 'EUR',
+  ESP35: 'EUR', SPA35: 'EUR', IBEX35: 'EUR', IBEX: 'EUR',
+  ITA40: 'EUR', IT40: 'EUR', FTSEMIB: 'EUR', MIB: 'EUR',
+  NETH25: 'EUR', NL25: 'EUR', AEX: 'EUR',
+  // — Royaume-Uni (GBP) —
+  UK100: 'GBP', FTSE100: 'GBP', FTSE: 'GBP', UKX: 'GBP',
+  // — Suisse (CHF) —
+  SWI20: 'CHF', CH20: 'CHF', SMI: 'CHF',
+  // — Japon (JPY) —
+  JP225: 'JPY', JPN225: 'JPY', NI225: 'JPY', N225: 'JPY', NIKKEI: 'JPY',
+  // — Australie (AUD) —
+  AUS200: 'AUD', AU200: 'AUD', ASX200: 'AUD', ASX: 'AUD',
+  // — Matières premières cotées en USD —
+  USOIL: 'USD', WTI: 'USD', OIL: 'USD', CL: 'USD',
+  UKOIL: 'USD', BRENT: 'USD',
+  XAU: 'USD', GOLD: 'USD', XAG: 'USD', SILVER: 'USD',
+  NATGAS: 'USD', NGAS: 'USD',
+}
+
+// Suffixes courtiers fréquents accolés au symbole : US30.cash, GER40USD,
+// NAS100SPOT, SPX500FT… On les retire pour retrouver la clé de base.
+const BROKER_SUFFIX = /(CASH|SPOT|FT|RT|IDX|USD|EUR|GBP|JPY|AUD|CHF)$/
+
+function indexCurrency(raw: string): string | null {
+  if (INDEX_CURRENCY[raw]) return INDEX_CURRENCY[raw]
+  const stripped = raw.replace(BROKER_SUFFIX, '')
+  if (stripped !== raw && INDEX_CURRENCY[stripped]) return INDEX_CURRENCY[stripped]
+  return null
+}
+
+// Devises impliquées par un symbole.
+//   1) Indice / matière première connu → devise de l'économie sous-jacente.
+//   2) Paire forex standard (≥ 6 lettres) → les 2 devises.
+//   3) Sinon → [] (pas de mapping fiable, on se tait).
 function symbolCurrencies(symbol: string): string[] {
-  const s = String(symbol || '').toUpperCase().replace(/[^A-Z]/g, '')
-  if (s.length >= 6) return [s.slice(0, 3), s.slice(3, 6)]
+  const raw = String(symbol || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  if (!raw) return []
+  const idx = indexCurrency(raw)
+  if (idx) return [idx]
+  const letters = raw.replace(/[0-9]/g, '')
+  if (letters.length >= 6) return [letters.slice(0, 3), letters.slice(3, 6)]
   return []
 }
 
