@@ -2352,7 +2352,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'max', name: 'Max', price: '34€',
       accent: C.red, accentAlpha: `rgba(124,58,237,`,
-      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', 'Débrief de session IA', 'Rapport hebdomadaire IA'],
+      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', '7 schémas avancés exclusifs', 'Rapport hebdomadaire'],
     },
   ]
 

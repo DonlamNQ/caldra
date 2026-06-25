@@ -552,12 +552,12 @@ const HTML = `
       <div class="plan-pop">Recommandé</div>
       <div class="plan-lab">Max</div>
       <div class="plan-price"><sup>€</sup>25,50<sub>/mois</sub><span class="plan-strike">34€</span><span class="plan-promo-tag">&minus;25 %</span></div>
-      <div class="plan-tag">Tout le plan Pro, augmenté d'un coach IA actif. Analyse, recommandations et debriefing à chaque session.</div>
+      <div class="plan-tag">Tout le plan Pro, avec la détection comportementale la plus poussée et un suivi hebdomadaire.</div>
       <ul class="plan-features">
         <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:var(--t3)">Tout le plan Pro inclus, plus :</span></li>
         <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>18 détecteurs comportementaux</li>
-        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Débrief de session IA</li>
-        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport hebdomadaire IA</li>
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>7 schémas avancés exclusifs</li>
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport hebdomadaire</li>
       </ul>
       <a href="/signup" class="plan-btn plan-btn-pri">Essayer 7 jours gratuitement →</a>
     </div>

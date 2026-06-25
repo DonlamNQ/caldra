@@ -108,12 +108,12 @@ export default function PricingPage() {
             <div className="plan-shine plan-shine-red"></div>
             <div className="plan-label plan-label-red">Max</div>
             <div className="plan-price"><sup>&euro;</sup>25,50<sub>/mois</sub><span className="plan-strike">34&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
-            <div className="plan-tagline">Tout le plan Pro, augment&eacute; d&rsquo;un coach IA actif. Analyse, recommandations et debriefing &agrave; chaque session.</div>
+            <div className="plan-tagline">Tout le plan Pro, avec la d&eacute;tection comportementale la plus pouss&eacute;e et un suivi hebdomadaire.</div>
             <ul className="plan-features">
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style={{ color: 'rgba(232,230,224,.3)' }}>Tout le plan Pro inclus, plus&nbsp;:</span></li>
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>18 d&eacute;tecteurs comportementaux</strong></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>D&eacute;brief de session IA</strong></li>
-              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire IA</strong></li>
+              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>7 sch&eacute;mas avanc&eacute;s exclusifs</strong></li>
+              <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire</strong></li>
             </ul>
             <a href="/signup?plan=max" className="plan-btn plan-btn-primary">Essayer 7 jours gratuitement &rarr;</a>
           </div>
