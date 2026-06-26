@@ -21,6 +21,7 @@ const DEFAULTS = {
   telegram_chat_id: null as string | null,
   detector_config: {} as Record<string, unknown>,
   prop_firm: null as string | null,
+  prop_firm_started_at: null as string | null,
 }
 
 async function getUser() {
@@ -73,6 +74,7 @@ export async function PUT(req: NextRequest) {
     telegram_chat_id: body.telegram_chat_id ? String(body.telegram_chat_id).trim() : null,
     detector_config: (body.detector_config && typeof body.detector_config === 'object') ? body.detector_config : {},
     prop_firm: body.prop_firm ? String(body.prop_firm) : null,
+    prop_firm_started_at: (body.prop_firm && body.prop_firm_started_at && /^\d{4}-\d{2}-\d{2}$/.test(String(body.prop_firm_started_at))) ? String(body.prop_firm_started_at) : null,
   }
 
   const { data, error } = await service()
@@ -83,7 +85,7 @@ export async function PUT(req: NextRequest) {
 
   if (error) {
     // Retry without optional columns that may not exist yet in older DB schemas
-    const { account_size, slack_webhook_url, tz_offset_hours, max_leverage, require_stop_loss, telegram_bot_token, telegram_chat_id, detector_config, prop_firm, ...baseRules } = rules
+    const { account_size, slack_webhook_url, tz_offset_hours, max_leverage, require_stop_loss, telegram_bot_token, telegram_chat_id, detector_config, prop_firm, prop_firm_started_at, ...baseRules } = rules
     const { data: data2, error: error2 } = await service()
       .from('trading_rules')
       .upsert(baseRules, { onConflict: 'user_id' })

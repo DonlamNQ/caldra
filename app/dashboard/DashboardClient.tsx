@@ -695,6 +695,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   const propFirmId = (rules as any)?.prop_firm as string | null
   const propFirm = propFirmId ? PROPFIRM_PRESETS.find(p => p.id === propFirmId) : null
   const accountSize = rules?.account_size || 10000
+  // Ambiance violette des cartes quand le mode prop firm est actif (signal discret).
+  const ambBd = propFirm ? 'rgba(124,58,237,.34)' : C.b
+  const ambLn = propFirm ? 'rgba(124,58,237,.85)' : C.b3
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
@@ -703,8 +706,8 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
 
         {/* Stats terminal */}
-        <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 18px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
+        <div style={{ background: C.sf, border: `.5px solid ${ambBd}`, borderRadius: 12, padding: '18px 18px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${ambLn} 40%, transparent)` }} />
           <div>
             <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 5 }}>P&L</div>
             <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
@@ -741,8 +744,8 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
         </div>
 
         {/* Chart card */}
-        <div style={{ background: C.sf, borderTop: `.5px solid ${C.b}`, borderLeft: `.5px solid ${C.b}`, borderRight: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
+        <div style={{ background: C.sf, borderTop: `.5px solid ${ambBd}`, borderLeft: `.5px solid ${ambBd}`, borderRight: `.5px solid ${ambBd}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${ambLn} 40%, transparent)` }} />
           <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: SANS }}>Ligne de session</div>
           <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
@@ -756,8 +759,8 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
       </div>
 
       {/* Session tape — timeline */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.b3} 40%, transparent)` }} />
+      <div style={{ background: C.sf, border: `.5px solid ${ambBd}`, borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${ambLn} 40%, transparent)` }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 12 }}>
           <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: SANS }}>Session tape</span>
           {trades.length > 0 && <span style={{ fontSize: 9, fontFamily: SANS, color: C.te }}>{trades.length} trade{trades.length > 1 ? 's' : ''}</span>}
@@ -1283,10 +1286,19 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
 }
 
 // ── AnalyticsPanel ─────────────────────────────────────────────────────────────
-function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, allTimePatterns, plan }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number; allTimePatterns?: Record<string, number>; plan?: string }) {
+function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: journalTradesAll, accountSize, allTimePatterns, plan, propFirm, propFirmStart }: { sessions: DaySession[]; todayAlerts: AlertRow[]; journalTrades: JournalTrade[]; accountSize: number; allTimePatterns?: Record<string, number>; plan?: string; propFirm?: string | null; propFirmStart?: string | null }) {
   const C = useContext(ThemeCtx)
   // On affiche TOUJOURS la page — même sans aucune donnée. Chaque sous-bloc a son
   // propre état vide (placeholders), donc la structure reste lisible à zéro trade.
+
+  // Mode prop firm : on scope toutes les métriques aux données depuis le démarrage du
+  // compte prop firm (les données « repartent à 0 » à l'activation). Hors mode = tout.
+  const inProp = !!(propFirm && propFirmStart)
+  const sessions = inProp ? sessionsAll.filter(s => (s.date || '') >= propFirmStart!) : sessionsAll
+  const journalTrades = inProp ? journalTradesAll.filter(t => (t.entry_time || '').slice(0, 10) >= propFirmStart!) : journalTradesAll
+  // Ambiance violette des cartes quand le mode prop firm est actif (signal discret).
+  const ambBd = inProp ? 'rgba(124,58,237,.34)' : C.b
+  const ambLn = inProp ? 'rgba(124,58,237,.85)' : C.b3
 
   const totalPnl = sessions.reduce((s, d) => s + d.pnl, 0)
   const avgScore = sessions.length > 0 ? Math.round(sessions.reduce((s, d) => s + d.score, 0) / sessions.length) : 0
@@ -1301,7 +1313,9 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, all
     const t = a.type ?? ''
     if (t) winCounts[t] = (winCounts[t] ?? 0) + 1
   }
-  const patternCounts = (allTimePatterns && Object.keys(allTimePatterns).length) ? allTimePatterns : winCounts
+  // En mode prop firm, on ignore les compteurs all-time (non scopés) au profit des
+  // alertes de la fenêtre déjà filtrée depuis le démarrage du compte.
+  const patternCounts = (!inProp && allTimePatterns && Object.keys(allTimePatterns).length) ? allTimePatterns : winCounts
   const allPatternEntries = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])
   // Pro : 5 schémas max · Max : tous.
   const patIsMax = isMaxPlan(plan)
@@ -1378,10 +1392,13 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, all
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
       {/* Header */}
-      <div style={{ padding: '18px 24px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Performance</div>
+      <div style={{ padding: '18px 24px 16px', borderBottom: `.5px solid ${ambBd}`, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 9, letterSpacing: 2, color: inProp ? '#7c3aed' : C.red, textTransform: 'uppercase' as const, fontFamily: SANS }}>Performance</span>
+          {inProp && <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.1, color: '#a78bfa', background: 'rgba(124,58,237,.12)', border: '.5px solid rgba(124,58,237,.4)', borderRadius: 5, padding: '2px 7px', textTransform: 'uppercase' as const }}>Compte prop firm · depuis {propFirmStart}</span>}
+        </div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Analytics</div>
-        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>{sessions.length > 0 ? `Données sur les ${sessions.length} dernières sessions` : 'Aucune session encore — tes métriques se rempliront au fil de tes trades'}</div>
+        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>{sessions.length > 0 ? `${inProp ? 'Compte prop firm — ' : ''}Données sur les ${sessions.length} dernières sessions` : inProp ? 'Compte prop firm tout juste démarré — les métriques repartent de zéro' : 'Aucune session encore — tes métriques se rempliront au fil de tes trades'}</div>
       </div>
 
     <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
@@ -1399,8 +1416,8 @@ function AnalyticsPanel({ sessions, todayAlerts, journalTrades, accountSize, all
           { type: 'val', val: jWins.length > 0 ? fmtEur(avgWin) : '—', lbl: 'Gain moyen', hint: `${jWins.length} gagnants`, col: C.tx, arrow: jWins.length > 0 ? 'up' : null },
           { type: 'val', val: jLosses.length > 0 ? fmtEur(-avgLoss) : '—', lbl: 'Perte moyenne', hint: `${jLosses.length} perdants`, col: C.tx, arrow: jLosses.length > 0 ? 'down' : null },
         ] as any[]).map((it, i) => (
-          <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden', display: it.type === 'donut' ? 'flex' : 'block', alignItems: 'center', gap: 12 }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div key={i} style={{ background: C.sf, border: `.5px solid ${ambBd}`, borderRadius: 12, padding: '15px 17px', position: 'relative', overflow: 'hidden', display: it.type === 'donut' ? 'flex' : 'block', alignItems: 'center', gap: 12 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${ambLn} 40%,transparent)` }} />
             {it.type === 'donut' ? (
               <>
                 {(() => {
@@ -2215,6 +2232,12 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   const [rules, setRules] = useState<TradingRules>(initial ?? defaults)
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [propFirm, setPropFirm] = useState<string>((initial as any)?.prop_firm || '')
+  // Date de démarrage du compte prop firm : aujourd'hui à l'activation/changement de firme,
+  // conservée si on garde la même → l'Analytique se scope à partir de cette date.
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const initialPropFirm = (initial as any)?.prop_firm || ''
+  const initialPropStart = (initial as any)?.prop_firm_started_at || null
+  const [propFirmStart, setPropFirmStart] = useState<string | null>(initialPropStart)
 
   // Éditer à la main le drawdown journalier désélectionne le preset (la valeur diverge).
   const PROPFIRM_FIELDS: (keyof TradingRules)[] = ['max_daily_drawdown_pct']
@@ -2225,15 +2248,17 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   // de la firme (seule vraie règle de prop firm reprise ; le reste = garde-fous Caldra).
   function applyPropFirm(id: string) {
     const preset = PROPFIRM_PRESETS.find(p => p.id === id)
-    if (!preset) { setPropFirm(''); setSave('idle'); return }
+    if (!preset) { setPropFirm(''); setPropFirmStart(null); setSave('idle'); return }
     setPropFirm(id)
+    // Même firme qu'avant → on garde sa date de démarrage ; sinon, le compte démarre aujourd'hui.
+    setPropFirmStart(id === initialPropFirm ? (initialPropStart || todayISO) : todayISO)
     setRules(p => ({ ...p, max_daily_drawdown_pct: preset.daily }))
     setSave('idle')
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
-    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null }
+    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || todayISO) : null }
     const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setSave(res.ok ? 'saved' : 'error')
     if (res.ok) {
@@ -2260,7 +2285,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Ces seuils définissent quand Caldra déclenche une alerte. Modifiables à tout moment.</div>
       </div>
     <div style={{ padding: '22px 28px', overflowY: 'auto', flex: 1 }}>
-      <form onSubmit={submit} className="rules-form" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Mode prop firm — presets de garde-fous (plan Max) */}
         <RuleGroup title="Mode prop firm" desc="Aligne tes garde-fous de risque sur les règles d’un challenge prop firm.">
           {!isMaxRules ? (
@@ -2270,17 +2295,16 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 <button type="button" onClick={() => applyPropFirm('')} style={{
                   padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
-                  background: propFirm === '' ? '#7c3aed' : 'rgba(255,255,255,.05)', color: propFirm === '' ? '#fff' : C.tm,
-                  border: `.5px solid ${propFirm === '' ? '#7c3aed' : C.b2}`,
+                  background: propFirm === '' ? C.red : 'rgba(255,255,255,.05)', color: propFirm === '' ? '#fff' : C.tm,
+                  border: `.5px solid ${propFirm === '' ? C.red : C.b2}`,
                 }}>Aucune</button>
                 {PROPFIRM_PRESETS.map(pf => {
                   const on = propFirm === pf.id
                   return (
                     <button key={pf.id} type="button" onClick={() => applyPropFirm(pf.id)} style={{
                       padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
-                      background: on ? '#7c3aed' : 'rgba(255,255,255,.05)', color: on ? '#fff' : C.tm,
-                      border: `.5px solid ${on ? '#7c3aed' : C.b2}`,
-                      boxShadow: on ? '0 0 0 2px rgba(124,58,237,.22)' : 'none',
+                      background: on ? C.red : 'rgba(255,255,255,.05)', color: on ? '#fff' : C.tm,
+                      border: `.5px solid ${on ? C.red : C.b2}`,
                     }}>{pf.name}</button>
                   )
                 })}
@@ -3446,7 +3470,6 @@ export default function DashboardClient({
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
         input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.3)}
-        .rules-form input:focus,.rules-form select:focus{border-color:#7c3aed!important;box-shadow:0 0 0 2px rgba(124,58,237,.22)}
         .c-card{transition:border-color .18s,box-shadow .18s}
         .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
         .c-row:hover{background:${C.b}!important}
@@ -3669,7 +3692,7 @@ export default function DashboardClient({
               <CalendrierPanel sessions={historicalSessions} />
             )}
             {activeTab === 'analytics' && (
-              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={liveRules?.account_size || 10000} allTimePatterns={allTimePatterns} plan={plan} />
+              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={liveRules?.account_size || 10000} allTimePatterns={allTimePatterns} plan={plan} propFirm={(liveRules as any)?.prop_firm || null} propFirmStart={(liveRules as any)?.prop_firm_started_at || null} />
             )}
             {activeTab === 'rapports' && (
               <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />

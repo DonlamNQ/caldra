@@ -48,6 +48,7 @@ create table if not exists trading_rules (
   telegram_chat_id              text,
   detector_config               jsonb       not null default '{}'::jsonb,
   prop_firm                     text,
+  prop_firm_started_at          date,
   created_at                    timestamptz not null default now(),
   updated_at                    timestamptz not null default now()
 );
@@ -262,4 +263,8 @@ alter table trading_rules add column if not exists detector_config jsonb not nul
 
 -- v2.13 : mode prop firm (Max) — id du preset appliqué (FTMO, FundedNext…), informatif.
 alter table trading_rules add column if not exists prop_firm text;
+
+-- v2.14 : date de démarrage du compte prop firm → l'Analytique se scope à partir de
+-- cette date quand le mode est actif (données « repartent à 0 » à l'activation).
+alter table trading_rules add column if not exists prop_firm_started_at date;
 
