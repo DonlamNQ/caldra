@@ -2470,8 +2470,8 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
   }
   const select = (v: 'day' | '7' | '30') => { setView(v); if (avail(v)) load(v) }
 
-  // Le bilan Semaine n'est dispo qu'en fin de semaine : vendredi APRÈS la clôture de
-  // la séance, puis samedi/dimanche. Le bilan Mois qu'au dernier jour du mois.
+  // Le débrief Semaine n'est dispo qu'en fin de semaine : vendredi APRÈS la clôture de
+  // la séance, puis samedi/dimanche. Le débrief Mois qu'au dernier jour du mois.
   const now0 = new Date()
   const dow0 = now0.getDay()
   const weekAvail = dow0 === 6 || dow0 === 0 || (dow0 === 5 && ended)
@@ -2525,9 +2525,9 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
             {!avail(view) && (
               <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic', lineHeight: 1.5 }}>
                 {view === '7'
-                  ? 'Le bilan hebdomadaire sera disponible en fin de semaine.'
+                  ? 'Le débrief hebdomadaire sera disponible en fin de semaine.'
                   : view === '30'
-                  ? "Le bilan mensuel sera disponible à l'avant-dernier jour du mois."
+                  ? "Le débrief mensuel sera disponible à l'avant-dernier jour du mois."
                   : ended
                   ? "Aucun trade sur cette séance — pas de débrief aujourd'hui."
                   : "Le débrief du jour s'affichera à la clôture de ta séance."}
