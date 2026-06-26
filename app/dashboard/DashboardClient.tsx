@@ -2528,9 +2528,9 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
                   ? 'Le bilan hebdomadaire sera disponible en fin de semaine.'
                   : view === '30'
                   ? "Le bilan mensuel sera disponible à l'avant-dernier jour du mois."
-                  : tradesToday === 0
-                  ? "Aucun trade pour l'instant — le débrief du jour s'affichera à la clôture de ta séance."
-                  : "Le débrief du jour sera disponible à la clôture de ta séance."}
+                  : ended
+                  ? "Aucun trade sur cette séance — pas de débrief aujourd'hui."
+                  : "Le débrief du jour s'affichera à la clôture de ta séance."}
               </div>
             )}
             {avail(view) && cur.loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse en cours…</div>}
