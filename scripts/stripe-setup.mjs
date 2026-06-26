@@ -2,7 +2,7 @@
 //
 // Crée (de façon idempotente) :
 //   • Produit "Caldra Pro"  + prix 19€/mois
-//   • Produit "Caldra Max"  + prix 34€/mois
+//   • Produit "Caldra Max"  + prix 29€/mois
 //   • Coupon early adopter  : -25 % à vie, max 25 utilisations
 //   • Code promo associé    : START25 (configurable)
 //   • Webhook endpoint      : 3 events → /api/billing/webhook
@@ -136,7 +136,7 @@ async function ensureWebhook() {
 async function main() {
   console.log(`\n=== Configuration Stripe Caldra — mode ${LIVE ? 'LIVE 🔴' : 'TEST 🧪'} ===\n`)
   const proPrice = await ensureProductPrice('pro', 'Caldra Pro', 1900)
-  const maxPrice = await ensureProductPrice('max', 'Caldra Max', 3400)
+  const maxPrice = await ensureProductPrice('max', 'Caldra Max', 2900)
   await ensureCouponAndPromo()
   const whSecret = await ensureWebhook()
 

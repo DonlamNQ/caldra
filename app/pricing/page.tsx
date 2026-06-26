@@ -85,7 +85,7 @@ export default function PricingPage() {
 
         <div className="ea-banner">
           <span className="ea-tag">Lancement</span>
-          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 25 premiers inscrits &middot; Pro &agrave; <strong>14,25&euro;</strong> &middot; Max &agrave; <strong>25,50&euro;</strong> &middot; code <strong>START25</strong> au paiement</span>
+          <span className="ea-text"><strong>&minus;25&nbsp;% &agrave; vie</strong> pour les 25 premiers inscrits &middot; Pro &agrave; <strong>14,25&euro;</strong> &middot; Max &agrave; <strong>21,75&euro;</strong> &middot; code <strong>START25</strong> au paiement</span>
         </div>
 
         <div className="pricing-grid">
@@ -109,7 +109,7 @@ export default function PricingPage() {
           <div className="plan-card plan-max">
             <div className="plan-shine plan-shine-red"></div>
             <div className="plan-label plan-label-red">Max</div>
-            <div className="plan-price"><sup>&euro;</sup>25,50<sub>/mois</sub><span className="plan-strike">34&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
+            <div className="plan-price"><sup>&euro;</sup>21,75<sub>/mois</sub><span className="plan-strike">29&euro;</span><span className="plan-promo-tag">&minus;25&nbsp;%</span></div>
             <div className="plan-tagline">Tout le plan Pro, avec la d&eacute;tection comportementale la plus pouss&eacute;e et un suivi hebdomadaire.</div>
             <ul className="plan-features">
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style={{ color: 'rgba(232,230,224,.3)' }}>Tout le plan Pro inclus, plus&nbsp;:</span></li>

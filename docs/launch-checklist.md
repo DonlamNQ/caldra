@@ -10,7 +10,10 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 ## 🟢 Fait (vérifié)
 - [x] Auth complète (login/signup, middleware, callback, onboarding)
 - [x] Dashboard temps réel (ScoreRing, AlertFeed, TradeLog, analytics)
-- [x] 18 détecteurs comportementaux (`lib/engine.ts`) + gating par plan
+- [x] 18 détecteurs comportementaux (`lib/engine.ts`) + gating par plan (Pro 12 / Max 18 ; revenge_sizing en Pro)
+- [x] Mode prop firm (Max) : presets garde-fous, ambiance violette, Analytics scopée au démarrage du compte
+- [x] Notifications push serveur (cron quotidien `daily-nudges`) : streaks, reprise, inactivité, bilan hebdo
+- [x] Couche engagement : message du jour, streaks de discipline (×3), rappels contextuels
 - [x] Billing Stripe (checkout / portal / webhook validé en prod)
 - [x] Essai 7 jours gated CB + promo START25 (−25 % à vie)
 - [x] Emails d'auth : Amazon SES, DMARC PASS, 6 templates FR sans emoji
@@ -19,11 +22,13 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [x] Landing en mode lancement (CTA → /signup, essai 7j — plus de waitlist)
 
 ## 🔴 À finir / confirmer avant lancement
-- [ ] **Stripe en mode LIVE** — prix **Max 34€** live (`price_1TlpYDBJjaZ0wLhVilvNyA1H`), ancien 38€ archivé, coupon START25 plafonné à 25 (`caldra-early-25-cap`). ✅ `STRIPE_MAX_PRICE_ID` mis à jour sur Vercel + redeploy fait, prod vérifiée (34€/25,50€ affichés). **RESTE : un vrai test de paiement end-to-end** (webhook → `user_profiles.plan` + `subscription_status`).
+- [ ] **Nouveau prix Max 29€** (décidé 2026-06-26, avant: 34€) — affichage déjà à jour partout (landing/pricing/billing : 29€ / promo 21,75€). **RESTE côté Stripe** : créer un prix Max à **2900** sur le produit existant, mettre à jour `STRIPE_MAX_PRICE_ID` sur Vercel, archiver l'ancien 34€.
+- [ ] **Migrations SQL à exécuter en prod** (Supabase SQL Editor) : v2.14 `prop_firm_started_at` + v2.15 table `notif_state` (cf. `lib/schema.sql`). Sans elles : scoping prop firm Analytics + déduplication des notifs push KO.
+- [ ] **Stripe en mode LIVE** — coupon START25 plafonné à 25 (`caldra-early-25-cap`). **RESTE : un vrai test de paiement end-to-end** (webhook → `user_profiles.plan` + `subscription_status`).
 - [x] **cTrader day 1** — OK, validé (worker Railway → `caldra-sable.vercel.app`, ingest fonctionnel).
 - [ ] **MT5 day 1** — worker VPS opérationnel, `MT5_ENC_KEY` identique Vercel+VPS, « Sauvegarder infos compte » coché + Algo Trading vert. Tester une connexion client réelle.
 - [ ] **Test end-to-end complet** : signup → checkout (essai) → onboarding → connexion plateforme → ingest trade → alerte temps réel → dashboard.
-- [ ] **Purge des données de test** en prod (trades/alertes de test restants).
+- [x] **Purge des données de test** en prod (trades/alertes — fait 2026-06-26).
 
 ## 🟡 Nice-to-have / post-lancement
 - [ ] `STRIPE_WEBHOOK_SECRET` en local (présent sur Vercel — pas bloquant)

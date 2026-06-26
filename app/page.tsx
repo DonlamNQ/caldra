@@ -533,7 +533,7 @@ const HTML = `
 <section class="sec wrap center" id="tarifs" data-reveal>
   <div class="tag">Tarifs</div>
   <div class="h2">Simple.<br>Rentabilisé au <em>premier trade évité.</em></div>
-  <p class="lead"><strong style="color:var(--tx)">&minus;25 % à vie</strong> pour les 25 premiers inscrits · Pro à <strong style="color:var(--tx)">14,25€</strong> · Max à <strong style="color:var(--tx)">25,50€</strong></p>
+  <p class="lead"><strong style="color:var(--tx)">&minus;25 % à vie</strong> pour les 25 premiers inscrits · Pro à <strong style="color:var(--tx)">14,25€</strong> · Max à <strong style="color:var(--tx)">21,75€</strong></p>
   <div class="pricing">
     <div class="plan plan-pro">
       <div class="plan-lab">Pro</div>
@@ -553,7 +553,7 @@ const HTML = `
     <div class="plan plan-max">
       <div class="plan-pop">Recommandé</div>
       <div class="plan-lab">Max</div>
-      <div class="plan-price"><sup>€</sup>25,50<sub>/mois</sub><span class="plan-strike">34€</span><span class="plan-promo-tag">&minus;25 %</span></div>
+      <div class="plan-price"><sup>€</sup>21,75<sub>/mois</sub><span class="plan-strike">29€</span><span class="plan-promo-tag">&minus;25 %</span></div>
       <div class="plan-tag">Tout le plan Pro, avec la détection comportementale la plus poussée et un suivi hebdomadaire.</div>
       <ul class="plan-features">
         <li><div class="pfc pfc-d"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><span style="color:var(--t3)">Tout le plan Pro inclus, plus :</span></li>
