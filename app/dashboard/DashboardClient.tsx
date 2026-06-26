@@ -695,6 +695,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
     : 0
   const propFirmId = (rules as any)?.prop_firm as string | null
   const propFirm = propFirmId ? PROPFIRM_PRESETS.find(p => p.id === propFirmId) : null
+  const propFirmStart = (rules as any)?.prop_firm_started_at as string | null
   const accountSize = rules?.account_size || 10000
   // Ambiance prop firm : pas de contour coloré, seulement le filet lumineux du haut.
   const ambBd = C.b
@@ -702,6 +703,8 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
+
+      {propFirm && <div style={{ flexShrink: 0 }}><PropFirmChip start={propFirmStart} /></div>}
 
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
@@ -918,9 +921,22 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   )
 }
 
+// ── PropFirmChip — pastille « Compte prop firm · depuis <date> » (mode actif) ────
+// `start` (prop_firm_started_at) n'est renseigné QUE quand le mode est actif → sa
+// présence suffit à savoir qu'on est en mode prop firm.
+function PropFirmChip({ start }: { start?: string | null }) {
+  if (!start) return null
+  return (
+    <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.1, color: '#a78bfa', background: 'rgba(124,58,237,.12)', border: '.5px solid rgba(124,58,237,.4)', borderRadius: 5, padding: '2px 7px', textTransform: 'uppercase' as const, fontFamily: SANS, whiteSpace: 'nowrap' as const }}>
+      Compte prop firm · depuis {start}
+    </span>
+  )
+}
+
 // ── CalendrierPanel ────────────────────────────────────────────────────────────
-function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
+function CalendrierPanel({ sessions, propFirmStart }: { sessions: DaySession[]; propFirmStart?: string | null }) {
   const C = useContext(ThemeCtx)
+  const inProp = !!propFirmStart
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [calOffset, setCalOffset] = useState(0)
 
@@ -963,9 +979,13 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflowY: 'auto' }}>
 
       {/* Header */}
-      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+        {inProp && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.9) 40%,transparent)' }} />}
         <div>
-          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Historique</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 9, letterSpacing: 2, color: inProp ? '#7c3aed' : C.red, textTransform: 'uppercase' as const, fontFamily: SANS }}>Historique</span>
+            <PropFirmChip start={propFirmStart} />
+          </div>
           <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Calendrier des sessions</div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -1029,6 +1049,9 @@ function CalendrierPanel({ sessions }: { sessions: DaySession[] }) {
                 outline: isSelected ? '1.5px solid rgba(124,58,237,.5)' : 'none', outlineOffset: 1,
               }}>
                 {s.alertCount > 0 && <div style={{ position: 'absolute', top: 7, right: 7, width: 5, height: 5, borderRadius: '50%', background: C.red }} />}
+                {inProp && dateStr >= propFirmStart! && (
+                  <span style={{ position: 'absolute', bottom: 6, right: 6, fontSize: 7, fontWeight: 700, letterSpacing: .5, color: '#a78bfa', background: 'rgba(124,58,237,.16)', border: '.5px solid rgba(124,58,237,.45)', borderRadius: 4, padding: '1px 3px', fontFamily: SANS, lineHeight: 1.2 }}>PF</span>
+                )}
                 <div style={{ fontSize: 11, color: C.te, fontFamily: SANS, marginBottom: 4 }}>{d}</div>
                 <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -1, lineHeight: 1, marginBottom: 2, color: col }}>{s.score}</div>
                 <div style={{ fontSize: 10, color: C.td }}>{fmtEur(s.pnl)}</div>
@@ -1395,10 +1418,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
 
       {/* Header */}
       <div style={{ padding: '18px 24px 16px', borderBottom: `.5px solid ${ambBd}`, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 9, letterSpacing: 2, color: inProp ? '#7c3aed' : C.red, textTransform: 'uppercase' as const, fontFamily: SANS }}>Performance</span>
-          {inProp && <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.1, color: '#a78bfa', background: 'rgba(124,58,237,.12)', border: '.5px solid rgba(124,58,237,.4)', borderRadius: 5, padding: '2px 7px', textTransform: 'uppercase' as const }}>Compte prop firm · depuis {propFirmStart}</span>}
-        </div>
+        {inProp && <div style={{ marginBottom: 6 }}><PropFirmChip start={propFirmStart} /></div>}
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Analytics</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>{sessions.length > 0 ? `${inProp ? 'Compte prop firm — ' : ''}Données sur les ${sessions.length} dernières sessions` : inProp ? 'Compte prop firm tout juste démarré — les métriques repartent de zéro' : 'Aucune session encore — tes métriques se rempliront au fil de tes trades'}</div>
       </div>
@@ -2159,10 +2179,10 @@ namespace CaldraBot
       {/* ── Alertes externes ── (sous les plateformes) */}
       <IntCard style={{ marginTop: 16 }}>
         <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx, marginBottom: 4 }}>Alertes externes</div>
-        <div style={{ fontSize: 12, color: C.te, marginBottom: 16, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app. Webhook Slack ou Discord pour tous, Telegram pour le plan Max.</div>
+        <div style={{ fontSize: 12, color: C.te, marginBottom: 16, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app. Webhook Skool ou Discord pour tous, Telegram pour le plan Max.</div>
 
         <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>WEBHOOK SLACK OU DISCORD</div>
-        <input style={notifInp} value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://hooks.slack.com/…  ou  https://discord.com/api/webhooks/…" />
+        <input style={notifInp} value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://discord.com/api/webhooks/…" />
 
         <div style={{ marginTop: 16, opacity: intIsMax ? 1 : .55 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
@@ -2685,7 +2705,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'max', name: 'Max', price: '34€',
       accent: C.red, accentAlpha: `rgba(124,58,237,`,
-      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', 'Mode prop firm (FTMO, FundedNext…)', 'Débriefs IA (jour/semaine/mois)', 'Patterns récurrents complets', 'Alertes Slack, Discord et Telegram', 'Rapport hebdomadaire'],
+      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', 'Règles configurables (on/off + seuils)', 'Mode prop firm (FTMO, FundedNext…)', 'Débriefs IA (jour/semaine/mois)', 'Patterns récurrents complets', 'Alertes Skool, Discord et Telegram', 'Rapport hebdomadaire'],
     },
   ]
 
@@ -2981,7 +3001,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
   )
 
   const faq: Array<{ q: string; a: string }> = [
-    { q: 'Comment connecter mon broker ?', a: "Onglet Intégrations : récupère ta clé API pour /api/ingest, branche un webhook Slack/Discord, ou connecte un compte cTrader. Le dashboard se met à jour en temps réel dès qu'un trade arrive." },
+    { q: 'Comment connecter mon broker ?', a: "Onglet Intégrations : récupère ta clé API pour /api/ingest, branche un webhook Skool/Discord, ou connecte un compte cTrader. Le dashboard se met à jour en temps réel dès qu'un trade arrive." },
     { q: 'Comment le score de session est-il calculé ?', a: 'Tu pars de 100 et chaque alerte retire des points selon sa gravité (niveau 3 : −18, niveau 2 : −8, niveau 1 : −3). Le score reflète la discipline comportementale de ta session, pas ton P&L.' },
     { q: 'À quoi servent les alertes ?', a: "Caldra surveille 18 schémas (revenge sizing, re-entrées impulsives, overtrading, drawdown…) et te prévient en direct. Ajuste les seuils dans l'onglet Règles." },
     { q: 'Mes données sont-elles privées ?', a: 'Oui. Chaque trade est rattaché à ton compte uniquement, isolé par les règles de sécurité Supabase. Tu peux supprimer ton compte et toutes tes données depuis le Profil.' },
@@ -3692,7 +3712,7 @@ export default function DashboardClient({
               <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} />
             )}
             {activeTab === 'calendrier' && (
-              <CalendrierPanel sessions={historicalSessions} />
+              <CalendrierPanel sessions={historicalSessions} propFirmStart={(liveRules as any)?.prop_firm_started_at || null} />
             )}
             {activeTab === 'analytics' && (
               <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={liveRules?.account_size || 10000} allTimePatterns={allTimePatterns} plan={plan} propFirm={(liveRules as any)?.prop_firm || null} propFirmStart={(liveRules as any)?.prop_firm_started_at || null} />
