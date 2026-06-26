@@ -3327,6 +3327,17 @@ export default function DashboardClient({
 
   const dismissMilestone = useCallback(() => setMilestone(null), [])
 
+  // Aperçu de test : ?streak=discipline|risque|sangfroid force la bannière + la notif
+  // du streak choisi (valeur 7), pour visualiser le rendu sans données réelles.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('streak')
+    const def = STREAK_DEFS.find(d => d.id === p)
+    if (!def) return
+    setMilestone({ id: def.id, label: def.label, value: 7 })
+    showPushNotif('Caldra — Jalon atteint', `7 ${def.label}. Garde le cap.`, `caldra-streak-${def.id}`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Rappels contextuels (pas quotidiens — déclenchés par un événement) évalués à
   // l'ouverture : inactivité ≥ 5 j, ou dernière session difficile. Notif système +
   // bandeau, une fois par épisode (garde localStorage sur la date de session concernée).
