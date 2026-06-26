@@ -3237,6 +3237,7 @@ export default function DashboardClient({
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [notifHint, setNotifHint] = useState<string | null>(null)   // message d'aide si l'activation échoue (iOS / permission bloquée)
   const [milestone, setMilestone] = useState<{ id: string; label: string; value: number } | null>(null)   // jalon de streak à fêter
+  const [reminder, setReminder] = useState<string | null>(null)   // rappel contextuel (session difficile / inactivité)
   const [connectHint, setConnectHint] = useState(false)   // invite à connecter une plateforme (aucun trade encore)
 
   // Affiche l'invite de connexion si aucune plateforme connectée et aucun trade reçu.
@@ -3325,6 +3326,36 @@ export default function DashboardClient({
   }, [historicalSessions, userId])
 
   const dismissMilestone = useCallback(() => setMilestone(null), [])
+
+  // Rappels contextuels (pas quotidiens — déclenchés par un événement) évalués à
+  // l'ouverture : inactivité ≥ 5 j, ou dernière session difficile. Notif système +
+  // bandeau, une fois par épisode (garde localStorage sur la date de session concernée).
+  useEffect(() => {
+    const days = historicalSessions.filter(s => s.tradeCount > 0).sort((a, b) => b.date.localeCompare(a.date))
+    if (days.length === 0) return
+    const last = days[0]
+    const daysSince = Math.floor((Date.now() - new Date(`${last.date}T00:00:00`).getTime()) / 86_400_000)
+
+    if (daysSince >= 5) {
+      const key = `caldra_reminder_idle_${userId}`
+      if (localStorage.getItem(key) !== last.date) {
+        localStorage.setItem(key, last.date)
+        const msg = 'Ça fait quelques jours. Reprends le temps de revoir tes règles avant de te relancer.'
+        setReminder(msg); showPushNotif('Caldra', msg, 'caldra-reminder-idle')
+      }
+      return
+    }
+
+    if (last.score < 40 || last.criticalAlerts > 0) {
+      const key = `caldra_reminder_hard_${userId}`
+      if (localStorage.getItem(key) !== last.date) {
+        localStorage.setItem(key, last.date)
+        const msg = 'Dernière session difficile. Reprends posément — respecte ta fenêtre et ton risque.'
+        setReminder(msg); showPushNotif('Caldra', msg, 'caldra-reminder-hard')
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historicalSessions, userId])
 
   const _yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
   const _dayBefore = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0]
@@ -3576,6 +3607,16 @@ export default function DashboardClient({
             <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>Bravo — {milestone.value} {milestone.label}. Garde le cap.</div>
           </div>
           <button onClick={dismissMilestone} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
+        </div>
+      )}
+
+      {reminder && !milestone && (
+        <div style={{ position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 9998, background: '#12121c', border: '1px solid rgba(124,58,237,.4)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 8px 40px rgba(0,0,0,.4)', maxWidth: 520, width: 'calc(100vw - 48px)', fontFamily: SANS, animation: 'fadeUp .3s ease' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, color: '#a78bfa', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: SANS }}>Rappel</div>
+            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>{reminder}</div>
+          </div>
+          <button onClick={() => setReminder(null)} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
         </div>
       )}
 
