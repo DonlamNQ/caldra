@@ -47,6 +47,7 @@ create table if not exists trading_rules (
   telegram_bot_token            text,
   telegram_chat_id              text,
   detector_config               jsonb       not null default '{}'::jsonb,
+  prop_firm                     text,
   created_at                    timestamptz not null default now(),
   updated_at                    timestamptz not null default now()
 );
@@ -258,4 +259,7 @@ alter table trading_rules add column if not exists telegram_chat_id   text;
 
 -- v2.12 : détecteurs configurables (Max) — on/off + seuils par détecteur (jsonb).
 alter table trading_rules add column if not exists detector_config jsonb not null default '{}'::jsonb;
+
+-- v2.13 : mode prop firm (Max) — id du preset appliqué (FTMO, FundedNext…), informatif.
+alter table trading_rules add column if not exists prop_firm text;
 

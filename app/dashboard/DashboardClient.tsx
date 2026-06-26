@@ -11,6 +11,7 @@ import { alertTechnical } from '@/lib/alertTechnical'
 import { randomNote } from '@/lib/coachNotes'
 import { isMaxPlan, isPaidPlan } from '@/lib/plans'
 import { DETECTOR_DEFS } from '@/lib/detectors'
+import { PROPFIRM_PRESETS } from '@/lib/propfirms'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -2174,13 +2175,30 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
   }
   const [rules, setRules] = useState<TradingRules>(initial ?? defaults)
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [propFirm, setPropFirm] = useState<string>((initial as any)?.prop_firm || '')
 
-  function set(k: keyof TradingRules, v: string) { setRules(p => ({ ...p, [k]: v })); setSave('idle') }
+  // Éditer à la main un champ piloté par le preset le désélectionne (les valeurs divergent).
+  const PROPFIRM_FIELDS: (keyof TradingRules)[] = ['max_daily_drawdown_pct', 'max_risk_per_trade_pct', 'max_consecutive_losses']
+  function set(k: keyof TradingRules, v: string) { setRules(p => ({ ...p, [k]: v })); if (PROPFIRM_FIELDS.includes(k)) setPropFirm(''); setSave('idle') }
   function setBool(k: keyof TradingRules, v: boolean) { setRules(p => ({ ...p, [k]: v })); setSave('idle') }
+
+  // Mode prop firm : applique les garde-fous types du challenge aux règles de risque.
+  function applyPropFirm(id: string) {
+    const preset = PROPFIRM_PRESETS.find(p => p.id === id)
+    if (!preset) { setPropFirm(''); setSave('idle'); return }
+    setPropFirm(id)
+    setRules(p => ({
+      ...p,
+      max_daily_drawdown_pct: preset.daily,
+      max_risk_per_trade_pct: preset.risk,
+      max_consecutive_losses: preset.maxLosses,
+    }))
+    setSave('idle')
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
-    const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...rules, detector_config: detCfg }) })
+    const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...rules, detector_config: detCfg, prop_firm: propFirm || null }) })
     setSave(res.ok ? 'saved' : 'error')
     if (res.ok) setTimeout(() => setSave('idle'), 3000)
   }
@@ -2223,6 +2241,43 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
       </div>
     <div style={{ padding: '22px 28px', overflowY: 'auto', flex: 1 }}>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Mode prop firm — presets de garde-fous (plan Max) */}
+        <RuleGroup title="Mode prop firm" desc="Aligne tes garde-fous de risque sur les règles d’un challenge prop firm." accent="">
+          {!isMaxRules ? (
+            <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>Le mode prop firm (presets FTMO, FundedNext, The5ers…) est inclus dans le plan <span style={{ color: C.tx }}>Max</span>.</div>
+          ) : (
+            <div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <button type="button" onClick={() => applyPropFirm('')} style={{
+                  padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
+                  background: propFirm === '' ? C.red : 'rgba(255,255,255,.05)', color: propFirm === '' ? '#fff' : C.tm,
+                  border: `.5px solid ${propFirm === '' ? C.red : C.b2}`,
+                }}>Aucune</button>
+                {PROPFIRM_PRESETS.map(pf => {
+                  const on = propFirm === pf.id
+                  return (
+                    <button key={pf.id} type="button" onClick={() => applyPropFirm(pf.id)} style={{
+                      padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
+                      background: on ? C.red : 'rgba(255,255,255,.05)', color: on ? '#fff' : C.tm,
+                      border: `.5px solid ${on ? C.red : C.b2}`,
+                    }}>{pf.name}</button>
+                  )
+                })}
+              </div>
+              {propFirm && (() => {
+                const pf = PROPFIRM_PRESETS.find(p => p.id === propFirm)
+                if (!pf) return null
+                return (
+                  <div style={{ fontSize: 11.5, color: C.te, marginTop: 12, lineHeight: 1.6 }}>
+                    <span style={{ color: C.tm }}>{pf.name}</span> appliqué : drawdown journalier <span style={{ color: C.tm }}>{pf.daily}%</span> · risk/trade <span style={{ color: C.tm }}>{pf.risk}%</span> · {pf.maxLosses} pertes consécutives max · perte totale max <span style={{ color: C.tm }}>{pf.total}%</span> (informatif).
+                    <br />Valeurs indicatives — vérifie-les selon ton challenge exact, puis sauvegarde.
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+        </RuleGroup>
+
         <div className="rules-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <RuleGroup title="Risk management" desc="Niveau 2 si seuil dépassé" accent="rgba(124,58,237,.5)">
             <RuleField label="Taille du compte" unit="€">
