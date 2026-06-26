@@ -342,21 +342,28 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
 }
 
 // ── PnlChart — cumulative SVG chart with Y/X axes ────────────────────────────
-function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: number }) {
+function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawdownAmt?: number; baseline?: number }) {
   const C = useContext(ThemeCtx)
   const [hover, setHover] = useState<number | null>(null)
   const sorted = [...trades]
     .filter(t => t.pnl != null && t.entry_time)
     .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime())
 
+  // Mode prop firm : la courbe représente le SOLDE du compte (démarre au capital de
+  // départ `baseline`) au lieu du P&L cumulé (qui démarre à 0). `base` = la référence.
+  const base = baseline ?? 0
+  const propMode = baseline != null
+
   const W = 600, H = 120
   // Les chiffres de l'axe Y sont dans une gouttière À GAUCHE (PXL), hors du tracé.
   // Gouttière volontairement fine pour limiter le décalage de la courbe.
-  const PXL = 30, PXR = 10, PYT = 6, PYB = 18
+  const PXL = propMode ? 42 : 30, PXR = 10, PYT = 6, PYB = 18
   const DW = W - PXL - PXR, DH = H - PYT - PYB
   const axisColor = C.te
   const gridColor = C.b
-  const fmtY = (v: number) => v === 0 ? '€0' : v > 0 ? `+€${Math.abs(v).toFixed(0)}` : `-€${Math.abs(v).toFixed(0)}`
+  const fmtY = (v: number) => propMode
+    ? `€${Math.round(v).toLocaleString('fr-FR')}`
+    : v === 0 ? '€0' : v > 0 ? `+€${Math.abs(v).toFixed(0)}` : `-€${Math.abs(v).toFixed(0)}`
 
   if (sorted.length === 0) {
     const yMid = PYT + DH / 2
@@ -364,33 +371,33 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-        <text x={PXL - 3} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: SANS }}>€0</text>
+        <text x={PXL - 3} y={yMid + 3} textAnchor="end" fill={axisColor} fontSize="8" style={{ fontFamily: SANS }}>{fmtY(base)}</text>
       </svg>
     )
   }
 
   // La courbe démarre directement au premier trade : pas de point d'origine
-  // artificiel à €0. Si la session ouvre dans le rouge, le tracé part en rouge.
+  // artificiel. En mode prop firm elle part du capital ; sinon de €0 (P&L cumulé).
   const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] = []
   let cum = 0
   for (const t of sorted) {
     cum += t.pnl ?? 0
-    pts.push({ t: fmtTime(t.entry_time), v: cum, pnl: t.pnl ?? null, sym: t.symbol ?? null, dir: t.direction ?? null })
+    pts.push({ t: fmtTime(t.entry_time), v: base + cum, pnl: t.pnl ?? null, sym: t.symbol ?? null, dir: t.direction ?? null })
   }
 
   const vals = pts.map(p => p.v)
-  const rawMin = Math.min(0, ...vals), rawMax = Math.max(0, ...vals)
+  const rawMin = Math.min(base, ...vals), rawMax = Math.max(base, ...vals)
   const rawRange = rawMax - rawMin || 1
   const grace = rawRange * 0.08
   const minV = rawMin - grace, maxV = rawMax + grace
   const range = maxV - minV
   const n = pts.length
   const GREEN = '#3cc87a', RED = '#dc503c'
-  const colorForV = (v: number) => (v >= 0 ? GREEN : RED)
+  const colorForV = (v: number) => (v >= base ? GREEN : RED)
 
   const xOf = (i: number) => PXL + (i / Math.max(n - 1, 1)) * DW
   const yOf = (v: number) => PYT + DH - ((v - minV) / range) * DH
-  const y0 = yOf(0)
+  const y0 = yOf(base)
   // Fraction verticale de la ligne du zéro dans la zone de tracé → point de
   // bascule des dégradés (vert au-dessus du zéro, rouge en-dessous).
   const zf = Math.max(0, Math.min(1, (y0 - PYT) / DH))
@@ -475,6 +482,8 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
         ))}
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
+        {/* Mode prop firm : ligne de référence au capital de départ */}
+        {propMode && <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={C.b3} strokeWidth={0.6} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />}
         {yTicks.map(v => (
           <text key={`t${v}`} x={PXL - 3} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
             textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: SANS }}>{fmtY(v)}</text>
@@ -508,7 +517,7 @@ function PnlChart({ trades, drawdownAmt }: { trades: TradeRow[]; drawdownAmt?: n
           <div style={{ color: C.te, marginBottom: 1 }}>
             {hp.pnl == null ? 'Début de session' : `${hp.t} · ${hp.sym} ${hp.dir}`}
           </div>
-          <div><span style={{ color: C.te }}>Cumul </span><span style={{ color: C.tm }}>{fmtY(hp.v)}</span></div>
+          <div><span style={{ color: C.te }}>{propMode ? 'Solde ' : 'Cumul '}</span><span style={{ color: C.tm }}>{fmtY(hp.v)}</span></div>
         </div>
       )}
     </div>
@@ -683,9 +692,26 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   const drawdownPct = rules
     ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
+  const propFirmId = (rules as any)?.prop_firm as string | null
+  const propFirm = propFirmId ? PROPFIRM_PRESETS.find(p => p.id === propFirmId) : null
+  const accountSize = rules?.account_size || 10000
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
+
+      {/* Bandeau mode prop firm — l'utilisateur sait qu'un cadre de challenge est actif */}
+      {propFirm && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+          background: `linear-gradient(90deg, ${C.red}1c, transparent)`,
+          border: `.5px solid ${C.red}55`, borderLeft: `2.5px solid ${C.red}`,
+          borderRadius: 8, padding: '7px 13px',
+        }}>
+          <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.4, color: C.red, fontFamily: SANS, textTransform: 'uppercase' as const }}>Mode prop firm</span>
+          <span style={{ fontSize: 11.5, color: C.tm, fontFamily: SANS }}>{propFirm.name}</span>
+          <span style={{ fontSize: 10.5, color: C.te, fontFamily: SANS }}>· capital {fmtEur(accountSize)} · DD jour {propFirm.daily}% · risk {propFirm.risk}%</span>
+        </div>
+      )}
 
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
@@ -736,9 +762,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
-          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: SANS }}>Courbe P&L</div>
+          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: SANS }}>{propFirm ? 'Solde du compte' : 'Courbe P&L'}</div>
           <div style={{ flex: 1, minHeight: 120 }}>
-            <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} />
+            <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} baseline={propFirm ? accountSize : undefined} />
           </div>
         </div>
       </div>
@@ -2158,6 +2184,33 @@ namespace CaldraBot
 }
 
 // ── ReglesPanel ────────────────────────────────────────────────────────────────
+// IMPORTANT : RuleGroup/RuleField sont au niveau MODULE (pas dans ReglesPanel). Définis
+// à l'intérieur, ils étaient recréés à chaque frappe → React remontait l'input → perte
+// du focus à chaque caractère.
+function RuleGroup({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
+  const C = useContext(ThemeCtx)
+  return (
+    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ fontSize: 14, fontWeight: 500, color: C.tx, marginBottom: desc ? 3 : 18 }}>{title}</div>
+      {desc && <div style={{ fontSize: 11, color: C.td, marginBottom: 18 }}>{desc}</div>}
+      {children}
+    </div>
+  )
+}
+
+function RuleField({ label, unit, children }: { label: string; unit?: string; children: React.ReactNode }) {
+  const C = useContext(ThemeCtx)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
+      <span style={{ fontSize: 12.5, color: C.tm }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {children}
+        {unit && <span style={{ fontSize: 11, color: C.te, fontFamily: SANS, width: 26 }}>{unit}</span>}
+      </div>
+    </div>
+  )
+}
+
 function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: string }) {
   const C = useContext(ThemeCtx)
   const isMaxRules = isMaxPlan(plan)
@@ -2209,28 +2262,6 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
     textAlign: 'right', outline: 'none', transition: 'border-color .2s',
   }
 
-  function RuleGroup({ title, desc, accent, children }: { title: string; desc: string; accent: string; children: React.ReactNode }) {
-    return (
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: C.tx, marginBottom: 3 }}>{title}</div>
-        <div style={{ fontSize: 11, color: C.td, marginBottom: 18 }}>{desc}</div>
-        {children}
-      </div>
-    )
-  }
-
-  function RuleField({ label, unit, children }: { label: string; unit?: string; children: React.ReactNode }) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: `.5px solid rgba(255,255,255,.04)` }}>
-        <span style={{ fontSize: 12.5, color: C.tm }}>{label}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {children}
-          {unit && <span style={{ fontSize: 11, color: C.te, fontFamily: SANS, width: 26 }}>{unit}</span>}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
@@ -2242,7 +2273,7 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
     <div style={{ padding: '22px 28px', overflowY: 'auto', flex: 1 }}>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Mode prop firm — presets de garde-fous (plan Max) */}
-        <RuleGroup title="Mode prop firm" desc="Aligne tes garde-fous de risque sur les règles d’un challenge prop firm." accent="">
+        <RuleGroup title="Mode prop firm" desc="Aligne tes garde-fous de risque sur les règles d’un challenge prop firm.">
           {!isMaxRules ? (
             <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>Le mode prop firm (presets FTMO, FundedNext, The5ers…) est inclus dans le plan <span style={{ color: C.tx }}>Max</span>.</div>
           ) : (
@@ -2279,7 +2310,7 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
         </RuleGroup>
 
         <div className="rules-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <RuleGroup title="Risk management" desc="Niveau 2 si seuil dépassé" accent="rgba(124,58,237,.5)">
+          <RuleGroup title="Risk management" desc="Niveau 2 si seuil dépassé">
             <RuleField label="Taille du compte" unit="€">
               <input style={{ ...inputStyle, width: 100 }} type="number" min={100} max={10000000} step={100} value={rules.account_size ?? 10000} onChange={e => set('account_size', e.target.value)} />
             </RuleField>
@@ -2292,7 +2323,7 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
             <RuleField label="Levier max" unit="×">
               <input style={inputStyle} type="number" min={1} max={500} step={1} value={rules.max_leverage ?? 30} onChange={e => set('max_leverage', e.target.value)} />
             </RuleField>
-            <RuleField label="Exiger un stop-loss">
+            <RuleField label="Alerter si trade sans stop-loss">
               <button
                 type="button" role="switch" aria-checked={!!rules.require_stop_loss}
                 onClick={() => setBool('require_stop_loss', !rules.require_stop_loss)}
@@ -2309,7 +2340,7 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
             </RuleField>
           </RuleGroup>
 
-          <RuleGroup title="Discipline comportementale" desc="Niveau 1 si 80% approché · Niveau 2 si dépassé" accent="rgba(255,171,0,.45)">
+          <RuleGroup title="Discipline comportementale" desc="Niveau 1 si 80% approché · Niveau 2 si dépassé">
             <RuleField label="Max trades par session">
               <input style={inputStyle} type="number" min={1} max={100} step={1} value={rules.max_trades_per_session} onChange={e => set('max_trades_per_session', e.target.value)} />
             </RuleField>
@@ -2319,22 +2350,15 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
             <RuleField label="Délai min entre trades" unit="sec">
               <input style={inputStyle} type="number" min={0} max={3600} step={10} value={rules.min_time_between_entries_sec} onChange={e => set('min_time_between_entries_sec', e.target.value)} />
             </RuleField>
-          </RuleGroup>
-        </div>
-
-        <div style={{ maxWidth: 460 }}>
-          <RuleGroup title="Fenêtre de session" desc="Niveau 1 si trade hors fenêtre" accent="rgba(0,209,122,.4)">
-            <div style={{ display: 'flex', gap: 20 }}>
-              <RuleField label="Début">
-                <input style={{ ...inputStyle, width: 88, textAlign: 'center' }} type="time" value={rules.session_start} onChange={e => set('session_start', e.target.value)} />
-              </RuleField>
-              <RuleField label="Fin">
-                <input style={{ ...inputStyle, width: 88, textAlign: 'center' }} type="time" value={rules.session_end} onChange={e => set('session_end', e.target.value)} />
-              </RuleField>
-            </div>
+            <RuleField label="Début de session">
+              <input style={{ ...inputStyle, width: 100, textAlign: 'center' }} type="time" value={(rules.session_start || '').slice(0, 5)} onChange={e => set('session_start', e.target.value)} />
+            </RuleField>
+            <RuleField label="Fin de session">
+              <input style={{ ...inputStyle, width: 100, textAlign: 'center' }} type="time" value={(rules.session_end || '').slice(0, 5)} onChange={e => set('session_end', e.target.value)} />
+            </RuleField>
             <RuleField label="Fuseau horaire (UTC+)">
               <select
-                style={{ ...inputStyle, width: 88, textAlign: 'center', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundColor: 'rgba(255,255,255,.05)', color: C.tx }}
+                style={{ ...inputStyle, width: 100, textAlign: 'center', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundColor: 'rgba(255,255,255,.05)', color: C.tx }}
                 value={rules.tz_offset_hours ?? 0}
                 onChange={e => set('tz_offset_hours', e.target.value)}
               >
@@ -2347,7 +2371,7 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
         </div>
 
         {/* Détecteurs — on/off + seuils (plan Max) */}
-        <RuleGroup title="Détecteurs" desc="Active ou coupe chaque détecteur, et ajuste ses seuils." accent="">
+        <RuleGroup title="Détecteurs" desc="Active ou coupe chaque détecteur, et ajuste ses seuils.">
           {!isMaxRules ? (
             <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>Le réglage individuel des 18 détecteurs (marche/arrêt + seuils) est inclus dans le plan <span style={{ color: C.tx }}>Max</span>.</div>
           ) : (
