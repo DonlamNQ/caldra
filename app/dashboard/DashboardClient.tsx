@@ -130,11 +130,11 @@ function streakNoAlerts(sessions: DaySession[], badTypes: Set<string>): number {
   return streak
 }
 
-type StreakDef = { id: string; label: string; compute: (s: DaySession[]) => number }
+type StreakDef = { id: string; message: (n: number) => string; compute: (s: DaySession[]) => number }
 const STREAK_DEFS: StreakDef[] = [
-  { id: 'discipline', label: "sessions maîtrisées d'affilée",        compute: computeDisciplineStreak },
-  { id: 'risque',     label: 'sessions sans dépassement de risque',  compute: s => streakNoAlerts(s, STREAK_RISK_TYPES) },
-  { id: 'sangfroid',  label: 'sessions sans réaction impulsive',     compute: s => streakNoAlerts(s, STREAK_TILT_TYPES) },
+  { id: 'discipline', compute: computeDisciplineStreak,                  message: n => `Bravo — ${n} sessions maîtrisées d'affilée. Garde le cap.` },
+  { id: 'risque',     compute: s => streakNoAlerts(s, STREAK_RISK_TYPES), message: n => `Solide — ${n} sessions sans dépasser ton risque. Ta gestion tient.` },
+  { id: 'sangfroid',  compute: s => streakNoAlerts(s, STREAK_TILT_TYPES), message: n => `Beau sang-froid — ${n} sessions sans réaction impulsive.` },
 ]
 
 function fmtPnl(v: number) { return `${v >= 0 ? '+' : ''}${v.toFixed(2)}` }
@@ -3236,7 +3236,7 @@ export default function DashboardClient({
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [notifHint, setNotifHint] = useState<string | null>(null)   // message d'aide si l'activation échoue (iOS / permission bloquée)
-  const [milestone, setMilestone] = useState<{ id: string; label: string; value: number } | null>(null)   // jalon de streak à fêter
+  const [milestone, setMilestone] = useState<{ id: string; text: string } | null>(null)   // jalon de streak à fêter
   const [reminder, setReminder] = useState<string | null>(null)   // rappel contextuel (session difficile / inactivité)
   const [connectHint, setConnectHint] = useState(false)   // invite à connecter une plateforme (aucun trade encore)
 
@@ -3317,8 +3317,9 @@ export default function DashboardClient({
       const key = `caldra_milestone_${def.id}_${userId}`
       if (reached > Number(localStorage.getItem(key) || 0)) {
         localStorage.setItem(key, String(reached))
-        setMilestone({ id: def.id, label: def.label, value: reached })
-        showPushNotif('Caldra — Jalon atteint', `${reached} ${def.label}. Garde le cap.`, `caldra-streak-${def.id}`)
+        const text = def.message(reached)
+        setMilestone({ id: def.id, text })
+        showPushNotif('Caldra — Jalon atteint', text, `caldra-streak-${def.id}`)
         break
       }
     }
@@ -3333,8 +3334,8 @@ export default function DashboardClient({
     const p = new URLSearchParams(window.location.search).get('streak')
     const def = STREAK_DEFS.find(d => d.id === p)
     if (!def) return
-    setMilestone({ id: def.id, label: def.label, value: 7 })
-    showPushNotif('Caldra — Jalon atteint', `7 ${def.label}. Garde le cap.`, `caldra-streak-${def.id}`)
+    setMilestone({ id: def.id, text: def.message(7) })
+    showPushNotif('Caldra — Jalon atteint', def.message(7), `caldra-streak-${def.id}`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -3615,7 +3616,7 @@ export default function DashboardClient({
           <div style={{ fontSize: 22, flexShrink: 0 }}>🏆</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 10, color: '#00d17a', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: SANS }}>Jalon atteint</div>
-            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>Bravo — {milestone.value} {milestone.label}. Garde le cap.</div>
+            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>{milestone.text}</div>
           </div>
           <button onClick={dismissMilestone} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
         </div>
