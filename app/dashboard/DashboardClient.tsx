@@ -2436,7 +2436,9 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
   const load = async (v: 'day' | '7' | '30') => {
     if (store[v]?.text || store[v]?.loading) return
     setStore(s => ({ ...s, [v]: { loading: true } }))
-    const query = v === 'day' ? '?latest=1' : `?period=${v}`
+    // Jour → on cible explicitement AUJOURD'HUI (pas ?latest=1, qui retomberait sur
+    // la dernière journée tradée = hier sur une séance neuve sans trade).
+    const query = v === 'day' ? '' : `?period=${v}`
     try {
       const res = await fetch(`/api/debrief${query}`, { method: 'POST' })
       const data = await res.json()
@@ -2475,7 +2477,8 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
   const weekAvail = dow0 === 5 || dow0 === 6 || dow0 === 0
   const lastDom = new Date(now0.getFullYear(), now0.getMonth() + 1, 0).getDate()
   const monthAvail = now0.getDate() >= lastDom - 1   // avant-dernier jour ou après
-  function avail(v: 'day' | '7' | '30') { return v === '7' ? weekAvail : v === '30' ? monthAvail : true }
+  // Le débrief du jour n'est dispo qu'à la clôture de la séance ET s'il y a eu des trades.
+  function avail(v: 'day' | '7' | '30') { return v === '7' ? weekAvail : v === '30' ? monthAvail : dailyReady }
 
   const cur = store[view] || {}
   const tabs: Array<{ k: 'day' | '7' | '30'; label: string }> = [
@@ -2521,7 +2524,13 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
           <div style={{ padding: 14, overflowY: 'auto' }}>
             {!avail(view) && (
               <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic', lineHeight: 1.5 }}>
-                {view === '7' ? 'Le bilan hebdomadaire sera disponible en fin de semaine.' : "Le bilan mensuel sera disponible à l'avant-dernier jour du mois."}
+                {view === '7'
+                  ? 'Le bilan hebdomadaire sera disponible en fin de semaine.'
+                  : view === '30'
+                  ? "Le bilan mensuel sera disponible à l'avant-dernier jour du mois."
+                  : tradesToday === 0
+                  ? "Aucun trade pour l'instant — le débrief du jour s'affichera à la clôture de ta séance."
+                  : "Le débrief du jour sera disponible à la clôture de ta séance."}
               </div>
             )}
             {avail(view) && cur.loading && <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic' }}>Analyse en cours…</div>}
