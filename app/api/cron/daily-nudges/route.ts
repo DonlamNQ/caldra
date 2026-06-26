@@ -64,6 +64,17 @@ export async function GET(req: NextRequest) {
 
   const service = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
+  // ?test=<email> → envoi forcé d'une notif de test UNIQUEMENT à cet utilisateur
+  // (vérif du pipeline push, sans spammer les autres abonnés).
+  const testEmail = new URL(req.url).searchParams.get('test')
+  if (testEmail) {
+    const { data: { users } } = await service.auth.admin.listUsers({ perPage: 1000 })
+    const target = users.find(u => u.email?.toLowerCase() === testEmail.toLowerCase())
+    if (!target) return NextResponse.json({ ok: false, error: 'user introuvable' }, { status: 404 })
+    await sendPushToUser(target.id, 'Caldra — Test', 'Notification de test. Si tu vois ça, le push serveur fonctionne. 🔔', 1)
+    return NextResponse.json({ ok: true, test: true, email: testEmail })
+  }
+
   // Seulement les users abonnés au push (sinon rien à envoyer).
   const { data: subs } = await service.from('push_subscriptions').select('user_id')
   const userIds = [...new Set((subs || []).map(s => s.user_id))]
