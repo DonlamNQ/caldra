@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
       if (wk.length > 0 && state.get('weekly') !== weekKey) {
         const avg = Math.round(wk.reduce((s, d) => s + d.score, 0) / wk.length)
         const clean = wk.filter(d => d.score >= 70 && d.critical === 0).length
-        await sendPushToUser(uid, 'Caldra — Bilan de ta semaine', `Score moyen ${avg}/100 · ${clean} jour(s) propre(s) sur ${wk.length}.`, 1)
+        await sendPushToUser(uid, 'Caldra — Ta semaine en bref', `Score moyen ${avg}/100 · ${clean} jour(s) propre(s) sur ${wk.length}.`, 1)
         await setState('weekly', weekKey)
         sent++
       }
