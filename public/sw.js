@@ -12,7 +12,7 @@ self.addEventListener('push', e => {
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: { url: data.url || '/dashboard' },
-      tag: 'caldra-alert',
+      tag: data.tag || 'caldra-alert',
       renotify: true,
       requireInteraction: data.level >= 3,
     })

@@ -132,9 +132,9 @@ function streakNoAlerts(sessions: DaySession[], badTypes: Set<string>): number {
 
 type StreakDef = { id: string; message: (n: number) => string; compute: (s: DaySession[]) => number }
 const STREAK_DEFS: StreakDef[] = [
-  { id: 'discipline', compute: computeDisciplineStreak,                  message: n => `Bravo — ${n} sessions maîtrisées d'affilée. Garde le cap.` },
-  { id: 'risque',     compute: s => streakNoAlerts(s, STREAK_RISK_TYPES), message: n => `Solide — ${n} sessions sans dépasser ton risque. Ta gestion tient.` },
-  { id: 'sangfroid',  compute: s => streakNoAlerts(s, STREAK_TILT_TYPES), message: n => `Beau sang-froid — ${n} sessions sans réaction impulsive.` },
+  { id: 'discipline', compute: computeDisciplineStreak,                  message: n => `Bravo, ${n} sessions maîtrisées d'affilée. Garde le cap.` },
+  { id: 'risque',     compute: s => streakNoAlerts(s, STREAK_RISK_TYPES), message: n => `Solide, ${n} sessions sans dépasser ton risque. Ta gestion tient.` },
+  { id: 'sangfroid',  compute: s => streakNoAlerts(s, STREAK_TILT_TYPES), message: n => `Beau sang-froid sur ${n} sessions sans réaction impulsive.` },
 ]
 
 function fmtPnl(v: number) { return `${v >= 0 ? '+' : ''}${v.toFixed(2)}` }
@@ -3361,7 +3361,7 @@ export default function DashboardClient({
       const key = `caldra_reminder_hard_${userId}`
       if (localStorage.getItem(key) !== last.date) {
         localStorage.setItem(key, last.date)
-        setReminder('Dernière session difficile. Reprends posément — respecte ta fenêtre et ton risque.')
+        setReminder('Dernière session difficile. Reprends posément, respecte ta fenêtre et ton risque.')
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

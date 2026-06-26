@@ -6,7 +6,8 @@ export async function sendPushToUser(
   title: string,
   body: string,
   level: number,
-  url = '/dashboard'
+  url = '/dashboard',
+  tag?: string
 ): Promise<void> {
   if (!process.env.VAPID_PRIVATE_KEY) return
 
@@ -28,7 +29,7 @@ export async function sendPushToUser(
 
   if (!subs?.length) return
 
-  const payload = JSON.stringify({ title, body, level, url })
+  const payload = JSON.stringify({ title, body, level, url, tag })
 
   await Promise.allSettled(
     subs.map(sub =>

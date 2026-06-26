@@ -68,20 +68,21 @@ export async function GET(req: NextRequest) {
   // (vérif du pipeline push, sans spammer les autres abonnés).
   const testEmail = new URL(req.url).searchParams.get('test')
   if (testEmail) {
-    const { data: { users } } = await service.auth.admin.listUsers({ perPage: 1000 })
-    const target = users.find(u => u.email?.toLowerCase() === testEmail.toLowerCase())
+    const listed = await service.auth.admin.listUsers({ perPage: 1000 })
+    const users = (listed.data?.users ?? []) as Array<{ id: string; email?: string | null }>
+    const target = users.find(u => (u.email || '').toLowerCase() === testEmail.toLowerCase())
     if (!target) return NextResponse.json({ ok: false, error: 'user introuvable' }, { status: 404 })
 
     // &samples=1 → envoie les 4 vraies notifs avec des valeurs d'exemple (aperçu).
     if (new URL(req.url).searchParams.get('samples') === '1') {
-      await sendPushToUser(target.id, 'Caldra — Jalon atteint', 'Solide — 7 sessions sans dépasser ton risque. Ta gestion tient.', 1)
-      await sendPushToUser(target.id, 'Caldra', 'Dernière session difficile. Reprends posément — respecte ta fenêtre et ton risque.', 1)
-      await sendPushToUser(target.id, 'Caldra', '5 jours sans trader. Reprends en revoyant tes règles avant de te relancer.', 1)
-      await sendPushToUser(target.id, 'Caldra — Ta semaine en bref', 'Score moyen 82/100 · 3 jour(s) propre(s) sur 4.', 1)
+      await sendPushToUser(target.id, 'Jalon atteint', 'Solide, 7 sessions sans dépasser ton risque. Ta gestion tient.', 1, '/dashboard', 'sample-streak')
+      await sendPushToUser(target.id, 'Reprise', 'Dernière session difficile. Reprends posément, respecte ta fenêtre et ton risque.', 1, '/dashboard', 'sample-hard')
+      await sendPushToUser(target.id, 'Inactivité', '5 jours sans trader. Reprends en revoyant tes règles avant de te relancer.', 1, '/dashboard', 'sample-idle')
+      await sendPushToUser(target.id, 'Bilan de ta semaine', 'Score moyen 82/100 · 3 jour(s) propre(s) sur 4.', 1, '/dashboard', 'sample-weekly')
       return NextResponse.json({ ok: true, samples: true, email: testEmail })
     }
 
-    await sendPushToUser(target.id, 'Caldra — Test', 'Notification de test. Si tu vois ça, le push serveur fonctionne. 🔔', 1)
+    await sendPushToUser(target.id, 'Test', 'Notification de test. Si tu vois ça, le push serveur fonctionne. 🔔', 1)
     return NextResponse.json({ ok: true, test: true, email: testEmail })
   }
 
@@ -112,14 +113,14 @@ export async function GET(req: NextRequest) {
 
     // 1) Jalons de streak
     const streaks = [
-      { kind: 'streak_discipline', val: disciplineStreak(days), msg: (n: number) => `Bravo — ${n} sessions maîtrisées d'affilée. Garde le cap.` },
-      { kind: 'streak_risque',     val: streakNo(days, RISK_TYPES), msg: (n: number) => `Solide — ${n} sessions sans dépasser ton risque. Ta gestion tient.` },
-      { kind: 'streak_sangfroid',  val: streakNo(days, TILT_TYPES), msg: (n: number) => `Beau sang-froid — ${n} sessions sans réaction impulsive.` },
+      { kind: 'streak_discipline', val: disciplineStreak(days), msg: (n: number) => `Bravo, ${n} sessions maîtrisées d'affilée. Garde le cap.` },
+      { kind: 'streak_risque',     val: streakNo(days, RISK_TYPES), msg: (n: number) => `Solide, ${n} sessions sans dépasser ton risque. Ta gestion tient.` },
+      { kind: 'streak_sangfroid',  val: streakNo(days, TILT_TYPES), msg: (n: number) => `Beau sang-froid sur ${n} sessions sans réaction impulsive.` },
     ]
     for (const st of streaks) {
       const reached = MILESTONES.filter(m => m <= st.val).pop()
       if (!reached || reached <= Number(state.get(st.kind) || 0)) continue
-      await sendPushToUser(uid, 'Caldra — Jalon atteint', st.msg(reached), 1)
+      await sendPushToUser(uid, 'Jalon atteint', st.msg(reached), 1, '/dashboard', st.kind)
       await setState(st.kind, String(reached))
       sent++
     }
@@ -128,14 +129,14 @@ export async function GET(req: NextRequest) {
     const last = days[0]
     const lastDaysAgo = Math.floor((Date.parse(todayStr) - Date.parse(last.date)) / 86_400_000)
     if (lastDaysAgo <= 2 && (last.score < 40 || last.critical > 0) && state.get('hard') !== last.date) {
-      await sendPushToUser(uid, 'Caldra', 'Dernière session difficile. Reprends posément — respecte ta fenêtre et ton risque.', 1)
+      await sendPushToUser(uid, 'Reprise', 'Dernière session difficile. Reprends posément, respecte ta fenêtre et ton risque.', 1, '/dashboard', 'nudge-hard')
       await setState('hard', last.date)
       sent++
     }
 
     // 3) Inactivité ≥ 5 jours
     if (lastDaysAgo >= 5 && state.get('idle') !== last.date) {
-      await sendPushToUser(uid, 'Caldra', `${lastDaysAgo} jours sans trader. Reprends en revoyant tes règles avant de te relancer.`, 1)
+      await sendPushToUser(uid, 'Inactivité', `${lastDaysAgo} jours sans trader. Reprends en revoyant tes règles avant de te relancer.`, 1, '/dashboard', 'nudge-idle')
       await setState('idle', last.date)
       sent++
     }
@@ -151,7 +152,7 @@ export async function GET(req: NextRequest) {
       if (wk.length > 0 && state.get('weekly') !== weekKey) {
         const avg = Math.round(wk.reduce((s, d) => s + d.score, 0) / wk.length)
         const clean = wk.filter(d => d.score >= 70 && d.critical === 0).length
-        await sendPushToUser(uid, 'Caldra — Ta semaine en bref', `Score moyen ${avg}/100 · ${clean} jour(s) propre(s) sur ${wk.length}.`, 1)
+        await sendPushToUser(uid, 'Bilan de ta semaine', `Score moyen ${avg}/100 · ${clean} jour(s) propre(s) sur ${wk.length}.`, 1, '/dashboard', 'nudge-weekly')
         await setState('weekly', weekKey)
         sent++
       }
