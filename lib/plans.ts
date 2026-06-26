@@ -24,11 +24,11 @@ export function normalizePlan(plan: string | null | undefined): Plan | null {
   return null
 }
 
-// Détecteurs réservés au plan Max (7). Les 11 autres détecteurs comportementaux
-// sont inclus dès le plan Pro. Voir lib/engine.ts pour la logique de chaque
-// détecteur et CLAUDE.md pour le tableau complet.
+// Détecteurs réservés au plan Max (6). Les 12 autres détecteurs comportementaux
+// sont inclus dès le plan Pro — dont `revenge_sizing` (le problème n°1 des traders),
+// volontairement dans Pro pour qu'il soit un vrai produit. Voir lib/engine.ts pour la
+// logique de chaque détecteur et CLAUDE.md pour le tableau complet.
 export const MAX_ONLY_DETECTORS = new Set<string>([
-  'revenge_sizing',
   'averaging_down',
   'euphoria_sizing',
   'accelerating_frequency',

@@ -230,7 +230,7 @@ score = 100 - Σ(deductions)
 ### Plans
 | Plan en DB | Nom affiché | Prix | Notes |
 |---|---|---|---|
-| `pro` | Pro | 19€/mois | 11 détecteurs, rapport mensuel, historique illimité |
+| `pro` | Pro | 19€/mois | 12 détecteurs (dont revenge sizing), rapport mensuel, historique illimité |
 | `max` | Max | 34€/mois | 18 détecteurs, IA (débrief session + rapport hebdo), historique illimité |
 
 `STRIPE_PRO_PRICE_ID` → plan `pro` / `STRIPE_MAX_PRICE_ID` → plan `max` (fallback lecture : `STRIPE_SENTINEL_PRICE_ID`).
@@ -239,7 +239,7 @@ score = 100 - Σ(deductions)
 
 ### Gating par plan — `lib/plans.ts` (source unique)
 - `isMaxPlan(plan)` / `isPaidPlan(plan)` / `normalizePlan(plan)`
-- `MAX_ONLY_DETECTORS` (7) : `revenge_sizing`, `averaging_down`, `euphoria_sizing`, `accelerating_frequency`, `cut_winners_hold_losers`, `drawdown_override`, `news_trading`. Les 11 autres détecteurs sont inclus dès Pro.
+- `MAX_ONLY_DETECTORS` (6) : `averaging_down`, `euphoria_sizing`, `accelerating_frequency`, `cut_winners_hold_losers`, `drawdown_override`, `news_trading`. Les 12 autres détecteurs sont inclus dès Pro — dont `revenge_sizing` (problème n°1 des traders, dans Pro à dessein).
 - Filtrage appliqué dans `lib/engine.ts` → `saveAndNotify` (avant `suppressRedundant`) : si `!isMax`, on retire les types `MAX_ONLY_DETECTORS`.
 - Historique **illimité sur les deux plans** (pas de rétention par plan — différenciation uniquement sur détecteurs + IA).
 
