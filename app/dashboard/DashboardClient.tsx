@@ -549,6 +549,7 @@ function Sidebar({ score, alerts, stats, rules }: {
   const mDrawdown  = Math.max(0, 100 - drawdownPct)
   const mDiscipline = metricScore(alerts, 'outside_session')
   const propFirmOn = !!(rules as any)?.prop_firm
+  const propFirmStart = (rules as any)?.prop_firm_started_at as string | null
 
   return (
     <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none', borderRadius: 16, margin: '10px 0 10px 10px', overflow: 'hidden' }}>
@@ -556,7 +557,8 @@ function Sidebar({ score, alerts, stats, rules }: {
       {/* Score */}
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: propFirmOn ? 'linear-gradient(90deg, rgba(124,58,237,.9), rgba(124,58,237,.3), transparent)' : `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${propFirmOn ? 'rgba(124,58,237,.9)' : C.b3} 40%, transparent)`, transition: 'background .5s' }} />
+        {propFirmOn && <div style={{ marginBottom: 8 }}><PropFirmChip start={propFirmStart} /></div>}
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: SANS }}>Profil comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ScoreRingSvg score={score} />
@@ -695,7 +697,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
     : 0
   const propFirmId = (rules as any)?.prop_firm as string | null
   const propFirm = propFirmId ? PROPFIRM_PRESETS.find(p => p.id === propFirmId) : null
-  const propFirmStart = (rules as any)?.prop_firm_started_at as string | null
   const accountSize = rules?.account_size || 10000
   // Ambiance prop firm : pas de contour coloré, seulement le filet lumineux du haut.
   const ambBd = C.b
@@ -703,8 +704,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
-
-      {propFirm && <div style={{ flexShrink: 0 }}><PropFirmChip start={propFirmStart} /></div>}
 
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
@@ -928,7 +927,7 @@ function PropFirmChip({ start }: { start?: string | null }) {
   if (!start) return null
   return (
     <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.1, color: '#a78bfa', background: 'rgba(124,58,237,.12)', border: '.5px solid rgba(124,58,237,.4)', borderRadius: 5, padding: '2px 7px', textTransform: 'uppercase' as const, fontFamily: SANS, whiteSpace: 'nowrap' as const }}>
-      Compte prop firm · depuis {start}
+      Prop firm
     </span>
   )
 }
@@ -937,6 +936,8 @@ function PropFirmChip({ start }: { start?: string | null }) {
 function CalendrierPanel({ sessions, propFirmStart }: { sessions: DaySession[]; propFirmStart?: string | null }) {
   const C = useContext(ThemeCtx)
   const inProp = !!propFirmStart
+  // Filet lumineux des cartes : violet en mode prop firm, argenté (C.b3) sinon.
+  const fluxLn = inProp ? 'rgba(124,58,237,.9)' : C.b3
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [calOffset, setCalOffset] = useState(0)
 
@@ -979,13 +980,9 @@ function CalendrierPanel({ sessions, propFirmStart }: { sessions: DaySession[]; 
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflowY: 'auto' }}>
 
       {/* Header */}
-      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
-        {inProp && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(124,58,237,.9) 40%,transparent)' }} />}
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 9, letterSpacing: 2, color: inProp ? '#7c3aed' : C.red, textTransform: 'uppercase' as const, fontFamily: SANS }}>Historique</span>
-            <PropFirmChip start={propFirmStart} />
-          </div>
+          {inProp && <div style={{ marginBottom: 6 }}><PropFirmChip start={propFirmStart} /></div>}
           <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Calendrier des sessions</div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -1108,7 +1105,8 @@ function CalendrierPanel({ sessions, propFirmStart }: { sessions: DaySession[]; 
               const col = scoreColor(avg, C)
               const wPnl = w.days.reduce((a, d) => a + (sessionByDate[cellDate(d)]?.pnl ?? 0), 0)
               return (
-                <div key={w.lbl} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px', marginBottom: 8 }}>
+                <div key={w.lbl} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px', marginBottom: 8, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${fluxLn} 40%,transparent)` }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <span style={{ fontSize: 11, color: C.td }}>{w.lbl} <span style={{ fontFamily: SANS, color: C.pnl }}>· {fmtEur(wPnl)}</span></span>
                     <span style={{ fontSize: 13, fontFamily: SANS, fontWeight: 500, color: col }}>{avg}</span>
@@ -1144,7 +1142,8 @@ function CalendrierPanel({ sessions, propFirmStart }: { sessions: DaySession[]; 
                 { val: String(critical), lbl: 'Critiques', col: C.tm },
                 { val: fmtEur(totalPnl), lbl: 'P&L total', col: C.pnl },
               ].map((item, i) => (
-                <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px' }}>
+                <div key={i} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 9, padding: '12px 14px', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${fluxLn} 40%,transparent)` }} />
                   <div style={{ fontSize: 22, fontWeight: 300, letterSpacing: -.5, color: item.col }}>{item.val}</div>
                   <div style={{ fontSize: 10, color: C.td, letterSpacing: .3, marginTop: 3 }}>{item.lbl}</div>
                 </div>
@@ -1697,7 +1696,6 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Rapports</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Rapports PDF</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Score, PnL, alertes comportementales, journal des trades — généré à la demande.</div>
       </div>
@@ -1986,7 +1984,6 @@ namespace CaldraBot
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Connecteurs</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Intégrations</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
       </div>
@@ -2302,7 +2299,6 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 28px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Configuration</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Règles de session</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Ces seuils définissent quand Caldra déclenche une alerte. Modifiables à tout moment.</div>
       </div>
@@ -2714,8 +2710,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Abonnement</div>
-          <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Billing</div>
+            <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Billing</div>
           <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Plan actuel : <span style={{ color: C.tm, fontWeight: 500, textTransform: 'capitalize' }}>{plan}</span></div>
         </div>
         {isPaid && (
@@ -2869,7 +2864,6 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Compte</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Profil</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Gère tes informations, ta sécurité et ton compte.</div>
       </div>
@@ -3032,7 +3026,6 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 9, letterSpacing: 2, color: C.red, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 4 }}>Aide</div>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Aide &amp; support</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Une question, un bug, une suggestion — on répond sous 24h.</div>
       </div>
