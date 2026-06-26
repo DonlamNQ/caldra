@@ -2179,7 +2179,7 @@ namespace CaldraBot
       {/* ── Alertes externes ── (sous les plateformes) */}
       <IntCard style={{ marginTop: 16 }}>
         <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx, marginBottom: 4 }}>Alertes externes</div>
-        <div style={{ fontSize: 12, color: C.te, marginBottom: 16, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app. Webhook Skool ou Discord pour tous, Telegram pour le plan Max.</div>
+        <div style={{ fontSize: 12, color: C.te, marginBottom: 16, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app. Webhook Discord pour tous, Telegram pour le plan Max.</div>
 
         <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>WEBHOOK SLACK OU DISCORD</div>
         <input style={notifInp} value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://discord.com/api/webhooks/…" />
@@ -2705,7 +2705,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'max', name: 'Max', price: '34€',
       accent: C.red, accentAlpha: `rgba(124,58,237,`,
-      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', 'Règles configurables (on/off + seuils)', 'Mode prop firm (FTMO, FundedNext…)', 'Débriefs IA (jour/semaine/mois)', 'Patterns récurrents complets', 'Alertes Skool, Discord et Telegram', 'Rapport hebdomadaire'],
+      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', 'Règles configurables (on/off + seuils)', 'Mode prop firm (FTMO, FundedNext…)', 'Débriefs IA (jour/semaine/mois)', 'Patterns récurrents complets', 'Alertes Discord et Telegram', 'Rapport hebdomadaire'],
     },
   ]
 
@@ -3001,7 +3001,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
   )
 
   const faq: Array<{ q: string; a: string }> = [
-    { q: 'Comment connecter mon broker ?', a: "Onglet Intégrations : récupère ta clé API pour /api/ingest, branche un webhook Skool/Discord, ou connecte un compte cTrader. Le dashboard se met à jour en temps réel dès qu'un trade arrive." },
+    { q: 'Comment connecter mon broker ?', a: "Onglet Intégrations : récupère ta clé API pour /api/ingest, branche un webhook Discord, ou connecte un compte cTrader. Le dashboard se met à jour en temps réel dès qu'un trade arrive." },
     { q: 'Comment le score de session est-il calculé ?', a: 'Tu pars de 100 et chaque alerte retire des points selon sa gravité (niveau 3 : −18, niveau 2 : −8, niveau 1 : −3). Le score reflète la discipline comportementale de ta session, pas ton P&L.' },
     { q: 'À quoi servent les alertes ?', a: "Caldra surveille 18 schémas (revenge sizing, re-entrées impulsives, overtrading, drawdown…) et te prévient en direct. Ajuste les seuils dans l'onglet Règles." },
     { q: 'Mes données sont-elles privées ?', a: 'Oui. Chaque trade est rattaché à ton compte uniquement, isolé par les règles de sécurité Supabase. Tu peux supprimer ton compte et toutes tes données depuis le Profil.' },

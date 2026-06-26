@@ -437,7 +437,7 @@ const HTML = `
       <div class="chan-list">
         <div class="chan"><div class="chan-ic">📱</div><div class="chan-t">Push iOS &amp; Android via Web Push (VAPID)</div></div>
         <div class="chan"><div class="chan-ic">💻</div><div class="chan-t">Notification desktop (Chrome, Safari, Firefox)</div></div>
-        <div class="chan"><div class="chan-ic">💬</div><div class="chan-t">Webhook Skool / Discord configurable</div></div>
+        <div class="chan"><div class="chan-ic">💬</div><div class="chan-t">Webhook Discord configurable</div></div>
       </div>
     </div>
     <div class="notif-stack">
@@ -560,7 +560,7 @@ const HTML = `
         <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Mode prop firm (FTMO, FundedNext…)</li>
         <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Débriefs IA : jour, semaine, mois</li>
         <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Patterns récurrents complets</li>
-        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Alertes Skool, Discord et Telegram</li>
+        <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Alertes Discord et Telegram</li>
         <li class="plan-hi"><div class="pfc pfc-v"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport hebdomadaire</li>
       </ul>
       <a href="/signup?plan=max" class="plan-btn plan-btn-pri">Essayer 7 jours gratuitement →</a>
