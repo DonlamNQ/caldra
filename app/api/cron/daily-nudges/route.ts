@@ -71,6 +71,16 @@ export async function GET(req: NextRequest) {
     const { data: { users } } = await service.auth.admin.listUsers({ perPage: 1000 })
     const target = users.find(u => u.email?.toLowerCase() === testEmail.toLowerCase())
     if (!target) return NextResponse.json({ ok: false, error: 'user introuvable' }, { status: 404 })
+
+    // &samples=1 → envoie les 4 vraies notifs avec des valeurs d'exemple (aperçu).
+    if (new URL(req.url).searchParams.get('samples') === '1') {
+      await sendPushToUser(target.id, 'Caldra — Jalon atteint', 'Solide — 7 sessions sans dépasser ton risque. Ta gestion tient.', 1)
+      await sendPushToUser(target.id, 'Caldra', 'Dernière session difficile. Reprends posément — respecte ta fenêtre et ton risque.', 1)
+      await sendPushToUser(target.id, 'Caldra', '5 jours sans trader. Reprends en revoyant tes règles avant de te relancer.', 1)
+      await sendPushToUser(target.id, 'Caldra — Ta semaine en bref', 'Score moyen 82/100 · 3 jour(s) propre(s) sur 4.', 1)
+      return NextResponse.json({ ok: true, samples: true, email: testEmail })
+    }
+
     await sendPushToUser(target.id, 'Caldra — Test', 'Notification de test. Si tu vois ça, le push serveur fonctionne. 🔔', 1)
     return NextResponse.json({ ok: true, test: true, email: testEmail })
   }
