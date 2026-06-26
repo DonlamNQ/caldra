@@ -2525,7 +2525,7 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
             {!avail(view) && (
               <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic', lineHeight: 1.5 }}>
                 {view === '7'
-                  ? 'Le bilan hebdomadaire sera disponible à la clôture de la séance du vendredi.'
+                  ? 'Le bilan hebdomadaire sera disponible en fin de semaine.'
                   : view === '30'
                   ? "Le bilan mensuel sera disponible à l'avant-dernier jour du mois."
                   : ended
