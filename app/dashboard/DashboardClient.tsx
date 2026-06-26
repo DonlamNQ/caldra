@@ -1741,7 +1741,7 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
 }
 
 // ── IntegrationsPanel ──────────────────────────────────────────────────────────
-function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, ctraderConflict, ctraderPending, userId, lastTradeAt, plan, initialTgToken, initialTgChat }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; ctraderConflict?: boolean; ctraderPending?: boolean; userId: string; lastTradeAt: string | null; plan?: string; initialTgToken?: string | null; initialTgChat?: string | null }) {
+function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtraderConn, ctraderConflict, ctraderPending, userId, lastTradeAt, plan, initialTgToken, initialTgChat, propFirmStart }: { apiKeyPrefix: string | null; initialWebhook: string | null; ctraderConn: boolean; setCtraderConn: (v: boolean) => void; ctraderConflict?: boolean; ctraderPending?: boolean; userId: string; lastTradeAt: string | null; plan?: string; initialTgToken?: string | null; initialTgChat?: string | null; propFirmStart?: string | null }) {
   const C = useContext(ThemeCtx)
 
   // Indicateur de santé : « est-ce que Caldra reçoit bien tes trades ? »
@@ -1984,6 +1984,7 @@ namespace CaldraBot
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
+        {propFirmStart && <div style={{ marginBottom: 6 }}><PropFirmChip start={propFirmStart} /></div>}
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Intégrations</div>
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Connectez vos plateformes de trading — les trades seront analysés automatiquement.</div>
       </div>
@@ -1999,7 +2000,6 @@ namespace CaldraBot
       <IntCard style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.red, marginBottom: 4 }}>Authentification</div>
             <div style={{ fontSize: 15, fontWeight: 500, color: C.tx }}>Clé API</div>
             <div style={{ fontSize: 11, color: C.td, marginTop: 2 }}>Requise pour envoyer des trades depuis ta plateforme.</div>
           </div>
@@ -2173,32 +2173,60 @@ namespace CaldraBot
         </div>
       </div>
 
-      {/* ── Alertes externes ── (sous les plateformes) */}
-      <IntCard style={{ marginTop: 16 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx, marginBottom: 4 }}>Alertes externes</div>
-        <div style={{ fontSize: 12, color: C.te, marginBottom: 16, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app. Webhook Discord pour tous, Telegram pour le plan Max.</div>
+      {/* ── Canaux d'alerte ── (section distincte des plateformes) */}
+      <div style={{ marginTop: 24 }}>
+        <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 6 }}>Canaux</div>
+        <div style={{ fontSize: 12, color: C.te, marginBottom: 12, lineHeight: 1.5 }}>Reçois tes alertes niveau 2 et 3 hors de l&apos;app.</div>
+        <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
 
-        <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }}>WEBHOOK SLACK OU DISCORD</div>
-        <input style={notifInp} value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://discord.com/api/webhooks/…" />
+          {/* Discord */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>DC</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Discord</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Webhook · tous les plans</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: webhookUrl ? C.g : C.b3 }} />
+                <span style={{ fontSize: 10, color: webhookUrl ? C.g : C.td, letterSpacing: .5 }}>{webhookUrl ? 'CONFIGURÉ' : 'NON CONFIGURÉ'}</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 12 }}>Colle l&apos;URL du webhook de ton salon Discord (Paramètres du salon → Intégrations → Webhooks).</div>
+            <input style={notifInp} value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://discord.com/api/webhooks/…" />
+          </IntCard>
 
-        <div style={{ marginTop: 16, opacity: intIsMax ? 1 : .55 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-            <span style={{ fontSize: 9, letterSpacing: 1.5, color: C.te }}>TELEGRAM</span>
-            {!intIsMax && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px' }}>MAX</span>}
-          </div>
-          <input style={notifInp} disabled={!intIsMax} value={tgToken} onChange={e => setTgToken(e.target.value)} placeholder="Bot token (créé via @BotFather)" />
-          <input style={{ ...notifInp, marginTop: 8 }} disabled={!intIsMax} value={tgChat} onChange={e => setTgChat(e.target.value)} placeholder="Chat ID (obtenu via @userinfobot)" />
-          {!intIsMax && <div style={{ fontSize: 11, color: C.te, marginTop: 6 }}>Le canal Telegram est inclus dans le plan Max.</div>}
+          {/* Telegram (Max) */}
+          <IntCard style={{ opacity: intIsMax ? 1 : .55 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>TG</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx, display: 'flex', alignItems: 'center', gap: 7 }}>
+                  Telegram
+                  {!intIsMax && <span style={{ fontSize: 8, letterSpacing: 1, color: C.red, border: `.5px solid ${C.red}55`, borderRadius: 4, padding: '1px 4px' }}>MAX</span>}
+                </div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Bot · plan Max</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: (tgToken && tgChat) ? C.g : C.b3 }} />
+                <span style={{ fontSize: 10, color: (tgToken && tgChat) ? C.g : C.td, letterSpacing: .5 }}>{(tgToken && tgChat) ? 'CONFIGURÉ' : 'NON CONFIGURÉ'}</span>
+              </div>
+            </div>
+            <input style={notifInp} disabled={!intIsMax} value={tgToken} onChange={e => setTgToken(e.target.value)} placeholder="Bot token (créé via @BotFather)" />
+            <input style={{ ...notifInp, marginTop: 8 }} disabled={!intIsMax} value={tgChat} onChange={e => setTgChat(e.target.value)} placeholder="Chat ID (obtenu via @userinfobot)" />
+            {!intIsMax && <div style={{ fontSize: 11, color: C.te, marginTop: 8 }}>Le canal Telegram est inclus dans le plan Max.</div>}
+          </IntCard>
+
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
           <button onClick={saveWebhook} disabled={webhookSave === 'saving'} style={{ padding: '9px 20px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: webhookSave === 'saving' ? 'not-allowed' : 'pointer', opacity: webhookSave === 'saving' ? .6 : 1 }}>
-            {webhookSave === 'saving' ? 'Enregistrement…' : 'Enregistrer'}
+            {webhookSave === 'saving' ? 'Enregistrement…' : 'Enregistrer les canaux'}
           </button>
           {webhookSave === 'saved' && <span style={{ fontSize: 11, color: C.g }}>✓ Enregistré</span>}
           {webhookSave === 'error' && <span style={{ fontSize: 11, color: C.red }}>Erreur — réessaie</span>}
         </div>
-      </IntCard>
+      </div>
 
     </div>
     </div>
@@ -3713,7 +3741,7 @@ export default function DashboardClient({
             {activeTab === 'rapports' && (
               <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
             )}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} plan={plan} initialTgToken={tradingRules?.telegram_bot_token ?? null} initialTgChat={tradingRules?.telegram_chat_id ?? null} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} plan={plan} initialTgToken={tradingRules?.telegram_bot_token ?? null} initialTgChat={tradingRules?.telegram_chat_id ?? null} propFirmStart={(liveRules as any)?.prop_firm_started_at || null} />}
             {activeTab === 'regles' && <ReglesPanel initial={liveRules} plan={plan} onSaved={setLiveRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} plan={plan} />}
