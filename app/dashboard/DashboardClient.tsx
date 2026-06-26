@@ -699,20 +699,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
 
-      {/* Bandeau mode prop firm — l'utilisateur sait qu'un cadre de challenge est actif */}
-      {propFirm && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
-          background: `linear-gradient(90deg, ${C.red}1c, transparent)`,
-          border: `.5px solid ${C.red}55`, borderLeft: `2.5px solid ${C.red}`,
-          borderRadius: 8, padding: '7px 13px',
-        }}>
-          <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.4, color: C.red, fontFamily: SANS, textTransform: 'uppercase' as const }}>Mode prop firm</span>
-          <span style={{ fontSize: 11.5, color: C.tm, fontFamily: SANS }}>{propFirm.name}</span>
-          <span style={{ fontSize: 10.5, color: C.te, fontFamily: SANS }}>· capital {fmtEur(accountSize)} · DD jour {propFirm.daily}% · risk {propFirm.risk}%</span>
-        </div>
-      )}
-
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
 
@@ -2211,7 +2197,7 @@ function RuleField({ label, unit, children }: { label: string; unit?: string; ch
   )
 }
 
-function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: string }) {
+function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null; plan?: string; onSaved?: (r: TradingRules) => void }) {
   const C = useContext(ThemeCtx)
   const isMaxRules = isMaxPlan(plan)
   const [detCfg, setDetCfg] = useState<Record<string, any>>((initial as any)?.detector_config || {})
@@ -2230,30 +2216,33 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [propFirm, setPropFirm] = useState<string>((initial as any)?.prop_firm || '')
 
-  // Éditer à la main un champ piloté par le preset le désélectionne (les valeurs divergent).
-  const PROPFIRM_FIELDS: (keyof TradingRules)[] = ['max_daily_drawdown_pct', 'max_risk_per_trade_pct', 'max_consecutive_losses']
+  // Éditer à la main le drawdown journalier désélectionne le preset (la valeur diverge).
+  const PROPFIRM_FIELDS: (keyof TradingRules)[] = ['max_daily_drawdown_pct']
   function set(k: keyof TradingRules, v: string) { setRules(p => ({ ...p, [k]: v })); if (PROPFIRM_FIELDS.includes(k)) setPropFirm(''); setSave('idle') }
   function setBool(k: keyof TradingRules, v: boolean) { setRules(p => ({ ...p, [k]: v })); setSave('idle') }
 
-  // Mode prop firm : applique les garde-fous types du challenge aux règles de risque.
+  // Mode prop firm : cale le drawdown journalier max sur la règle de perte journalière
+  // de la firme (seule vraie règle de prop firm reprise ; le reste = garde-fous Caldra).
   function applyPropFirm(id: string) {
     const preset = PROPFIRM_PRESETS.find(p => p.id === id)
     if (!preset) { setPropFirm(''); setSave('idle'); return }
     setPropFirm(id)
-    setRules(p => ({
-      ...p,
-      max_daily_drawdown_pct: preset.daily,
-      max_risk_per_trade_pct: preset.risk,
-      max_consecutive_losses: preset.maxLosses,
-    }))
+    setRules(p => ({ ...p, max_daily_drawdown_pct: preset.daily }))
     setSave('idle')
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
-    const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...rules, detector_config: detCfg, prop_firm: propFirm || null }) })
+    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null }
+    const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setSave(res.ok ? 'saved' : 'error')
-    if (res.ok) setTimeout(() => setSave('idle'), 3000)
+    if (res.ok) {
+      // Remonte les règles fraîches au parent → la Session live se met à jour aussitôt.
+      let saved: TradingRules = payload as TradingRules
+      try { const d = await res.json(); if (d && typeof d === 'object') saved = { ...payload, ...d } } catch {}
+      onSaved?.(saved)
+      setTimeout(() => setSave('idle'), 3000)
+    }
   }
 
   const inputStyle: React.CSSProperties = {
@@ -2271,7 +2260,7 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
         <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Ces seuils définissent quand Caldra déclenche une alerte. Modifiables à tout moment.</div>
       </div>
     <div style={{ padding: '22px 28px', overflowY: 'auto', flex: 1 }}>
-      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <form onSubmit={submit} className="rules-form" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Mode prop firm — presets de garde-fous (plan Max) */}
         <RuleGroup title="Mode prop firm" desc="Aligne tes garde-fous de risque sur les règles d’un challenge prop firm.">
           {!isMaxRules ? (
@@ -2281,16 +2270,17 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 <button type="button" onClick={() => applyPropFirm('')} style={{
                   padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
-                  background: propFirm === '' ? C.red : 'rgba(255,255,255,.05)', color: propFirm === '' ? '#fff' : C.tm,
-                  border: `.5px solid ${propFirm === '' ? C.red : C.b2}`,
+                  background: propFirm === '' ? '#7c3aed' : 'rgba(255,255,255,.05)', color: propFirm === '' ? '#fff' : C.tm,
+                  border: `.5px solid ${propFirm === '' ? '#7c3aed' : C.b2}`,
                 }}>Aucune</button>
                 {PROPFIRM_PRESETS.map(pf => {
                   const on = propFirm === pf.id
                   return (
                     <button key={pf.id} type="button" onClick={() => applyPropFirm(pf.id)} style={{
                       padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
-                      background: on ? C.red : 'rgba(255,255,255,.05)', color: on ? '#fff' : C.tm,
-                      border: `.5px solid ${on ? C.red : C.b2}`,
+                      background: on ? '#7c3aed' : 'rgba(255,255,255,.05)', color: on ? '#fff' : C.tm,
+                      border: `.5px solid ${on ? '#7c3aed' : C.b2}`,
+                      boxShadow: on ? '0 0 0 2px rgba(124,58,237,.22)' : 'none',
                     }}>{pf.name}</button>
                   )
                 })}
@@ -2300,8 +2290,8 @@ function ReglesPanel({ initial, plan }: { initial: TradingRules | null; plan?: s
                 if (!pf) return null
                 return (
                   <div style={{ fontSize: 11.5, color: C.te, marginTop: 12, lineHeight: 1.6 }}>
-                    <span style={{ color: C.tm }}>{pf.name}</span> appliqué : drawdown journalier <span style={{ color: C.tm }}>{pf.daily}%</span> · risk/trade <span style={{ color: C.tm }}>{pf.risk}%</span> · {pf.maxLosses} pertes consécutives max · perte totale max <span style={{ color: C.tm }}>{pf.total}%</span> (informatif).
-                    <br />Valeurs indicatives — vérifie-les selon ton challenge exact, puis sauvegarde.
+                    Règles <span style={{ color: C.tm }}>{pf.name}</span> : perte journalière max <span style={{ color: C.tm }}>{pf.daily}%</span> · perte totale max <span style={{ color: C.tm }}>{pf.total}%</span> (informatif). Caldra cale ton <span style={{ color: C.tm }}>drawdown journalier sur {pf.daily}%</span> ; le risk/trade et les autres garde-fous restent à ton choix.
+                    <br />Valeurs du challenge 2-step phare — vérifie selon ta variante exacte, puis sauvegarde.
                   </div>
                 )
               })()}
@@ -3117,6 +3107,10 @@ export default function DashboardClient({
 
   const [activeTab, setActiveTab] = useState<TabId>('session')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // Règles vivantes : initialisées depuis le prop serveur, mises à jour quand l'utilisateur
+  // sauvegarde dans l'onglet Règles → la Session live reflète tout de suite le nouveau
+  // capital / preset prop firm sans recharger la page.
+  const [liveRules, setLiveRules] = useState<TradingRules | null>(tradingRules)
 
   // Auto-switch to integrations tab after cTrader / Tradovate OAuth callback
   useEffect(() => {
@@ -3452,6 +3446,7 @@ export default function DashboardClient({
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
         input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.3)}
+        .rules-form input:focus,.rules-form select:focus{border-color:#7c3aed!important;box-shadow:0 0 0 2px rgba(124,58,237,.22)}
         .c-card{transition:border-color .18s,box-shadow .18s}
         .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
         .c-row:hover{background:${C.b}!important}
@@ -3556,7 +3551,7 @@ export default function DashboardClient({
                 </button>
               ))}
             </div>
-            {isMaxPlan(plan) && <DebriefMenu tradesToday={stats.total_trades} sessionEnd={tradingRules?.session_end ?? null} />}
+            {isMaxPlan(plan) && <DebriefMenu tradesToday={stats.total_trades} sessionEnd={liveRules?.session_end ?? null} />}
           </div>
           {/* Right controls */}
           <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 12, marginLeft: 'auto', flexShrink: 0, height: 46 }}>
@@ -3664,23 +3659,23 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', gridTemplateRows: 'minmax(0, 1fr)', flex: 1, overflow: 'hidden', minHeight: 0, height: 0, marginTop: topbarH }}>
-          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={tradingRules} />}
+          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={liveRules} />}
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
-              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={tradingRules} connected={!!platformConnected || ctraderConn} />
+              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} />
             )}
             {activeTab === 'calendrier' && (
               <CalendrierPanel sessions={historicalSessions} />
             )}
             {activeTab === 'analytics' && (
-              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={tradingRules?.account_size || 10000} allTimePatterns={allTimePatterns} plan={plan} />
+              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={liveRules?.account_size || 10000} allTimePatterns={allTimePatterns} plan={plan} />
             )}
             {activeTab === 'rapports' && (
               <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
             )}
             {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} plan={plan} initialTgToken={tradingRules?.telegram_bot_token ?? null} initialTgChat={tradingRules?.telegram_chat_id ?? null} />}
-            {activeTab === 'regles' && <ReglesPanel initial={tradingRules} plan={plan} />}
+            {activeTab === 'regles' && <ReglesPanel initial={liveRules} plan={plan} onSaved={setLiveRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} plan={plan} />}
             {activeTab === 'aide' && <SupportPanel userEmail={userEmail} />}
