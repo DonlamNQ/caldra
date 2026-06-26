@@ -2751,7 +2751,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'max', name: 'Max', price: '34€',
       accent: C.red, accentAlpha: `rgba(124,58,237,`,
-      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', 'Règles configurables (on/off + seuils)', 'Mode prop firm (FTMO, FundedNext…)', 'Débriefs IA (jour/semaine/mois)', 'Patterns récurrents complets', 'Alertes Discord et Telegram', 'Rapport hebdomadaire'],
+      features: ['Tout le plan Pro inclus', '18 détecteurs comportementaux', 'Règles configurables (on/off + seuils)', 'Mode prop firm (FTMO, FundedNext…)', 'Débriefs IA (jour/semaine/mois)', 'Patterns récurrents complets', 'Alertes Telegram', 'Rapport hebdomadaire'],
     },
   ]
 
