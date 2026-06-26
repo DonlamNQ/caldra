@@ -115,6 +115,28 @@ function computeDisciplineStreak(sessions: DaySession[]): number {
 }
 const MILESTONES = [3, 5, 7, 10, 14, 21, 30, 50, 100]
 
+// Streaks de discipline (sobres) : jours de trading consécutifs, du plus récent, qui
+// respectent une condition. Chacun déclenche bannière + notif aux paliers MILESTONES.
+const STREAK_RISK_TYPES = new Set(['risk_exceeded', 'stop_not_respected', 'overleverage', 'no_stop', 'drawdown_alert', 'drawdown_override'])
+const STREAK_TILT_TYPES = new Set(['revenge_sizing', 'immediate_reentry', 'averaging_down', 'euphoria_sizing', 'accelerating_frequency'])
+
+function streakNoAlerts(sessions: DaySession[], badTypes: Set<string>): number {
+  const days = sessions.filter(s => s.tradeCount > 0).sort((a, b) => b.date.localeCompare(a.date))
+  let streak = 0
+  for (const s of days) {
+    if (s.alerts.some(a => badTypes.has(a.type))) break
+    streak++
+  }
+  return streak
+}
+
+type StreakDef = { id: string; label: string; compute: (s: DaySession[]) => number }
+const STREAK_DEFS: StreakDef[] = [
+  { id: 'discipline', label: "sessions maîtrisées d'affilée",        compute: computeDisciplineStreak },
+  { id: 'risque',     label: 'sessions sans dépassement de risque',  compute: s => streakNoAlerts(s, STREAK_RISK_TYPES) },
+  { id: 'sangfroid',  label: 'sessions sans réaction impulsive',     compute: s => streakNoAlerts(s, STREAK_TILT_TYPES) },
+]
+
 function fmtPnl(v: number) { return `${v >= 0 ? '+' : ''}${v.toFixed(2)}` }
 function fmtEur(v: number) { return `${v >= 0 ? '+€' : '-€'}${Math.abs(v).toFixed(0)}` }
 function fmtTime(iso: string) {
@@ -3214,7 +3236,7 @@ export default function DashboardClient({
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [notifPerm, setNotifPerm] = useState<string>('default')
   const [notifHint, setNotifHint] = useState<string | null>(null)   // message d'aide si l'activation échoue (iOS / permission bloquée)
-  const [milestone, setMilestone] = useState<number | null>(null)   // jalon de discipline à fêter
+  const [milestone, setMilestone] = useState<{ id: string; label: string; value: number } | null>(null)   // jalon de streak à fêter
   const [connectHint, setConnectHint] = useState(false)   // invite à connecter une plateforme (aucun trade encore)
 
   // Affiche l'invite de connexion si aucune plateforme connectée et aucun trade reçu.
@@ -3282,22 +3304,27 @@ export default function DashboardClient({
   }, [dismissToast])
 
   const score = computeScore(alerts)
-  const disciplineStreak = computeDisciplineStreak(historicalSessions)
 
-  // Notif de jalon : on fête le palier le plus haut atteint, une seule fois
-  // (mémorisé en localStorage) → réapparaît seulement quand on franchit le suivant.
+  // Jalons de streak : on fête le palier le plus haut atteint pour chaque streak, une
+  // seule fois (mémorisé en localStorage). En plus de la bannière brève, on envoie une
+  // notif système (si autorisée). Un seul palier à la fois pour ne pas spammer.
   useEffect(() => {
-    const reached = MILESTONES.filter(m => m <= disciplineStreak).pop()
-    if (!reached) return
-    const key = `caldra_milestone_${userId}`
-    const last = Number(localStorage.getItem(key) || 0)
-    if (reached > last) setMilestone(reached)
-  }, [disciplineStreak, userId])
+    for (const def of STREAK_DEFS) {
+      const val = def.compute(historicalSessions)
+      const reached = MILESTONES.filter(m => m <= val).pop()
+      if (!reached) continue
+      const key = `caldra_milestone_${def.id}_${userId}`
+      if (reached > Number(localStorage.getItem(key) || 0)) {
+        localStorage.setItem(key, String(reached))
+        setMilestone({ id: def.id, label: def.label, value: reached })
+        showPushNotif('Caldra — Jalon atteint', `${reached} ${def.label}. Garde le cap.`, `caldra-streak-${def.id}`)
+        break
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historicalSessions, userId])
 
-  const dismissMilestone = useCallback(() => {
-    if (milestone) localStorage.setItem(`caldra_milestone_${userId}`, String(milestone))
-    setMilestone(null)
-  }, [milestone, userId])
+  const dismissMilestone = useCallback(() => setMilestone(null), [])
 
   const _yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
   const _dayBefore = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0]
@@ -3546,7 +3573,7 @@ export default function DashboardClient({
           <div style={{ fontSize: 22, flexShrink: 0 }}>🏆</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 10, color: '#00d17a', letterSpacing: 1.2, textTransform: 'uppercase' as const, marginBottom: 3, fontFamily: SANS }}>Jalon atteint</div>
-            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>Bravo — {milestone} sessions maîtrisées d'affilée. Garde le cap.</div>
+            <div style={{ fontSize: 13, color: '#eae8f5', lineHeight: 1.4 }}>Bravo — {milestone.value} {milestone.label}. Garde le cap.</div>
           </div>
           <button onClick={dismissMilestone} style={{ background: 'none', border: 'none', color: 'rgba(234,232,245,.35)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>✕</button>
         </div>
