@@ -2746,7 +2746,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'pro', name: 'Pro', price: '19€',
       accent: C.g, accentAlpha: 'rgba(0,209,122,',
-      features: ['11 détecteurs comportementaux', 'Dashboard temps réel', 'Personnalisation des règles', 'Rapport mensuel', 'Historique illimité'],
+      features: ['11 détecteurs comportementaux', 'Dashboard temps réel', '3 patterns récurrents', 'Alertes Discord', 'Personnalisation des règles', 'Rapport mensuel', 'Historique illimité'],
     },
     {
       id: 'max', name: 'Max', price: '34€',
