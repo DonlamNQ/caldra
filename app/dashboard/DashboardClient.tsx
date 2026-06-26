@@ -548,6 +548,7 @@ function Sidebar({ score, alerts, stats, rules }: {
   const mReentry   = metricScore(alerts, 'reentry')
   const mDrawdown  = Math.max(0, 100 - drawdownPct)
   const mDiscipline = metricScore(alerts, 'outside_session')
+  const propFirmOn = !!(rules as any)?.prop_firm
 
   return (
     <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none', borderRadius: 16, margin: '10px 0 10px 10px', overflow: 'hidden' }}>
@@ -555,7 +556,7 @@ function Sidebar({ score, alerts, stats, rules }: {
       {/* Score */}
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: propFirmOn ? 'linear-gradient(90deg, rgba(124,58,237,.9), rgba(124,58,237,.3), transparent)' : `linear-gradient(90deg, ${scoreCol}90, ${scoreCol}30, transparent)`, transition: 'background .5s' }} />
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: SANS }}>Profil comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ScoreRingSvg score={score} />
@@ -695,9 +696,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   const propFirmId = (rules as any)?.prop_firm as string | null
   const propFirm = propFirmId ? PROPFIRM_PRESETS.find(p => p.id === propFirmId) : null
   const accountSize = rules?.account_size || 10000
-  // Ambiance violette des cartes quand le mode prop firm est actif (signal discret).
-  const ambBd = propFirm ? 'rgba(124,58,237,.34)' : C.b
-  const ambLn = propFirm ? 'rgba(124,58,237,.85)' : C.b3
+  // Ambiance prop firm : pas de contour coloré, seulement le filet lumineux du haut.
+  const ambBd = C.b
+  const ambLn = propFirm ? 'rgba(124,58,237,.9)' : C.b3
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
@@ -1296,9 +1297,10 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
   const inProp = !!(propFirm && propFirmStart)
   const sessions = inProp ? sessionsAll.filter(s => (s.date || '') >= propFirmStart!) : sessionsAll
   const journalTrades = inProp ? journalTradesAll.filter(t => (t.entry_time || '').slice(0, 10) >= propFirmStart!) : journalTradesAll
-  // Ambiance violette des cartes quand le mode prop firm est actif (signal discret).
-  const ambBd = inProp ? 'rgba(124,58,237,.34)' : C.b
-  const ambLn = inProp ? 'rgba(124,58,237,.85)' : C.b3
+  // Ambiance prop firm : pas de contour coloré, seulement le filet lumineux du haut
+  // (appliqué à TOUTES les cartes via la classe .ana-prop + .cflux, cf. <style> global).
+  const ambBd = C.b
+  const ambLn = inProp ? 'rgba(124,58,237,.9)' : C.b3
 
   const totalPnl = sessions.reduce((s, d) => s + d.pnl, 0)
   const avgScore = sessions.length > 0 ? Math.round(sessions.reduce((s, d) => s + d.score, 0) / sessions.length) : 0
@@ -1389,7 +1391,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
   const maxDDpct = accountSize > 0 ? (maxDD / accountSize) * 100 : 0
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+    <div className={inProp ? 'ana-prop' : undefined} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
       {/* Header */}
       <div style={{ padding: '18px 24px 16px', borderBottom: `.5px solid ${ambBd}`, flexShrink: 0 }}>
@@ -1453,7 +1455,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
 
       {/* Grande courbe d'evolution du capital (trade par trade) */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+        <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Évolution du capital</div>
         </div>
@@ -1465,7 +1467,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
 
         {/* Par instrument */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Par instrument</div>
             <div style={{ fontSize: 9.5, color: C.te, fontFamily: SANS }}>barre = ampleur du P&L</div>
@@ -1497,7 +1499,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
 
         {/* Comportement */}
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Comportement</div>
             <div style={{ fontSize: 10.5, color: C.te, fontFamily: SANS }}>score moy. <span style={{ color: scoreColor(avgScore, C), fontWeight: 600 }}>{avgScore}</span></div>
@@ -1548,7 +1550,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
       {/* Long vs Short | PnL par jour de semaine */}
       <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>Long vs Short</div>
           {(() => {
             const m = Math.max(1, Math.abs(longPnl), Math.abs(shortPnl))
@@ -1570,7 +1572,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
           })()}
         </div>
         <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+          <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3, marginBottom: 16 }}>PnL par jour de semaine</div>
           {(() => {
             const m = Math.max(1, ...dowPnl.map(v => Math.abs(v)))
@@ -1654,7 +1656,7 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
     const isLoading = loading === k
     return (
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 20, display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+        <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
         <div style={{ width: 42, height: 42, borderRadius: 10, background: C.rd, border: `.5px solid ${C.rb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{icon}</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13.5, fontWeight: 400, color: C.tx, marginBottom: 3 }}>{title}</div>
@@ -2831,7 +2833,7 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
   const fieldLbl: React.CSSProperties = { fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }
   const Card = ({ title, accent, children }: { title: string; accent?: string; children: React.ReactNode }) => (
     <div style={{ background: C.sf, border: `.5px solid ${accent ?? C.b}`, ...(accent ? { borderLeft: `3px solid ${accent}` } : {}), borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+      <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
       <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: accent ?? C.te, marginBottom: 16, fontFamily: SANS }}>{title}</div>
       {children}
     </div>
@@ -2855,7 +2857,7 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
 
       {/* Résumé du compte */}
       <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '16px 22px', display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+        <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
         <div style={{ width: 52, height: 52, borderRadius: '50%', flexShrink: 0, background: C.sf2, border: `.5px solid ${C.b2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 500, color: C.tx, letterSpacing: .5 }}>{initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 500, color: C.tx, marginBottom: 2 }}>{fullName || 'Ton profil'}</div>
@@ -2972,7 +2974,7 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
   const fieldLbl: React.CSSProperties = { fontSize: 9, letterSpacing: 1.5, color: C.te, marginBottom: 5 }
   const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
+      <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
       <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' as const, color: C.te, marginBottom: 16, fontFamily: SANS }}>{title}</div>
       {children}
     </div>
@@ -3470,6 +3472,7 @@ export default function DashboardClient({
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
         input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.3)}
+        .ana-prop .cflux{background:linear-gradient(90deg,transparent,rgba(124,58,237,.9) 40%,transparent)!important}
         .c-card{transition:border-color .18s,box-shadow .18s}
         .c-card:hover{border-color:${C.b3}!important;box-shadow:0 2px 18px rgba(0,0,0,.18)}
         .c-row:hover{background:${C.b}!important}
