@@ -2470,11 +2470,11 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
   }
   const select = (v: 'day' | '7' | '30') => { setView(v); if (avail(v)) load(v) }
 
-  // Le bilan Semaine n'est dispo qu'en fin de semaine (ven–dim), le bilan Mois qu'au
-  // dernier jour du mois.
+  // Le bilan Semaine n'est dispo qu'en fin de semaine : vendredi APRÈS la clôture de
+  // la séance, puis samedi/dimanche. Le bilan Mois qu'au dernier jour du mois.
   const now0 = new Date()
   const dow0 = now0.getDay()
-  const weekAvail = dow0 === 5 || dow0 === 6 || dow0 === 0
+  const weekAvail = dow0 === 6 || dow0 === 0 || (dow0 === 5 && ended)
   const lastDom = new Date(now0.getFullYear(), now0.getMonth() + 1, 0).getDate()
   const monthAvail = now0.getDate() >= lastDom - 1   // avant-dernier jour ou après
   // Le débrief du jour n'est dispo qu'à la clôture de la séance ET s'il y a eu des trades.
@@ -2525,7 +2525,7 @@ function DebriefMenu({ tradesToday, sessionEnd }: { tradesToday: number; session
             {!avail(view) && (
               <div style={{ fontSize: 12.5, color: C.td, fontStyle: 'italic', lineHeight: 1.5 }}>
                 {view === '7'
-                  ? 'Le bilan hebdomadaire sera disponible en fin de semaine.'
+                  ? 'Le bilan hebdomadaire sera disponible à la clôture de la séance du vendredi.'
                   : view === '30'
                   ? "Le bilan mensuel sera disponible à l'avant-dernier jour du mois."
                   : ended
