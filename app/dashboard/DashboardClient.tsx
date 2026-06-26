@@ -3556,7 +3556,7 @@ export default function DashboardClient({
   return (
     <ThemeCtx.Provider value={C}>
     <>
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         *{box-sizing:border-box;margin:0;padding:0;text-decoration:none}
         a{text-decoration:none!important}
         html,body{height:100%;background:${C.bg}}
@@ -3607,7 +3607,7 @@ export default function DashboardClient({
           .main-layout>*:first-child>div{height:auto!important;overflow:visible!important}
           .main-layout>*:first-child>div>div{flex:none!important;min-height:0!important}
         }
-      `}</style>
+      ` }} />
 
 
       {milestone && (
