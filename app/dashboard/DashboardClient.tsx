@@ -3317,9 +3317,9 @@ export default function DashboardClient({
       const key = `caldra_milestone_${def.id}_${userId}`
       if (reached > Number(localStorage.getItem(key) || 0)) {
         localStorage.setItem(key, String(reached))
-        const text = def.message(reached)
-        setMilestone({ id: def.id, text })
-        showPushNotif('Caldra — Jalon atteint', text, `caldra-streak-${def.id}`)
+        // Bannière in-app uniquement ; le push appareil (tél) est envoyé par le cron
+        // serveur /api/cron/daily-nudges → pas de notif locale ici (évite le doublon).
+        setMilestone({ id: def.id, text: def.message(reached) })
         break
       }
     }
@@ -3328,14 +3328,14 @@ export default function DashboardClient({
 
   const dismissMilestone = useCallback(() => setMilestone(null), [])
 
-  // Aperçu de test : ?streak=discipline|risque|sangfroid force la bannière + la notif
-  // du streak choisi (valeur 7), pour visualiser le rendu sans données réelles.
+  // Aperçu de test (DEV uniquement) : ?streak=discipline|risque|sangfroid force la
+  // bannière du streak choisi (valeur 7), pour visualiser le rendu sans données réelles.
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return
     const p = new URLSearchParams(window.location.search).get('streak')
     const def = STREAK_DEFS.find(d => d.id === p)
     if (!def) return
     setMilestone({ id: def.id, text: def.message(7) })
-    showPushNotif('Caldra — Jalon atteint', def.message(7), `caldra-streak-${def.id}`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -3352,8 +3352,7 @@ export default function DashboardClient({
       const key = `caldra_reminder_idle_${userId}`
       if (localStorage.getItem(key) !== last.date) {
         localStorage.setItem(key, last.date)
-        const msg = 'Ça fait quelques jours. Reprends le temps de revoir tes règles avant de te relancer.'
-        setReminder(msg); showPushNotif('Caldra', msg, 'caldra-reminder-idle')
+        setReminder('Ça fait quelques jours. Reprends le temps de revoir tes règles avant de te relancer.')
       }
       return
     }
@@ -3362,8 +3361,7 @@ export default function DashboardClient({
       const key = `caldra_reminder_hard_${userId}`
       if (localStorage.getItem(key) !== last.date) {
         localStorage.setItem(key, last.date)
-        const msg = 'Dernière session difficile. Reprends posément — respecte ta fenêtre et ton risque.'
-        setReminder(msg); showPushNotif('Caldra', msg, 'caldra-reminder-hard')
+        setReminder('Dernière session difficile. Reprends posément — respecte ta fenêtre et ton risque.')
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

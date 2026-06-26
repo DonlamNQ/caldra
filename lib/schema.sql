@@ -268,3 +268,17 @@ alter table trading_rules add column if not exists prop_firm text;
 -- cette date quand le mode est actif (données « repartent à 0 » à l'activation).
 alter table trading_rules add column if not exists prop_firm_started_at date;
 
+-- v2.15 : déduplication des notifications push serveur (cron quotidien « nudges »).
+-- kind = streak_discipline | streak_risque | streak_sangfroid | hard | idle | weekly.
+-- value = dernier palier / date / clé de semaine déjà notifié → on n'envoie qu'une fois.
+create table if not exists notif_state (
+  user_id    uuid        not null references auth.users (id) on delete cascade,
+  kind       text        not null,
+  value      text,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, kind)
+);
+alter table notif_state enable row level security;
+drop policy if exists "users read own notif_state" on notif_state;
+create policy "users read own notif_state" on notif_state for select using (auth.uid() = user_id);
+
