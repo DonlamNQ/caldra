@@ -119,34 +119,41 @@ export async function GET(req: NextRequest) {
   const priceId = priceIds()[plan]
   if (!priceId) return NextResponse.redirect(`${origin}/pricing`)
 
-  const service = serviceClient()
-  const customerId = await ensureCustomer(stripe, service, user.id, user.email ?? undefined)
+  // Toute erreur Stripe/DB → on renvoie proprement vers /pricing (pas un 500 brut
+  // sur un bouton de prix). Ex. déjà vu : produit Stripe inactif → checkout refusé.
+  try {
+    const service = serviceClient()
+    const customerId = await ensureCustomer(stripe, service, user.id, user.email ?? undefined)
 
-  // Abonnement déjà actif/en essai ? → on synchronise et on entre dans l'app.
-  const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 10 })
-  const live = subs.data.find(s => s.status === 'trialing' || s.status === 'active' || s.status === 'past_due')
-  if (live) {
-    const livePlan = planForPrice(live.items.data[0]?.price.id) ?? plan
-    await service
-      .from('user_profiles')
-      .upsert(
-        { user_id: user.id, plan: livePlan, subscription_status: live.status, stripe_customer_id: customerId, stripe_subscription_id: live.id },
-        { onConflict: 'user_id' }
-      )
-    return NextResponse.redirect(`${origin}/onboarding`)
+    // Abonnement déjà actif/en essai ? → on synchronise et on entre dans l'app.
+    const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 10 })
+    const live = subs.data.find(s => s.status === 'trialing' || s.status === 'active' || s.status === 'past_due')
+    if (live) {
+      const livePlan = planForPrice(live.items.data[0]?.price.id) ?? plan
+      await service
+        .from('user_profiles')
+        .upsert(
+          { user_id: user.id, plan: livePlan, subscription_status: live.status, stripe_customer_id: customerId, stripe_subscription_id: live.id },
+          { onConflict: 'user_id' }
+        )
+      return NextResponse.redirect(`${origin}/onboarding`)
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      subscription_data: { trial_period_days: 7 },
+      payment_method_collection: 'always',
+      allow_promotion_codes: true,
+      success_url: `${origin}/billing?success=1`,
+      cancel_url: `${origin}/pricing?canceled=1`,
+      metadata: { user_id: user.id, plan },
+    })
+
+    return NextResponse.redirect(session.url!)
+  } catch (e) {
+    console.error('[checkout GET] échec création session:', (e as Error)?.message)
+    return NextResponse.redirect(`${origin}/pricing?error=checkout`)
   }
-
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    subscription_data: { trial_period_days: 7 },
-    payment_method_collection: 'always',
-    allow_promotion_codes: true,
-    success_url: `${origin}/billing?success=1`,
-    cancel_url: `${origin}/pricing?canceled=1`,
-    metadata: { user_id: user.id, plan },
-  })
-
-  return NextResponse.redirect(session.url!)
 }
