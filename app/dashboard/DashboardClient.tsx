@@ -1367,9 +1367,10 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
     const t = a.type ?? ''
     if (t) winCounts[t] = (winCounts[t] ?? 0) + 1
   }
-  // En mode prop firm, on ignore les compteurs all-time (non scopés) au profit des
-  // alertes de la fenêtre déjà filtrée depuis le démarrage du compte.
-  const patternCounts = (!inProp && allTimePatterns && Object.keys(allTimePatterns).length) ? allTimePatterns : winCounts
+  // Le comportement est HUMAIN, pas lié à un compte : les patterns restent sur TOUTE
+  // ta durée (all-time), même en mode prop firm. Seuls les chiffres financiers au-dessus
+  // sont scopés au challenge. Repli sur la fenêtre chargée si pas de compteurs all-time.
+  const patternCounts = (allTimePatterns && Object.keys(allTimePatterns).length) ? allTimePatterns : winCounts
   const allPatternEntries = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])
   // Pro : 5 schémas max · Max : tous.
   const patIsMax = isMaxPlan(plan)
