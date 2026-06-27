@@ -564,7 +564,6 @@ function Sidebar({ score, alerts, stats, rules }: {
     : 0
   const tradesPct = rules ? Math.min(100, Math.round(stats.total_trades / rules.max_trades_per_session * 100)) : 0
 
-  const scoreCol = scoreColor(score, C)
   const statusLabel = score >= 70 ? 'Contrôlé' : score >= 40 ? 'Attention' : 'STOP'
   const statusCls = score >= 70 ? 'ok' : score >= 40 ? 'warn' : 'danger'
   const statusNote = score >= 70
@@ -588,7 +587,6 @@ function Sidebar({ score, alerts, stats, rules }: {
 
       {/* Score */}
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scoreCol}12 0%, transparent 60%)`, pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${propFirmOn ? 'rgba(124,58,237,.9)' : C.b3} 40%, transparent)`, transition: 'background .5s' }} />
         {propFirmOn && <div style={{ marginBottom: 8 }}><PropFirmChip start={propFirmStart} /></div>}
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: SANS }}>Profil comportemental</span>
