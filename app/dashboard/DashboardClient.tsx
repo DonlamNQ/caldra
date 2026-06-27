@@ -426,11 +426,6 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
   // Fraction verticale de la ligne du zéro dans la zone de tracé → point de
   // bascule des dégradés (vert au-dessus du zéro, rouge en-dessous).
   const zf = Math.max(0, Math.min(1, (y0 - PYT) / DH))
-  // Pour la LIGNE : on décale la bascule vert/rouge d'un demi-trait au-dessus du zéro,
-  // pour que le tracé posé PILE sur la ligne du zéro (l'origine) ressorte rouge et non
-  // vert (le trait a une épaisseur → sa moitié haute tombait sinon côté vert). Le vert
-  // ne réapparaît que dès que la courbe est franchement positive. (L'aplat garde `zf`.)
-  const zt = Math.max(0, Math.min(1, zf - 0.7 / DH))
 
   const xyPts = pts.map((p, i) => [xOf(i), yOf(p.v)] as [number, number])
   const polyPoints = xyPts.map(([x, y]) => `${x},${y}`).join(' ')
@@ -492,14 +487,6 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
       onTouchStart={onTouch} onTouchMove={onTouch} onTouchEnd={() => setHover(null)}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
         <defs>
-          {/* Ligne : vert au-dessus du zéro, rouge en-dessous (bascule à zt, biaisée d'un
-              demi-trait au-dessus de 0 pour qu'il n'y ait pas de vert pile sur le zéro). */}
-          <linearGradient id="pnl-line" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
-            <stop offset={0} stopColor={GREEN}/>
-            <stop offset={zt} stopColor={GREEN}/>
-            <stop offset={zt} stopColor={RED}/>
-            <stop offset={1} stopColor={RED}/>
-          </linearGradient>
           {/* Aplat : même bascule, faible opacité, estompé vers la ligne du zéro. */}
           <linearGradient id="pnl-fill" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
             <stop offset={0} stopColor={GREEN} stopOpacity="0.22"/>
@@ -527,7 +514,14 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
         ))}
         {n >= 2 && <path d={fillPath} fill="url(#pnl-fill)" />}
         {n >= 2
-          ? <polyline points={polyPoints} fill="none" stroke="url(#pnl-line)" strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="butt" />
+          // Chaque segment est coloré par le signe du P&L cumulé à son arrivée :
+          // 1er trade en perte → segment depuis 0 rouge ; en gain → vert. La couleur
+          // alterne ensuite quand la courbe repasse au-dessus/en-dessous de 0. Pas de
+          // dégradé positionnel (donc aucun vert parasite pile sur la ligne du zéro).
+          ? Array.from({ length: n - 1 }, (_, i) => (
+              <line key={i} x1={xOf(i)} y1={yOf(pts[i].v)} x2={xOf(i + 1)} y2={yOf(pts[i + 1].v)}
+                stroke={colorForV(pts[i + 1].v)} strokeWidth={0.9} strokeLinecap="butt" />
+            ))
           : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={colorForV(pts[0].v)} />
         }
         {hover != null && (
