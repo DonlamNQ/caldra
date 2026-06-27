@@ -472,7 +472,7 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
       const TOL = 5
       if (yVB < Math.min(yCurve, y0) - TOL || yVB > Math.max(yCurve, y0) + TOL) { setHover(null); return }
     }
-    setHover(Math.round(fi))
+    setHover(Math.min(n - 1, Math.max(1, Math.round(fi))))   // jamais le point d'origine (index 0)
   }
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => locate(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), false)
   const onTouch = (e: React.TouchEvent<HTMLDivElement>) => { const t = e.touches[0]; if (t) locate(t.clientX, t.clientY, e.currentTarget.getBoundingClientRect(), true) }
@@ -1276,7 +1276,7 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
       const TOL = 6
       if (yVB < Math.min(yCurve, y0) - TOL || yVB > Math.max(yCurve, y0) + TOL) { setHover(null); return }
     }
-    setHover(Math.round(fi))
+    setHover(Math.min(n - 1, Math.max(1, Math.round(fi))))   // jamais le point d'origine (index 0)
   }
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => locate(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), false)
   const onTouch = (e: React.TouchEvent<HTMLDivElement>) => { const t = e.touches[0]; if (t) locate(t.clientX, t.clientY, e.currentTarget.getBoundingClientRect(), true) }
