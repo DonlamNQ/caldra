@@ -22,7 +22,8 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [x] Landing en mode lancement (CTA → /signup, essai 7j — plus de waitlist)
 
 ## 🔴 À finir / confirmer avant lancement
-- [~] **Nouveau prix Max 29€** — prix `price_1TmxBKBJjaZ0wLhV4oaUw5vk` (2900) créé en LIVE le 2026-06-27, ancien 34€ archivé, `.env.local` à jour. **RESTE : coller `STRIPE_MAX_PRICE_ID=price_1TmxBKBJjaZ0wLhV4oaUw5vk` sur Vercel (Production) + Redeploy.**
+- [x] **Nouveau prix Max 29€** — prix `price_1TmxBKBJjaZ0wLhV4oaUw5vk` (2900) créé en LIVE le 2026-06-27, ancien 34€ archivé, `.env.local` + `STRIPE_MAX_PRICE_ID` Vercel (Production) à jour.
+- [x] **Outil de test push retiré** — bloc `?test=`/`&samples=` du cron `daily-nudges` supprimé (2026-06-27).
 - [x] **Migrations SQL exécutées en prod** (Supabase SQL Editor, 2026-06-27) : v2.14 `prop_firm_started_at` + v2.15 table `notif_state`.
 - [ ] **Stripe en mode LIVE** — coupon START25 plafonné à 25 (`caldra-early-25-cap`). **RESTE : un vrai test de paiement end-to-end** (webhook → `user_profiles.plan` + `subscription_status`).
 - [x] **cTrader day 1** — OK, validé (worker Railway → `caldra-sable.vercel.app`, ingest fonctionnel).
