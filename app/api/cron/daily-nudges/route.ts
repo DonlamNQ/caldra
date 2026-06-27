@@ -64,28 +64,6 @@ export async function GET(req: NextRequest) {
 
   const service = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-  // ?test=<email> → envoi forcé d'une notif de test UNIQUEMENT à cet utilisateur
-  // (vérif du pipeline push, sans spammer les autres abonnés).
-  const testEmail = new URL(req.url).searchParams.get('test')
-  if (testEmail) {
-    const listed = await service.auth.admin.listUsers({ perPage: 1000 })
-    const users = (listed.data?.users ?? []) as Array<{ id: string; email?: string | null }>
-    const target = users.find(u => (u.email || '').toLowerCase() === testEmail.toLowerCase())
-    if (!target) return NextResponse.json({ ok: false, error: 'user introuvable' }, { status: 404 })
-
-    // &samples=1 → envoie les 4 vraies notifs avec des valeurs d'exemple (aperçu).
-    if (new URL(req.url).searchParams.get('samples') === '1') {
-      await sendPushToUser(target.id, 'Tu as atteint un jalon', 'Solide, 7 sessions sans dépasser ton risque. Ta gestion tient.', 1, '/dashboard', 'sample-streak')
-      await sendPushToUser(target.id, 'Après une session difficile', 'Reprends posément, respecte ta fenêtre et ton risque.', 1, '/dashboard', 'sample-hard')
-      await sendPushToUser(target.id, 'Ça fait un moment', '5 jours sans trader. Reprends en revoyant tes règles avant de te relancer.', 1, '/dashboard', 'sample-idle')
-      await sendPushToUser(target.id, 'Bilan de ta semaine', 'Score moyen 82/100 · 3 jour(s) propre(s) sur 4.', 1, '/dashboard', 'sample-weekly')
-      return NextResponse.json({ ok: true, samples: true, email: testEmail })
-    }
-
-    await sendPushToUser(target.id, 'Test des notifications', 'Si tu vois ça, le push serveur fonctionne. 🔔', 1)
-    return NextResponse.json({ ok: true, test: true, email: testEmail })
-  }
-
   // Seulement les users abonnés au push (sinon rien à envoyer).
   const { data: subs } = await service.from('push_subscriptions').select('user_id')
   const userIds = [...new Set((subs || []).map(s => s.user_id))]
