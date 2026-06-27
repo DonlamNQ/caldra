@@ -564,6 +564,7 @@ function Sidebar({ score, alerts, stats, rules }: {
     : 0
   const tradesPct = rules ? Math.min(100, Math.round(stats.total_trades / rules.max_trades_per_session * 100)) : 0
 
+  const scoreCol = scoreColor(score, C)
   const statusLabel = score >= 70 ? 'Contrôlé' : score >= 40 ? 'Attention' : 'STOP'
   const statusCls = score >= 70 ? 'ok' : score >= 40 ? 'warn' : 'danger'
   const statusNote = score >= 70
@@ -591,7 +592,11 @@ function Sidebar({ score, alerts, stats, rules }: {
         {propFirmOn && <div style={{ marginBottom: 8 }}><PropFirmChip start={propFirmStart} /></div>}
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: SANS }}>Profil comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <ScoreRingSvg score={score} />
+          <div style={{ position: 'relative', display: 'flex', flexShrink: 0 }}>
+            {/* Halo glow autour du cercle de score, teinté par le score (vert quand ≥70). */}
+            <div style={{ position: 'absolute', inset: -12, borderRadius: '50%', background: `radial-gradient(circle, ${scoreCol}26 0%, transparent 70%)`, pointerEvents: 'none', transition: 'background .5s' }} />
+            <ScoreRingSvg score={score} />
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8,
