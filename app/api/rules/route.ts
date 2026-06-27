@@ -74,7 +74,8 @@ export async function PUT(req: NextRequest) {
     telegram_chat_id: body.telegram_chat_id ? String(body.telegram_chat_id).trim() : null,
     detector_config: (body.detector_config && typeof body.detector_config === 'object') ? body.detector_config : {},
     prop_firm: body.prop_firm ? String(body.prop_firm) : null,
-    prop_firm_started_at: (body.prop_firm && body.prop_firm_started_at && /^\d{4}-\d{2}-\d{2}$/.test(String(body.prop_firm_started_at))) ? String(body.prop_firm_started_at) : null,
+    // Horodatage d'activation prop firm : accepte une date (legacy) OU un timestamp ISO complet.
+    prop_firm_started_at: (body.prop_firm && body.prop_firm_started_at && !isNaN(Date.parse(String(body.prop_firm_started_at)))) ? String(body.prop_firm_started_at) : null,
   }
 
   const { data, error } = await service()

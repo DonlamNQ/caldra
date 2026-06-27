@@ -45,20 +45,32 @@ export async function GET(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Mode prop firm : la Session live est scopée à l'HEURE EXACTE d'activation
+  // (prop_firm_started_at = timestamptz) → on exclut les trades faits avant.
+  const { data: rules } = await service.from('trading_rules').select('prop_firm, prop_firm_started_at').eq('user_id', user.id).single()
+  const propStartTs = (rules as any)?.prop_firm && (rules as any)?.prop_firm_started_at
+    ? String((rules as any).prop_firm_started_at) : null
+  const liveFloor = propStartTs && new Date(propStartTs).getTime() > new Date(today).getTime()
+    ? propStartTs : today
+  const scopedLive = liveFloor !== today
+
+  let alertsQuery = service
+    .from('alerts')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('session_date', today)
+    .order('level', { ascending: false })
+    .order('created_at', { ascending: false })
+  if (scopedLive) alertsQuery = alertsQuery.gte('created_at', liveFloor)
+
   const [{ data: alerts }, { data: trades }] = await Promise.all([
-    service
-      .from('alerts')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('session_date', today)
-      .order('level', { ascending: false })
-      .order('created_at', { ascending: false }),
+    alertsQuery,
 
     service
       .from('trades')
       .select('*')
       .eq('user_id', user.id)
-      .gte('entry_time', today)
+      .gte('entry_time', liveFloor)
       .order('entry_time', { ascending: false })
       .limit(20),
   ])

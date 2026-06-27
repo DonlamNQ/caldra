@@ -1071,7 +1071,7 @@ function CalendrierPanel({ sessions, propFirmStart }: { sessions: DaySession[]; 
                 outline: isSelected ? '1.5px solid rgba(124,58,237,.5)' : 'none', outlineOffset: 1,
               }}>
                 {s.alertCount > 0 && <div style={{ position: 'absolute', top: 7, right: 7, width: 5, height: 5, borderRadius: '50%', background: C.red }} />}
-                {inProp && dateStr >= propFirmStart! && (
+                {inProp && dateStr >= propFirmStart!.slice(0, 10) && (
                   <span style={{ position: 'absolute', bottom: 6, right: 6, fontSize: 7, fontWeight: 700, letterSpacing: .5, color: '#a78bfa', background: 'rgba(124,58,237,.16)', border: '.5px solid rgba(124,58,237,.45)', borderRadius: 4, padding: '1px 3px', fontFamily: SANS, lineHeight: 1.2 }}>PF</span>
                 )}
                 <div style={{ fontSize: 11, color: C.te, fontFamily: SANS, marginBottom: 4 }}>{d}</div>
@@ -1342,8 +1342,9 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
   // Mode prop firm : on scope toutes les métriques aux données depuis le démarrage du
   // compte prop firm (les données « repartent à 0 » à l'activation). Hors mode = tout.
   const inProp = !!(propFirm && propFirmStart)
-  const sessions = inProp ? sessionsAll.filter(s => (s.date || '') >= propFirmStart!) : sessionsAll
-  const journalTrades = inProp ? journalTradesAll.filter(t => (t.entry_time || '').slice(0, 10) >= propFirmStart!) : journalTradesAll
+  const propStartDate = propFirmStart ? propFirmStart.slice(0, 10) : ''   // prop_firm_started_at = timestamptz → on compare au jour pour l'Analytique
+  const sessions = inProp ? sessionsAll.filter(s => (s.date || '') >= propStartDate) : sessionsAll
+  const journalTrades = inProp ? journalTradesAll.filter(t => (t.entry_time || '').slice(0, 10) >= propStartDate) : journalTradesAll
   // Ambiance prop firm : pas de contour coloré, seulement le filet lumineux du haut
   // (appliqué à TOUTES les cartes via la classe .ana-prop + .cflux, cf. <style> global).
   const ambBd = C.b
@@ -2304,9 +2305,9 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   const [rules, setRules] = useState<TradingRules>(initial ?? defaults)
   const [save, setSave] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [propFirm, setPropFirm] = useState<string>((initial as any)?.prop_firm || '')
-  // Date de démarrage du compte prop firm : aujourd'hui à l'activation/changement de firme,
-  // conservée si on garde la même → l'Analytique se scope à partir de cette date.
-  const todayISO = new Date().toISOString().slice(0, 10)
+  // Horodatage de démarrage du compte prop firm : l'HEURE EXACTE d'activation/changement
+  // de firme (timestamptz), conservée si on garde la même firme → la Session live repart
+  // précisément à ce moment, et l'Analytique/Calendrier se scopent à partir de ce jour.
   const initialPropFirm = (initial as any)?.prop_firm || ''
   const initialPropStart = (initial as any)?.prop_firm_started_at || null
   const [propFirmStart, setPropFirmStart] = useState<string | null>(initialPropStart)
@@ -2322,15 +2323,15 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     const preset = PROPFIRM_PRESETS.find(p => p.id === id)
     if (!preset) { setPropFirm(''); setPropFirmStart(null); setSave('idle'); return }
     setPropFirm(id)
-    // Même firme qu'avant → on garde sa date de démarrage ; sinon, le compte démarre aujourd'hui.
-    setPropFirmStart(id === initialPropFirm ? (initialPropStart || todayISO) : todayISO)
+    // Même firme qu'avant → on garde son horodatage de démarrage ; sinon, le compte démarre maintenant.
+    setPropFirmStart(id === initialPropFirm ? (initialPropStart || new Date().toISOString()) : new Date().toISOString())
     setRules(p => ({ ...p, max_daily_drawdown_pct: preset.daily }))
     setSave('idle')
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
-    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || todayISO) : null }
+    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || new Date().toISOString()) : null }
     const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setSave(res.ok ? 'saved' : 'error')
     if (res.ok) {

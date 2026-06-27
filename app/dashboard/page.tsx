@@ -41,12 +41,26 @@ export default async function DashboardPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Règles d'abord : en mode prop firm, la Session live est scopée à l'HEURE EXACTE
+  // d'activation (prop_firm_started_at = timestamptz) → on exclut les trades/alertes
+  // faits avant l'activation, même le jour même. Hors prop firm : session = aujourd'hui.
+  const { data: rules } = await service.from('trading_rules').select('*').eq('user_id', user.id).single()
+  const propStartTs = (rules as any)?.prop_firm && (rules as any)?.prop_firm_started_at
+    ? String((rules as any).prop_firm_started_at) : null
+  // Plancher de la session live = le plus tardif entre minuit (aujourd'hui) et l'activation.
+  const liveFloor = propStartTs && new Date(propStartTs).getTime() > new Date(today).getTime()
+    ? propStartTs : today
+  const scopedLive = liveFloor !== today   // activation le jour même → on filtre aussi sur l'heure
+
+  let todayAlertsQuery = service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
+    .order('level', { ascending: false }).order('created_at', { ascending: false })
+  if (scopedLive) todayAlertsQuery = todayAlertsQuery.gte('created_at', liveFloor)
+
   const [
     { data: todayAlerts },
     { data: todayTrades },
     { data: histTrades },
     { data: histAlerts },
-    { data: rules },
     { data: apiKey },
     { data: yesterdayAlerts },
     { data: yesterdayTrades },
@@ -57,16 +71,14 @@ export default async function DashboardPage() {
     { data: tradovateAccounts },
     { data: allAlertTypes },
   ] = await Promise.all([
-    service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
-      .order('level', { ascending: false }).order('created_at', { ascending: false }),
-    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', today)
+    todayAlertsQuery,
+    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', liveFloor)
       .order('entry_time', { ascending: false }).limit(50),
     service.from('trades').select('id,symbol,direction,size,entry_price,exit_price,pnl,entry_time,exit_time,stop_loss')
       .eq('user_id', user.id).gte('entry_time', thirtyDaysAgo).lt('entry_time', today)
       .order('entry_time'),
     service.from('alerts').select('session_date,level,type,message')
       .eq('user_id', user.id).gte('session_date', thirtyDaysAgo).lt('session_date', today),
-    service.from('trading_rules').select('*').eq('user_id', user.id).single(),
     service.from('api_keys').select('key_prefix,created_at').eq('user_id', user.id).eq('label', 'main').limit(1).single(),
     service.from('alerts').select('level').eq('user_id', user.id).eq('session_date', yesterday),
     service.from('trades').select('pnl').eq('user_id', user.id)

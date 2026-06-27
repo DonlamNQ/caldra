@@ -282,3 +282,11 @@ alter table notif_state enable row level security;
 drop policy if exists "users read own notif_state" on notif_state;
 create policy "users read own notif_state" on notif_state for select using (auth.uid() = user_id);
 
+-- v2.16 : prop_firm_started_at passe de `date` → `timestamptz` (heure EXACTE d'activation).
+-- La Session live repart précisément au moment de l'activation (exclut les trades faits
+-- plus tôt le même jour) ; l'Analytique/Calendrier comparent toujours sur la date (slice).
+-- Les valeurs existantes (dates) deviennent minuit ce jour-là — comportement inchangé pour elles.
+alter table trading_rules
+  alter column prop_firm_started_at type timestamptz
+  using prop_firm_started_at::timestamptz;
+
