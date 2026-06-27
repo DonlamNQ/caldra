@@ -42,7 +42,7 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [ ] `STRIPE_WEBHOOK_SECRET` en local (présent sur Vercel — pas bloquant)
 - [ ] Emails produit Brevo (alertes, rapport hebdo) testés bout-en-bout
 - [ ] SPF : ajouter `include:amazonses.com` + custom MAIL FROM SES (double alignement)
-- [ ] DMARC `p=none` → `p=quarantine` une fois les rapports propres
+- [~] DMARC : passé à `p=quarantine; pct=25` le 2026-06-27 (SES + Brevo confirmés DKIM-signés). **RESTE : monter `pct=25` → `pct=100` dans ~1 semaine** une fois la délivrabilité confirmée OK.
 - [ ] Idées backlog : journal de trading, couche engagement, détecteur symbole inhabituel
 
 ---
