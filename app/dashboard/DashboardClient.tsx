@@ -398,9 +398,12 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
     )
   }
 
-  // La courbe démarre directement au premier trade : pas de point d'origine
-  // artificiel. En mode prop firm elle part du capital ; sinon de €0 (P&L cumulé).
-  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] = []
+  // La courbe est ancrée à l'origine (€0 en P&L cumulé, le capital de départ en
+  // mode prop firm) puis évolue trade par trade — sinon elle « démarrerait » au
+  // P&L du premier trade (ex. -23€ au lieu de 0€). Point d'origine sans marqueur
+  // (pnl null → tooltip « Début de session »), même logique que l'EquityCurve.
+  const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] =
+    [{ t: '', v: base, pnl: null, sym: null, dir: null }]
   let cum = 0
   for (const t of sorted) {
     cum += t.pnl ?? 0
