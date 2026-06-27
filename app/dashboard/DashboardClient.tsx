@@ -521,7 +521,7 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
         ))}
         {n >= 2 && <path d={fillPath} fill="url(#pnl-fill)" />}
         {n >= 2
-          ? <polyline points={polyPoints} fill="none" stroke="url(#pnl-line)" strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="butt" />
+          ? <polyline points={polyPoints} fill="none" stroke={colorForV(pts[pts.length - 1].v)} strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="butt" />
           : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={colorForV(pts[0].v)} />
         }
         {hover != null && (
