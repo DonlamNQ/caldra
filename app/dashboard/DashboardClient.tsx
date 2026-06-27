@@ -487,6 +487,15 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
       onTouchStart={onTouch} onTouchMove={onTouch} onTouchEnd={() => setHover(null)}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
         <defs>
+          {/* Ligne : la couleur suit la ligne du zéro — vert au-dessus de 0, rouge
+              en-dessous (bascule pile à zf). Le tracé passe au vert dès que le P&L
+              cumulé repasse positif, et inversement. */}
+          <linearGradient id="pnl-line" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
+            <stop offset={0} stopColor={GREEN}/>
+            <stop offset={zf} stopColor={GREEN}/>
+            <stop offset={zf} stopColor={RED}/>
+            <stop offset={1} stopColor={RED}/>
+          </linearGradient>
           {/* Aplat : même bascule, faible opacité, estompé vers la ligne du zéro. */}
           <linearGradient id="pnl-fill" x1="0" y1={PYT} x2="0" y2={H - PYB} gradientUnits="userSpaceOnUse">
             <stop offset={0} stopColor={GREEN} stopOpacity="0.22"/>
@@ -514,14 +523,10 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
         ))}
         {n >= 2 && <path d={fillPath} fill="url(#pnl-fill)" />}
         {n >= 2
-          // Chaque segment est coloré par le signe du P&L cumulé à son arrivée :
-          // 1er trade en perte → segment depuis 0 rouge ; en gain → vert. La couleur
-          // alterne ensuite quand la courbe repasse au-dessus/en-dessous de 0. Pas de
-          // dégradé positionnel (donc aucun vert parasite pile sur la ligne du zéro).
-          ? Array.from({ length: n - 1 }, (_, i) => (
-              <line key={i} x1={xOf(i)} y1={yOf(pts[i].v)} x2={xOf(i + 1)} y2={yOf(pts[i + 1].v)}
-                stroke={colorForV(pts[i + 1].v)} strokeWidth={0.9} strokeLinecap="butt" />
-            ))
+          // Ligne en dégradé positionnel : verte tant que la courbe est au-dessus de 0,
+          // rouge en-dessous — la couleur suit la ligne du zéro et bascule pile au
+          // croisement de 0. `butt` aux extrémités → pas de pastille à l'origine.
+          ? <polyline points={polyPoints} fill="none" stroke="url(#pnl-line)" strokeWidth={0.9} strokeLinejoin="round" strokeLinecap="butt" />
           : <circle cx={xOf(0)} cy={yOf(pts[0].v)} r={3} fill={colorForV(pts[0].v)} />
         }
         {hover != null && (
