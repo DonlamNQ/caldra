@@ -45,7 +45,9 @@ export default async function DashboardPage() {
   // d'activation (prop_firm_started_at = timestamptz) → on exclut les trades/alertes
   // faits avant l'activation, même le jour même. Hors prop firm : session = aujourd'hui.
   const { data: rules } = await service.from('trading_rules').select('*').eq('user_id', user.id).single()
-  const propStartTs = (rules as any)?.prop_firm && (rules as any)?.prop_firm_started_at
+  // Vue prop firm active = flag prop_firm_active (fallback legacy : firme configurée) + firme + date.
+  const propActiveSaved = (rules as any)?.prop_firm_active ?? !!(rules as any)?.prop_firm
+  const propStartTs = (propActiveSaved && (rules as any)?.prop_firm && (rules as any)?.prop_firm_started_at)
     ? String((rules as any).prop_firm_started_at) : null
   // Plancher de la session live = le plus tardif entre minuit (aujourd'hui) et l'activation.
   const liveFloor = propStartTs && new Date(propStartTs).getTime() > new Date(today).getTime()

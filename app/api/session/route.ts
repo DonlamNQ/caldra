@@ -47,8 +47,9 @@ export async function GET(req: NextRequest) {
 
   // Mode prop firm : la Session live est scopée à l'HEURE EXACTE d'activation
   // (prop_firm_started_at = timestamptz) → on exclut les trades faits avant.
-  const { data: rules } = await service.from('trading_rules').select('prop_firm, prop_firm_started_at').eq('user_id', user.id).single()
-  const propStartTs = (rules as any)?.prop_firm && (rules as any)?.prop_firm_started_at
+  const { data: rules } = await service.from('trading_rules').select('prop_firm, prop_firm_started_at, prop_firm_active').eq('user_id', user.id).single()
+  const propActiveSaved = (rules as any)?.prop_firm_active ?? !!(rules as any)?.prop_firm
+  const propStartTs = (propActiveSaved && (rules as any)?.prop_firm && (rules as any)?.prop_firm_started_at)
     ? String((rules as any).prop_firm_started_at) : null
   const liveFloor = propStartTs && new Date(propStartTs).getTime() > new Date(today).getTime()
     ? propStartTs : today

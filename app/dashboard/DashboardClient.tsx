@@ -573,8 +573,10 @@ function Sidebar({ score, alerts, stats, rules }: {
   const mReentry   = metricScore(alerts, 'reentry')
   const mDrawdown  = Math.max(0, 100 - drawdownPct)
   const mDiscipline = metricScore(alerts, 'outside_session')
-  const propFirmOn = !!(rules as any)?.prop_firm
-  const propFirmStart = (rules as any)?.prop_firm_started_at as string | null
+  // Vue prop firm active uniquement si le flag est vrai (fallback legacy = firme configurée).
+  const propActiveSaved = (rules as any)?.prop_firm_active ?? !!(rules as any)?.prop_firm
+  const propFirmOn = !!(propActiveSaved && (rules as any)?.prop_firm)
+  const propFirmStart = propFirmOn ? ((rules as any)?.prop_firm_started_at as string | null) : null
 
   return (
     <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none', borderRadius: 16, margin: '10px 0 10px 10px', overflow: 'hidden' }}>
@@ -720,7 +722,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   const drawdownPct = rules
     ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
-  const propFirmId = (rules as any)?.prop_firm as string | null
+  // Vue prop firm active uniquement si le flag est vrai (fallback legacy = firme configurée).
+  const propActiveSaved = (rules as any)?.prop_firm_active ?? !!(rules as any)?.prop_firm
+  const propFirmId = (propActiveSaved && (rules as any)?.prop_firm) ? ((rules as any).prop_firm as string) : null
   const propFirm = propFirmId ? PROPFIRM_PRESETS.find(p => p.id === propFirmId) : null
   const accountSize = rules?.account_size || 10000
   // Ambiance prop firm : pas de contour coloré, seulement le filet lumineux du haut.
@@ -2311,6 +2315,17 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   const initialPropFirm = (initial as any)?.prop_firm || ''
   const initialPropStart = (initial as any)?.prop_firm_started_at || null
   const [propFirmStart, setPropFirmStart] = useState<string | null>(initialPropStart)
+  // Mode prop firm = on/off MÉMORISÉ : couper le mode garde la firme + la date d'activation
+  // (rien n'est perdu). Fallback legacy : si le flag n'existe pas encore, on déduit de la firme.
+  const [propActive, setPropActive] = useState<boolean>((initial as any)?.prop_firm_active ?? !!(initial as any)?.prop_firm)
+
+  // Toggle on/off : activer sans firme encore choisie → l'utilisateur en sélectionne une ci-dessous ;
+  // activer avec une firme déjà mémorisée sans date → on démarre maintenant ; couper ne perd rien.
+  function togglePropMode(active: boolean) {
+    setPropActive(active)
+    if (active && propFirm && !propFirmStart) setPropFirmStart(new Date().toISOString())
+    setSave('idle')
+  }
 
   // Éditer à la main le drawdown journalier désélectionne le preset (la valeur diverge).
   const PROPFIRM_FIELDS: (keyof TradingRules)[] = ['max_daily_drawdown_pct']
@@ -2323,6 +2338,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     const preset = PROPFIRM_PRESETS.find(p => p.id === id)
     if (!preset) { setPropFirm(''); setPropFirmStart(null); setSave('idle'); return }
     setPropFirm(id)
+    setPropActive(true)   // choisir une firme = activer la vue prop firm
     // Même firme qu'avant → on garde son horodatage de démarrage ; sinon, le compte démarre maintenant.
     setPropFirmStart(id === initialPropFirm ? (initialPropStart || new Date().toISOString()) : new Date().toISOString())
     setRules(p => ({ ...p, max_daily_drawdown_pct: preset.daily }))
@@ -2331,7 +2347,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
-    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || new Date().toISOString()) : null }
+    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || new Date().toISOString()) : null, prop_firm_active: !!(propActive && propFirm) }
     const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setSave(res.ok ? 'saved' : 'error')
     if (res.ok) {
@@ -2364,12 +2380,18 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
             <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>Le mode prop firm (presets FTMO, FundedNext, The5ers…) est inclus dans le plan <span style={{ color: C.tx }}>Max</span>.</div>
           ) : (
             <div>
+              {/* Toggle on/off mémorisé : couper le mode garde la firme + la date d'activation. */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' as const }}>
+                <input type="checkbox" checked={propActive} onChange={e => togglePropMode(e.target.checked)} style={{ display: 'none' }} />
+                <span style={{ width: 34, height: 20, borderRadius: 10, background: propActive ? C.red : 'rgba(255,255,255,.12)', position: 'relative', transition: 'background .15s', flexShrink: 0 }}>
+                  <span style={{ position: 'absolute', top: 2, left: propActive ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
+                </span>
+                <span style={{ fontSize: 13, color: C.tx, fontFamily: SANS }}>Activer le mode prop firm</span>
+              </label>
+              {propActive && (
+              <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11.5, color: C.te, marginBottom: 10, lineHeight: 1.5 }}>Choisis ta firme : tes garde-fous s’alignent dessus, et la Session/Analytique se scopent depuis l’activation.</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                <button type="button" onClick={() => applyPropFirm('')} style={{
-                  padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
-                  background: propFirm === '' ? C.red : 'rgba(255,255,255,.05)', color: propFirm === '' ? '#fff' : C.tm,
-                  border: `.5px solid ${propFirm === '' ? C.red : C.b2}`,
-                }}>Aucune</button>
                 {PROPFIRM_PRESETS.map(pf => {
                   const on = propFirm === pf.id
                   return (
@@ -2391,6 +2413,8 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
                   </div>
                 )
               })()}
+              </div>
+              )}
             </div>
           )}
         </RuleGroup>
@@ -3310,6 +3334,14 @@ export default function DashboardClient({
 
   const score = computeScore(alerts)
 
+  // Vue prop firm "active" : la vue scopée (Session/Calendrier/Analytique depuis l'activation)
+  // n'est affichée que si prop_firm_active est vrai ET qu'une firme + une date sont configurées.
+  // En Classique (active=false) le réglage reste mémorisé → on bascule sans rien perdre.
+  const _lr: any = liveRules
+  const _propActiveSaved = (_lr?.prop_firm_active ?? !!_lr?.prop_firm)
+  const activePropFirm = (_propActiveSaved && _lr?.prop_firm) ? (_lr.prop_firm as string) : null
+  const activePropStart = (activePropFirm && _lr?.prop_firm_started_at) ? (_lr.prop_firm_started_at as string) : null
+
   // Jalons de streak : on fête le palier le plus haut atteint pour chaque streak, une
   // seule fois (mémorisé en localStorage). En plus de la bannière brève, on envoie une
   // notif système (si autorisée). Un seul palier à la fois pour ne pas spammer.
@@ -3815,15 +3847,15 @@ export default function DashboardClient({
               <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} />
             )}
             {activeTab === 'calendrier' && (
-              <CalendrierPanel sessions={historicalSessions} propFirmStart={(liveRules as any)?.prop_firm_started_at || null} />
+              <CalendrierPanel sessions={historicalSessions} propFirmStart={activePropStart} />
             )}
             {activeTab === 'analytics' && (
-              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={liveRules?.account_size || 10000} allTimePatterns={allTimePatterns} plan={plan} propFirm={(liveRules as any)?.prop_firm || null} propFirmStart={(liveRules as any)?.prop_firm_started_at || null} />
+              <AnalyticsPanel sessions={historicalSessions} todayAlerts={alerts} journalTrades={journalTrades} accountSize={liveRules?.account_size || 10000} allTimePatterns={allTimePatterns} plan={plan} propFirm={activePropFirm} propFirmStart={activePropStart} />
             )}
             {activeTab === 'rapports' && (
               <RapportsPanel plan={plan} onUpgrade={() => setActiveTab('billing')} />
             )}
-            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} plan={plan} initialTgToken={tradingRules?.telegram_bot_token ?? null} initialTgChat={tradingRules?.telegram_chat_id ?? null} propFirmStart={(liveRules as any)?.prop_firm_started_at || null} />}
+            {activeTab === 'integrations' && <IntegrationsPanel apiKeyPrefix={apiKeyPrefix} initialWebhook={tradingRules?.slack_webhook_url ?? null} ctraderConn={ctraderConn} setCtraderConn={setCtraderConn} ctraderConflict={!!ctraderConflict} ctraderPending={!!ctraderPending} userId={userId} lastTradeAt={lastTradeAt} plan={plan} initialTgToken={tradingRules?.telegram_bot_token ?? null} initialTgChat={tradingRules?.telegram_chat_id ?? null} propFirmStart={activePropStart} />}
             {activeTab === 'regles' && <ReglesPanel initial={liveRules} plan={plan} onSaved={setLiveRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} plan={plan} />}

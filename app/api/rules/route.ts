@@ -22,6 +22,7 @@ const DEFAULTS = {
   detector_config: {} as Record<string, unknown>,
   prop_firm: null as string | null,
   prop_firm_started_at: null as string | null,
+  prop_firm_active: false,
 }
 
 async function getUser() {
@@ -76,6 +77,8 @@ export async function PUT(req: NextRequest) {
     prop_firm: body.prop_firm ? String(body.prop_firm) : null,
     // Horodatage d'activation prop firm : accepte une date (legacy) OU un timestamp ISO complet.
     prop_firm_started_at: (body.prop_firm && body.prop_firm_started_at && !isNaN(Date.parse(String(body.prop_firm_started_at)))) ? String(body.prop_firm_started_at) : null,
+    // Vue active : on n'est en vue prop firm que si une firme est configurée ET le flag est vrai.
+    prop_firm_active: !!(body.prop_firm && body.prop_firm_active),
   }
 
   const { data, error } = await service()
@@ -86,7 +89,7 @@ export async function PUT(req: NextRequest) {
 
   if (error) {
     // Retry without optional columns that may not exist yet in older DB schemas
-    const { account_size, slack_webhook_url, tz_offset_hours, max_leverage, require_stop_loss, telegram_bot_token, telegram_chat_id, detector_config, prop_firm, prop_firm_started_at, ...baseRules } = rules
+    const { account_size, slack_webhook_url, tz_offset_hours, max_leverage, require_stop_loss, telegram_bot_token, telegram_chat_id, detector_config, prop_firm, prop_firm_started_at, prop_firm_active, ...baseRules } = rules
     const { data: data2, error: error2 } = await service()
       .from('trading_rules')
       .upsert(baseRules, { onConflict: 'user_id' })

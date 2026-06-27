@@ -290,3 +290,11 @@ alter table trading_rules
   alter column prop_firm_started_at type timestamptz
   using prop_firm_started_at::timestamptz;
 
+-- v2.17 : mode prop firm = VUE basculable (Classique ⇄ Prop firm) sans rien perdre.
+-- `prop_firm` (firme) + `prop_firm_started_at` (heure d'activation) restent MÉMORISÉS
+-- même en vue Classique ; `prop_firm_active` dit seulement quelle vue est affichée.
+-- Classique = toutes les données ; Prop firm = données depuis l'activation.
+alter table trading_rules add column if not exists prop_firm_active boolean not null default false;
+-- Les comptes prop firm déjà configurés restent en vue prop firm après migration.
+update trading_rules set prop_firm_active = true where prop_firm is not null;
+
