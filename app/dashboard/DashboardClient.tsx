@@ -588,15 +588,14 @@ function Sidebar({ score, alerts, stats, rules }: {
 
       {/* Score */}
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+        {/* Voile teinté par le score en haut du bloc — clippé par overflow:hidden du bloc
+            ET par les coins arrondis de la carte (sidebar) → ne déborde pas les contours. */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 96, background: `linear-gradient(180deg, ${scoreCol}24 0%, transparent 100%)`, pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${propFirmOn ? 'rgba(124,58,237,.9)' : C.b3} 40%, transparent)`, transition: 'background .5s' }} />
         {propFirmOn && <div style={{ marginBottom: 8 }}><PropFirmChip start={propFirmStart} /></div>}
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: SANS }}>Profil comportemental</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ position: 'relative', display: 'flex', flexShrink: 0 }}>
-            {/* Halo glow autour du cercle de score, teinté par le score (vert quand ≥70). */}
-            <div style={{ position: 'absolute', inset: -12, borderRadius: '50%', background: `radial-gradient(circle, ${scoreCol}26 0%, transparent 70%)`, pointerEvents: 'none', transition: 'background .5s' }} />
-            <ScoreRingSvg score={score} />
-          </div>
+          <ScoreRingSvg score={score} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8,
