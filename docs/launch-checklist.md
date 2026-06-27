@@ -26,7 +26,7 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [x] **Migrations SQL exécutées en prod** (Supabase SQL Editor, 2026-06-27) : v2.14 `prop_firm_started_at` + v2.15 table `notif_state`.
 - [ ] **Stripe en mode LIVE** — coupon START25 plafonné à 25 (`caldra-early-25-cap`). **RESTE : un vrai test de paiement end-to-end** (webhook → `user_profiles.plan` + `subscription_status`).
 - [x] **cTrader day 1** — OK, validé (worker Railway → `caldra-sable.vercel.app`, ingest fonctionnel).
-- [~] **MT5 day 1** — worker VPS mis à jour + relancé (2026-06-27, dernière version : alertes ouverture temps réel + SL). **RESTE : tester une connexion client réelle** (compte démo → trade → ingest).
+- [x] **MT5 day 1** — worker VPS à jour + relancé (2026-06-27). Connexion réelle validée : 3 comptes connectés (ICMarkets/Pepperstone/Vantage), trade test remonté dans le dashboard Caldra. ✅
 - [ ] **Test end-to-end complet** : signup → checkout (essai) → onboarding → connexion plateforme → ingest trade → alerte temps réel → dashboard.
 - [x] **Purge des données de test** en prod (trades/alertes — fait 2026-06-26).
 
