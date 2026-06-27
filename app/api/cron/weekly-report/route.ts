@@ -8,6 +8,7 @@ import React from 'react'
 import { WeeklyReport } from '@/lib/pdf/WeeklyReport'
 import type { WeeklyReportData, DayData, AlertTypeData, TradeItem } from '@/lib/pdf/WeeklyReport'
 import { sendWeeklyReportEmail } from '@/lib/brevo'
+import { isMaxPlan, isVip } from '@/lib/plans'
 
 const ALERT_LABELS: Record<string, string> = {
   revenge_sizing: 'Revenge Sizing',
@@ -87,11 +88,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to list users' }, { status: 500 })
   }
 
+  // Rapport HEBDOMADAIRE = réservé au plan Max (le mensuel ira à tous les payants
+  // via son propre cron). On charge les plans une fois pour gater dans la boucle.
+  const { data: profiles } = await service.from('user_profiles').select('user_id, plan')
+  const planByUser = new Map((profiles ?? []).map(p => [p.user_id, p.plan as string]))
+
   let sent = 0
   let skipped = 0
 
   for (const user of users) {
     if (!user.email) { skipped++; continue }
+    if (!isMaxPlan(planByUser.get(user.id)) && !isVip(user.email)) { skipped++; continue }
 
     const [{ data: trades }, { data: alerts }] = await Promise.all([
       service.from('trades').select('*').eq('user_id', user.id)
