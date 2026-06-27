@@ -1377,10 +1377,10 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
   // sont scopés au challenge. Repli sur la fenêtre chargée si pas de compteurs all-time.
   const patternCounts = (allTimePatterns && Object.keys(allTimePatterns).length) ? allTimePatterns : winCounts
   const allPatternEntries = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])
-  // Pro : 5 schémas max · Max : tous.
+  // Pro : 4 schémas max · Max : tous.
   const patIsMax = isMaxPlan(plan)
-  const patterns = allPatternEntries.slice(0, patIsMax ? 12 : 3)
-  const hiddenPatterns = patIsMax ? 0 : Math.max(0, allPatternEntries.length - 3)
+  const patterns = allPatternEntries.slice(0, patIsMax ? 12 : 4)
+  const hiddenPatterns = patIsMax ? 0 : Math.max(0, allPatternEntries.length - 4)
   const maxCount = patterns[0]?.[1] ?? 1
 
   const totalTrades = sessions.reduce((s, d) => s + d.tradeCount, 0)
@@ -1557,7 +1557,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
           <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Comportement</div>
-            <div style={{ fontSize: 10.5, color: C.te, fontFamily: SANS }}>score moy. <span style={{ color: scoreColor(avgScore, C), fontWeight: 600 }}>{avgScore}</span></div>
+            <div style={{ fontSize: 10.5, color: C.te, fontFamily: SANS }}>score moy. <span style={{ color: C.tx, fontWeight: 600 }}>{avgScore}</span></div>
           </div>
           <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 10 }}>Score moyen par jour</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 16 }}>
@@ -1574,7 +1574,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
               )
             })}
           </div>
-          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 10 }}>Patterns déclenchés</div>
+          <div style={{ fontSize: 9.5, color: C.te, letterSpacing: 1, textTransform: 'uppercase' as const, fontFamily: SANS, marginBottom: 10 }}>Patterns récurrents</div>
           {patterns.length === 0 ? (
             <div style={{ fontSize: 13, color: C.te, fontStyle: 'italic' }}>Aucun pattern — excellent travail.</div>
           ) : (
@@ -1617,7 +1617,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
               <div key={r.k} style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                   <span style={{ fontSize: 12.5, color: C.td }}>{r.k} <span style={{ color: C.te, fontFamily: SANS }}>· {r.w}% · {r.n} tr.</span></span>
-                  <span style={{ fontSize: 12.5, fontFamily: SANS, color: pnlCol(r.pnl), fontWeight: 600 }}>{fmtEur(r.pnl)}</span>
+                  <span style={{ fontSize: 12.5, fontFamily: SANS, color: C.pnl, fontWeight: 600 }}>{fmtEur(r.pnl)}</span>
                 </div>
                 <div style={{ height: 8, background: 'rgba(255,255,255,.05)', borderRadius: 4, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${Math.abs(r.pnl) / m * 100}%`, background: BAR, borderRadius: 4 }} />
@@ -2397,6 +2397,9 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
               {propActive && (
               <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 11.5, color: C.te, marginBottom: 10, lineHeight: 1.5 }}>Choisis ta firme : tes garde-fous s’alignent dessus, et la Session/Analytique se scopent depuis l’activation.</div>
+              <div style={{ fontSize: 11, color: '#a78bfa', background: 'rgba(124,58,237,.08)', border: '.5px solid rgba(124,58,237,.25)', borderRadius: 7, padding: '9px 11px', marginBottom: 12, lineHeight: 1.5 }}>
+                ℹ️ Le mode prop firm scope tes <strong style={{ fontWeight: 600 }}>chiffres</strong> (P&amp;L, drawdown, win rate) au challenge depuis l’activation. Ton <strong style={{ fontWeight: 600 }}>historique comportemental</strong> (tes patterns, tes habitudes) reste lui conservé sur toute ta durée — c’est toi, pas ton compte.
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {PROPFIRM_PRESETS.map(pf => {
                   const on = propFirm === pf.id
@@ -2780,7 +2783,7 @@ function BillingPanel({ plan: initialPlan }: { plan: string }) {
     {
       id: 'pro', name: 'Pro', price: '19€',
       accent: C.g, accentAlpha: 'rgba(0,209,122,',
-      features: ['12 détecteurs comportementaux', 'Dashboard temps réel', '3 patterns récurrents', 'Alertes Discord', 'Personnalisation des règles', 'Rapport mensuel', 'Historique illimité'],
+      features: ['12 détecteurs comportementaux', 'Dashboard temps réel', '4 patterns récurrents', 'Alertes Discord', 'Personnalisation des règles', 'Rapport mensuel', 'Historique illimité'],
     },
     {
       id: 'max', name: 'Max', price: '29€',
