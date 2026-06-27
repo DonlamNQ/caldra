@@ -23,7 +23,7 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 
 ## 🔴 À finir / confirmer avant lancement
 - [ ] **Nouveau prix Max 29€** (décidé 2026-06-26, avant: 34€) — affichage déjà à jour partout (landing/pricing/billing : 29€ / promo 21,75€). **RESTE côté Stripe** : créer un prix Max à **2900** sur le produit existant, mettre à jour `STRIPE_MAX_PRICE_ID` sur Vercel, archiver l'ancien 34€.
-- [ ] **Migrations SQL à exécuter en prod** (Supabase SQL Editor) : v2.14 `prop_firm_started_at` + v2.15 table `notif_state` (cf. `lib/schema.sql`). Sans elles : scoping prop firm Analytics + déduplication des notifs push KO.
+- [x] **Migrations SQL exécutées en prod** (Supabase SQL Editor, 2026-06-27) : v2.14 `prop_firm_started_at` + v2.15 table `notif_state`.
 - [ ] **Stripe en mode LIVE** — coupon START25 plafonné à 25 (`caldra-early-25-cap`). **RESTE : un vrai test de paiement end-to-end** (webhook → `user_profiles.plan` + `subscription_status`).
 - [x] **cTrader day 1** — OK, validé (worker Railway → `caldra-sable.vercel.app`, ingest fonctionnel).
 - [ ] **MT5 day 1** — worker VPS opérationnel, `MT5_ENC_KEY` identique Vercel+VPS, « Sauvegarder infos compte » coché + Algo Trading vert. Tester une connexion client réelle.
