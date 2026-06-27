@@ -30,6 +30,13 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [x] **MT5 day 1** — worker VPS à jour + relancé (2026-06-27). Connexion réelle validée : 3 comptes connectés (ICMarkets/Pepperstone/Vantage), trade test remonté dans le dashboard Caldra. ✅
 - [ ] **Test end-to-end complet** : signup → checkout (essai) → onboarding → connexion plateforme → ingest trade → alerte temps réel → dashboard.
 - [x] **Purge des données de test** en prod (trades/alertes — fait 2026-06-26).
+- [ ] **🔒 AUDIT SÉCURITÉ + DROITS + CONFORMITÉ (demandé par le user, à faire AVANT le lancement public)** :
+  - **RLS Supabase** : toutes les tables ont RLS activée + policies own-row (vérifier avec la clé anon qu'un user ne voit/écrit QUE ses lignes — cf. `mt5_accounts`, `notif_state`, `ctrader_accounts`, `tradovate_accounts`, `push_subscriptions`, `trading_rules`, `trades`, `alerts`, `user_profiles`).
+  - **Auth des routes API** : chaque route vérifie l'identité (service-role key jamais exposée côté client ; `/api/ingest` via hash clé ; webhooks vérifiés signature).
+  - **Secrets** : aucun secret committé (`.env.local` gitignoré), clés service-role/Stripe uniquement serveur, `MT5_ENC_KEY` non exposée.
+  - **Chiffrement données sensibles** : mots de passe MT5 chiffrés (AES-256-GCM), pas de PII en clair inutile.
+  - **RGPD / conformité** : mentions légales + politique de confidentialité à jour, suppression de compte (`/api/account/delete`) fonctionnelle, base de traitement, consentement, hébergement UE (Supabase région), DPA Stripe/Brevo/SES.
+  - **Surface d'attaque** : rate-limiting/abuse sur routes publiques, pas d'IDOR (accès par user_id, pas d'id devinable), CORS, headers de sécurité.
 
 ## 🟡 Nice-to-have / post-lancement
 - [ ] `STRIPE_WEBHOOK_SECRET` en local (présent sur Vercel — pas bloquant)
