@@ -3,6 +3,7 @@
   weekLabel: string
   weekStart: string
   pdfBase64: string
+  kind?: 'week' | 'month'   // hebdomadaire (défaut) ou mensuel
   stats: {
     avgScore: number
     totalPnl: number
@@ -18,10 +19,14 @@ export async function sendWeeklyReportEmail(opts: WeeklyReportEmailOpts): Promis
   if (!apiKey || !opts.to) return
 
   const { stats } = opts
+  const kind = opts.kind ?? 'week'
+  const periodWord = kind === 'month' ? 'mensuel' : 'hebdomadaire'
+  const binWord = kind === 'month' ? 'du mois' : 'de la semaine'
+  const granWord = kind === 'month' ? 'semaine par semaine' : 'jour par jour'
   const pnlSign = stats.totalPnl >= 0 ? '+' : ''
   const pnlColor = stats.totalPnl >= 0 ? '#00d17a' : '#ff5a3d'
   const scoreColor = stats.avgScore >= 70 ? '#00d17a' : stats.avgScore >= 40 ? '#ffab00' : '#ff5a3d'
-  const filename = `caldra-rapport-${opts.weekStart}.pdf`
+  const filename = `caldra-rapport-${kind === 'month' ? 'mensuel' : 'hebdo'}-${opts.weekStart}.pdf`
 
   await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
@@ -29,7 +34,7 @@ export async function sendWeeklyReportEmail(opts: WeeklyReportEmailOpts): Promis
     body: JSON.stringify({
       sender: { name: 'Caldra', email: 'noreply@getcaldra.com' },
       to: [{ email: opts.to }],
-      subject: `Rapport hebdomadaire · ${opts.weekLabel}`,
+      subject: `Rapport ${periodWord} · ${opts.weekLabel}`,
       attachment: [{ content: opts.pdfBase64, name: filename }],
       htmlContent: `
 <!DOCTYPE html>
@@ -40,14 +45,14 @@ export async function sendWeeklyReportEmail(opts: WeeklyReportEmailOpts): Promis
 
     <div style="margin-bottom:24px">
       <span style="font-size:11px;letter-spacing:3px;color:#7c3aed;text-transform:uppercase">Caldra</span>
-      <span style="font-size:11px;color:#475569;margin-left:12px">Rapport hebdomadaire</span>
+      <span style="font-size:11px;color:#475569;margin-left:12px">Rapport ${periodWord}</span>
     </div>
 
     <div style="background:#10101e;border:1px solid #1e1e35;border-radius:12px;padding:28px;position:relative;overflow:hidden;margin-bottom:16px">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#7c3aedcc,transparent)"></div>
 
       <div style="font-size:13px;font-weight:400;color:#94a3b8;margin-bottom:6px;letter-spacing:.3px">${opts.weekLabel}</div>
-      <div style="font-size:24px;font-weight:300;color:#eae8f5;margin-bottom:20px">Votre bilan de la semaine</div>
+      <div style="font-size:24px;font-weight:300;color:#eae8f5;margin-bottom:20px">Votre bilan ${binWord}</div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
         <div style="background:#0d0d1a;border:1px solid #1e1e35;border-radius:8px;padding:14px;text-align:center">
@@ -69,7 +74,7 @@ export async function sendWeeklyReportEmail(opts: WeeklyReportEmailOpts): Promis
       </div>
 
       <div style="font-size:11px;color:#64748b;background:#0a0a18;border:1px solid #1e1e35;border-radius:6px;padding:10px 14px;margin-bottom:20px">
-        📎 Rapport complet en pièce jointe — score jour par jour, journal des trades, détail des alertes comportementales.
+        📎 Rapport complet en pièce jointe — score ${granWord}, journal des trades, détail des alertes comportementales.
       </div>
 
       <a href="https://getcaldra.com/dashboard"
