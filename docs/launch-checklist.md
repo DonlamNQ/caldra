@@ -22,6 +22,7 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [x] Landing en mode lancement (CTA → /signup, essai 7j — plus de waitlist)
 
 ## 🔴 À finir / confirmer avant lancement
+- [ ] **⚠️ UPGRADE VERCEL HOBBY → PRO** (~20$/mois) — **bloquant**. (1) Hobby = usage NON-commercial seulement → un SaaS payant doit être sur Pro (risque de suspension). (2) Hobby = 2 crons max ; on en a **3** (weekly-report + monthly-report + daily-nudges) → sans Pro, le 3ᵉ ne tourne pas. Au 2026-06-27 le projet est encore en **Hobby**.
 - [x] **Nouveau prix Max 29€** — prix `price_1TmxBKBJjaZ0wLhV4oaUw5vk` (2900) créé en LIVE le 2026-06-27, ancien 34€ archivé, `.env.local` + `STRIPE_MAX_PRICE_ID` Vercel (Production) à jour.
 - [x] **Outil de test push retiré** — bloc `?test=`/`&samples=` du cron `daily-nudges` supprimé (2026-06-27).
 - [x] **Migrations SQL exécutées en prod** (Supabase SQL Editor, 2026-06-27) : v2.14 `prop_firm_started_at` + v2.15 table `notif_state`.
