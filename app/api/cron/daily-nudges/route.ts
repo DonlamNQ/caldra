@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPushToUser } from '@/lib/push'
+import { isMaxPlan, isVip } from '@/lib/plans'
 
 // Cron quotidien « nudges » : envoie sur le téléphone (push serveur, même app fermée)
 // les jalons de streak, la reprise après une session difficile, l'inactivité et le
@@ -69,6 +70,14 @@ export async function GET(req: NextRequest) {
   const userIds = [...new Set((subs || []).map(s => s.user_id))]
   if (userIds.length === 0) return NextResponse.json({ ok: true, sent: 0, users: 0 })
 
+  // Plans + emails : pour la push du dimanche, Max = « rapport hebdo prêt », sinon récap.
+  const [{ data: profiles }, listed] = await Promise.all([
+    service.from('user_profiles').select('user_id, plan'),
+    service.auth.admin.listUsers({ perPage: 1000 }),
+  ])
+  const planByUser = new Map((profiles ?? []).map(p => [p.user_id, p.plan as string]))
+  const emailByUser = new Map((listed.data?.users ?? []).map(u => [u.id, u.email ?? '']))
+
   const today = new Date()
   const todayStr = today.toISOString().slice(0, 10)
   const dow = today.getUTCDay() // 0 = dimanche, 1 = lundi
@@ -119,18 +128,25 @@ export async function GET(req: NextRequest) {
       sent++
     }
 
-    // 4) Bilan hebdo (le lundi, sur la semaine écoulée lun→dim)
-    if (dow === 1) {
+    // 4) Le DIMANCHE, sur la semaine qui se termine (lun→dim) :
+    //    • Max  → « Ton rapport hebdo est prêt » (PDF dispo dans l'app, pas d'email hebdo)
+    //    • Pro  → « Bilan de ta semaine » (récap chiffré, pas de rapport hebdo)
+    //    Une seule push par personne → pas de doublon.
+    if (dow === 0) {
       const monday = new Date(today)
-      monday.setUTCDate(today.getUTCDate() - 7)
+      monday.setUTCDate(today.getUTCDate() - 6) // lundi de la semaine qui se termine aujourd'hui
       monday.setUTCHours(0, 0, 0, 0)
       const weekKey = monday.toISOString().slice(0, 10)
-      const sunStr = new Date(monday.getTime() + 6 * 86_400_000).toISOString().slice(0, 10)
-      const wk = days.filter(d => d.date >= weekKey && d.date <= sunStr)
+      const wk = days.filter(d => d.date >= weekKey && d.date <= todayStr)
       if (wk.length > 0 && state.get('weekly') !== weekKey) {
-        const avg = Math.round(wk.reduce((s, d) => s + d.score, 0) / wk.length)
-        const clean = wk.filter(d => d.score >= 70 && d.critical === 0).length
-        await sendPushToUser(uid, 'Bilan de ta semaine', `Score moyen ${avg}/100 · ${clean} jour(s) propre(s) sur ${wk.length}.`, 1, '/dashboard', 'nudge-weekly')
+        const isMax = isMaxPlan(planByUser.get(uid)) || isVip(emailByUser.get(uid))
+        if (isMax) {
+          await sendPushToUser(uid, 'Ton rapport hebdo est prêt', 'Ta semaine est bouclée — ouvre Caldra pour consulter ton rapport hebdomadaire.', 1, '/dashboard', 'nudge-weekly')
+        } else {
+          const avg = Math.round(wk.reduce((s, d) => s + d.score, 0) / wk.length)
+          const clean = wk.filter(d => d.score >= 70 && d.critical === 0).length
+          await sendPushToUser(uid, 'Bilan de ta semaine', `Score moyen ${avg}/100 · ${clean} jour(s) propre(s) sur ${wk.length}.`, 1, '/dashboard', 'nudge-weekly')
+        }
         await setState('weekly', weekKey)
         sent++
       }
