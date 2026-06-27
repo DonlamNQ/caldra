@@ -588,9 +588,10 @@ function Sidebar({ score, alerts, stats, rules }: {
 
       {/* Score */}
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-        {/* Voile teinté par le score en haut du bloc — clippé par overflow:hidden du bloc
-            ET par les coins arrondis de la carte (sidebar) → ne déborde pas les contours. */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 96, background: `linear-gradient(180deg, ${scoreCol}24 0%, transparent 100%)`, pointerEvents: 'none', transition: 'background .5s' }} />
+        {/* Voile teinté par le score en haut du bloc. On lui donne SES propres arrondis en
+            haut (16, = carte sidebar) : le clipping d'un enfant absolu par le border-radius
+            du parent bugge sur mobile (iOS/Safari) → arrondis explicites = suit les coins partout. */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 96, background: `linear-gradient(180deg, ${scoreCol}24 0%, transparent 100%)`, borderTopLeftRadius: 16, borderTopRightRadius: 16, pointerEvents: 'none', transition: 'background .5s' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${propFirmOn ? 'rgba(124,58,237,.9)' : C.b3} 40%, transparent)`, transition: 'background .5s' }} />
         {propFirmOn && <div style={{ marginBottom: 8 }}><PropFirmChip start={propFirmStart} /></div>}
         <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, display: 'block', marginBottom: 12, textTransform: 'uppercase' as const, fontFamily: SANS }}>Profil comportemental</span>
