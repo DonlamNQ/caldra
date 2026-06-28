@@ -6,30 +6,11 @@ import { createClient } from '@supabase/supabase-js'
 import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { WeeklyReport } from '@/lib/pdf/WeeklyReport'
-import type { WeeklyReportData, DayData, AlertTypeData, TradeItem } from '@/lib/pdf/WeeklyReport'
+import { buildReportData, fetchPropFirmInfo, type Bucket } from '@/lib/reportData'
 import { sendWeeklyReportEmail } from '@/lib/brevo'
 import { isMaxPlan, isVip } from '@/lib/plans'
 
-const ALERT_LABELS: Record<string, string> = {
-  revenge_sizing: 'Revenge Sizing',
-  immediate_reentry: 'Réentrée Impulsive',
-  consecutive_losses: 'Pertes Consécutives',
-  drawdown_alert: 'Drawdown',
-  outside_session: 'Hors Session',
-  overtrading: 'Overtrading',
-}
-
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-
-function computeScore(alerts: { level?: number }[]): number {
-  const deductions = alerts.reduce((sum, a) => {
-    const level = a.level ?? 1
-    if (level === 3) return sum + 18
-    if (level === 2) return sum + 8
-    return sum + 3
-  }, 0)
-  return Math.max(0, 100 - deductions)
-}
 
 function getPreviousMonday(): Date {
   const now = new Date()
@@ -81,7 +62,17 @@ export async function GET(req: NextRequest) {
   const sunday = addDays(monday, 6)
   const weekStartStr = toISODate(monday)
   const weekEndStr = toISODate(addDays(sunday, 1))
+  const prevStartStr = toISODate(addDays(monday, -7))   // semaine d'avant (tendance)
   const wLabel = weekLabel(monday)
+
+  // Buckets = jours ouvrés de la semaine.
+  const buckets: Bucket[] = []
+  for (let i = 0; i < 7; i++) {
+    const day = addDays(monday, i)
+    const dow = day.getUTCDay()
+    if (dow === 0 || dow === 6) continue
+    buckets.push({ label: frLabel(day), startStr: toISODate(day), endStr: toISODate(addDays(day, 1)) })
+  }
 
   const { data: { users }, error: usersError } = await service.auth.admin.listUsers({ perPage: 1000 })
   if (usersError || !users) {
@@ -112,63 +103,28 @@ export async function GET(req: NextRequest) {
 
     if (safeTrades.length === 0) { skipped++; continue }
 
-    // Build day data
-    const days: DayData[] = []
-    for (let i = 0; i < 7; i++) {
-      const day = addDays(monday, i)
-      const dow = day.getUTCDay()
-      if (dow === 0 || dow === 6) continue
-      const dateStr = toISODate(day)
-      const dayTrades = safeTrades.filter(t => t.entry_time?.startsWith(dateStr))
-      const dayAlerts = safeAlerts.filter(a => a.session_date === dateStr)
-      const wins = dayTrades.filter(t => (t.pnl ?? 0) > 0).length
-      const pnl = dayTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
-      days.push({
-        date: dateStr, label: frLabel(day),
-        score: computeScore(dayAlerts), pnl,
-        tradeCount: dayTrades.length, wins, alertCount: dayAlerts.length,
-      })
-    }
+    const [{ data: prevTrades }, { data: prevAlerts }, propFirm] = await Promise.all([
+      service.from('trades').select('entry_time, pnl').eq('user_id', user.id).gte('entry_time', prevStartStr).lt('entry_time', weekStartStr),
+      service.from('alerts').select('session_date, level').eq('user_id', user.id).gte('session_date', prevStartStr).lt('session_date', weekStartStr),
+      fetchPropFirmInfo(service, user.id),
+    ])
 
-    const tradingDays = days.filter(d => d.tradeCount > 0)
-    const avgScore = tradingDays.length > 0
-      ? Math.round(tradingDays.reduce((s, d) => s + d.score, 0) / tradingDays.length) : 0
-    const totalPnl = safeTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
-    const wins = safeTrades.filter(t => (t.pnl ?? 0) > 0).length
-    const winRate = safeTrades.length > 0 ? Math.round((wins / safeTrades.length) * 100) : 0
-    const criticalAlerts = safeAlerts.filter(a => a.level === 3).length
-
-    const alertMap = new Map<string, { count: number; maxLevel: number }>()
-    for (const a of safeAlerts) {
-      const existing = alertMap.get(a.type) ?? { count: 0, maxLevel: 1 }
-      alertMap.set(a.type, { count: existing.count + 1, maxLevel: Math.max(existing.maxLevel, a.level ?? 1) })
-    }
-    const alertsByType: AlertTypeData[] = Array.from(alertMap.entries())
-      .map(([type, v]) => ({ type, label: ALERT_LABELS[type] ?? type, count: v.count, maxLevel: v.maxLevel }))
-      .sort((a, b) => b.maxLevel - a.maxLevel || b.count - a.count)
-
-    const tradeItems: TradeItem[] = safeTrades.map(t => {
-      const dt = new Date(t.entry_time)
-      const tradeAlerts = safeAlerts.filter(a =>
-        a.trade_id ? a.trade_id === t.id : Math.abs(new Date(a.created_at).getTime() - dt.getTime()) < 90000
-      )
-      return {
-        date: dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }),
-        time: dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-        symbol: t.symbol, direction: t.direction as 'long' | 'short',
-        size: t.size, pnl: t.pnl ?? 0, alertCount: tradeAlerts.length,
-      }
+    const data = buildReportData({
+      meta: {
+        weekLabel: wLabel,
+        periodTitle: 'RAPPORT HEBDOMADAIRE',
+        bucketUnit: 'JOUR',
+        generatedAt: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
+        userEmail: user.email,
+        periodWord: 'la semaine',
+      },
+      buckets,
+      trades: safeTrades,
+      alerts: safeAlerts,
+      prevTrades: (prevTrades ?? []) as any,
+      prevAlerts: (prevAlerts ?? []) as any,
+      propFirm,
     })
-
-    const data: WeeklyReportData = {
-      weekLabel: wLabel,
-      generatedAt: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
-      userEmail: user.email,
-      days,
-      summary: { avgScore, totalPnl, winRate, totalTrades: safeTrades.length, totalAlerts: safeAlerts.length, criticalAlerts },
-      alertsByType,
-      trades: tradeItems,
-    }
 
     try {
       const pdfBuffer = await renderToBuffer(React.createElement(WeeklyReport, { data }) as any)

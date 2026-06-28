@@ -28,6 +28,32 @@ export interface TradeItem {
   alertCount: number
 }
 
+export interface PerfMetrics {
+  profitFactor: number | null   // gains bruts / |pertes brutes| (null si pas de perte)
+  expectancy: number            // PnL moyen par trade
+  avgWin: number
+  avgLoss: number               // négatif
+  payoff: number | null         // gain moyen / |perte moyenne|
+  bestTrade: number
+  worstTrade: number
+  maxWinStreak: number
+  maxLossStreak: number
+  avgDurationMin: number | null
+  grossProfit: number
+  grossLoss: number             // négatif
+}
+
+export interface SideStat { trades: number; wins: number; pnl: number }
+export interface SymbolStat { symbol: string; trades: number; wins: number; pnl: number }
+
+export interface PropFirmInfo {
+  name: string
+  phase: string
+  progressPct: number | null     // avancement vers l'objectif (si phase à objectif)
+  bestDayShare: number | null    // part de la meilleure journée dans le profit total
+  consistencyMax: number | null  // seuil de consistance de la firme (si applicable)
+}
+
 export interface WeeklyReportData {
   weekLabel: string
   periodTitle?: string   // 'RAPPORT HEBDOMADAIRE' (défaut) | 'RAPPORT MENSUEL'
@@ -43,6 +69,13 @@ export interface WeeklyReportData {
     totalAlerts: number
     criticalAlerts: number
   }
+  prevAvgScore: number | null    // période précédente → tendance de discipline
+  narrative: string              // synthèse rédigée de la période
+  metrics: PerfMetrics
+  bySide: { long: SideStat; short: SideStat }
+  bySymbol: SymbolStat[]         // top symboles
+  recommendations: string[]
+  propFirm?: PropFirmInfo | null
   alertsByType: AlertTypeData[]
   trades: TradeItem[]
 }
@@ -165,7 +198,52 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: { fontSize: 7.5, color: M },
+
+  // Synthèse rédigée
+  narrativeBox: {
+    backgroundColor: '#f8f7ff',
+    borderWidth: 1,
+    borderColor: B,
+    borderStyle: 'solid',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: A,
+    padding: 12,
+  },
+  narrativeText: { fontSize: 9.5, color: '#334155', lineHeight: 1.55 },
+
+  // Grille de métriques
+  statGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  statBox: {
+    width: '25%',
+    paddingVertical: 7,
+    paddingHorizontal: 4,
+  },
+  statLabel: { fontSize: 6.5, color: M, fontFamily: 'Helvetica-Bold', marginBottom: 3 },
+  statValue: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: T },
+  statSub: { fontSize: 6.5, color: M, marginTop: 1 },
+
+  // Cartes Long/Short
+  sideRow: { flexDirection: 'row', marginBottom: 10 },
+  sideCard: {
+    flex: 1,
+    backgroundColor: '#f8f7ff',
+    borderWidth: 1,
+    borderColor: B,
+    borderStyle: 'solid',
+    borderRadius: 8,
+    padding: 10,
+    marginRight: 8,
+  },
+
+  // Recommandations
+  recoRow: { flexDirection: 'row', marginBottom: 6, alignItems: 'flex-start' },
+  recoBullet: { fontSize: 9, color: A, fontFamily: 'Helvetica-Bold', marginRight: 6, width: 10 },
+  recoText: { fontSize: 9.5, color: '#334155', lineHeight: 1.5, flex: 1 },
 })
+
+const fmtEur = (v: number) => `${v >= 0 ? '+€' : '-€'}${Math.abs(v).toFixed(0)}`
+const fmtEur2 = (v: number) => `${v >= 0 ? '+€' : '-€'}${Math.abs(v).toFixed(2)}`
 
 function ScoreBarChart({ days }: { days: DayData[] }) {
   const W = 210, H = 55, baseY = 50, maxBarH = 42
@@ -297,10 +375,29 @@ const LEVEL_LABELS: Record<number, string> = {
   3: 'Critique',
 }
 
+function Stat({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+  return (
+    <View style={s.statBox}>
+      <Text style={s.statLabel}>{label}</Text>
+      <Text style={[s.statValue, color ? { color } : {}]}>{value}</Text>
+      {sub ? <Text style={s.statSub}>{sub}</Text> : null}
+    </View>
+  )
+}
+
+function fmtDur(min: number | null): string {
+  if (min == null) return '—'
+  if (min < 60) return `${Math.round(min)} min`
+  const h = Math.floor(min / 60), m = Math.round(min % 60)
+  return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`
+}
+
 export function WeeklyReport({ data }: { data: WeeklyReportData }) {
-  const { summary: sum } = data
+  const { summary: sum, metrics: mt } = data
   const fmtPnl = (v: number) => `${v >= 0 ? '+€' : '-€'}${Math.abs(v).toFixed(0)}`
   const pnlCol = sum.totalPnl >= 0 ? G : R
+  const trendDelta = data.prevAvgScore != null ? sum.avgScore - data.prevAvgScore : null
+  const sideWR = (st: SideStat) => st.trades > 0 ? Math.round(st.wins / st.trades * 100) : 0
 
   return (
     <Document>
@@ -319,6 +416,14 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
           </View>
         </View>
 
+        {/* ── Synthèse ───────────────────────────────────────────────── */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>SYNTHÈSE</Text>
+          <View style={s.narrativeBox}>
+            <Text style={s.narrativeText}>{data.narrative}</Text>
+          </View>
+        </View>
+
         {/* ── Vue d'ensemble ─────────────────────────────────────────── */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>VUE D'ENSEMBLE</Text>
@@ -329,6 +434,11 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
                 {sum.avgScore}
                 <Text style={{ fontSize: 11, color: M, fontFamily: 'Helvetica' }}>/100</Text>
               </Text>
+              {trendDelta != null && (
+                <Text style={[s.cardSub, { color: trendDelta > 0 ? G : trendDelta < 0 ? R : M }]}>
+                  {trendDelta > 0 ? '▲ +' : trendDelta < 0 ? '▼ ' : ''}{trendDelta === 0 ? 'stable' : trendDelta}{trendDelta !== 0 ? ' vs préc.' : ''}
+                </Text>
+              )}
             </View>
             <View style={s.card}>
               <Text style={s.cardLabel}>PNL TOTAL</Text>
@@ -365,6 +475,64 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
           </View>
         </View>
 
+        {/* ── Métriques de performance ───────────────────────────────── */}
+        {sum.totalTrades > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>MÉTRIQUES DE PERFORMANCE</Text>
+            <View style={s.statGrid}>
+              <Stat label="PROFIT FACTOR" value={mt.profitFactor == null ? '∞' : mt.profitFactor.toFixed(2)}
+                color={mt.profitFactor != null && mt.profitFactor >= 1 ? G : R} sub="gains / pertes" />
+              <Stat label="ESPÉRANCE / TRADE" value={fmtEur2(mt.expectancy)} color={mt.expectancy >= 0 ? G : R} sub="PnL moyen" />
+              <Stat label="RATIO GAIN/PERTE" value={mt.payoff == null ? '—' : mt.payoff.toFixed(2)} sub="gain moy. / perte moy." />
+              <Stat label="DURÉE MOYENNE" value={fmtDur(mt.avgDurationMin)} sub="par trade" />
+              <Stat label="GAIN MOYEN" value={fmtEur2(mt.avgWin)} color={G} />
+              <Stat label="PERTE MOYENNE" value={fmtEur2(mt.avgLoss)} color={R} />
+              <Stat label="MEILLEUR TRADE" value={fmtEur2(mt.bestTrade)} color={G} />
+              <Stat label="PIRE TRADE" value={fmtEur2(mt.worstTrade)} color={R} />
+              <Stat label="GAINS BRUTS" value={fmtEur(mt.grossProfit)} color={G} />
+              <Stat label="PERTES BRUTES" value={fmtEur(mt.grossLoss)} color={R} />
+              <Stat label="SÉRIE GAGNANTE" value={`${mt.maxWinStreak}`} sub="max d'affilée" color={G} />
+              <Stat label="SÉRIE PERDANTE" value={`${mt.maxLossStreak}`} sub="max d'affilée" color={R} />
+            </View>
+          </View>
+        )}
+
+        {/* ── Répartition (nouvelle page) ────────────────────────────── */}
+        {sum.totalTrades > 0 && (
+          <View style={s.section} break>
+            <Text style={s.sectionTitle}>RÉPARTITION LONG / SHORT</Text>
+            <View style={s.sideRow}>
+              {([['LONG', data.bySide.long, G], ['SHORT', data.bySide.short, R]] as const).map(([lbl, st, col], i) => (
+                <View key={lbl} style={[s.sideCard, i === 1 ? { marginRight: 0 } : {}]}>
+                  <Text style={[s.cardLabel, { color: col }]}>{lbl}</Text>
+                  <Text style={[s.cardValue, { fontSize: 16, color: st.pnl >= 0 ? G : R }]}>{fmtPnl(st.pnl)}</Text>
+                  <Text style={s.cardSub}>{st.trades} trade{st.trades !== 1 ? 's' : ''} · {sideWR(st)}% réussite</Text>
+                </View>
+              ))}
+            </View>
+
+            {data.bySymbol.length > 0 && (
+              <>
+                <Text style={[s.sectionTitle, { marginTop: 6 }]}>PERFORMANCE PAR SYMBOLE</Text>
+                <View style={s.tableHeader}>
+                  <Text style={[s.tableHeaderCell, { flex: 2 }]}>SYMBOLE</Text>
+                  <Text style={[s.tableHeaderCell, { flex: 1 }]}>TRADES</Text>
+                  <Text style={[s.tableHeaderCell, { flex: 1.2 }]}>RÉUSSITE</Text>
+                  <Text style={[s.tableHeaderCell, { flex: 1.2 }]}>PNL</Text>
+                </View>
+                {data.bySymbol.map((sy, i) => (
+                  <View key={sy.symbol} style={[s.tableRow, { backgroundColor: i % 2 === 0 ? '#ffffff' : '#faf9ff' }]}>
+                    <Text style={[s.tableCell, { flex: 2, fontFamily: 'Helvetica-Bold' }]}>{sy.symbol}</Text>
+                    <Text style={[s.tableCell, { flex: 1 }]}>{sy.trades}</Text>
+                    <Text style={[s.tableCell, { flex: 1.2 }]}>{sy.trades > 0 ? Math.round(sy.wins / sy.trades * 100) : 0}%</Text>
+                    <Text style={[s.tableCell, { flex: 1.2, color: sy.pnl >= 0 ? G : R, fontFamily: 'Helvetica-Bold' }]}>{fmtPnl(sy.pnl)}</Text>
+                  </View>
+                ))}
+              </>
+            )}
+          </View>
+        )}
+
         {/* ── Alertes comportementales ───────────────────────────────── */}
         {data.alertsByType.length > 0 && (
           <View style={s.section}>
@@ -393,6 +561,36 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
                 </View>
               )
             })}
+          </View>
+        )}
+
+        {/* ── Suivi prop firm ────────────────────────────────────────── */}
+        {data.propFirm && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>SUIVI PROP FIRM — {data.propFirm.name.toUpperCase()} · {data.propFirm.phase.toUpperCase()}</Text>
+            <View style={s.statGrid}>
+              {data.propFirm.progressPct != null && (
+                <Stat label="AVANCEMENT OBJECTIF" value={`${data.propFirm.progressPct}%`} color={A} />
+              )}
+              {data.propFirm.bestDayShare != null && (
+                <Stat label="MEILLEURE JOURNÉE" value={`${data.propFirm.bestDayShare}%`}
+                  sub={data.propFirm.consistencyMax != null ? `du profit (max ${data.propFirm.consistencyMax}%)` : 'du profit total'}
+                  color={data.propFirm.consistencyMax != null && data.propFirm.bestDayShare > data.propFirm.consistencyMax ? R : T} />
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* ── Recommandations ────────────────────────────────────────── */}
+        {data.recommendations.length > 0 && (
+          <View style={s.section} wrap={false}>
+            <Text style={s.sectionTitle}>RECOMMANDATIONS POUR LA SUITE</Text>
+            {data.recommendations.map((r, i) => (
+              <View key={i} style={s.recoRow}>
+                <Text style={s.recoBullet}>{i + 1}.</Text>
+                <Text style={s.recoText}>{r}</Text>
+              </View>
+            ))}
           </View>
         )}
 
