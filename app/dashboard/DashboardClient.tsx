@@ -364,7 +364,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
 }
 
 // ── PnlChart — cumulative SVG chart with Y/X axes ────────────────────────────
-function PnlChart({ trades, drawdownAmt, baseline, refs }: { trades: TradeRow[]; drawdownAmt?: number; baseline?: number; refs?: { v: number; label: string; tone: 'obj' | 'floor' }[] }) {
+function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawdownAmt?: number; baseline?: number }) {
   const C = useContext(ThemeCtx)
   const [hover, setHover] = useState<number | null>(null)
   const sorted = [...trades]
@@ -387,7 +387,7 @@ function PnlChart({ trades, drawdownAmt, baseline, refs }: { trades: TradeRow[];
     ? `€${Math.round(v).toLocaleString('fr-FR')}`
     : v === 0 ? '€0' : v > 0 ? `+€${Math.abs(v).toFixed(0)}` : `-€${Math.abs(v).toFixed(0)}`
 
-  if (sorted.length === 0 && !(refs && refs.length)) {
+  if (sorted.length === 0) {
     const yMid = PYT + DH / 2
     return (
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
@@ -411,10 +411,7 @@ function PnlChart({ trades, drawdownAmt, baseline, refs }: { trades: TradeRow[];
   }
 
   const vals = pts.map(p => p.v)
-  // En mode prop firm, les repères (objectif, marges) entrent dans l'échelle Y pour
-  // être visibles : la courbe se lit « entre les garde-fous ».
-  const refVals = (refs ?? []).map(r => r.v)
-  const rawMin = Math.min(base, ...vals, ...refVals), rawMax = Math.max(base, ...vals, ...refVals)
+  const rawMin = Math.min(base, ...vals), rawMax = Math.max(base, ...vals)
   const rawRange = rawMax - rawMin || 1
   const grace = rawRange * 0.08
   const minV = rawMin - grace, maxV = rawMax + grace
@@ -512,20 +509,8 @@ function PnlChart({ trades, drawdownAmt, baseline, refs }: { trades: TradeRow[];
         ))}
         <line x1={PXL} y1={PYT} x2={PXL} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
         <line x1={PXL} y1={H - PYB} x2={W - PXR} y2={H - PYB} stroke={gridColor} strokeWidth={1} />
-        {/* Mode prop firm : ligne de référence au solde d'ouverture du jour */}
+        {/* Mode prop firm : ligne de référence au capital de départ */}
         {propMode && <line x1={PXL} y1={y0} x2={W - PXR} y2={y0} stroke={C.b3} strokeWidth={0.6} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />}
-        {/* Repères de challenge : objectif (violet) + marges journalière/totale (rouge sobre).
-            Tracés sous la courbe, étiquette relative alignée à droite. */}
-        {(refs ?? []).map((r, i) => {
-          const y = yOf(r.v)
-          const col = r.tone === 'obj' ? 'rgba(124,58,237,.6)' : 'rgba(220,80,60,.5)'
-          return (
-            <g key={`ref${i}`} pointerEvents="none">
-              <line x1={PXL} y1={y} x2={W - PXR} y2={y} stroke={col} strokeWidth={0.7} strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
-              <text x={W - PXR - 2} y={Math.max(PYT + 7, Math.min(H - PYB - 2, y - 2.5))} textAnchor="end" fill={col} fontSize="6.5" style={{ fontFamily: SANS }}>{r.label}</text>
-            </g>
-          )
-        })}
         {yTicks.map(v => (
           <text key={`t${v}`} x={PXL - 3} y={Math.max(PYT + 5, Math.min(H - PYB, yOf(v) + 2))}
             textAnchor="end" fill={axisColor} fontSize="6.5" style={{ fontFamily: SANS }}>{fmtY(v)}</text>
@@ -732,6 +717,108 @@ type ChallengeData = {
   daysTraded: number
 }
 
+// ── ChallengeBadge — pastille « firme · phase » cliquable → popover de suivi ──────
+// Remplace le texte statique dans l'en-tête de la courbe. Au clic, ouvre un panneau
+// (portal, façon débrief IA) avec l'objectif, les marges journalière/totale, le jalon
+// et les jours. La courbe reste propre, le détail est à la demande.
+function ChallengeBadge({ data }: { data: ChallengeData }) {
+  const C = useContext(ThemeCtx)
+  const [open, setOpen] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+
+  const { preset, phase, capital, cumPnl, todayPnl, daysTraded } = data
+  const phaseLabel = PROPFIRM_PHASES.find(p => p.id === phase)?.label ?? 'Phase 1'
+  const targetPct = targetForPhase(preset, phase)
+  const targetAmt = targetPct * capital / 100
+  const dailyLimit = preset.daily * capital / 100
+  const totalLimit = preset.total * capital / 100
+  const todayLoss = Math.max(0, -todayPnl)
+  const totalLoss = Math.max(0, -cumPnl)
+  const dailyLeft = Math.max(0, dailyLimit - todayLoss)
+  const totalLeft = Math.max(0, totalLimit - totalLoss)
+  const progressPct = targetAmt > 0 ? Math.max(0, Math.min(100, Math.round(cumPnl / targetAmt * 100))) : 0
+  const dailyUsedPct = dailyLimit > 0 ? Math.min(100, Math.round(todayLoss / dailyLimit * 100)) : 0
+  const totalUsedPct = totalLimit > 0 ? Math.min(100, Math.round(totalLoss / totalLimit * 100)) : 0
+  const fmt = (v: number) => `€${Math.round(v).toLocaleString('fr-FR')}`
+  const RED = '#dc503c', ORANGE = '#ffab00'
+  // Neutre tant que la marge est confortable ; orange/rouge seulement si ça devient
+  // critique (anti-biais : pas de vert sur l'écran Session live).
+  const dangerCol = (used: number) => used >= 80 ? RED : used >= 55 ? ORANGE : C.tx
+
+  const milestone = targetPct === 0
+    ? 'Compte financé — protège tes gains, respecte tes marges.'
+    : progressPct >= 100 ? `Objectif ${phaseLabel} atteint — sécurise et valide.`
+    : progressPct >= 75 ? `Plus que ${fmt(Math.max(0, targetAmt - cumPnl))} pour valider la ${phaseLabel}.`
+    : progressPct >= 50 ? 'À mi-chemin de ton objectif. Reste discipliné.'
+    : cumPnl < 0 ? 'Tu es en repli — protège ta marge avant de viser l’objectif.'
+    : `Objectif ${phaseLabel} : +${targetPct}% (${fmt(targetAmt)}).`
+
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      const PW = 290
+      setPos({ top: r.bottom + 8, left: Math.max(12, Math.min(window.innerWidth - PW - 12, r.right - PW)) })
+    }
+    setOpen(o => !o)
+  }
+
+  const Bar = ({ label, value, used, neutral }: { label: string; value: string; used: number; neutral?: boolean }) => (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+        <span style={{ fontSize: 11.5, color: C.td }}>{label}</span>
+        <span style={{ fontSize: 11.5, fontFamily: SANS, color: neutral ? C.tx : dangerCol(used), fontWeight: 600 }}>{value}</span>
+      </div>
+      <div style={{ height: 7, background: 'rgba(255,255,255,.06)', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${used}%`, background: neutral ? C.tm : dangerCol(used), borderRadius: 4, transition: 'width .4s' }} />
+      </div>
+    </div>
+  )
+
+  return (
+    <>
+      <button ref={btnRef} onClick={toggle} style={{
+        background: open ? 'rgba(124,58,237,.14)' : 'transparent', border: `.5px solid ${open ? 'rgba(124,58,237,.5)' : 'rgba(124,58,237,.28)'}`,
+        borderRadius: 6, padding: '2px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+        fontFamily: SANS, fontSize: 9.5, fontWeight: 600, color: '#a78bfa', letterSpacing: .3,
+        whiteSpace: 'nowrap', outline: 'none', transition: 'all .15s', WebkitTapHighlightColor: 'transparent',
+      }}>
+        {preset.name} · {phaseLabel}
+        <span style={{ fontSize: 7, opacity: .8 }}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && pos && createPortal(
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99998 }} />
+          <div style={{
+            position: 'fixed', top: pos.top, left: pos.left, width: 290, background: C.sf,
+            border: `.5px solid ${C.b2}`, borderRadius: 12, overflow: 'hidden',
+            boxShadow: '0 16px 44px rgba(0,0,0,.55)', zIndex: 99999, animation: 'fadeUp .18s ease', fontFamily: SANS,
+          }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,.9) 40%, transparent)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: `.5px solid ${C.b}` }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: C.tx }}>{preset.name}</span>
+                <span style={{ fontSize: 10.5, color: '#a78bfa', fontWeight: 600 }}>{phaseLabel}</span>
+              </div>
+              <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: C.te, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 2 }}>✕</button>
+            </div>
+            <div style={{ padding: 14 }}>
+              {targetPct > 0 && <Bar label="Objectif de profit" value={`${fmt(cumPnl)} / ${fmt(targetAmt)} · ${progressPct}%`} used={progressPct} neutral />}
+              <Bar label="Marge avant perte journalière" value={fmt(dailyLeft)} used={dailyUsedPct} />
+              <Bar label="Marge avant perte totale" value={fmt(totalLeft)} used={totalUsedPct} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 4 }}>
+                <span style={{ fontSize: 11, color: C.tm, fontStyle: 'italic', lineHeight: 1.45 }}>{milestone}</span>
+                {preset.minDays > 0 && <span style={{ fontSize: 10.5, color: C.te, fontFamily: SANS, flexShrink: 0 }}>{daysTraded}/{preset.minDays} j</span>}
+              </div>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+    </>
+  )
+}
+
 // ── SessionPanel ───────────────────────────────────────────────────────────────
 function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected, challenge }: {
   trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats
@@ -766,32 +853,6 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   // Ambiance prop firm : pas de contour coloré, seulement le filet lumineux du haut.
   const ambBd = C.b
   const ambLn = propFirm ? 'rgba(124,58,237,.9)' : C.b3
-
-  // Mode prop firm : repères de challenge tracés directement sur la courbe « Solde du
-  // compte » (objectif + marges journalière/totale) → plus de bloc déroulant redondant.
-  // La courbe démarre au solde d'ouverture du jour (capital + P&L des jours précédents).
-  const fmtK = (v: number) => `€${Math.round(v).toLocaleString('fr-FR')}`
-  const challengeStartToday = challenge ? challenge.capital + (challenge.cumPnl - challenge.todayPnl) : null
-  const challengeRefs = challenge ? (() => {
-    const { preset, phase, capital } = challenge
-    const targetAmt = targetForPhase(preset, phase) * capital / 100
-    const dailyLimit = preset.daily * capital / 100
-    const totalLimit = preset.total * capital / 100
-    const r: { v: number; label: string; tone: 'obj' | 'floor' }[] = []
-    if (targetAmt > 0) r.push({ v: capital + targetAmt, label: `obj +${fmtK(targetAmt)}`, tone: 'obj' })
-    r.push({ v: (challengeStartToday ?? capital) - dailyLimit, label: `marge j. −${fmtK(dailyLimit)}`, tone: 'floor' })
-    r.push({ v: capital - totalLimit, label: `marge tot. −${fmtK(totalLimit)}`, tone: 'floor' })
-    return r
-  })() : undefined
-  const chartBaseline = challengeStartToday ?? (propFirm ? accountSize : undefined)
-  const challengeCaption = challenge ? (() => {
-    const targetPct = targetForPhase(challenge.preset, challenge.phase)
-    const targetAmt = targetPct * challenge.capital / 100
-    const progressPct = targetAmt > 0 ? Math.max(0, Math.min(100, Math.round(challenge.cumPnl / targetAmt * 100))) : 0
-    const phaseLabel = PROPFIRM_PHASES.find(p => p.id === challenge.phase)?.label ?? 'Phase 1'
-    const daysTxt = challenge.preset.minDays > 0 ? ` · ${challenge.daysTraded}/${challenge.preset.minDays} j` : ''
-    return `${challenge.preset.name} · ${phaseLabel}${targetPct > 0 ? ` · Obj ${progressPct}%` : ''}${daysTxt}`
-  })() : null
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
@@ -845,12 +906,12 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 5 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 5, minHeight: 18 }}>
             <span style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: SANS }}>{propFirm ? 'Solde du compte' : 'Courbe P&L'}</span>
-            {challengeCaption && <span style={{ fontSize: 9.5, color: '#a78bfa', fontFamily: SANS, fontWeight: 600, letterSpacing: .3, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>{challengeCaption}</span>}
+            {challenge && <ChallengeBadge data={challenge} />}
           </div>
           <div style={{ flex: 1, minHeight: 120 }}>
-            <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} baseline={chartBaseline} refs={challengeRefs} />
+            <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} baseline={propFirm ? accountSize : undefined} />
           </div>
         </div>
       </div>
