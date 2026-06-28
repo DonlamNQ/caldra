@@ -44,7 +44,18 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [ ] Emails produit Brevo (alertes, rapport hebdo) testés bout-en-bout
 - [ ] SPF : ajouter `include:amazonses.com` + custom MAIL FROM SES (double alignement)
 - [~] DMARC : passé à `p=quarantine; pct=25` le 2026-06-27 (SES + Brevo confirmés DKIM-signés). **RESTE : monter `pct=25` → `pct=100` dans ~1 semaine** une fois la délivrabilité confirmée OK.
-- [ ] Idées backlog : journal de trading, couche engagement, détecteur symbole inhabituel
+- [ ] **#2 Guide de première connexion** (tour guidé de chaque onglet/case)
+- [ ] **#13 Rapports = vrais documents** (refonte PDF hebdo/mensuel, pas juste un recap)
+- [ ] **#14 Page d'inscription complète** (adresse, code postal, mail de confirmation — vrai parcours)
+- [ ] **#8 Autres plateformes futures** (Rithmic / Quantower / MotiveWave…) — secondaire
+- [ ] Idées backlog plus anciennes : journal de trading, couche engagement, détecteur symbole inhabituel
+
+## ✅ Fait sessions 2026-06-27/28
+- Worker MT5 redéployé + connexion réelle validée ; migrations v2.14→v2.18 toutes passées.
+- Stripe Max 29€ LIVE (produit réactivé, ancien 34€ archivé) ; bug 500 checkout réglé + handler GET résilient.
+- Rapports : hebdo = push « rapport prêt » le dimanche (Max) ; mensuel = email PDF (tous payants) ; 2 crons (rentre dans Hobby).
+- 6 quick wins UI (4 patterns Pro, « patterns récurrents », Long/Short neutre, score moy. blanc, halo score, fix mobile calendrier).
+- **Mode prop firm complet** : suivi de challenge (bandeau dépliable, neutre), phases p1/p2/funded, débriefs IA scopés, popup reset, **mode strict** (seuils resserrés). C'est la vraie valeur Max.
 
 ---
 
