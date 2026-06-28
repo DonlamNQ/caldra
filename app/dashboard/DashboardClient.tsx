@@ -11,7 +11,7 @@ import { alertTechnical } from '@/lib/alertTechnical'
 import { randomNote } from '@/lib/coachNotes'
 import { isMaxPlan, isPaidPlan } from '@/lib/plans'
 import { DETECTOR_DEFS } from '@/lib/detectors'
-import { PROPFIRM_PRESETS } from '@/lib/propfirms'
+import { PROPFIRM_PRESETS, PROPFIRM_PHASES, targetForPhase, type PropFirmPhase } from '@/lib/propfirms'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -705,11 +705,93 @@ function Sidebar({ score, alerts, stats, rules }: {
   )
 }
 
+// ── ChallengeTracker — suivi de challenge prop firm (objectif, marges, jours) ────
+type ChallengeData = {
+  preset: typeof PROPFIRM_PRESETS[number]
+  phase: PropFirmPhase
+  capital: number
+  cumPnl: number    // P&L cumulé depuis l'activation du challenge
+  todayPnl: number  // P&L du jour
+  daysTraded: number
+}
+
+function ChallengeTracker({ data }: { data: ChallengeData }) {
+  const C = useContext(ThemeCtx)
+  const GREEN = '#3cc87a', RED = '#dc503c', ORANGE = '#ffab00'
+  const { preset, phase, capital, cumPnl, todayPnl, daysTraded } = data
+  const phaseLabel = PROPFIRM_PHASES.find(p => p.id === phase)?.label ?? 'Phase 1'
+  const targetPct = targetForPhase(preset, phase)
+  const targetAmt = targetPct * capital / 100
+  const dailyLimit = preset.daily * capital / 100
+  const totalLimit = preset.total * capital / 100
+  const todayLoss = Math.max(0, -todayPnl)
+  const totalLoss = Math.max(0, -cumPnl)
+  const dailyLeft = Math.max(0, dailyLimit - todayLoss)
+  const totalLeft = Math.max(0, totalLimit - totalLoss)
+  const progressPct = targetAmt > 0 ? Math.max(0, Math.min(100, Math.round(cumPnl / targetAmt * 100))) : 0
+  const dailyUsedPct = dailyLimit > 0 ? Math.min(100, Math.round(todayLoss / dailyLimit * 100)) : 0
+  const totalUsedPct = totalLimit > 0 ? Math.min(100, Math.round(totalLoss / totalLimit * 100)) : 0
+  const fmt = (v: number) => `€${Math.round(v).toLocaleString('fr-FR')}`
+  const dangerCol = (used: number) => used >= 80 ? RED : used >= 50 ? ORANGE : GREEN
+
+  // Message jalon (#3) selon l'avancement vers l'objectif.
+  const milestone = targetPct === 0
+    ? 'Compte financé — protège tes gains, respecte tes marges.'
+    : progressPct >= 100 ? `🎉 Objectif ${phaseLabel} atteint — sécurise et valide.`
+    : progressPct >= 75 ? `Plus que ${fmt(targetAmt - cumPnl)} pour valider la ${phaseLabel}.`
+    : progressPct >= 50 ? 'À mi-chemin de ton objectif. Reste discipliné.'
+    : cumPnl < 0 ? 'Tu es en repli — protège ta marge avant de viser l’objectif.'
+    : `Objectif ${phaseLabel} : +${targetPct}% (${fmt(targetAmt)}).`
+
+  const Margin = ({ label, left, used }: { label: string; left: number; used: number }) => (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+        <span style={{ fontSize: 11.5, color: C.td }}>{label}</span>
+        <span style={{ fontSize: 11.5, fontFamily: SANS, color: dangerCol(used), fontWeight: 600 }}>{fmt(left)}</span>
+      </div>
+      <div style={{ height: 7, background: 'rgba(255,255,255,.06)', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${used}%`, background: dangerCol(used), borderRadius: 4, transition: 'width .4s' }} />
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ background: C.sf, border: '.5px solid rgba(124,58,237,.35)', borderRadius: 12, padding: '16px 18px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,.9) 40%, transparent)' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 13 }}>
+        <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: SANS }}>Suivi de challenge</div>
+        <div style={{ fontSize: 11, color: '#a78bfa', fontFamily: SANS, fontWeight: 600 }}>{preset.name} · {phaseLabel}</div>
+      </div>
+
+      {targetPct > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+            <span style={{ fontSize: 11.5, color: C.td }}>Objectif de profit</span>
+            <span style={{ fontSize: 11.5, fontFamily: SANS, color: C.tx }}>{fmt(cumPnl)} / {fmt(targetAmt)} · {progressPct}%</span>
+          </div>
+          <div style={{ height: 7, background: 'rgba(255,255,255,.06)', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${progressPct}%`, background: GREEN, borderRadius: 4, transition: 'width .4s' }} />
+          </div>
+        </div>
+      )}
+
+      <Margin label="Marge avant perte journalière" left={dailyLeft} used={dailyUsedPct} />
+      <Margin label="Marge avant perte totale" left={totalLeft} used={totalUsedPct} />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 2 }}>
+        <span style={{ fontSize: 11, color: C.tm, fontStyle: 'italic', lineHeight: 1.4 }}>{milestone}</span>
+        {preset.minDays > 0 && <span style={{ fontSize: 10.5, color: C.te, fontFamily: SANS, flexShrink: 0 }}>{daysTraded}/{preset.minDays} jours</span>}
+      </div>
+    </div>
+  )
+}
+
 // ── SessionPanel ───────────────────────────────────────────────────────────────
-function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected }: {
+function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected, challenge }: {
   trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats
   yesterdayStats: { score: number; pnl: number; alerts: number } | null
   yesterdayTrend: number | null; rules: TradingRules | null; connected?: boolean
+  challenge?: ChallengeData | null
 }) {
   const C = useContext(ThemeCtx)
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
@@ -741,6 +823,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
+
+      {/* Suivi de challenge prop firm (en tête, si mode prop firm actif) */}
+      {challenge && <ChallengeTracker data={challenge} />}
 
       {/* Row 1: terminal stats + chart */}
       <div className="session-main-grid" style={{ display: 'grid', gridTemplateColumns: '158px 1fr', gap: 12 }}>
@@ -2327,6 +2412,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   // Mode prop firm = on/off MÉMORISÉ : couper le mode garde la firme + la date d'activation
   // (rien n'est perdu). Fallback legacy : si le flag n'existe pas encore, on déduit de la firme.
   const [propActive, setPropActive] = useState<boolean>((initial as any)?.prop_firm_active ?? !!(initial as any)?.prop_firm)
+  const [propPhase, setPropPhase] = useState<PropFirmPhase>(((initial as any)?.prop_firm_phase as PropFirmPhase) || 'p1')
 
   // Toggle on/off : activer sans firme encore choisie → l'utilisateur en sélectionne une ci-dessous ;
   // activer avec une firme déjà mémorisée sans date → on démarre maintenant ; couper ne perd rien.
@@ -2346,6 +2432,12 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   function applyPropFirm(id: string) {
     const preset = PROPFIRM_PRESETS.find(p => p.id === id)
     if (!preset) { setPropFirm(''); setPropFirmStart(null); setSave('idle'); return }
+    // #5 — Changer de firme = NOUVEAU challenge : les chiffres repartent de zéro (le
+    // comportemental reste). On demande confirmation pour ne pas réinitialiser par erreur.
+    if (propFirm && id !== propFirm) {
+      const ok = window.confirm('Nouvelle firme = nouveau challenge.\n\nTes chiffres (objectif, marges, P&L) repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nContinuer ?')
+      if (!ok) return
+    }
     setPropFirm(id)
     setPropActive(true)   // choisir une firme = activer la vue prop firm
     // Même firme qu'avant → on garde son horodatage de démarrage ; sinon, le compte démarre maintenant.
@@ -2356,7 +2448,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
-    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || new Date().toISOString()) : null, prop_firm_active: !!(propActive && propFirm) }
+    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || new Date().toISOString()) : null, prop_firm_active: !!(propActive && propFirm), prop_firm_phase: propPhase }
     const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setSave(res.ok ? 'saved' : 'error')
     if (res.ok) {
@@ -2401,7 +2493,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
               <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 11.5, color: C.te, marginBottom: 10, lineHeight: 1.5 }}>Choisis ta firme : tes garde-fous s’alignent dessus, et la Session/Analytique se scopent depuis l’activation.</div>
               <div style={{ fontSize: 11, color: '#a78bfa', background: 'rgba(124,58,237,.08)', border: '.5px solid rgba(124,58,237,.25)', borderRadius: 7, padding: '9px 11px', marginBottom: 12, lineHeight: 1.5 }}>
-                ℹ️ Le mode prop firm scope tes <strong style={{ fontWeight: 600 }}>chiffres</strong> (P&amp;L, drawdown, win rate) au challenge depuis l’activation. Ton <strong style={{ fontWeight: 600 }}>historique comportemental</strong> (tes patterns, tes habitudes) reste lui conservé sur toute ta durée — c’est toi, pas ton compte.
+                ℹ️ En mode prop firm, tes <strong style={{ fontWeight: 600 }}>chiffres</strong> (P&amp;L, drawdown, win rate) ne comptent qu’à partir de l’activation du challenge — ils repartent de zéro. Ton <strong style={{ fontWeight: 600 }}>historique comportemental</strong> (tes patterns, tes habitudes), lui, reste conservé sur toute ta durée.
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {PROPFIRM_PRESETS.map(pf => {
@@ -2415,12 +2507,32 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
                   )
                 })}
               </div>
+              {propFirm && (
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 10.5, color: C.te, letterSpacing: .5, marginBottom: 8, fontFamily: SANS, textTransform: 'uppercase' as const }}>Phase du challenge</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {PROPFIRM_PHASES.map(ph => {
+                      const on = propPhase === ph.id
+                      const pf2 = PROPFIRM_PRESETS.find(p => p.id === propFirm)
+                      const tgt = pf2 ? targetForPhase(pf2, ph.id) : 0
+                      return (
+                        <button key={ph.id} type="button" onClick={() => { setPropPhase(ph.id); setSave('idle') }} style={{
+                          padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
+                          background: on ? C.red : 'rgba(255,255,255,.05)', color: on ? '#fff' : C.tm,
+                          border: `.5px solid ${on ? C.red : C.b2}`,
+                        }}>{ph.label}{tgt > 0 ? ` · ${tgt}%` : ''}</button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
               {propFirm && (() => {
                 const pf = PROPFIRM_PRESETS.find(p => p.id === propFirm)
                 if (!pf) return null
+                const tgt = targetForPhase(pf, propPhase)
                 return (
                   <div style={{ fontSize: 11.5, color: C.te, marginTop: 12, lineHeight: 1.6 }}>
-                    Règles <span style={{ color: C.tm }}>{pf.name}</span> : perte journalière max <span style={{ color: C.tm }}>{pf.daily}%</span> · perte totale max <span style={{ color: C.tm }}>{pf.total}%</span> (informatif). Caldra cale ton <span style={{ color: C.tm }}>drawdown journalier sur {pf.daily}%</span> ; le risk/trade et les autres garde-fous restent à ton choix.
+                    {tgt > 0 && <>Objectif <span style={{ color: C.tm }}>{PROPFIRM_PHASES.find(p => p.id === propPhase)?.label}</span> : <span style={{ color: C.tm }}>+{tgt}%</span> · </>}perte journalière max <span style={{ color: C.tm }}>{pf.daily}%</span> · perte totale max <span style={{ color: C.tm }}>{pf.total}%</span>. Le <span style={{ color: C.tm }}>suivi de challenge</span> s’affiche dans l’onglet Session.
                     <br />Valeurs du challenge 2-step phare — vérifie selon ta variante exacte, puis sauvegarde.
                   </div>
                 )
@@ -3354,6 +3466,22 @@ export default function DashboardClient({
   const activePropFirm = (_propActiveSaved && _lr?.prop_firm) ? (_lr.prop_firm as string) : null
   const activePropStart = (activePropFirm && _lr?.prop_firm_started_at) ? (_lr.prop_firm_started_at as string) : null
 
+  // Suivi de challenge (carte Session) : P&L cumulé depuis l'activation + jours tradés.
+  const challengeData: ChallengeData | null = (() => {
+    if (!activePropFirm || !activePropStart) return null
+    const preset = PROPFIRM_PRESETS.find(p => p.id === activePropFirm)
+    if (!preset) return null
+    const phase = ((_lr?.prop_firm_phase as PropFirmPhase) || 'p1')
+    const capital = liveRules?.account_size || 10000
+    const startDate = activePropStart.slice(0, 10)
+    const scoped = historicalSessions.filter(s => (s.date || '') >= startDate)
+    const histPnl = scoped.reduce((s, d) => s + d.pnl, 0)
+    const histDays = scoped.filter(s => s.tradeCount > 0).length
+    const cumPnl = histPnl + stats.total_pnl
+    const daysTraded = histDays + (stats.total_trades > 0 ? 1 : 0)
+    return { preset, phase, capital, cumPnl, todayPnl: stats.total_pnl, daysTraded }
+  })()
+
   // Jalons de streak : on fête le palier le plus haut atteint pour chaque streak, une
   // seule fois (mémorisé en localStorage). En plus de la bannière brève, on envoie une
   // notif système (si autorisée). Un seul palier à la fois pour ne pas spammer.
@@ -3856,7 +3984,7 @@ export default function DashboardClient({
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
-              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} />
+              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} challenge={challengeData} />
             )}
             {activeTab === 'calendrier' && (
               <CalendrierPanel sessions={historicalSessions} propFirmStart={activePropStart} />

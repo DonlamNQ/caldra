@@ -298,3 +298,7 @@ alter table trading_rules add column if not exists prop_firm_active boolean not 
 -- Les comptes prop firm déjà configurés restent en vue prop firm après migration.
 update trading_rules set prop_firm_active = true where prop_firm is not null;
 
+-- v2.18 : phase du challenge prop firm (suivi de challenge) — 'p1' | 'p2' | 'funded'.
+-- Sert à choisir l'objectif de profit (Phase 1/2) et l'affichage du suivi de challenge.
+alter table trading_rules add column if not exists prop_firm_phase text not null default 'p1';
+
