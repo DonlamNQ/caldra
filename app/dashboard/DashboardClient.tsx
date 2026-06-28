@@ -584,7 +584,7 @@ function Sidebar({ score, alerts, stats, rules }: {
   const propFirmStart = propFirmOn ? ((rules as any)?.prop_firm_started_at as string | null) : null
 
   return (
-    <div style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none', borderRadius: 16, margin: '10px 0 10px 10px', overflow: 'hidden' }}>
+    <div className="score-sidebar" style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none', borderRadius: 16, margin: '10px 0 10px 10px', overflow: 'hidden' }}>
 
       {/* Score */}
       <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
@@ -3650,9 +3650,9 @@ export default function DashboardClient({
           .kpi-grid{grid-template-columns:repeat(2,1fr)!important}
           .session-main-grid{grid-template-columns:1fr!important}
           .rules-grid{grid-template-columns:1fr!important}
-          .main-layout>*:first-child{overflow:visible!important;height:auto!important;border-radius:12px!important;margin:10px!important}
-          .main-layout>*:first-child>div{height:auto!important;overflow:visible!important}
-          .main-layout>*:first-child>div>div{flex:none!important;min-height:0!important}
+          .main-layout>.score-sidebar{overflow:visible!important;height:auto!important;border-radius:12px!important;margin:10px!important}
+          .main-layout>.score-sidebar>div{height:auto!important;overflow:visible!important}
+          .main-layout>.score-sidebar>div>div{flex:none!important;min-height:0!important}
         }
       ` }} />
 
