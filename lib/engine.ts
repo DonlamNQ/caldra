@@ -3,6 +3,7 @@ import { sendAlertEmail, sendWebhookAlert, sendTelegramAlert } from './brevo'
 import { newsConflict } from './economic-calendar'
 import { isMaxPlan, MAX_ONLY_DETECTORS, isVip } from './plans'
 import { detectorEnabled, detectorThreshold } from './detectors'
+import { PROPFIRM_PRESETS, PROPFIRM_PHASES, targetForPhase, type PropFirmPhase } from './propfirms'
 
 const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -212,6 +213,67 @@ async function saveAndNotify(
 // déclenchent plus tôt (un seul mauvais jour peut griller un challenge).
 function isPropStrict(rules: Record<string, any>): boolean {
   return !!((rules.prop_firm_active ?? !!rules.prop_firm) && rules.prop_firm)
+}
+
+// Notifications push liées à l'AVANCEMENT du challenge prop firm (Max). Envoyées sur
+// le téléphone, hors du feed d'alertes comportementales :
+//   • marge TOTALE du challenge entamée (≥ 80 %) — alerte de protection du compte
+//   • jalons d'objectif (75 % puis 100 %) — repères motivants vers la validation
+// La marge JOURNALIÈRE n'est PAS doublée ici : `drawdown_alert` la couvre déjà (en
+// mode prop firm la limite journalière = celle du preset). Déduplication via
+// `notif_state` : marge = 1×/jour, jalons = 1×/challenge (clé = date d'activation).
+async function maybeChallengeNudges(rules: Record<string, any>, isMax: boolean): Promise<void> {
+  if (!isMax || !isPropStrict(rules)) return
+  const startedAt = (rules.prop_firm_started_at as string | null) || null
+  const preset = PROPFIRM_PRESETS.find(p => p.id === rules.prop_firm)
+  if (!startedAt || !preset || !rules.user_id) return
+
+  const supabase = getSupabase()
+  const { data: chalTrades } = await supabase.from('trades')
+    .select('pnl').eq('user_id', rules.user_id).eq('status', 'closed').gte('entry_time', startedAt)
+  const cumPnl = (chalTrades ?? []).reduce((s: number, t: any) => s + (t.pnl || 0), 0)
+
+  const capital = Number(rules.account_size) || 10000
+  const phase = (rules.prop_firm_phase as PropFirmPhase) || 'p1'
+  const phaseLabel = PROPFIRM_PHASES.find(p => p.id === phase)?.label ?? 'Phase 1'
+  const totalLimit = preset.total * capital / 100
+  const targetAmt = targetForPhase(preset, phase) * capital / 100
+  const totalUsedPct = totalLimit > 0 ? Math.round(Math.max(0, -cumPnl) / totalLimit * 100) : 0
+  const objPct = targetAmt > 0 ? Math.round(cumPnl / targetAmt * 100) : 0
+  const fmtEur = (v: number) => `€${Math.round(v).toLocaleString('fr-FR')}`
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data: stateRows } = await supabase.from('notif_state').select('kind, value').eq('user_id', rules.user_id)
+  const seen = new Map<string, string | null>((stateRows ?? []).map((r: any) => [r.kind, r.value]))
+  const mark = (kind: string, value: string) =>
+    supabase.from('notif_state').upsert(
+      { user_id: rules.user_id, kind, value, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,kind' })
+
+  const { sendPushToUser } = await import('./push')
+
+  // Marge totale entamée (≥ 80 %) → 1 push par jour.
+  if (totalUsedPct >= 80 && seen.get('chal-total') !== today) {
+    await sendPushToUser(rules.user_id, 'Marge de challenge entamée',
+      `Tu as consommé ${Math.min(100, totalUsedPct)} % de ta marge totale. Protège ton compte avant de continuer.`,
+      3, '/dashboard', 'chal-total')
+    await mark('chal-total', today)
+  }
+
+  // Jalons d'objectif (1× par challenge ; repérés par la date d'activation).
+  if (targetAmt > 0) {
+    if (objPct >= 100 && seen.get('chal-obj-done') !== startedAt) {
+      await sendPushToUser(rules.user_id, 'Objectif de phase atteint',
+        `Objectif ${phaseLabel} atteint — sécurise tes gains et lance la validation.`,
+        1, '/dashboard', 'chal-obj-done')
+      await mark('chal-obj-done', startedAt)
+    } else if (objPct >= 75 && objPct < 100 && seen.get('chal-obj-75') !== startedAt) {
+      await sendPushToUser(rules.user_id, 'Tu approches de ton objectif',
+        `Plus que ${fmtEur(Math.max(0, targetAmt - cumPnl))} pour valider ta ${phaseLabel}. Reste discipliné.`,
+        1, '/dashboard', 'chal-obj-75')
+      await mark('chal-obj-75', startedAt)
+    }
+  }
 }
 
 function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTrades: Trade[]): Alert[] {
@@ -654,6 +716,10 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
       })
     }
   }
+
+  // Notifs d'avancement de challenge (marge totale + jalons) — best effort, ne doit
+  // jamais faire échouer l'ingestion.
+  try { await maybeChallengeNudges(rules as any, isMax) } catch (e) { console.error('challenge nudges', e) }
 
   return saveAndNotify(trade, alerts, sessionTrades, isMax, rules)
 }
