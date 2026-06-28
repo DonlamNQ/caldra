@@ -479,20 +479,21 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
         {sum.totalTrades > 0 && (
           <View style={s.section}>
             <Text style={s.sectionTitle}>MÉTRIQUES DE PERFORMANCE</Text>
+            {/* Valeurs neutres : le libellé et le signe (+/-) portent déjà l'info, on
+                réserve le vert/rouge aux vraies valeurs P&L (Long/Short, symbole, total). */}
             <View style={s.statGrid}>
-              <Stat label="PROFIT FACTOR" value={mt.profitFactor == null ? '∞' : mt.profitFactor.toFixed(2)}
-                color={mt.profitFactor != null && mt.profitFactor >= 1 ? G : R} sub="gains / pertes" />
-              <Stat label="ESPÉRANCE / TRADE" value={fmtEur2(mt.expectancy)} color={mt.expectancy >= 0 ? G : R} sub="PnL moyen" />
+              <Stat label="PROFIT FACTOR" value={mt.profitFactor == null ? '∞' : mt.profitFactor.toFixed(2)} sub="gains / pertes" />
+              <Stat label="ESPÉRANCE / TRADE" value={fmtEur2(mt.expectancy)} sub="PnL moyen" />
               <Stat label="RATIO GAIN/PERTE" value={mt.payoff == null ? '—' : mt.payoff.toFixed(2)} sub="gain moy. / perte moy." />
               <Stat label="DURÉE MOYENNE" value={fmtDur(mt.avgDurationMin)} sub="par trade" />
-              <Stat label="GAIN MOYEN" value={fmtEur2(mt.avgWin)} color={G} />
-              <Stat label="PERTE MOYENNE" value={fmtEur2(mt.avgLoss)} color={R} />
-              <Stat label="MEILLEUR TRADE" value={fmtEur2(mt.bestTrade)} color={G} />
-              <Stat label="PIRE TRADE" value={fmtEur2(mt.worstTrade)} color={R} />
-              <Stat label="GAINS BRUTS" value={fmtEur(mt.grossProfit)} color={G} />
-              <Stat label="PERTES BRUTES" value={fmtEur(mt.grossLoss)} color={R} />
-              <Stat label="SÉRIE GAGNANTE" value={`${mt.maxWinStreak}`} sub="max d'affilée" color={G} />
-              <Stat label="SÉRIE PERDANTE" value={`${mt.maxLossStreak}`} sub="max d'affilée" color={R} />
+              <Stat label="GAIN MOYEN" value={fmtEur2(mt.avgWin)} />
+              <Stat label="PERTE MOYENNE" value={fmtEur2(mt.avgLoss)} />
+              <Stat label="MEILLEUR TRADE" value={fmtEur2(mt.bestTrade)} />
+              <Stat label="PIRE TRADE" value={fmtEur2(mt.worstTrade)} />
+              <Stat label="GAINS BRUTS" value={fmtEur(mt.grossProfit)} />
+              <Stat label="PERTES BRUTES" value={fmtEur(mt.grossLoss)} />
+              <Stat label="SÉRIE GAGNANTE" value={`${mt.maxWinStreak}`} sub="max d'affilée" />
+              <Stat label="SÉRIE PERDANTE" value={`${mt.maxLossStreak}`} sub="max d'affilée" />
             </View>
           </View>
         )}
@@ -502,9 +503,9 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
           <View style={s.section} break>
             <Text style={s.sectionTitle}>RÉPARTITION LONG / SHORT</Text>
             <View style={s.sideRow}>
-              {([['LONG', data.bySide.long, G], ['SHORT', data.bySide.short, R]] as const).map(([lbl, st, col], i) => (
+              {([['LONG', data.bySide.long], ['SHORT', data.bySide.short]] as const).map(([lbl, st], i) => (
                 <View key={lbl} style={[s.sideCard, i === 1 ? { marginRight: 0 } : {}]}>
-                  <Text style={[s.cardLabel, { color: col }]}>{lbl}</Text>
+                  <Text style={s.cardLabel}>{lbl}</Text>
                   <Text style={[s.cardValue, { fontSize: 16, color: st.pnl >= 0 ? G : R }]}>{fmtPnl(st.pnl)}</Text>
                   <Text style={s.cardSub}>{st.trades} trade{st.trades !== 1 ? 's' : ''} · {sideWR(st)}% réussite</Text>
                 </View>
@@ -617,7 +618,7 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
                 >
                   <Text style={[s.tableCell, { flex: 1.5, color: M }]}>{t.date} {t.time}</Text>
                   <Text style={[s.tableCell, { flex: 1.2, fontFamily: 'Helvetica-Bold' }]}>{t.symbol}</Text>
-                  <Text style={[s.tableCell, { flex: 1, color: t.direction === 'long' ? G : R }]}>
+                  <Text style={[s.tableCell, { flex: 1, color: M }]}>
                     {t.direction === 'long' ? 'Long' : 'Short'}
                   </Text>
                   <Text style={[s.tableCell, { flex: 0.8 }]}>×{t.size}</Text>

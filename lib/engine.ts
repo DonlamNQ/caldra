@@ -200,12 +200,25 @@ async function saveAndNotify(
   // corps pour que l'utilisateur sache qu'il y en a plus à consulter dans l'app.
   const topPush = alerts.reduce((a, b) => b.level > a.level ? b : a)
   const extraCount = alerts.length - 1
+  // En mode prop firm, on remonte EN PLUS l'alerte liée aux règles de la firme (marge
+  // de perte, consistance, ligne d'arrivée) si elle n'est pas déjà celle poussée : la
+  // savoir reste critique pour le challenge, elle ne doit pas être masquée par une L3.
+  const PROP_RULE_TYPES = new Set(['drawdown_alert', 'drawdown_override', 'consistency_rule', 'near_target_oversizing'])
+  const propPush = isPropStrict(rules)
+    ? alerts.filter(a => a !== topPush && PROP_RULE_TYPES.has(a.type))
+        .reduce<Alert | null>((best, a) => !best || a.level > best.level ? a : best, null)
+    : null
   await import('./push').then(({ sendPushToUser }) => {
     const { title, body } = buildPushContent(topPush)
     const suffix = extraCount <= 0 ? ''
       : extraCount === 1 ? ' + 1 autre signal sur ce trade.'
       : ` + ${extraCount} autres signaux sur ce trade.`
-    return sendPushToUser(trade.user_id, title, body + suffix, topPush.level)
+    const sends = [sendPushToUser(trade.user_id, title, body + suffix, topPush.level)]
+    if (propPush) {
+      const p = buildPushContent(propPush)
+      sends.push(sendPushToUser(trade.user_id, p.title, p.body, propPush.level))
+    }
+    return Promise.all(sends)
   }).catch(() => {})
 
   return alerts
