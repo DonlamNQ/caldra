@@ -717,6 +717,7 @@ type ChallengeData = {
 
 function ChallengeTracker({ data }: { data: ChallengeData }) {
   const C = useContext(ThemeCtx)
+  const [open, setOpen] = useState(false)
   const GREEN = '#3cc87a', RED = '#dc503c', ORANGE = '#ffab00'
   const { preset, phase, capital, cumPnl, todayPnl, daysTraded } = data
   const phaseLabel = PROPFIRM_PHASES.find(p => p.id === phase)?.label ?? 'Phase 1'
@@ -756,32 +757,45 @@ function ChallengeTracker({ data }: { data: ChallengeData }) {
   )
 
   return (
-    <div style={{ background: C.sf, border: '.5px solid rgba(124,58,237,.35)', borderRadius: 12, padding: '16px 18px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+    <div style={{ background: C.sf, border: '.5px solid rgba(124,58,237,.3)', borderRadius: 10, padding: open ? '11px 16px 16px' : '11px 16px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,.9) 40%, transparent)' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 13 }}>
-        <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: SANS }}>Suivi de challenge</div>
-        <div style={{ fontSize: 11, color: '#a78bfa', fontFamily: SANS, fontWeight: 600 }}>{preset.name} · {phaseLabel}</div>
+
+      {/* Bandeau compact (toujours visible, clic = déplier) */}
+      <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const, cursor: 'pointer', userSelect: 'none' as const }}>
+        <span style={{ fontSize: 10.5, color: '#a78bfa', fontFamily: SANS, fontWeight: 700, letterSpacing: .3 }}>{preset.name} · {phaseLabel}</span>
+        <span style={{ flex: 1, minWidth: 6 }} />
+        {targetPct > 0 && (
+          <span style={{ fontSize: 11, color: C.td, fontFamily: SANS }}>Obj <span style={{ color: C.tx, fontWeight: 600 }}>{progressPct}%</span></span>
+        )}
+        <span style={{ fontSize: 11, color: C.td, fontFamily: SANS }}>Marge j. <span style={{ color: dangerCol(dailyUsedPct), fontWeight: 600 }}>{fmt(dailyLeft)}</span></span>
+        <span style={{ fontSize: 11, color: C.td, fontFamily: SANS }}>Tot. <span style={{ color: dangerCol(totalUsedPct), fontWeight: 600 }}>{fmt(totalLeft)}</span></span>
+        <span style={{ fontSize: 9, color: C.te, marginLeft: 2 }}>{open ? '▲' : '▼'}</span>
       </div>
 
-      {targetPct > 0 && (
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-            <span style={{ fontSize: 11.5, color: C.td }}>Objectif de profit</span>
-            <span style={{ fontSize: 11.5, fontFamily: SANS, color: C.tx }}>{fmt(cumPnl)} / {fmt(targetAmt)} · {progressPct}%</span>
-          </div>
-          <div style={{ height: 7, background: 'rgba(255,255,255,.06)', borderRadius: 4, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progressPct}%`, background: GREEN, borderRadius: 4, transition: 'width .4s' }} />
+      {/* Détail (déplié) */}
+      {open && (
+        <div style={{ marginTop: 14 }}>
+          {targetPct > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 11.5, color: C.td }}>Objectif de profit</span>
+                <span style={{ fontSize: 11.5, fontFamily: SANS, color: C.tx }}>{fmt(cumPnl)} / {fmt(targetAmt)} · {progressPct}%</span>
+              </div>
+              <div style={{ height: 7, background: 'rgba(255,255,255,.06)', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${progressPct}%`, background: GREEN, borderRadius: 4, transition: 'width .4s' }} />
+              </div>
+            </div>
+          )}
+
+          <Margin label="Marge avant perte journalière" left={dailyLeft} used={dailyUsedPct} />
+          <Margin label="Marge avant perte totale" left={totalLeft} used={totalUsedPct} />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 2 }}>
+            <span style={{ fontSize: 11, color: C.tm, fontStyle: 'italic', lineHeight: 1.4 }}>{milestone}</span>
+            {preset.minDays > 0 && <span style={{ fontSize: 10.5, color: C.te, fontFamily: SANS, flexShrink: 0 }}>{daysTraded}/{preset.minDays} jours</span>}
           </div>
         </div>
       )}
-
-      <Margin label="Marge avant perte journalière" left={dailyLeft} used={dailyUsedPct} />
-      <Margin label="Marge avant perte totale" left={totalLeft} used={totalUsedPct} />
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 2 }}>
-        <span style={{ fontSize: 11, color: C.tm, fontStyle: 'italic', lineHeight: 1.4 }}>{milestone}</span>
-        {preset.minDays > 0 && <span style={{ fontSize: 10.5, color: C.te, fontFamily: SANS, flexShrink: 0 }}>{daysTraded}/{preset.minDays} jours</span>}
-      </div>
     </div>
   )
 }
