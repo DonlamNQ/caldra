@@ -364,7 +364,7 @@ function SessionLine({ alerts, score, pnl }: { alerts: AlertRow[]; score: number
 }
 
 // ── PnlChart — cumulative SVG chart with Y/X axes ────────────────────────────
-function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawdownAmt?: number; baseline?: number }) {
+function PnlChart({ trades, drawdownAmt, baseline, multiDay }: { trades: TradeRow[]; drawdownAmt?: number; baseline?: number; multiDay?: boolean }) {
   const C = useContext(ThemeCtx)
   const [hover, setHover] = useState<number | null>(null)
   const sorted = [...trades]
@@ -402,12 +402,17 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
   // mode prop firm) puis évolue trade par trade — sinon elle « démarrerait » au
   // P&L du premier trade (ex. -23€ au lieu de 0€). Point d'origine sans marqueur
   // (pnl null → tooltip « Début de session »), même logique que l'EquityCurve.
+  // Courbe d'un seul jour → libellés en heures ; courbe multi-jours (challenge prop
+  // firm depuis le début) → libellés en dates (jj/mm).
+  const fmtX = (iso: string) => multiDay
+    ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+    : fmtTime(iso)
   const pts: { t: string; v: number; pnl: number | null; sym: string | null; dir: string | null }[] =
     [{ t: '', v: base, pnl: null, sym: null, dir: null }]
   let cum = 0
   for (const t of sorted) {
     cum += t.pnl ?? 0
-    pts.push({ t: fmtTime(t.entry_time), v: base + cum, pnl: t.pnl ?? null, sym: t.symbol ?? null, dir: t.direction ?? null })
+    pts.push({ t: fmtX(t.entry_time), v: base + cum, pnl: t.pnl ?? null, sym: t.symbol ?? null, dir: t.direction ?? null })
   }
 
   const vals = pts.map(p => p.v)
@@ -545,7 +550,7 @@ function PnlChart({ trades, drawdownAmt, baseline }: { trades: TradeRow[]; drawd
           boxShadow: '0 4px 14px rgba(0,0,0,.4)',
         }}>
           <div style={{ color: C.te, marginBottom: 1 }}>
-            {hp.pnl == null ? 'Début de session' : `${hp.t} · ${hp.sym} ${hp.dir}`}
+            {hp.pnl == null ? (multiDay ? 'Début du challenge' : 'Début de session') : `${hp.t} · ${hp.sym} ${hp.dir}`}
           </div>
           <div><span style={{ color: C.te }}>{propMode ? 'Solde ' : 'Cumul '}</span><span style={{ color: C.tm }}>{fmtY(hp.v)}</span></div>
         </div>
@@ -820,11 +825,12 @@ function ChallengeBadge({ data }: { data: ChallengeData }) {
 }
 
 // ── SessionPanel ───────────────────────────────────────────────────────────────
-function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected, challenge }: {
+function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected, challenge, challengeTrades }: {
   trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats
   yesterdayStats: { score: number; pnl: number; alerts: number } | null
   yesterdayTrend: number | null; rules: TradingRules | null; connected?: boolean
   challenge?: ChallengeData | null
+  challengeTrades?: TradeRow[] | null
 }) {
   const C = useContext(ThemeCtx)
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
@@ -853,6 +859,14 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   // Ambiance prop firm : pas de contour coloré, seulement le filet lumineux du haut.
   const ambBd = C.b
   const ambLn = propFirm ? 'rgba(124,58,237,.9)' : C.b3
+
+  // En mode prop firm, la courbe « Solde du compte » suit TOUT le challenge (depuis son
+  // démarrage), pas seulement le jour : le solde se reporte d'un jour à l'autre au lieu
+  // de repartir au capital chaque matin. Multi-jours = axe en dates dès que ≥ 2 jours.
+  const curveTrades = (challenge && challengeTrades && challengeTrades.length) ? challengeTrades : trades
+  const challengeMultiDay = !!(challenge && challengeTrades) && new Set(
+    challengeTrades.filter(t => t.pnl != null && t.entry_time).map(t => t.entry_time.slice(0, 10))
+  ).size > 1
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', height: '100%' }}>
@@ -911,7 +925,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
             {challenge && <ChallengeBadge data={challenge} />}
           </div>
           <div style={{ flex: 1, minHeight: 120 }}>
-            <PnlChart trades={trades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} baseline={propFirm ? accountSize : undefined} />
+            <PnlChart trades={curveTrades} drawdownAmt={rules ? (rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000) : undefined} baseline={propFirm ? accountSize : undefined} multiDay={challengeMultiDay} />
           </div>
         </div>
       </div>
@@ -3515,6 +3529,15 @@ export default function DashboardClient({
     return { preset, phase, capital, cumPnl, todayPnl: stats.total_pnl, daysTraded }
   })()
 
+  // Trades du challenge (depuis son démarrage) pour la courbe « Solde du compte » :
+  // tout l'historique journalier depuis l'activation, fenêtre limitée aux ~30 derniers
+  // jours chargés (suffisant pour la durée d'un challenge prop firm).
+  const challengeTrades: TradeRow[] | null = (activePropFirm && activePropStart)
+    ? ((journalTrades as any[])
+        .filter(t => (t.entry_time || '').slice(0, 10) >= activePropStart.slice(0, 10))
+        .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()) as TradeRow[])
+    : null
+
   // Jalons de streak : on fête le palier le plus haut atteint pour chaque streak, une
   // seule fois (mémorisé en localStorage). En plus de la bannière brève, on envoie une
   // notif système (si autorisée). Un seul palier à la fois pour ne pas spammer.
@@ -4017,7 +4040,7 @@ export default function DashboardClient({
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
-              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} challenge={challengeData} />
+              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} challenge={challengeData} challengeTrades={challengeTrades} />
             )}
             {activeTab === 'calendrier' && (
               <CalendrierPanel sessions={historicalSessions} propFirmStart={activePropStart} />
