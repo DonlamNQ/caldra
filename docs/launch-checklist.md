@@ -45,7 +45,7 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [ ] SPF : ajouter `include:amazonses.com` + custom MAIL FROM SES (double alignement)
 - [~] DMARC : passé à `p=quarantine; pct=25` le 2026-06-27 (SES + Brevo confirmés DKIM-signés). **RESTE : monter `pct=25` → `pct=100` dans ~1 semaine** une fois la délivrabilité confirmée OK.
 - [ ] **#2 Guide de première connexion** (tour guidé de chaque onglet/case)
-- [ ] **#13 Rapports = vrais documents** (refonte PDF hebdo/mensuel, pas juste un recap)
+- [x] **#13 Rapports = vrais documents** ✅ (2026-06-28) — PDF hebdo/mensuel refondu : synthèse rédigée, métriques de journal (profit factor, espérance, ratio gain/perte, séries, durée…), répartition Long/Short + par symbole, tendance discipline, recommandations, section prop firm. Logique factorisée dans `lib/reportData.ts`.
 - [ ] **#14 Page d'inscription complète** (adresse, code postal, mail de confirmation — vrai parcours)
 - [ ] **#8 Autres plateformes futures** (Rithmic / Quantower / MotiveWave…) — secondaire
 - [ ] Idées backlog plus anciennes : journal de trading, couche engagement, détecteur symbole inhabituel
