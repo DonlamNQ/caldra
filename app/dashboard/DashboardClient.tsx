@@ -2461,6 +2461,8 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   // (rien n'est perdu). Fallback legacy : si le flag n'existe pas encore, on déduit de la firme.
   const [propActive, setPropActive] = useState<boolean>((initial as any)?.prop_firm_active ?? !!(initial as any)?.prop_firm)
   const [propPhase, setPropPhase] = useState<PropFirmPhase>(((initial as any)?.prop_firm_phase as PropFirmPhase) || 'p1')
+  // Confirmation in-app (modale Caldra) au lieu des boîtes natives du navigateur.
+  const [confirmBox, setConfirmBox] = useState<{ title: string; body: string; confirmLabel: string; onConfirm: () => void } | null>(null)
 
   // Toggle on/off : activer sans firme encore choisie → l'utilisateur en sélectionne une ci-dessous ;
   // activer avec une firme déjà mémorisée sans date → on démarre maintenant ; couper ne perd rien.
@@ -2477,39 +2479,53 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
 
   // Mode prop firm : cale le drawdown journalier max sur la règle de perte journalière
   // de la firme (seule vraie règle de prop firm reprise ; le reste = garde-fous Caldra).
-  function applyPropFirm(id: string) {
+  // Applique réellement le choix de firme (après confirmation si c'est un changement).
+  // Mise à jour STAGÉE : l'utilisateur enregistre lui-même ensuite.
+  function doApplyFirm(id: string) {
     const preset = PROPFIRM_PRESETS.find(p => p.id === id)
-    if (!preset) { setPropFirm(''); setPropFirmStart(null); setSave('idle'); return }
-    // #5 — Changer de firme = NOUVEAU challenge : les chiffres repartent de zéro (le
-    // comportemental reste). On demande confirmation pour ne pas réinitialiser par erreur.
-    const isChange = propFirm && id !== propFirm
-    if (isChange) {
-      const ok = window.confirm('Nouvelle firme = nouveau challenge.\n\nTes chiffres (objectif, marges, P&L) repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nContinuer ?')
-      if (!ok) return
-    }
+    if (!preset) return
+    const isChange = !!propFirm && id !== propFirm
     setPropFirm(id)
     setPropActive(true)   // choisir une firme = activer la vue prop firm
-    // Nouvelle firme = nouveau challenge → on repart en Phase 1.
-    if (isChange) setPropPhase('p1')
-    // Même firme qu'avant → on garde son horodatage de démarrage ; sinon, le compte démarre maintenant.
+    if (isChange) setPropPhase('p1')   // nouvelle firme = nouveau challenge → Phase 1
+    // Même firme qu'avant → on garde son horodatage de démarrage ; sinon, démarrage maintenant.
     setPropFirmStart(id === initialPropFirm ? (initialPropStart || new Date().toISOString()) : new Date().toISOString())
     setRules(p => ({ ...p, max_daily_drawdown_pct: preset.daily }))
     setSave('idle')
   }
 
-  // Recommencer un challenge sur la MÊME firme (échec, nouveau compte) : remet la date
-  // de démarrage à maintenant + phase 1 → objectif/marges/P&L/jours repartent de zéro.
-  // Le comportemental (all-time) reste intact. Sauvegarde + reload immédiats.
-  async function restartChallenge() {
+  function applyPropFirm(id: string) {
+    const preset = PROPFIRM_PRESETS.find(p => p.id === id)
+    if (!preset) { setPropFirm(''); setPropFirmStart(null); setSave('idle'); return }
+    // Changer de firme = nouveau challenge → confirmation via modale Caldra (pas la boîte
+    // native). On STAGE le changement : l'utilisateur clique « Enregistrer » ensuite.
+    if (propFirm && id !== propFirm) {
+      setConfirmBox({
+        title: 'Changer de firme ?',
+        body: 'Nouvelle firme = nouveau challenge. Ton objectif, tes marges, ton P&L de challenge, tes jours et ta phase repartent de zéro. Ton historique comportemental, lui, reste conservé.\n\nPense à enregistrer pour appliquer.',
+        confirmLabel: 'Changer de firme',
+        onConfirm: () => doApplyFirm(id),
+      })
+      return
+    }
+    doApplyFirm(id)
+  }
+
+  // Recommencer un challenge sur la MÊME firme (échec, nouveau compte) : remet la date de
+  // démarrage à maintenant + phase 1 → objectif/marges/P&L/jours repartent de zéro. Le
+  // comportemental (all-time) reste intact. STAGÉ → l'utilisateur enregistre lui-même.
+  function restartChallenge() {
     if (!propFirm) return
-    const ok = window.confirm('Recommencer le challenge ?\n\nTon objectif, tes marges, ton P&L de challenge, tes jours et ta phase repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nContinuer ?')
-    if (!ok) return
-    setSave('saving')
-    const now = new Date().toISOString()
-    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm, prop_firm_started_at: now, prop_firm_active: true, prop_firm_phase: 'p1' }
-    const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    if (res.ok) window.location.reload()
-    else setSave('error')
+    setConfirmBox({
+      title: 'Recommencer le challenge ?',
+      body: 'Ton objectif, tes marges, ton P&L de challenge, tes jours et ta phase repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nPense à enregistrer pour appliquer.',
+      confirmLabel: 'Recommencer',
+      onConfirm: () => {
+        setPropFirmStart(new Date().toISOString())
+        setPropPhase('p1')
+        setSave('idle')
+      },
+    })
   }
 
   async function submit(e: React.FormEvent) {
@@ -2543,6 +2559,23 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
+      {/* Modale de confirmation Caldra (changement de firme / recommencer) */}
+      {confirmBox && createPortal(
+        <div onClick={() => setConfirmBox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000, padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 'min(420px, 100%)', background: C.sf, border: `.5px solid ${C.b2}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.6)', fontFamily: SANS, position: 'relative' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,.9) 40%, transparent)' }} />
+            <div style={{ padding: '20px 22px' }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.tx, marginBottom: 9 }}>{confirmBox.title}</div>
+              <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.6, whiteSpace: 'pre-line' as const }}>{confirmBox.body}</div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 22, justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setConfirmBox(null)} style={{ padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontFamily: SANS, background: 'transparent', color: C.td, border: `.5px solid ${C.b2}` }}>Annuler</button>
+                <button type="button" onClick={() => { const fn = confirmBox.onConfirm; setConfirmBox(null); fn() }} style={{ padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, fontFamily: SANS, background: '#7c3aed', color: '#fff', border: 'none' }}>{confirmBox.confirmLabel}</button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
       {/* Header */}
       <div style={{ padding: '18px 28px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
         <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Règles de session</div>
