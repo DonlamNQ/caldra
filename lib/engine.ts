@@ -10,6 +10,21 @@ const getSupabase = () => createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// Jour de session dans le FUSEAU de l'utilisateur (`tz_offset_hours`) : le reset journalier
+// (drawdown du jour, pertes consécutives, overtrading…) et le `session_date` des alertes
+// s'alignent sur SON minuit, pas minuit UTC. tz=0 → comportement UTC inchangé.
+function userDay(rules: Record<string, any>): { today: string; floorMs: number } {
+  const tz = Number(rules?.tz_offset_hours ?? 0)
+  const today = new Date(Date.now() + tz * 3600000).toISOString().slice(0, 10)
+  const floorMs = new Date(today + 'T00:00:00.000Z').getTime() - tz * 3600000
+  return { today, floorMs }
+}
+// Plancher de requête large (UTC J-1) : couvre le minuit de l'utilisateur quel que soit son
+// fuseau ; on re-filtre ensuite précisément avec `userDay().floorMs`.
+function sessionQueryFloor(): string {
+  return new Date(Date.now() - 36 * 3600000).toISOString()
+}
+
 // Compte VIP (email) → traité comme plan Max (les 18 détecteurs), sans abonnement.
 async function isVipUser(userId: string): Promise<boolean> {
   try {
@@ -139,7 +154,7 @@ async function saveAndNotify(
   alerts = suppressRedundant(alerts)
   if (alerts.length === 0) return []
 
-  const today = new Date().toISOString().split('T')[0]
+  const { today } = userDay(rules)
   const supabase = getSupabase()
 
   const { data: insertedAlerts } = await supabase.from('alerts').insert(
@@ -333,7 +348,7 @@ async function maybeChallengeNudges(rules: Record<string, any>, ctx: ChallengeCt
   const totalUsedPct = totalLimit > 0 ? Math.round(Math.max(0, -cumPnl) / totalLimit * 100) : 0
   const objPct = targetAmt > 0 ? Math.round(cumPnl / targetAmt * 100) : 0
   const fmtEur = (v: number) => `€${Math.round(v).toLocaleString('fr-FR')}`
-  const today = new Date().toISOString().split('T')[0]
+  const { today } = userDay(rules)
 
   const { data: stateRows } = await supabase.from('notif_state').select('kind, value').eq('user_id', rules.user_id)
   const seen = new Map<string, string | null>((stateRows ?? []).map((r: any) => [r.kind, r.value]))
@@ -586,16 +601,18 @@ async function maybeUnfamiliarSymbolAlert(trade: Trade): Promise<Alert | null> {
 
 // ── Alertes à l'OUVERTURE d'un trade ─────────────────────────────────────────
 export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
-  const today = new Date().toISOString().split('T')[0]
   const supabase = getSupabase()
 
-  const [{ data: rules }, { data: profile }, { data: sessionTrades }] = await Promise.all([
+  const [{ data: rules }, { data: profile }, { data: allTrades }] = await Promise.all([
     supabase.from('trading_rules').select('*').eq('user_id', trade.user_id).single(),
     supabase.from('user_profiles').select('plan').eq('user_id', trade.user_id).single(),
-    supabase.from('trades').select('*').eq('user_id', trade.user_id).gte('entry_time', today).order('entry_time', { ascending: false }),
+    supabase.from('trades').select('*').eq('user_id', trade.user_id).gte('entry_time', sessionQueryFloor()).order('entry_time', { ascending: false }),
   ])
 
-  if (!rules || !sessionTrades) return []
+  if (!rules || !allTrades) return []
+  // Session du jour dans le fuseau de l'utilisateur (reset à SON minuit).
+  const { floorMs } = userDay(rules)
+  const sessionTrades = (allTrades as Trade[]).filter(t => new Date(t.entry_time).getTime() >= floorMs)
 
   const isMax = isMaxPlan(profile?.plan) || await isVipUser(trade.user_id)
   const strict = isPropStrict(rules)
@@ -617,16 +634,18 @@ export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
 // consecutive_losses, drawdown_alert
 export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = false): Promise<Alert[]> {
   const alerts: Alert[] = []
-  const today = new Date().toISOString().split('T')[0]
   const supabase = getSupabase()
 
-  const [{ data: rules }, { data: profile }, { data: sessionTrades }] = await Promise.all([
+  const [{ data: rules }, { data: profile }, { data: allTrades }] = await Promise.all([
     supabase.from('trading_rules').select('*').eq('user_id', trade.user_id).single(),
     supabase.from('user_profiles').select('plan').eq('user_id', trade.user_id).single(),
-    supabase.from('trades').select('*').eq('user_id', trade.user_id).eq('status', 'closed').gte('entry_time', today).order('entry_time', { ascending: false }),
+    supabase.from('trades').select('*').eq('user_id', trade.user_id).eq('status', 'closed').gte('entry_time', sessionQueryFloor()).order('entry_time', { ascending: false }),
   ])
 
-  if (!rules || !sessionTrades) return []
+  if (!rules || !allTrades) return []
+  // Session du jour dans le fuseau de l'utilisateur (reset à SON minuit).
+  const { floorMs } = userDay(rules)
+  const sessionTrades = (allTrades as Trade[]).filter(t => new Date(t.entry_time).getTime() >= floorMs)
 
   const isMax = isMaxPlan(profile?.plan) || await isVipUser(trade.user_id)
   // Mode prop firm : « un cran plus strict » sur les détecteurs de fermeture aussi
