@@ -50,7 +50,15 @@ export default async function DashboardPage() {
   // On charge donc la session sur la JOURNÉE ; le scoping financier se fait dans le client.
   const { data: rules } = await service.from('trading_rules').select('*').eq('user_id', user.id).single()
 
-  const todayAlertsQuery = service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
+  // Frontière de journée dans le FUSEAU de l'utilisateur (champ « Fuseau horaire » des
+  // Règles) : la session bascule à SON minuit, pas à minuit UTC → aligne le reset journalier
+  // sur l'heure serveur de sa prop firm. tz=0 → comportement UTC inchangé. On scope par
+  // timestamp précis (created_at / entry_time), pas par session_date (qui reste en UTC).
+  const tz = Number((rules as any)?.tz_offset_hours ?? 0)
+  const userToday = new Date(Date.now() + tz * 3600000).toISOString().slice(0, 10)
+  const dayFloor = new Date(new Date(userToday + 'T00:00:00.000Z').getTime() - tz * 3600000).toISOString()
+
+  const todayAlertsQuery = service.from('alerts').select('*').eq('user_id', user.id).gte('created_at', dayFloor)
     .order('level', { ascending: false }).order('created_at', { ascending: false })
 
   const [
@@ -69,7 +77,7 @@ export default async function DashboardPage() {
     { data: allAlertTypes },
   ] = await Promise.all([
     todayAlertsQuery,
-    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', today)
+    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', dayFloor)
       .order('entry_time', { ascending: false }).limit(50),
     service.from('trades').select('id,symbol,direction,size,entry_price,exit_price,pnl,entry_time,exit_time,stop_loss')
       .eq('user_id', user.id).gte('entry_time', thirtyDaysAgo).lt('entry_time', today)

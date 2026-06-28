@@ -3578,7 +3578,11 @@ export default function DashboardClient({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const today = new Date().toISOString().split('T')[0]
+  // Journée de session dans le FUSEAU de l'utilisateur (champ « Fuseau horaire ») : reset à
+  // SON minuit, pas minuit UTC. `dayFloorUTC` = instant UTC de son minuit local. tz=0 = UTC.
+  const tzOffset = Number((liveRules as any)?.tz_offset_hours ?? 0)
+  const today = new Date(Date.now() + tzOffset * 3600000).toISOString().split('T')[0]
+  const dayFloorUTC = new Date(new Date(today + 'T00:00:00.000Z').getTime() - tzOffset * 3600000).toISOString()
 
   const dismissToast = useCallback((id: string) => {
     setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t))
@@ -3616,7 +3620,8 @@ export default function DashboardClient({
         // Jours précédents depuis journalTrades (snapshot serveur) + trades du jour LIVE
         // (`trades`, mis à jour par poll/realtime) → la courbe « Solde du compte » et le
         // suivi de challenge se mettent à jour SANS recharger la page.
-        const priorDays = (journalTrades as any[]).filter(t => (t.entry_time || '').slice(0, 10) < today)
+        const floorMs = new Date(dayFloorUTC).getTime()
+        const priorDays = (journalTrades as any[]).filter(t => t.entry_time && new Date(t.entry_time).getTime() < floorMs)
         return [...priorDays, ...(trades as any[])]
           .filter(t => t.entry_time && new Date(t.entry_time).getTime() >= startMs)
           .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()) as TradeRow[]
@@ -3632,9 +3637,9 @@ export default function DashboardClient({
     if (!preset) return null
     const phase = ((_lr?.prop_firm_phase as PropFirmPhase) || 'p1')
     const capital = liveRules?.account_size || 10000
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const floorMs = new Date(dayFloorUTC).getTime()
     const cumPnl = challengeTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
-    const todayPnl = challengeTrades.filter(t => (t.entry_time || '').slice(0, 10) === todayStr).reduce((s, t) => s + (t.pnl ?? 0), 0)
+    const todayPnl = challengeTrades.filter(t => t.entry_time && new Date(t.entry_time).getTime() >= floorMs).reduce((s, t) => s + (t.pnl ?? 0), 0)
     const daysTraded = new Set(challengeTrades.map(t => (t.entry_time || '').slice(0, 10)).filter(Boolean)).size
     return { preset, phase, capital, cumPnl, todayPnl, daysTraded }
   })()
@@ -3645,7 +3650,7 @@ export default function DashboardClient({
   // aujourd'hui : = P&L du jour (stats). Le comportemental (tape, compteur, consécutives…)
   // reste lui sur la journée.
   const financialPnl: number = (() => {
-    const midnightMs = new Date(today).getTime()
+    const midnightMs = new Date(dayFloorUTC).getTime()
     const floorMs = (activePropFirm && activePropStart && new Date(activePropStart).getTime() > midnightMs)
       ? new Date(activePropStart).getTime() : midnightMs
     if (floorMs <= midnightMs) return stats.total_pnl
@@ -3724,8 +3729,9 @@ export default function DashboardClient({
     channelRef.current = supabase
       .channel('caldra-live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts', filter: `user_id=eq.${userId}` }, (payload) => {
-        const a = payload.new as AlertRow & { session_date?: string; user_id?: string }
-        if (a.session_date && a.session_date !== today) return
+        const a = payload.new as AlertRow & { session_date?: string; created_at?: string; user_id?: string }
+        // Scope au jour de l'utilisateur (fuseau) via created_at, pas session_date (UTC).
+        if (a.created_at && new Date(a.created_at).getTime() < new Date(dayFloorUTC).getTime()) return
         setAlerts(prev => [a, ...prev])
         addToast(a)
       })
@@ -3741,7 +3747,7 @@ export default function DashboardClient({
       })
       .subscribe(s => setConnected(s === 'SUBSCRIBED'))
     return () => { channelRef.current?.unsubscribe() }
-  }, [userId, today, addToast])
+  }, [userId, dayFloorUTC, addToast])
 
   // Topbar fixe sur mobile : on mesure sa hauteur (variable car elle passe sur 2 lignes)
   // pour décaler le contenu d'autant. Sur desktop la topbar reste dans le flux → 0.
@@ -3807,8 +3813,8 @@ export default function DashboardClient({
     // Couche comportementale = la JOURNÉE (tape, compteur, alertes, score…). Le scoping
     // financier au challenge se fait à l'affichage (financialPnl), pas ici.
     const [aRes, tRes] = await Promise.all([
-      supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false }),
-      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', `${today}T00:00:00.000Z`).order('entry_time', { ascending: false }),
+      supabase.from('alerts').select('*').eq('user_id', userId).gte('created_at', dayFloorUTC).order('created_at', { ascending: false }),
+      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', dayFloorUTC).order('entry_time', { ascending: false }),
     ])
     if (aRes.data) setAlerts(aRes.data)
     if (tRes.data) {
@@ -3818,7 +3824,7 @@ export default function DashboardClient({
       const wins = visible.filter((t: TradeRow) => (t.pnl ?? 0) > 0).length
       setStats({ total_trades: visible.length, total_pnl: pnl, wins, losses: visible.length - wins })
     }
-  }, [userId, today])
+  }, [userId, dayFloorUTC])
 
   useEffect(() => {
     const id = setInterval(pollFreshData, 30000)
