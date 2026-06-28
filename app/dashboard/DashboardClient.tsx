@@ -3765,9 +3765,18 @@ export default function DashboardClient({
 
   const pollFreshData = useCallback(async () => {
     const supabase = createClient()
+    // Mirror du scoping serveur (page.tsx liveFloor) : en prop firm actif, la session live
+    // est scopée à l'heure d'activation du challenge → le poll NE DOIT PAS re-charger le jour
+    // complet (sinon il réaffiche les trades d'avant le (re)démarrage ~après le reload).
+    const dayFloor = `${today}T00:00:00.000Z`
+    const floor = (activePropStart && new Date(activePropStart).getTime() > new Date(dayFloor).getTime())
+      ? activePropStart : dayFloor
+    const scoped = floor !== dayFloor
+    let aQuery = supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false })
+    if (scoped) aQuery = aQuery.gte('created_at', floor)
     const [aRes, tRes] = await Promise.all([
-      supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false }),
-      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', `${today}T00:00:00`).order('entry_time', { ascending: false }),
+      aQuery,
+      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', floor).order('entry_time', { ascending: false }),
     ])
     if (aRes.data) setAlerts(aRes.data)
     if (tRes.data) {
@@ -3777,7 +3786,7 @@ export default function DashboardClient({
       const wins = visible.filter((t: TradeRow) => (t.pnl ?? 0) > 0).length
       setStats({ total_trades: visible.length, total_pnl: pnl, wins, losses: visible.length - wins })
     }
-  }, [userId, today])
+  }, [userId, today, activePropStart])
 
   useEffect(() => {
     const id = setInterval(pollFreshData, 30000)
