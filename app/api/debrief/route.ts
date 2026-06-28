@@ -64,14 +64,22 @@ export async function POST(_req: NextRequest) {
   const { data: rules } = await service.from('trading_rules').select('*').eq('user_id', user.id).single()
   const accountSize = Number(rules?.account_size) || 10000
 
+  // Mode prop firm actif → les débriefs n'analysent QUE la période du challenge
+  // (depuis l'activation), comme la Session live. Sinon, fenêtre normale.
+  const propActive = ((rules as any)?.prop_firm_active ?? !!(rules as any)?.prop_firm) && (rules as any)?.prop_firm && (rules as any)?.prop_firm_started_at
+  const propStartTs = propActive ? String((rules as any).prop_firm_started_at) : null
+  const propStartDate = propStartTs ? propStartTs.slice(0, 10) : null
+
   // ══ DÉBRIEF DE PÉRIODE — 7 jours ou 30 jours (en plus du quotidien) ════════════
   if (period === '7' || period === '30') {
     const nbDays = Number(period)
     const start = new Date(Date.now() - (nbDays - 1) * 86_400_000).toISOString().slice(0, 10)
+    // Mode prop firm : on ne remonte pas avant le démarrage du challenge.
+    const periodStart = (propStartDate && propStartDate > start) ? propStartDate : start
 
     const [{ data: trades }, { data: alerts }] = await Promise.all([
-      service.from('trades').select('symbol, pnl, entry_time').eq('user_id', user.id).gte('entry_time', start).order('entry_time'),
-      service.from('alerts').select('type, level, session_date').eq('user_id', user.id).gte('session_date', start),
+      service.from('trades').select('symbol, pnl, entry_time').eq('user_id', user.id).gte('entry_time', periodStart).order('entry_time'),
+      service.from('alerts').select('type, level, session_date').eq('user_id', user.id).gte('session_date', periodStart),
     ])
     const t = trades ?? []
     const a = alerts ?? []
@@ -110,7 +118,7 @@ export async function POST(_req: NextRequest) {
       .map(([ty, n]) => `${alertLabel(ty)} : ${n}× sur ${daysOfType[ty].size} jour(s)`)
 
     const facts = [
-      `Période analysée : ${nbDays} derniers jours · ${tradingDays.size} jours tradés`,
+      propActive ? `Période analysée : challenge prop firm en cours (depuis le démarrage) · ${tradingDays.size} jours tradés` : `Période analysée : ${nbDays} derniers jours · ${tradingDays.size} jours tradés`,
       `Score de discipline moyen : ${avgScore}/100`,
       `P&L net : ${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}€`,
       `${t.length} trades · win rate ${winRate}%`,
@@ -152,10 +160,14 @@ Règles :
     if (lt?.entry_time) day = lt.entry_time.split('T')[0]
   }
   const dayEnd = `${day}T23:59:59.999Z`
+  // Mode prop firm : sur le jour d'activation, on exclut les trades faits avant l'activation.
+  const dailyFloor = (propStartTs && new Date(propStartTs).getTime() > new Date(day).getTime()) ? propStartTs : day
+  let dayAlertsQuery = service.from('alerts').select('type, level').eq('user_id', user.id).eq('session_date', day)
+  if (dailyFloor !== day) dayAlertsQuery = dayAlertsQuery.gte('created_at', dailyFloor)
 
   const [{ data: trades }, { data: alerts }] = await Promise.all([
-    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', day).lte('entry_time', dayEnd).order('entry_time'),
-    service.from('alerts').select('type, level').eq('user_id', user.id).eq('session_date', day),
+    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', dailyFloor).lte('entry_time', dayEnd).order('entry_time'),
+    dayAlertsQuery,
   ])
 
   const t = trades ?? []
