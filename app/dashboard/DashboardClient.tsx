@@ -2497,6 +2497,21 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     setSave('idle')
   }
 
+  // Recommencer un challenge sur la MÊME firme (échec, nouveau compte) : remet la date
+  // de démarrage à maintenant + phase 1 → objectif/marges/P&L/jours repartent de zéro.
+  // Le comportemental (all-time) reste intact. Sauvegarde + reload immédiats.
+  async function restartChallenge() {
+    if (!propFirm) return
+    const ok = window.confirm('Recommencer le challenge ?\n\nTon objectif, tes marges, ton P&L de challenge, tes jours et ta phase repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nContinuer ?')
+    if (!ok) return
+    setSave('saving')
+    const now = new Date().toISOString()
+    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm, prop_firm_started_at: now, prop_firm_active: true, prop_firm_phase: 'p1' }
+    const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    if (res.ok) window.location.reload()
+    else setSave('error')
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
     const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || new Date().toISOString()) : null, prop_firm_active: !!(propActive && propFirm), prop_firm_phase: propPhase }
@@ -2597,6 +2612,16 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
                   </div>
                 )
               })()}
+              {propFirm && propFirmStart && (
+                <button type="button" onClick={restartChallenge} style={{
+                  marginTop: 14, padding: '8px 14px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS,
+                  background: 'transparent', color: '#a78bfa', border: '.5px solid rgba(124,58,237,.4)', transition: 'all .15s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,.1)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
+                  ↻ Recommencer le challenge
+                </button>
+              )}
               </div>
               )}
             </div>
@@ -3526,30 +3551,31 @@ export default function DashboardClient({
   const activePropFirm = (_propActiveSaved && _lr?.prop_firm) ? (_lr.prop_firm as string) : null
   const activePropStart = (activePropFirm && _lr?.prop_firm_started_at) ? (_lr.prop_firm_started_at as string) : null
 
-  // Suivi de challenge (carte Session) : P&L cumulé depuis l'activation + jours tradés.
-  const challengeData: ChallengeData | null = (() => {
-    if (!activePropFirm || !activePropStart) return null
-    const preset = PROPFIRM_PRESETS.find(p => p.id === activePropFirm)
-    if (!preset) return null
-    const phase = ((_lr?.prop_firm_phase as PropFirmPhase) || 'p1')
-    const capital = liveRules?.account_size || 10000
-    const startDate = activePropStart.slice(0, 10)
-    const scoped = historicalSessions.filter(s => (s.date || '') >= startDate)
-    const histPnl = scoped.reduce((s, d) => s + d.pnl, 0)
-    const histDays = scoped.filter(s => s.tradeCount > 0).length
-    const cumPnl = histPnl + stats.total_pnl
-    const daysTraded = histDays + (stats.total_trades > 0 ? 1 : 0)
-    return { preset, phase, capital, cumPnl, todayPnl: stats.total_pnl, daysTraded }
-  })()
-
-  // Trades du challenge (depuis son démarrage) pour la courbe « Solde du compte » :
-  // tout l'historique journalier depuis l'activation, fenêtre limitée aux ~30 derniers
-  // jours chargés (suffisant pour la durée d'un challenge prop firm).
+  // Trades du challenge (depuis son activation, à l'horodatage EXACT) pour la courbe
+  // « Solde du compte » ET les chiffres du suivi de challenge. Fenêtre ~30 derniers jours
+  // chargés (suffisant pour la durée d'un challenge). Indépendant de la session du jour :
+  // un redémarrage en cours de journée scope ces chiffres sans toucher la session/tape.
   const challengeTrades: TradeRow[] | null = (activePropFirm && activePropStart)
     ? ((journalTrades as any[])
         .filter(t => t.entry_time && new Date(t.entry_time).getTime() >= new Date(activePropStart).getTime())
         .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()) as TradeRow[])
     : null
+
+  // Suivi de challenge (carte Session) : dérivé des trades du challenge (scopés à
+  // l'activation), PAS des stats de session (= jour complet) — sinon un redémarrage en
+  // cours de journée compterait les trades d'avant le redémarrage.
+  const challengeData: ChallengeData | null = (() => {
+    if (!activePropFirm || !activePropStart || !challengeTrades) return null
+    const preset = PROPFIRM_PRESETS.find(p => p.id === activePropFirm)
+    if (!preset) return null
+    const phase = ((_lr?.prop_firm_phase as PropFirmPhase) || 'p1')
+    const capital = liveRules?.account_size || 10000
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const cumPnl = challengeTrades.reduce((s, t) => s + (t.pnl ?? 0), 0)
+    const todayPnl = challengeTrades.filter(t => (t.entry_time || '').slice(0, 10) === todayStr).reduce((s, t) => s + (t.pnl ?? 0), 0)
+    const daysTraded = new Set(challengeTrades.map(t => (t.entry_time || '').slice(0, 10)).filter(Boolean)).size
+    return { preset, phase, capital, cumPnl, todayPnl, daysTraded }
+  })()
 
   // Jalons de streak : on fête le palier le plus haut atteint pour chaque streak, une
   // seule fois (mémorisé en localStorage). En plus de la bannière brève, on envoie une
