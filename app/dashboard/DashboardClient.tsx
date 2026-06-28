@@ -2455,6 +2455,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   // précisément à ce moment, et l'Analytique/Calendrier se scopent à partir de ce jour.
   const initialPropFirm = (initial as any)?.prop_firm || ''
   const initialPropStart = (initial as any)?.prop_firm_started_at || null
+  const initialActive = (initial as any)?.prop_firm_active ?? !!(initial as any)?.prop_firm
   const [propFirmStart, setPropFirmStart] = useState<string | null>(initialPropStart)
   // Mode prop firm = on/off MÉMORISÉ : couper le mode garde la firme + la date d'activation
   // (rien n'est perdu). Fallback legacy : si le flag n'existe pas encore, on déduit de la firme.
@@ -2481,12 +2482,15 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     if (!preset) { setPropFirm(''); setPropFirmStart(null); setSave('idle'); return }
     // #5 — Changer de firme = NOUVEAU challenge : les chiffres repartent de zéro (le
     // comportemental reste). On demande confirmation pour ne pas réinitialiser par erreur.
-    if (propFirm && id !== propFirm) {
+    const isChange = propFirm && id !== propFirm
+    if (isChange) {
       const ok = window.confirm('Nouvelle firme = nouveau challenge.\n\nTes chiffres (objectif, marges, P&L) repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nContinuer ?')
       if (!ok) return
     }
     setPropFirm(id)
     setPropActive(true)   // choisir une firme = activer la vue prop firm
+    // Nouvelle firme = nouveau challenge → on repart en Phase 1.
+    if (isChange) setPropPhase('p1')
     // Même firme qu'avant → on garde son horodatage de démarrage ; sinon, le compte démarre maintenant.
     setPropFirmStart(id === initialPropFirm ? (initialPropStart || new Date().toISOString()) : new Date().toISOString())
     setRules(p => ({ ...p, max_daily_drawdown_pct: preset.daily }))
@@ -2499,6 +2503,15 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setSave(res.ok ? 'saved' : 'error')
     if (res.ok) {
+      // Si la FENÊTRE de scope prop firm a changé (firme, activation/désactivation, date
+      // de démarrage), la Session/Analytique/Calendrier doivent être re-fetchées côté
+      // serveur (elles sont scopées à l'activation, props serveur non rafraîchies côté
+      // client) → on recharge. Sinon, mise à jour live sans recharger (capital, seuils…).
+      const scopeChanged =
+        (payload.prop_firm || null) !== (initialPropFirm || null) ||
+        payload.prop_firm_active !== initialActive ||
+        (payload.prop_firm_started_at || null) !== (initialPropStart || null)
+      if (scopeChanged) { window.location.reload(); return }
       // Remonte les règles fraîches au parent → la Session live se met à jour aussitôt.
       let saved: TradingRules = payload as TradingRules
       try { const d = await res.json(); if (d && typeof d === 'object') saved = { ...payload, ...d } } catch {}
@@ -3534,7 +3547,7 @@ export default function DashboardClient({
   // jours chargés (suffisant pour la durée d'un challenge prop firm).
   const challengeTrades: TradeRow[] | null = (activePropFirm && activePropStart)
     ? ((journalTrades as any[])
-        .filter(t => (t.entry_time || '').slice(0, 10) >= activePropStart.slice(0, 10))
+        .filter(t => t.entry_time && new Date(t.entry_time).getTime() >= new Date(activePropStart).getTime())
         .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()) as TradeRow[])
     : null
 
