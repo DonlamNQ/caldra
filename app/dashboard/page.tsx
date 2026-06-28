@@ -41,23 +41,17 @@ export default async function DashboardPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // En mode prop firm, la Session live (tape, ligne de session, score, stats terminal) est
-  // scopée à l'HEURE EXACTE d'activation/redémarrage du challenge → « ardoise propre » sur
-  // le cockpit de la tentative en cours. RIEN n'est perdu : le profil comportemental reste
-  // all-time dans l'Analytique, et tous les trades restent en base + au Calendrier. Hors
-  // prop firm : session = aujourd'hui (minuit).
+  // La Session live a DEUX couches :
+  //  • COMPORTEMENTALE (tape, compteur de trades, win rate, consécutives, alertes, score,
+  //    ligne) = la JOURNÉE (minuit→minuit). Ton comportement ne se réinitialise pas parce
+  //    que tu changes de challenge en cours de journée → ces données restent sur le jour.
+  //  • FINANCIÈRE (P&L, Solde du compte, Drawdown) = scopée au CHALLENGE (activation),
+  //    calculée côté client. Un (re)démarrage en cours de journée remet ces 3 à zéro.
+  // On charge donc la session sur la JOURNÉE ; le scoping financier se fait dans le client.
   const { data: rules } = await service.from('trading_rules').select('*').eq('user_id', user.id).single()
-  const propActiveSaved = (rules as any)?.prop_firm_active ?? !!(rules as any)?.prop_firm
-  const propStartTs = (propActiveSaved && (rules as any)?.prop_firm && (rules as any)?.prop_firm_started_at)
-    ? String((rules as any).prop_firm_started_at) : null
-  // Plancher de la session live = le plus tardif entre minuit (aujourd'hui) et l'activation.
-  const liveFloor = propStartTs && new Date(propStartTs).getTime() > new Date(today).getTime()
-    ? propStartTs : today
-  const scopedLive = liveFloor !== today   // activation/redémarrage le jour même → on filtre aussi sur l'heure
 
-  let todayAlertsQuery = service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
+  const todayAlertsQuery = service.from('alerts').select('*').eq('user_id', user.id).eq('session_date', today)
     .order('level', { ascending: false }).order('created_at', { ascending: false })
-  if (scopedLive) todayAlertsQuery = todayAlertsQuery.gte('created_at', liveFloor)
 
   const [
     { data: todayAlerts },
@@ -75,7 +69,7 @@ export default async function DashboardPage() {
     { data: allAlertTypes },
   ] = await Promise.all([
     todayAlertsQuery,
-    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', liveFloor)
+    service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', today)
       .order('entry_time', { ascending: false }).limit(50),
     service.from('trades').select('id,symbol,direction,size,entry_price,exit_price,pnl,entry_time,exit_time,stop_loss')
       .eq('user_id', user.id).gte('entry_time', thirtyDaysAgo).lt('entry_time', today)

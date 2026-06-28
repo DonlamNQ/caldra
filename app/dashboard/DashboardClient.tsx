@@ -560,12 +560,13 @@ function PnlChart({ trades, drawdownAmt, baseline, multiDay }: { trades: TradeRo
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ score, alerts, stats, rules }: {
-  score: number; alerts: AlertRow[]; stats: SessionStats; rules: TradingRules | null
+function Sidebar({ score, alerts, stats, financialPnl, rules }: {
+  score: number; alerts: AlertRow[]; stats: SessionStats; financialPnl: number; rules: TradingRules | null
 }) {
   const C = useContext(ThemeCtx)
+  // Drawdown = couche financière (scopée au challenge) → basé sur financialPnl.
   const drawdownPct = rules
-    ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
+    ? Math.min(100, Math.round(Math.abs(Math.min(0, financialPnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
   const tradesPct = rules ? Math.min(100, Math.round(stats.total_trades / rules.max_trades_per_session * 100)) : 0
 
@@ -825,8 +826,8 @@ function ChallengeBadge({ data }: { data: ChallengeData }) {
 }
 
 // ── SessionPanel ───────────────────────────────────────────────────────────────
-function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, rules, connected, challenge, challengeTrades }: {
-  trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats
+function SessionPanel({ trades, alerts, stats, financialPnl, yesterdayStats, yesterdayTrend, rules, connected, challenge, challengeTrades }: {
+  trades: TradeRow[]; alerts: AlertRow[]; stats: SessionStats; financialPnl: number
   yesterdayStats: { score: number; pnl: number; alerts: number } | null
   yesterdayTrend: number | null; rules: TradingRules | null; connected?: boolean
   challenge?: ChallengeData | null
@@ -848,8 +849,9 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   const score = computeScore(alerts)
   const streak = consecutiveLosses(trades)
   const sortedTrades = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
+  // Drawdown = couche FINANCIÈRE (scopée au challenge), donc basé sur financialPnl.
   const drawdownPct = rules
-    ? Math.min(100, Math.round(Math.abs(Math.min(0, stats.total_pnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
+    ? Math.min(100, Math.round(Math.abs(Math.min(0, financialPnl)) / ((rules.max_daily_drawdown_pct / 100) * (rules.account_size || 10000)) * 100))
     : 0
   // Vue prop firm active uniquement si le flag est vrai (fallback legacy = firme configurée).
   const propActiveSaved = (rules as any)?.prop_firm_active ?? !!(rules as any)?.prop_firm
@@ -883,7 +885,7 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
           <div>
             <div style={{ fontSize: 9, letterSpacing: 1.5, color: C.te, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 5 }}>P&L</div>
             <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1.5, lineHeight: 1, color: C.tx }}>
-              {fmtEur(stats.total_pnl)}
+              {fmtEur(financialPnl)}
             </div>
           </div>
           <div style={{ height: .5, background: C.b }} />
@@ -3613,6 +3615,19 @@ export default function DashboardClient({
     return { preset, phase, capital, cumPnl, todayPnl, daysTraded }
   })()
 
+  // P&L FINANCIER (terminal P&L + drawdown) : couche financière, scopée au CHALLENGE. On
+  // exclut les trades du jour faits AVANT l'activation (cas d'un (re)démarrage en cours de
+  // journée → P&L/Drawdown repartent à 0). Hors prop firm, ou activation antérieure à
+  // aujourd'hui : = P&L du jour (stats). Le comportemental (tape, compteur, consécutives…)
+  // reste lui sur la journée.
+  const financialPnl: number = (() => {
+    const midnightMs = new Date(today).getTime()
+    const floorMs = (activePropFirm && activePropStart && new Date(activePropStart).getTime() > midnightMs)
+      ? new Date(activePropStart).getTime() : midnightMs
+    if (floorMs <= midnightMs) return stats.total_pnl
+    return trades.filter(t => t.entry_time && new Date(t.entry_time).getTime() >= floorMs).reduce((s, t) => s + (t.pnl ?? 0), 0)
+  })()
+
   // Jalons de streak : on fête le palier le plus haut atteint pour chaque streak, une
   // seule fois (mémorisé en localStorage). En plus de la bannière brève, on envoie une
   // notif système (si autorisée). Un seul palier à la fois pour ne pas spammer.
@@ -3765,18 +3780,11 @@ export default function DashboardClient({
 
   const pollFreshData = useCallback(async () => {
     const supabase = createClient()
-    // Mirror du scoping serveur (page.tsx liveFloor) : en prop firm actif, la session live
-    // est scopée à l'heure d'activation du challenge → le poll NE DOIT PAS re-charger le jour
-    // complet (sinon il réaffiche les trades d'avant le (re)démarrage ~après le reload).
-    const dayFloor = `${today}T00:00:00.000Z`
-    const floor = (activePropStart && new Date(activePropStart).getTime() > new Date(dayFloor).getTime())
-      ? activePropStart : dayFloor
-    const scoped = floor !== dayFloor
-    let aQuery = supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false })
-    if (scoped) aQuery = aQuery.gte('created_at', floor)
+    // Couche comportementale = la JOURNÉE (tape, compteur, alertes, score…). Le scoping
+    // financier au challenge se fait à l'affichage (financialPnl), pas ici.
     const [aRes, tRes] = await Promise.all([
-      aQuery,
-      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', floor).order('entry_time', { ascending: false }),
+      supabase.from('alerts').select('*').eq('user_id', userId).eq('session_date', today).order('created_at', { ascending: false }),
+      supabase.from('trades').select('*').eq('user_id', userId).gte('entry_time', `${today}T00:00:00.000Z`).order('entry_time', { ascending: false }),
     ])
     if (aRes.data) setAlerts(aRes.data)
     if (tRes.data) {
@@ -3786,7 +3794,7 @@ export default function DashboardClient({
       const wins = visible.filter((t: TradeRow) => (t.pnl ?? 0) > 0).length
       setStats({ total_trades: visible.length, total_pnl: pnl, wins, losses: visible.length - wins })
     }
-  }, [userId, today, activePropStart])
+  }, [userId, today])
 
   useEffect(() => {
     const id = setInterval(pollFreshData, 30000)
@@ -4120,11 +4128,11 @@ export default function DashboardClient({
 
         {/* ── Main layout ── */}
         <div className="main-layout" style={{ display: 'grid', gridTemplateColumns: activeTab === 'session' ? '20% 1fr' : '1fr', gridTemplateRows: 'minmax(0, 1fr)', flex: 1, overflow: 'hidden', minHeight: 0, height: 0, marginTop: topbarH }}>
-          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} rules={liveRules} />}
+          {activeTab === 'session' && <Sidebar score={score} alerts={alerts} stats={stats} financialPnl={financialPnl} rules={liveRules} />}
 
           <div className="panel-container" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {activeTab === 'session' && (
-              <SessionPanel trades={trades} alerts={alerts} stats={stats} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} challenge={challengeData} challengeTrades={challengeTrades} />
+              <SessionPanel trades={trades} alerts={alerts} stats={stats} financialPnl={financialPnl} yesterdayStats={yesterdayStats} yesterdayTrend={yesterdayTrend} rules={liveRules} connected={!!platformConnected || ctraderConn} challenge={challengeData} challengeTrades={challengeTrades} />
             )}
             {activeTab === 'calendrier' && (
               <CalendrierPanel sessions={historicalSessions} propFirmStart={activePropStart} />
