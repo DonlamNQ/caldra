@@ -208,9 +208,19 @@ async function saveAndNotify(
 // outside_session, revenge_sizing, immediate_reentry, overtrading.
 // Extraits pour pouvoir tourner aussi à la fermeture (cTrader ne poste que des
 // trades fermés → analyzeOpenTrade n'est jamais appelé pour ces comptes).
+// En mode prop firm actif, Caldra est « un cran plus strict » : les détecteurs se
+// déclenchent plus tôt (un seul mauvais jour peut griller un challenge).
+function isPropStrict(rules: Record<string, any>): boolean {
+  return !!((rules.prop_firm_active ?? !!rules.prop_firm) && rules.prop_firm)
+}
+
 function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTrades: Trade[]): Alert[] {
   const alerts: Alert[] = []
   const cfg = (rules.detector_config as any) || {}
+  const strict = isPropStrict(rules)
+  // Sizing : seuil ramené à 1.3× (au lieu de 1.5×) ; sur-activité : alerte dès 60 %
+  // (au lieu de 80 %) ; re-entrée : fenêtre élargie ×1.5. Tout ça uniquement en prop firm.
+  const tighten = (ratio: number) => strict ? Math.min(ratio, 1.3) : ratio
   const prevTrades = sessionTrades.filter((t: Trade) => t.id !== trade.id)
   const prevTrade = prevTrades[0] ?? null
 
@@ -229,7 +239,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
   }
 
   // ── 2. REVENGE SIZING ─────────────────────────────────────────────────────
-  if (prevTrade && (prevTrade.pnl ?? 0) < 0 && trade.size > prevTrade.size * detectorThreshold(cfg, 'revenge_sizing', 'ratio', 1.5)) {
+  if (prevTrade && (prevTrade.pnl ?? 0) < 0 && trade.size > prevTrade.size * tighten(detectorThreshold(cfg, 'revenge_sizing', 'ratio', 1.5))) {
     alerts.push({
       type: 'revenge_sizing',
       level: 2,
@@ -246,7 +256,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
   if (prevTrade?.exit_time) {
     const secsSinceLastExit =
       (new Date(trade.entry_time).getTime() - new Date(prevTrade.exit_time).getTime()) / 1000
-    if (secsSinceLastExit >= 0 && secsSinceLastExit < rules.min_time_between_entries_sec) {
+    if (secsSinceLastExit >= 0 && secsSinceLastExit < rules.min_time_between_entries_sec * (strict ? 1.5 : 1)) {
       alerts.push({
         type: 'immediate_reentry',
         level: 1,
@@ -261,8 +271,8 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
 
   // ── 4. SURACTIVITÉ ────────────────────────────────────────────────────────
   const tradeCount = sessionTrades.length
-  if (tradeCount >= rules.max_trades_per_session * 0.8) {
-    const level = tradeCount >= rules.max_trades_per_session ? 2 : 1
+  if (tradeCount >= rules.max_trades_per_session * (strict ? 0.6 : 0.8)) {
+    const level = tradeCount >= rules.max_trades_per_session * (strict ? 0.85 : 1) ? 2 : 1
     alerts.push({
       type: 'overtrading',
       level,
@@ -304,7 +314,7 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
 
   // ── 6. SIZING D'EUPHORIE ──────────────────────────────────────────────────
   // Taille qui gonfle après un GAIN (excès de confiance) — miroir du revenge.
-  if (prevTrade && (prevTrade.pnl ?? 0) > 0 && trade.size > prevTrade.size * detectorThreshold(cfg, 'euphoria_sizing', 'ratio', 1.5)) {
+  if (prevTrade && (prevTrade.pnl ?? 0) > 0 && trade.size > prevTrade.size * tighten(detectorThreshold(cfg, 'euphoria_sizing', 'ratio', 1.5))) {
     alerts.push({
       type: 'euphoria_sizing',
       level: 2,
@@ -455,6 +465,9 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
   if (!rules || !sessionTrades) return []
 
   const isMax = isMaxPlan(profile?.plan) || await isVipUser(trade.user_id)
+  // Mode prop firm : « un cran plus strict » sur les détecteurs de fermeture aussi
+  // (1 perte consécutive de moins, alerte drawdown dès 70 % de la limite).
+  const strict = isPropStrict(rules)
 
   // Trade fermé sans ouverture préalablement ingérée (ex. cTrader, qui ne poste
   // que des trades fermés) → on fait aussi tourner les détecteurs d'entrée,
@@ -475,7 +488,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
     if ((t.pnl ?? 0) < 0) lossStreak++
     else break
   }
-  if (lossStreak >= rules.max_consecutive_losses) {
+  if (lossStreak >= (strict ? Math.max(2, rules.max_consecutive_losses - 1) : rules.max_consecutive_losses)) {
     alerts.push({
       type: 'consecutive_losses',
       level: 2,
@@ -489,7 +502,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
   const accountSize = Number(rules.account_size) || 10000
   const drawdownPct = Math.abs(totalPnl / accountSize) * 100
 
-  if (totalPnl < 0 && drawdownPct >= rules.max_daily_drawdown_pct * 0.8) {
+  if (totalPnl < 0 && drawdownPct >= rules.max_daily_drawdown_pct * (strict ? 0.7 : 0.8)) {
     const level = drawdownPct >= rules.max_daily_drawdown_pct ? 3 : 2
     alerts.push({
       type: 'drawdown_alert',
