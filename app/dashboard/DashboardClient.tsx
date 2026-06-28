@@ -747,11 +747,11 @@ function ChallengeBadge({ data }: { data: ChallengeData }) {
   const dangerCol = (used: number) => used >= 80 ? RED : used >= 55 ? ORANGE : C.tx
 
   const milestone = targetPct === 0
-    ? 'Compte financé — protège tes gains, respecte tes marges.'
-    : progressPct >= 100 ? `Objectif ${phaseLabel} atteint — sécurise et valide.`
+    ? 'Compte financé. Protège tes gains, respecte tes marges.'
+    : progressPct >= 100 ? `Objectif ${phaseLabel} atteint. Sécurise et valide.`
     : progressPct >= 75 ? `Plus que ${fmt(Math.max(0, targetAmt - cumPnl))} pour valider la ${phaseLabel}.`
     : progressPct >= 50 ? 'À mi-chemin de ton objectif. Reste discipliné.'
-    : cumPnl < 0 ? 'Tu es en repli — protège ta marge avant de viser l’objectif.'
+    : cumPnl < 0 ? 'Tu es en repli, protège ta marge avant de viser l’objectif.'
     : `Objectif ${phaseLabel} : +${targetPct}% (${fmt(targetAmt)}).`
 
   const toggle = () => {

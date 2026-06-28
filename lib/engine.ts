@@ -264,7 +264,7 @@ async function maybeChallengeNudges(rules: Record<string, any>, isMax: boolean):
   if (targetAmt > 0) {
     if (objPct >= 100 && seen.get('chal-obj-done') !== startedAt) {
       await sendPushToUser(rules.user_id, 'Objectif de phase atteint',
-        `Objectif ${phaseLabel} atteint — sécurise tes gains et lance la validation.`,
+        `Objectif ${phaseLabel} atteint. Sécurise tes gains et lance la validation.`,
         1, '/dashboard', 'chal-obj-done')
       await mark('chal-obj-done', startedAt)
     } else if (objPct >= 75 && objPct < 100 && seen.get('chal-obj-75') !== startedAt) {
