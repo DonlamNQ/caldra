@@ -2516,6 +2516,23 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     doApplyFirm(id)
   }
 
+  // Changer de phase = nouvelle évaluation (P1→P2→Funded) → objectif/marges/P&L/jours
+  // repartent de zéro (nouvelle date de démarrage). Comportemental conservé. STAGÉ.
+  function changePhase(ph: PropFirmPhase) {
+    if (ph === propPhase) return
+    const label = PROPFIRM_PHASES.find(p => p.id === ph)?.label ?? ph
+    setConfirmBox({
+      title: `Passer en ${label} ?`,
+      body: 'Nouvelle phase = nouvelle évaluation. Ton objectif, tes marges, ton P&L de challenge et tes jours repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nPense à enregistrer pour appliquer.',
+      confirmLabel: `Passer en ${label}`,
+      onConfirm: () => {
+        setPropPhase(ph)
+        setPropFirmStart(new Date().toISOString())
+        setSave('idle')
+      },
+    })
+  }
+
   // Recommencer un challenge sur la MÊME firme (échec, nouveau compte) : remet la date de
   // démarrage à maintenant + phase 1 → objectif/marges/P&L/jours repartent de zéro. Le
   // comportemental (all-time) reste intact. STAGÉ → l'utilisateur enregistre lui-même.
@@ -2629,7 +2646,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
                       const pf2 = PROPFIRM_PRESETS.find(p => p.id === propFirm)
                       const tgt = pf2 ? targetForPhase(pf2, ph.id) : 0
                       return (
-                        <button key={ph.id} type="button" onClick={() => { setPropPhase(ph.id); setSave('idle') }} style={{
+                        <button key={ph.id} type="button" onClick={() => changePhase(ph.id)} style={{
                           padding: '7px 13px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontFamily: SANS, transition: 'all .15s',
                           background: on ? C.red : 'rgba(255,255,255,.05)', color: on ? '#fff' : C.tm,
                           border: `.5px solid ${on ? C.red : C.b2}`,
@@ -3594,9 +3611,16 @@ export default function DashboardClient({
   // chargés (suffisant pour la durée d'un challenge). Indépendant de la session du jour :
   // un redémarrage en cours de journée scope ces chiffres sans toucher la session/tape.
   const challengeTrades: TradeRow[] | null = (activePropFirm && activePropStart)
-    ? ((journalTrades as any[])
-        .filter(t => t.entry_time && new Date(t.entry_time).getTime() >= new Date(activePropStart).getTime())
-        .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()) as TradeRow[])
+    ? (() => {
+        const startMs = new Date(activePropStart).getTime()
+        // Jours précédents depuis journalTrades (snapshot serveur) + trades du jour LIVE
+        // (`trades`, mis à jour par poll/realtime) → la courbe « Solde du compte » et le
+        // suivi de challenge se mettent à jour SANS recharger la page.
+        const priorDays = (journalTrades as any[]).filter(t => (t.entry_time || '').slice(0, 10) < today)
+        return [...priorDays, ...(trades as any[])]
+          .filter(t => t.entry_time && new Date(t.entry_time).getTime() >= startMs)
+          .sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()) as TradeRow[]
+      })()
     : null
 
   // Suivi de challenge (carte Session) : dérivé des trades du challenge (scopés à
