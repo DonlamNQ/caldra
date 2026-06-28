@@ -863,7 +863,10 @@ function SessionPanel({ trades, alerts, stats, yesterdayStats, yesterdayTrend, r
   // En mode prop firm, la courbe « Solde du compte » suit TOUT le challenge (depuis son
   // démarrage), pas seulement le jour : le solde se reporte d'un jour à l'autre au lieu
   // de repartir au capital chaque matin. Multi-jours = axe en dates dès que ≥ 2 jours.
-  const curveTrades = (challenge && challengeTrades && challengeTrades.length) ? challengeTrades : trades
+  // IMPORTANT : en challenge, on utilise challengeTrades MÊME VIDE (challenge fraîchement
+  // (re)démarré → courbe vide au capital), sinon on retomberait sur les trades du jour et
+  // la courbe semblerait « ne pas se réinitialiser ».
+  const curveTrades = (challenge && challengeTrades) ? challengeTrades : trades
   const challengeMultiDay = !!(challenge && challengeTrades) && new Set(
     challengeTrades.filter(t => t.pnl != null && t.entry_time).map(t => t.entry_time.slice(0, 10))
   ).size > 1
