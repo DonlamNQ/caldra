@@ -718,7 +718,7 @@ type ChallengeData = {
 function ChallengeTracker({ data }: { data: ChallengeData }) {
   const C = useContext(ThemeCtx)
   const [open, setOpen] = useState(false)
-  const GREEN = '#3cc87a', RED = '#dc503c', ORANGE = '#ffab00'
+  const RED = '#dc503c', ORANGE = '#ffab00'
   const { preset, phase, capital, cumPnl, todayPnl, daysTraded } = data
   const phaseLabel = PROPFIRM_PHASES.find(p => p.id === phase)?.label ?? 'Phase 1'
   const targetPct = targetForPhase(preset, phase)
@@ -733,7 +733,9 @@ function ChallengeTracker({ data }: { data: ChallengeData }) {
   const dailyUsedPct = dailyLimit > 0 ? Math.min(100, Math.round(todayLoss / dailyLimit * 100)) : 0
   const totalUsedPct = totalLimit > 0 ? Math.min(100, Math.round(totalLoss / totalLimit * 100)) : 0
   const fmt = (v: number) => `€${Math.round(v).toLocaleString('fr-FR')}`
-  const dangerCol = (used: number) => used >= 80 ? RED : used >= 50 ? ORANGE : GREEN
+  // Neutre tant que la marge est confortable ; orange/rouge seulement quand ça devient
+  // critique (anti-biais : pas de vert sur l'écran Session live).
+  const dangerCol = (used: number) => used >= 80 ? RED : used >= 55 ? ORANGE : C.tx
 
   // Message jalon (#3) selon l'avancement vers l'objectif.
   const milestone = targetPct === 0
@@ -757,7 +759,7 @@ function ChallengeTracker({ data }: { data: ChallengeData }) {
   )
 
   return (
-    <div style={{ background: C.sf, border: '.5px solid rgba(124,58,237,.3)', borderRadius: 10, padding: open ? '11px 16px 16px' : '11px 16px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 10, padding: open ? '11px 16px 16px' : '11px 16px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,.9) 40%, transparent)' }} />
 
       {/* Bandeau compact (toujours visible, clic = déplier) */}
@@ -782,7 +784,7 @@ function ChallengeTracker({ data }: { data: ChallengeData }) {
                 <span style={{ fontSize: 11.5, fontFamily: SANS, color: C.tx }}>{fmt(cumPnl)} / {fmt(targetAmt)} · {progressPct}%</span>
               </div>
               <div style={{ height: 7, background: 'rgba(255,255,255,.06)', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${progressPct}%`, background: GREEN, borderRadius: 4, transition: 'width .4s' }} />
+                <div style={{ height: '100%', width: `${progressPct}%`, background: C.tm, borderRadius: 4, transition: 'width .4s' }} />
               </div>
             </div>
           )}
