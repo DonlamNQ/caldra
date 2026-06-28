@@ -21,6 +21,8 @@ export const ALERT_LABELS: Record<string, string> = {
   cut_winners_hold_losers:'Coupe les gains',
   end_of_day_desperation: 'Désespoir fin de session',
   unfamiliar_symbol:      'Actif inhabituel',
+  consistency_rule:       'Règle de consistance',
+  near_target_oversizing: "Ligne d'arrivée",
 }
 
 /** Libellé FR lisible pour un type d'alerte (fallback : snake_case → mots). */

@@ -35,6 +35,9 @@ export const MAX_ONLY_DETECTORS = new Set<string>([
   'cut_winners_hold_losers',
   'drawdown_override',
   'news_trading',
+  // Spécifiques au mode prop firm (ne se déclenchent qu'en challenge actif).
+  'consistency_rule',
+  'near_target_oversizing',
 ])
 
 // Comptes VIP : accès complet et traités comme plan Max, SANS abonnement Stripe.

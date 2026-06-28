@@ -94,6 +94,16 @@ export const ALERT_CONSEQUENCES: Record<string, string[]> = {
     "Chaque instrument a son rythme. En découvrir un en risquant de l'argent, c'est payer pour apprendre.",
     "L'opportunité sur un actif inconnu est souvent un mirage : tu n'as pas l'avantage que tu crois.",
   ],
+  consistency_rule: [
+    "Une seule grosse journée qui domine ton total, et beaucoup de firmes refusent de te financer ou de te payer.",
+    "La consistance, c'est répartir tes gains. Un pic isolé bloque ta validation au lieu de l'accélérer.",
+    "Ton meilleur jour ne doit pas écraser les autres : étaler tes gains protège ton payout.",
+  ],
+  near_target_oversizing: [
+    "Augmenter ta taille tout près de l'objectif, c'est la façon la plus classique de griller un challenge déjà gagné.",
+    "À quelques pas du but, le sur-engagement transforme une réussite en échec évitable.",
+    "Si près de valider, garde ta taille habituelle : tu n'as plus besoin de forcer, juste de finir propre.",
+  ],
 }
 
 /** Toutes les conséquences, à plat (pour alimenter les messages du jour). */

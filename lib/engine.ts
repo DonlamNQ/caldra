@@ -75,7 +75,13 @@ function buildPushContent(a: Alert): { title: string; body: string } {
     case 'risk_exceeded':
       return { title: '⚖️ Risk dépassé', body: `Risque ${d.risk_pct}% sur ce trade (max ${d.max_risk_pct}%). Réduis la taille.` }
     case 'news_trading':
-      return { title: '📰 Trade pendant news', body: `Tu trades pendant ${d.title} (${d.currency}). Là, c'est le hasard qui décide.` }
+      return a.level === 3
+        ? { title: '📰 News interdite en challenge', body: `Tu trades sur ${d.title} (${d.currency}). Beaucoup de firmes l'interdisent — tu risques une violation.` }
+        : { title: '📰 Trade pendant news', body: `Tu trades pendant ${d.title} (${d.currency}). Là, c'est le hasard qui décide.` }
+    case 'consistency_rule':
+      return { title: '⚖️ Consistance du challenge', body: `Ta meilleure journée pèse ${d.day_share}% de ton profit (max ${d.max_share}%). Étale tes gains.` }
+    case 'near_target_oversizing':
+      return { title: '🏁 Ligne d\'arrivée', body: `À ${d.progress_pct}% de ton objectif, tu ×${d.ratio} ta taille. Ne grille pas le challenge si près du but.` }
     case 'averaging_down':
       return { title: '🔻 Acharnement directionnel', body: `${d.symbol} ${d.direction} : 2 pertes d'affilée sur ce setup, et tu repars. Stop.` }
     case 'euphoria_sizing':
@@ -215,6 +221,90 @@ function isPropStrict(rules: Record<string, any>): boolean {
   return !!((rules.prop_firm_active ?? !!rules.prop_firm) && rules.prop_firm)
 }
 
+// Contexte de challenge prop firm : UNE seule requête (trades fermés depuis l'activation)
+// réutilisée par les nudges push + les détecteurs « consistance » et « ligne d'arrivée ».
+// Renvoie null hors mode prop firm / sans preset / sans date d'activation.
+type ChallengeCtx = {
+  preset: typeof PROPFIRM_PRESETS[number]
+  phase: PropFirmPhase
+  capital: number
+  startedAt: string
+  cumPnl: number          // profit net cumulé du challenge
+  bestDayProfit: number   // meilleure journée (profit), pour la règle de consistance
+  targetAmt: number       // objectif de profit de la phase (0 si financé)
+}
+async function fetchChallengeContext(rules: Record<string, any>): Promise<ChallengeCtx | null> {
+  if (!isPropStrict(rules)) return null
+  const startedAt = (rules.prop_firm_started_at as string | null) || null
+  const preset = PROPFIRM_PRESETS.find(p => p.id === rules.prop_firm)
+  if (!startedAt || !preset || !rules.user_id) return null
+
+  const { data } = await getSupabase().from('trades')
+    .select('pnl, entry_time').eq('user_id', rules.user_id).eq('status', 'closed').gte('entry_time', startedAt)
+  const rows = (data ?? []) as { pnl: number | null; entry_time: string }[]
+  const cumPnl = rows.reduce((s, t) => s + (t.pnl || 0), 0)
+  const byDay = new Map<string, number>()
+  for (const t of rows) {
+    const d = (t.entry_time || '').slice(0, 10); if (!d) continue
+    byDay.set(d, (byDay.get(d) || 0) + (t.pnl || 0))
+  }
+  const bestDayProfit = Math.max(0, ...Array.from(byDay.values()))
+  const phase = (rules.prop_firm_phase as PropFirmPhase) || 'p1'
+  const capital = Number(rules.account_size) || 10000
+  const targetAmt = targetForPhase(preset, phase) * capital / 100
+  return { preset, phase, capital, startedAt, cumPnl, bestDayProfit, targetAmt }
+}
+
+// Règle de consistance « best day » : aucune journée ne doit dépasser X % du profit
+// total. Détecteur Max + prop firm, qui ne se déclenche QUE quand la firme l'impose
+// réellement (cf. `consistency.phases` dans lib/propfirms.ts). Seuil ajustable par
+// l'utilisateur pour coller à son compte/payout exact (detector_config → 'share').
+function consistencyAlert(ctx: ChallengeCtx, cfg: any): Alert | null {
+  const c = ctx.preset.consistency
+  if (!c || !c.phases.includes(ctx.phase)) return null
+  if (ctx.cumPnl <= 0 || ctx.bestDayProfit <= 0) return null
+  // Trop tôt pour que ça compte : on attend d'avoir avancé vers l'objectif (≥ 25 %).
+  if (ctx.targetAmt > 0 && ctx.cumPnl < ctx.targetAmt * 0.25) return null
+  const maxShare = detectorThreshold(cfg, 'consistency_rule', 'share', c.maxDayShare)
+  const share = ctx.bestDayProfit / ctx.cumPnl * 100
+  if (share <= maxShare) return null
+  const neededTotal = ctx.bestDayProfit / (maxShare / 100)
+  return {
+    type: 'consistency_rule',
+    level: 2,
+    message: `Ta meilleure journée pèse ${Math.round(share)} % de ton profit total (max ${Math.round(maxShare)} %)`,
+    detail: {
+      day_share: share.toFixed(1),
+      max_share: maxShare,
+      best_day: Math.round(ctx.bestDayProfit),
+      total_profit: Math.round(ctx.cumPnl),
+      needed_total: Math.round(neededTotal),
+    },
+  }
+}
+
+// Protection « ligne d'arrivée » : tu es à 80–100 % de ton objectif (zone où l'on
+// sur-size pour finir vite et où l'on grille tout) ET tu viens d'augmenter ta taille.
+// Détecteur d'entrée Max + prop firm. Pas d'objectif (financé) → pas de ligne d'arrivée.
+function nearTargetTiltAlert(ctx: ChallengeCtx, trade: Trade, sessionTrades: Trade[]): Alert | null {
+  if (ctx.targetAmt <= 0) return null
+  const progress = ctx.cumPnl / ctx.targetAmt
+  if (progress < 0.8 || progress >= 1) return null
+  const prev = sessionTrades.filter(t => t.id !== trade.id)[0]
+  if (!prev || !prev.size || !trade.size || trade.size <= prev.size * 1.5) return null
+  return {
+    type: 'near_target_oversizing',
+    level: 3,
+    message: `Tu grossis ta taille à ${Math.round(progress * 100)} % de ton objectif`,
+    detail: {
+      progress_pct: Math.round(progress * 100),
+      previous_size: prev.size,
+      current_size: trade.size,
+      ratio: (trade.size / prev.size).toFixed(2),
+    },
+  }
+}
+
 // Notifications push liées à l'AVANCEMENT du challenge prop firm (Max). Envoyées sur
 // le téléphone, hors du feed d'alertes comportementales :
 //   • marge TOTALE du challenge entamée (≥ 80 %) — alerte de protection du compte
@@ -222,22 +312,11 @@ function isPropStrict(rules: Record<string, any>): boolean {
 // La marge JOURNALIÈRE n'est PAS doublée ici : `drawdown_alert` la couvre déjà (en
 // mode prop firm la limite journalière = celle du preset). Déduplication via
 // `notif_state` : marge = 1×/jour, jalons = 1×/challenge (clé = date d'activation).
-async function maybeChallengeNudges(rules: Record<string, any>, isMax: boolean): Promise<void> {
-  if (!isMax || !isPropStrict(rules)) return
-  const startedAt = (rules.prop_firm_started_at as string | null) || null
-  const preset = PROPFIRM_PRESETS.find(p => p.id === rules.prop_firm)
-  if (!startedAt || !preset || !rules.user_id) return
-
+async function maybeChallengeNudges(rules: Record<string, any>, ctx: ChallengeCtx): Promise<void> {
+  const { preset, phase, capital, startedAt, cumPnl, targetAmt } = ctx
   const supabase = getSupabase()
-  const { data: chalTrades } = await supabase.from('trades')
-    .select('pnl').eq('user_id', rules.user_id).eq('status', 'closed').gte('entry_time', startedAt)
-  const cumPnl = (chalTrades ?? []).reduce((s: number, t: any) => s + (t.pnl || 0), 0)
-
-  const capital = Number(rules.account_size) || 10000
-  const phase = (rules.prop_firm_phase as PropFirmPhase) || 'p1'
   const phaseLabel = PROPFIRM_PHASES.find(p => p.id === phase)?.label ?? 'Phase 1'
   const totalLimit = preset.total * capital / 100
-  const targetAmt = targetForPhase(preset, phase) * capital / 100
   const totalUsedPct = totalLimit > 0 ? Math.round(Math.max(0, -cumPnl) / totalLimit * 100) : 0
   const objPct = targetAmt > 0 ? Math.round(cumPnl / targetAmt * 100) : 0
   const fmtEur = (v: number) => `€${Math.round(v).toLocaleString('fr-FR')}`
@@ -444,14 +523,18 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
 
 // Détecteur "Trade pendant news" — croise l'heure d'entrée avec le calendrier
 // économique (événements à fort impact ±10 min sur la devise du symbole).
-async function maybeNewsAlert(trade: Trade, windowMin = 10): Promise<Alert | null> {
+async function maybeNewsAlert(trade: Trade, windowMin = 10, strict = false): Promise<Alert | null> {
   const news = await newsConflict(trade.entry_time, trade.symbol, windowMin)
   if (!news) return null
+  // En mode prop firm, plusieurs firmes interdisent carrément de trader sur les news à
+  // fort impact (risque de violation de règle) → alerte durcie en niveau 3.
   return {
     type: 'news_trading',
-    level: 2,
-    message: `Trade à ${news.minutes} min d'une news ${news.currency} à fort impact`,
-    detail: { title: news.title, currency: news.currency, minutes_from_event: news.minutes },
+    level: strict ? 3 : 2,
+    message: strict
+      ? `Trading sur news ${news.currency} à fort impact — interdit/risqué en challenge`
+      : `Trade à ${news.minutes} min d'une news ${news.currency} à fort impact`,
+    detail: { title: news.title, currency: news.currency, minutes_from_event: news.minutes, prop_firm: strict || undefined },
   }
 }
 
@@ -502,11 +585,17 @@ export async function analyzeOpenTrade(trade: Trade): Promise<Alert[]> {
   if (!rules || !sessionTrades) return []
 
   const isMax = isMaxPlan(profile?.plan) || await isVipUser(trade.user_id)
+  const strict = isPropStrict(rules)
   const alerts = entryBehaviorAlerts(trade, rules, sessionTrades)
-  const news = await maybeNewsAlert(trade, detectorThreshold((rules as any).detector_config, 'news_trading', 'window', 10))
+  const news = await maybeNewsAlert(trade, detectorThreshold((rules as any).detector_config, 'news_trading', 'window', 10), strict)
   if (news) alerts.push(news)
   const unfamiliar = await maybeUnfamiliarSymbolAlert(trade)
   if (unfamiliar) alerts.push(unfamiliar)
+  // Détecteur prop firm « ligne d'arrivée » (Max) — besoin du cumul du challenge.
+  if (isMax) {
+    const ctx = await fetchChallengeContext(rules)
+    if (ctx) { const nt = nearTargetTiltAlert(ctx, trade, sessionTrades); if (nt) alerts.push(nt) }
+  }
 
   return saveAndNotify(trade, alerts, sessionTrades, isMax, rules)
 }
@@ -530,17 +619,23 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
   // Mode prop firm : « un cran plus strict » sur les détecteurs de fermeture aussi
   // (1 perte consécutive de moins, alerte drawdown dès 70 % de la limite).
   const strict = isPropStrict(rules)
+  // Contexte de challenge (1 requête) réutilisé : consistance + ligne d'arrivée + nudges.
+  const ctx = isMax ? await fetchChallengeContext(rules) : null
 
   // Trade fermé sans ouverture préalablement ingérée (ex. cTrader, qui ne poste
   // que des trades fermés) → on fait aussi tourner les détecteurs d'entrée,
   // sinon overtrading / outside_session / revenge / re-entrée ne se déclenchent jamais.
   if (includeEntryChecks) {
     alerts.push(...entryBehaviorAlerts(trade, rules, sessionTrades))
-    const news = await maybeNewsAlert(trade, detectorThreshold((rules as any).detector_config, 'news_trading', 'window', 10))
+    const news = await maybeNewsAlert(trade, detectorThreshold((rules as any).detector_config, 'news_trading', 'window', 10), strict)
     if (news) alerts.push(news)
     const unfamiliar = await maybeUnfamiliarSymbolAlert(trade)
     if (unfamiliar) alerts.push(unfamiliar)
+    if (ctx) { const nt = nearTargetTiltAlert(ctx, trade, sessionTrades); if (nt) alerts.push(nt) }
   }
+
+  // Règle de consistance « best day » (prop firm, phases imposées par la firme).
+  if (ctx) { const cons = consistencyAlert(ctx, (rules as any).detector_config); if (cons) alerts.push(cons) }
 
   // ── 1. PERTES CONSÉCUTIVES ────────────────────────────────────────────────
   // Vraie série en cours : on compte depuis le trade le plus récent jusqu'au
@@ -719,7 +814,7 @@ export async function analyzeClosedTrade(trade: Trade, includeEntryChecks = fals
 
   // Notifs d'avancement de challenge (marge totale + jalons) — best effort, ne doit
   // jamais faire échouer l'ingestion.
-  try { await maybeChallengeNudges(rules as any, isMax) } catch (e) { console.error('challenge nudges', e) }
+  if (ctx) { try { await maybeChallengeNudges(rules as any, ctx) } catch (e) { console.error('challenge nudges', e) } }
 
   return saveAndNotify(trade, alerts, sessionTrades, isMax, rules)
 }

@@ -39,6 +39,9 @@ export const DETECTOR_DEFS: DetectorDef[] = [
   { type: 'cut_winners_hold_losers', label: 'Tu coupes tes gains', max: true },
   { type: 'drawdown_override', label: 'Drawdown franchi', max: true },
   { type: 'news_trading', label: 'Trade pendant news', max: true, thresholds: [{ key: 'window', label: 'Fenêtre news', unit: 'min', def: 10, min: 1, max: 60, step: 1 }] },
+  // Prop firm uniquement (ne se déclenchent qu'en challenge actif).
+  { type: 'consistency_rule', label: 'Règle de consistance', max: true, thresholds: [{ key: 'share', label: 'Part max d\'une journée', unit: '%', def: 40, min: 10, max: 100, step: 5 }] },
+  { type: 'near_target_oversizing', label: "Ligne d'arrivée", max: true },
 ]
 
 type Cfg = Record<string, { enabled?: boolean; [k: string]: unknown }> | null | undefined
