@@ -23,6 +23,7 @@ const CSS = `
   .sg-inp{background:rgba(255,255,255,.035);border:.5px solid ${B2};border-radius:8px;padding:12px 15px;color:${TX};font-size:13.5px;font-family:${SANS};width:100%;outline:none;transition:border-color .2s,background .2s}
   .sg-inp::placeholder{color:${TE}}
   .sg-inp:focus{border-color:${RB}!important;background:rgba(124,58,237,.04)!important}
+  .sg-sel{appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23eae8f5' stroke-width='2' stroke-opacity='.5'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
   .sg-btn{background:${RED};color:#fff;border:none;border-radius:8px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;width:100%;font-family:${SANS};transition:opacity .18s;letter-spacing:.2px}
   .sg-btn:hover{opacity:.88}
   .sg-btn:disabled{opacity:.5;cursor:not-allowed}
@@ -34,6 +35,10 @@ export default function SignupPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName,  setLastName]  = useState('')
   const [phone,     setPhone]     = useState('')
+  const [address,   setAddress]   = useState('')
+  const [postal,    setPostal]    = useState('')
+  const [city,      setCity]      = useState('')
+  const [country,   setCountry]   = useState('France')
   const [email,     setEmail]     = useState('')
   const [password,  setPassword]  = useState('')
   const [confirm,   setConfirm]   = useState('')
@@ -49,6 +54,9 @@ export default function SignupPage() {
     e.preventDefault()
     setError('')
     if (!firstName.trim()) { setError('Le prénom est requis.'); return }
+    if (!address.trim()) { setError("L'adresse est requise."); return }
+    if (!postal.trim()) { setError('Le code postal est requis.'); return }
+    if (!city.trim()) { setError('La ville est requise.'); return }
     if (password.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return }
     if (password !== confirm) { setError('Les mots de passe ne correspondent pas.'); return }
 
@@ -67,6 +75,7 @@ export default function SignupPage() {
         data: {
           first_name: firstName.trim(), last_name: lastName.trim(),
           phone: phone.trim(), full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+          address: address.trim(), postal_code: postal.trim(), city: city.trim(), country,
           plan,
         },
       },
@@ -160,6 +169,31 @@ export default function SignupPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: TE, fontFamily: MONO }}>Téléphone <span style={{ color: `${TE}` }}>(optionnel)</span></label>
                 <input className="sg-inp" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+33 6 00 00 00 00" autoComplete="tel" />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: TE, fontFamily: MONO }}>Adresse <span style={{ color: RED }}>*</span></label>
+                <input className="sg-inp" type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="12 rue de la Bourse" required autoComplete="street-address" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: TE, fontFamily: MONO }}>Code postal <span style={{ color: RED }}>*</span></label>
+                  <input className="sg-inp" type="text" value={postal} onChange={e => setPostal(e.target.value)} placeholder="75002" required autoComplete="postal-code" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: TE, fontFamily: MONO }}>Ville <span style={{ color: RED }}>*</span></label>
+                  <input className="sg-inp" type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Paris" required autoComplete="address-level2" />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: TE, fontFamily: MONO }}>Pays <span style={{ color: RED }}>*</span></label>
+                <select className="sg-inp sg-sel" value={country} onChange={e => setCountry(e.target.value)} autoComplete="country-name">
+                  {['France', 'Belgique', 'Suisse', 'Luxembourg', 'Monaco', 'Canada', 'Maroc', 'Tunisie', 'Algérie', 'Autre'].map(c => (
+                    <option key={c} value={c} style={{ background: SF, color: TX }}>{c}</option>
+                  ))}
+                </select>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
