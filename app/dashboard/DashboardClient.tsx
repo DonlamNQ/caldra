@@ -3312,7 +3312,7 @@ function ProfilPanel({ userEmail, userMeta, plan }: { userEmail: string; userMet
   )
 }
 
-function SupportPanel({ userEmail }: { userEmail: string }) {
+function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onReplayGuide?: () => void }) {
   const C = useContext(ThemeCtx)
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
@@ -3387,9 +3387,16 @@ function SupportPanel({ userEmail }: { userEmail: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Aide &amp; support</div>
-        <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Une question, un bug, une suggestion — on répond sous 24h.</div>
+      <div style={{ padding: '18px 26px 16px', borderBottom: `.5px solid ${C.b}`, flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.4, color: C.tx }}>Aide &amp; support</div>
+          <div style={{ fontSize: 12, color: C.te, marginTop: 3 }}>Une question, un bug, une suggestion : on répond sous 24h.</div>
+        </div>
+        {onReplayGuide && (
+          <button onClick={onReplayGuide} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 8, background: 'transparent', color: '#a78bfa', border: '.5px solid rgba(124,58,237,.4)', fontSize: 12, fontFamily: SANS, cursor: 'pointer', whiteSpace: 'nowrap' as const }}>
+            ↻ Revoir le guide
+          </button>
+        )}
       </div>
       <div style={{ padding: 26, overflowY: 'auto', flex: 1 }}>
        <div style={{ maxWidth: 940, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -3491,6 +3498,54 @@ const SETTINGS_ITEMS = [
 
 type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'aide'
 
+// ── FirstConnectionGuide — tour guidé de première connexion ──────────────────────
+// Carte d'étapes (portal) qui bascule sur chaque onglet au fil du parcours pour le
+// présenter. S'affiche 1× (localStorage), rejouable depuis l'onglet Aide.
+const GUIDE_STEPS: { tab?: TabId; icon: string; title: string; body: string }[] = [
+  { icon: '👋', title: 'Bienvenue sur Caldra', body: "Caldra surveille ton comportement de trading en temps réel et te prévient sur tes dérapages comme le revenge sizing, l'overtrading ou le drawdown. Voici un tour rapide des onglets." },
+  { tab: 'session', icon: '📊', title: 'Session', body: "Ton cockpit en direct : score de discipline, P&L du jour, tes trades en temps réel, et une alerte dès qu'un comportement à risque se déclenche." },
+  { tab: 'calendrier', icon: '🗓️', title: 'Calendrier', body: "Tes journées de trading en un coup d'œil. Le score et le résultat de chaque jour t'aident à repérer tes bonnes et mauvaises séries." },
+  { tab: 'analytics', icon: '📈', title: 'Analytique', body: "Tes vraies métriques : courbe d'évolution du capital, profit factor, performance par symbole, et tes patterns comportementaux récurrents." },
+  { tab: 'rapports', icon: '📄', title: 'Rapports', body: "Tes rapports hebdomadaire et mensuel en PDF : synthèse, métriques, comparaison avec la période précédente et recommandations." },
+  { tab: 'regles', icon: '⚙️', title: 'Règles', body: "Configure tes garde-fous (drawdown, horaires, taille de position) et active le mode prop firm si tu fais un challenge type FTMO ou FundedNext." },
+  { tab: 'integrations', icon: '🔌', title: 'Intégrations', body: "Connecte ta plateforme (cTrader, MT5) ou récupère ta clé API pour envoyer tes trades. C'est l'étape pour démarrer." },
+  { tab: 'integrations', icon: '🚀', title: 'À toi de jouer', body: "Connecte ta plateforme dans Intégrations et Caldra analysera chaque trade. Bon trading, et garde la discipline." },
+]
+
+function FirstConnectionGuide({ setActiveTab, onClose }: { setActiveTab: (t: TabId) => void; onClose: () => void }) {
+  const C = useContext(ThemeCtx)
+  const [step, setStep] = useState(0)
+  const cur = GUIDE_STEPS[step]
+  const last = step === GUIDE_STEPS.length - 1
+  useEffect(() => { if (cur.tab) setActiveTab(cur.tab) }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100001, padding: '0 16px 22px', pointerEvents: 'none' }}>
+      <div style={{ width: 'min(440px, 100%)', background: C.sf, border: `.5px solid ${C.b2}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.6)', fontFamily: SANS, position: 'relative', animation: 'fadeUp .2s ease', pointerEvents: 'auto' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,.9) 40%, transparent)' }} />
+        <div style={{ padding: '22px 24px 18px' }}>
+          <div style={{ fontSize: 26, marginBottom: 10 }}>{cur.icon}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: C.tx, marginBottom: 8 }}>{cur.title}</div>
+          <div style={{ fontSize: 13, color: C.td, lineHeight: 1.6 }}>{cur.body}</div>
+          <div style={{ display: 'flex', gap: 5, marginTop: 18 }}>
+            {GUIDE_STEPS.map((_, i) => (
+              <div key={i} style={{ width: i === step ? 16 : 6, height: 6, borderRadius: 3, background: i === step ? '#7c3aed' : C.b3, transition: 'all .2s' }} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 }}>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.te, fontSize: 12, fontFamily: SANS, cursor: 'pointer' }}>Passer</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {step > 0 && <button onClick={() => setStep(s => Math.max(0, s - 1))} style={{ padding: '8px 14px', borderRadius: 8, background: 'transparent', color: C.td, border: `.5px solid ${C.b2}`, fontSize: 12.5, fontFamily: SANS, cursor: 'pointer' }}>Précédent</button>}
+              <button onClick={() => last ? onClose() : setStep(s => s + 1)} style={{ padding: '8px 16px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', fontSize: 12.5, fontWeight: 600, fontFamily: SANS, cursor: 'pointer' }}>{last ? 'Terminer' : 'Suivant'}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 export default function DashboardClient({
   userId, userEmail, initialScore, initialAlerts, initialTrades, initialStats,
   yesterdayStats, tradingRules, apiKeyPrefix, historicalSessions, journalTrades, plan, userMeta,
@@ -3508,6 +3563,10 @@ export default function DashboardClient({
 
   const [activeTab, setActiveTab] = useState<TabId>('session')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // Guide de première connexion : 1× (localStorage), rejouable depuis l'onglet Aide.
+  const [showGuide, setShowGuide] = useState(false)
+  useEffect(() => { try { if (!localStorage.getItem('caldra_guide_seen')) setShowGuide(true) } catch {} }, [])
+  const closeGuide = () => { try { localStorage.setItem('caldra_guide_seen', '1') } catch {}; setShowGuide(false); setActiveTab('session') }
   // Règles vivantes : initialisées depuis le prop serveur, mises à jour quand l'utilisateur
   // sauvegarde dans l'onglet Règles → la Session live reflète tout de suite le nouveau
   // capital / preset prop firm sans recharger la page.
@@ -4202,7 +4261,8 @@ export default function DashboardClient({
             {activeTab === 'regles' && <ReglesPanel initial={liveRules} plan={plan} onSaved={setLiveRules} />}
             {activeTab === 'billing' && <BillingPanel plan={plan} />}
             {activeTab === 'profil' && <ProfilPanel userEmail={userEmail} userMeta={userMeta} plan={plan} />}
-            {activeTab === 'aide' && <SupportPanel userEmail={userEmail} />}
+            {activeTab === 'aide' && <SupportPanel userEmail={userEmail} onReplayGuide={() => setShowGuide(true)} />}
+            {showGuide && <FirstConnectionGuide setActiveTab={setActiveTab} onClose={closeGuide} />}
           </div>
         </div>
       </div>
