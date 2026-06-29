@@ -23,12 +23,19 @@ export async function GET(req: NextRequest) {
 
   if (!code) return NextResponse.redirect(`${errorRedirect}&reason=missing_code`)
 
-  // Identification du user : session Supabase (callback dans son navigateur), fallback state.
+  // CSRF : le `state` renvoyé doit correspondre au nonce déposé en cookie au connect.
+  // L'identité (user.id) vient de la session ou, à défaut, du cookie httpOnly (de confiance).
   const sessionClient = await createSessionClient()
   const { data: { user } } = await sessionClient.auth.getUser()
-  const userId = user?.id ?? searchParams.get('state')
+  const returnedState = searchParams.get('state')
+  const cookie = req.cookies.get('tradovate_oauth')?.value
+  let userId: string | null = null
+  if (cookie && returnedState) {
+    const [nonce, uid] = cookie.split('.')
+    if (nonce && returnedState === nonce) userId = user?.id ?? uid
+  }
 
-  if (!userId) return NextResponse.redirect(`${errorRedirect}&reason=no_session`)
+  if (!userId) return NextResponse.redirect(`${errorRedirect}&reason=invalid_state`)
 
   try {
     // Échange code → access_token (form-urlencoded, comme attendu par Tradovate).
@@ -83,7 +90,9 @@ export async function GET(req: NextRequest) {
       ingest_key:       plain,
     })
 
-    return NextResponse.redirect(`${appUrl}/dashboard?tradovate=connected`)
+    const okRes = NextResponse.redirect(`${appUrl}/dashboard?tradovate=connected`)
+    okRes.cookies.delete('tradovate_oauth')
+    return okRes
   } catch (e: any) {
     console.error('[tradovate/callback]', e)
     return NextResponse.redirect(`${errorRedirect}&reason=${encodeURIComponent('exception:' + (e?.message ?? ''))}`)

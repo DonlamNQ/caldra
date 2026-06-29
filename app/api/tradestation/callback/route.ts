@@ -19,10 +19,18 @@ export async function GET(req: NextRequest) {
 
   if (!code) return NextResponse.redirect(`${errorRedirect}&reason=missing_code`)
 
+  // CSRF : le `state` renvoyé doit correspondre au nonce déposé en cookie au connect.
+  // L'identité vient de la session ou, à défaut, du cookie httpOnly (de confiance).
   const sessionClient = await createSessionClient()
   const { data: { user } } = await sessionClient.auth.getUser()
-  const userId = user?.id ?? searchParams.get('state')
-  if (!userId) return NextResponse.redirect(`${errorRedirect}&reason=no_session`)
+  const returnedState = searchParams.get('state')
+  const cookie = req.cookies.get('tradestation_oauth')?.value
+  let userId: string | null = null
+  if (cookie && returnedState) {
+    const [nonce, uid] = cookie.split('.')
+    if (nonce && returnedState === nonce) userId = user?.id ?? uid
+  }
+  if (!userId) return NextResponse.redirect(`${errorRedirect}&reason=invalid_state`)
 
   try {
     const tokenRes = await fetch('https://signin.tradestation.com/oauth/token', {
@@ -66,7 +74,9 @@ export async function GET(req: NextRequest) {
       status:            null,   // le worker résout les comptes + passe à 'connected'
     })
 
-    return NextResponse.redirect(`${appUrl}/dashboard?tradestation=connected`)
+    const okRes = NextResponse.redirect(`${appUrl}/dashboard?tradestation=connected`)
+    okRes.cookies.delete('tradestation_oauth')
+    return okRes
   } catch (e: any) {
     console.error('[tradestation/callback]', e)
     return NextResponse.redirect(`${errorRedirect}&reason=${encodeURIComponent('exception:' + (e?.message ?? ''))}`)

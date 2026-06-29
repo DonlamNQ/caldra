@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { randomBytes } from 'crypto'
 
 // OAuth Tradovate — autorisation. L'utilisateur est redirigé vers le consentement
 // Tradovate, qui rappelle /api/tradovate/callback avec un code.
@@ -13,15 +14,19 @@ export async function GET() {
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login`)
   }
 
+  // CSRF : `state` = nonce aléatoire (PAS le user.id, qui serait devinable). Le nonce + le
+  // user.id sont déposés dans un cookie httpOnly, vérifiés au callback (anti-CSRF OAuth).
+  const nonce = randomBytes(16).toString('hex')
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: process.env.TRADOVATE_CLIENT_ID!,
     redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/tradovate/callback`,
-    // Tradovate n'exige pas state, mais on le passe en fallback d'identification user.
-    state: user.id,
+    state: nonce,
   })
 
-  return NextResponse.redirect(
-    `https://trader.tradovate.com/oauth?${params}`
-  )
+  const res = NextResponse.redirect(`https://trader.tradovate.com/oauth?${params}`)
+  res.cookies.set('tradovate_oauth', `${nonce}.${user.id}`, {
+    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 600,
+  })
+  return res
 }
