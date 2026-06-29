@@ -1452,9 +1452,11 @@ function EquityCurve({ trades }: { trades: JournalTrade[] }) {
           </g>
         )}
       </svg>
-      {/* Montants — gouttière de gauche, en HTML pour ne pas s'étirer */}
+      {/* Montants — gouttière de gauche, en HTML pour ne pas s'étirer. Largeur en % de la
+          gouttière de la courbe (PXL) + padding → l'étiquette « €0 » reste à gauche du tracé
+          à TOUTES les largeurs (en px fixe elle débordait sur la courbe en écran étroit). */}
       {yTicks.map(v => (
-        <div key={v} style={{ position: 'absolute', left: 0, width: PXL - 8, top: `${(Math.max(PYT, Math.min(H - PYB, yOf(v))) / H) * 100}%`, transform: 'translateY(-50%)', textAlign: 'right', fontSize: 9, fontFamily: SANS, color: C.te, lineHeight: 1 }}>{fmtY(v)}</div>
+        <div key={v} style={{ position: 'absolute', left: 0, width: `${(PXL / W) * 100}%`, paddingRight: 7, boxSizing: 'border-box' as const, top: `${(Math.max(PYT, Math.min(H - PYB, yOf(v))) / H) * 100}%`, transform: 'translateY(-50%)', textAlign: 'right', fontSize: 9, fontFamily: SANS, color: C.te, lineHeight: 1 }}>{fmtY(v)}</div>
       ))}
       {/* Dates début / fin */}
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'space-between', paddingLeft: `${(PXL / W) * 100}%`, paddingRight: `${(PXR / W) * 100}%`, fontSize: 9, fontFamily: SANS, color: C.te }}>

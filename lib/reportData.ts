@@ -7,7 +7,7 @@ import { alertLabel } from './alertLabels'
 import { PROPFIRM_PRESETS, PROPFIRM_PHASES, targetForPhase, type PropFirmPhase } from './propfirms'
 import type {
   WeeklyReportData, DayData, AlertTypeData, TradeItem,
-  PerfMetrics, SideStat, SymbolStat, PropFirmInfo,
+  PerfMetrics, SideStat, SymbolStat, PropFirmInfo, Comparison,
 } from './pdf/WeeklyReport'
 
 export type TradeLike = {
@@ -187,6 +187,51 @@ function buildRecommendations(opts: {
   return recos.slice(0, 4)
 }
 
+// Comparaison avec la période précédente : tableau des métriques clés (précédent vs
+// actuel) + 2 à 4 « axes d'amélioration / progrès » rédigés. Si pas de période précédente
+// (premier rapport), hasPrev=false → section omise dans le PDF.
+function buildComparison(opts: {
+  prevLabel: string
+  prevTrades: TradeLike[]
+  prevAlerts: AlertLike[]
+  cur: { avgScore: number; totalPnl: number; winRate: number; alertCount: number }
+  prevAvgScore: number | null
+}): Comparison {
+  const { prevLabel, prevTrades, prevAlerts, cur, prevAvgScore } = opts
+  const hasPrev = prevTrades.length > 0 || prevAlerts.length > 0
+  if (!hasPrev) return { hasPrev: false, prevLabel, rows: [], points: [] }
+
+  const prevClosed = prevTrades.filter(t => t.pnl != null)
+  const prevPnl = prevClosed.reduce((s, t) => s + (t.pnl as number), 0)
+  const prevWins = prevClosed.filter(t => (t.pnl as number) > 0).length
+  const prevWinRate = prevClosed.length ? Math.round(prevWins / prevClosed.length * 100) : 0
+  const prevAlertCount = prevAlerts.length
+
+  const rows = [
+    { label: 'Score moyen', prev: prevAvgScore != null ? String(prevAvgScore) : '—', cur: String(cur.avgScore), better: prevAvgScore != null ? cur.avgScore >= prevAvgScore : null },
+    { label: 'P&L net', prev: fmtE(prevPnl), cur: fmtE(cur.totalPnl), better: cur.totalPnl >= prevPnl },
+    { label: 'Réussite', prev: `${prevWinRate}%`, cur: `${cur.winRate}%`, better: cur.winRate >= prevWinRate },
+    { label: 'Alertes', prev: String(prevAlertCount), cur: String(cur.alertCount), better: cur.alertCount <= prevAlertCount },
+  ]
+
+  const points: string[] = []
+  if (prevAvgScore != null) {
+    const d = cur.avgScore - prevAvgScore
+    if (d >= 3) points.push(`Discipline en progrès : ${cur.avgScore}/100 contre ${prevAvgScore} la ${prevLabel} (+${d}).`)
+    else if (d <= -3) points.push(`Discipline en recul : ${cur.avgScore}/100 contre ${prevAvgScore} (${d}). C'est l'axe prioritaire à retravailler.`)
+  }
+  const dAlerts = cur.alertCount - prevAlertCount
+  if (dAlerts <= -2) points.push(`Moins de signaux comportementaux déclenchés (${cur.alertCount} contre ${prevAlertCount}). Tu gagnes en contrôle.`)
+  else if (dAlerts >= 2) points.push(`Plus de signaux qu'avant (${cur.alertCount} contre ${prevAlertCount}) : reste vigilant sur tes automatismes.`)
+  const dWR = cur.winRate - prevWinRate
+  if (Math.abs(dWR) >= 5) points.push(`Taux de réussite ${dWR > 0 ? 'en hausse' : 'en baisse'} : ${cur.winRate}% contre ${prevWinRate}%.`)
+  if (prevPnl < 0 && cur.totalPnl >= 0) points.push(`Résultat repassé positif (${fmtE(cur.totalPnl)} contre ${fmtE(prevPnl)}).`)
+  else if (prevPnl >= 0 && cur.totalPnl < 0) points.push(`Résultat repassé négatif (${fmtE(cur.totalPnl)} contre ${fmtE(prevPnl)}). Reviens à ton cadre.`)
+  if (points.length === 0) points.push(`Performance globalement stable par rapport à la ${prevLabel}. Continue sur le même rythme.`)
+
+  return { hasPrev: true, prevLabel, rows, points: points.slice(0, 4) }
+}
+
 // Infos prop firm (état du challenge à l'instant du rapport) : avancement objectif +
 // part de la meilleure journée vs seuil de consistance de la firme. null si mode inactif.
 export async function fetchPropFirmInfo(
@@ -283,6 +328,14 @@ export function buildReportData(opts: {
   const trendDelta = prevAvgScore != null ? avgScore - prevAvgScore : null
   const bestSym = [...symbols].sort((a, b) => b.pnl - a.pnl)[0] ?? null
 
+  // Comparaison avec la période précédente (axes d'amélioration / progrès).
+  const comparison = buildComparison({
+    prevLabel: meta.periodWord === 'le mois' ? 'mois précédent' : 'semaine précédente',
+    prevTrades, prevAlerts,
+    cur: { avgScore, totalPnl, winRate, alertCount: alerts.length },
+    prevAvgScore,
+  })
+
   const narrative = buildNarrative({
     periodWord: meta.periodWord, totalTrades: trades.length, totalPnl, winRate, avgScore,
     trendDelta, topAlert: alertsByType[0] ?? null, criticalAlerts, bestSym,
@@ -300,6 +353,7 @@ export function buildReportData(opts: {
     days,
     summary: { avgScore, totalPnl, winRate, totalTrades: trades.length, totalAlerts: alerts.length, criticalAlerts },
     prevAvgScore,
+    comparison,
     narrative,
     metrics,
     bySide: sides,

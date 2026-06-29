@@ -54,6 +54,14 @@ export interface PropFirmInfo {
   consistencyMax: number | null  // seuil de consistance de la firme (si applicable)
 }
 
+export interface ComparisonRow { label: string; prev: string; cur: string; better: boolean | null }
+export interface Comparison {
+  hasPrev: boolean
+  prevLabel: string          // 'semaine précédente' | 'mois précédent'
+  rows: ComparisonRow[]
+  points: string[]           // axes d'amélioration / progrès
+}
+
 export interface WeeklyReportData {
   weekLabel: string
   periodTitle?: string   // 'RAPPORT HEBDOMADAIRE' (défaut) | 'RAPPORT MENSUEL'
@@ -70,6 +78,7 @@ export interface WeeklyReportData {
     criticalAlerts: number
   }
   prevAvgScore: number | null    // période précédente → tendance de discipline
+  comparison: Comparison         // comparaison détaillée avec la période précédente
   narrative: string              // synthèse rédigée de la période
   metrics: PerfMetrics
   bySide: { long: SideStat; short: SideStat }
@@ -474,6 +483,35 @@ export function WeeklyReport({ data }: { data: WeeklyReportData }) {
             <PnlLineChart days={data.days} />
           </View>
         </View>
+
+        {/* ── Comparaison période précédente ─────────────────────────── */}
+        {data.comparison.hasPrev && (
+          <View style={s.section} wrap={false}>
+            <Text style={s.sectionTitle}>COMPARAISON AVEC LA {data.comparison.prevLabel.toUpperCase()}</Text>
+            <View style={s.tableHeader}>
+              <Text style={[s.tableHeaderCell, { flex: 2 }]}>MÉTRIQUE</Text>
+              <Text style={[s.tableHeaderCell, { flex: 1.4 }]}>PRÉCÉDENT</Text>
+              <Text style={[s.tableHeaderCell, { flex: 1.4 }]}>CETTE PÉRIODE</Text>
+            </View>
+            {data.comparison.rows.map((r, i) => (
+              <View key={r.label} style={[s.tableRow, { backgroundColor: i % 2 === 0 ? '#ffffff' : '#faf9ff' }]}>
+                <Text style={[s.tableCell, { flex: 2 }]}>{r.label}</Text>
+                <Text style={[s.tableCell, { flex: 1.4, color: M }]}>{r.prev}</Text>
+                <Text style={[s.tableCell, { flex: 1.4, fontFamily: 'Helvetica-Bold', color: r.better == null ? T : r.better ? G : R }]}>
+                  {r.better == null ? '' : r.better ? '▲ ' : '▼ '}{r.cur}
+                </Text>
+              </View>
+            ))}
+            <View style={{ marginTop: 10 }}>
+              {data.comparison.points.map((p, i) => (
+                <View key={i} style={s.recoRow}>
+                  <Text style={s.recoBullet}>›</Text>
+                  <Text style={s.recoText}>{p}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* ── Métriques de performance ───────────────────────────────── */}
         {sum.totalTrades > 0 && (
