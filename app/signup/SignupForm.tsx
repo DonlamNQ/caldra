@@ -145,7 +145,6 @@ export default function SignupPage() {
 
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: -.5, color: TX, marginBottom: 5 }}>Créer un compte</div>
-              <div style={{ fontSize: 12.5, color: TE }}>7 jours gratuits · Carte requise · Annulable avant J+7</div>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
