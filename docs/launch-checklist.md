@@ -48,6 +48,7 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [x] **#13 Rapports = vrais documents** ✅ (2026-06-28) — PDF hebdo/mensuel refondu : synthèse rédigée, métriques de journal (profit factor, espérance, ratio gain/perte, séries, durée…), répartition Long/Short + par symbole, tendance discipline, recommandations, section prop firm. Logique factorisée dans `lib/reportData.ts`.
 - [ ] **#14 Page d'inscription complète** (adresse, code postal, mail de confirmation — vrai parcours)
 - [ ] **#8 Autres plateformes futures** (Rithmic / Quantower / MotiveWave…) — secondaire
+- [ ] **Fuseau horaire = vrai timezone (Europe/Paris…) au lieu de `UTC+X` fixe** — le champ `tz_offset_hours` est un offset FIXE, il ne gère pas le passage été/hiver (DST). Conséquence : les users français doivent repasser le champ de 2→1 fin octobre. Remplacer par un IANA timezone (auto-DST). Touche `tz_offset_hours` (stockage) + `userDay()` moteur + `dayFloorUTC` client + détecteur d'horaires. Post-lancement. (noté 2026-06-29)
 - [ ] Idées backlog plus anciennes : journal de trading, couche engagement, détecteur symbole inhabituel
 
 ## ✅ Fait sessions 2026-06-27/28
