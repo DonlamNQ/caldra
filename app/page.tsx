@@ -411,6 +411,7 @@ const HTML = `
     <span class="logos-lbl">S'intègre à ta plateforme</span>
     <span class="logo-item"><span class="lg-dot"></span>cTrader</span>
     <span class="logo-item"><span class="lg-dot"></span>MetaTrader 5</span>
+    <span class="logo-item"><span class="lg-dot"></span>Interactive Brokers</span>
     <span class="logo-item soon"><span class="lg-dot"></span>+ d'autres à venir</span>
   </div>
 </div>
@@ -509,7 +510,7 @@ const HTML = `
   <div class="h2">Configure une fois.<br><em>Il veille toujours.</em></div>
   <p class="lead">Aucune saisie manuelle. Caldra se connecte à ta plateforme et fait le reste.</p>
   <div class="steps">
-    <div class="step"><div class="step-n">01</div><div class="step-h">Connecte ta plateforme</div><div class="step-d">Connexion directe via API. Tes trades remontent automatiquement, rien à saisir manuellement.</div><div class="step-tags"><span class="stag"><span class="sd"></span>cTrader</span><span class="stag"><span class="sd"></span>MetaTrader 5</span><span class="stag soon">+ à venir</span></div></div>
+    <div class="step"><div class="step-n">01</div><div class="step-h">Connecte ta plateforme</div><div class="step-d">Connexion directe via API. Tes trades remontent automatiquement, rien à saisir manuellement.</div><div class="step-tags"><span class="stag"><span class="sd"></span>cTrader</span><span class="stag"><span class="sd"></span>MetaTrader 5</span><span class="stag"><span class="sd"></span>Interactive Brokers</span><span class="stag soon">+ à venir</span></div></div>
     <div class="step"><div class="step-n">02</div><div class="step-h">Configure tes règles</div><div class="step-d">Horaires de session, risk par trade, drawdown max. Tes règles, tes standards, pas des valeurs génériques imposées.</div></div>
     <div class="step"><div class="step-n">03</div><div class="step-h">Trade, on veille</div><div class="step-d">Dès qu'un pattern dangereux est détecté, tu reçois une notification push + desktop en moins d'une seconde.</div></div>
   </div>

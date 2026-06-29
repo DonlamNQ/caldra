@@ -2457,6 +2457,36 @@ namespace CaldraBot
             </div>
           </IntCard>
 
+          {/* Trading 212 — prochainement (à évaluer après le lancement) */}
+          <IntCard style={{ opacity: .5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>212</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Trading 212</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Actions · CFD</div>
+              </div>
+              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: SANS, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65 }}>
+              Connexion par clé API en lecture seule, sans bot. Disponible après le lancement.
+            </div>
+          </IntCard>
+
+          {/* IG — prochainement (à évaluer après le lancement) */}
+          <IntCard style={{ opacity: .5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>IG</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>IG</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Actions · CFD · forex</div>
+              </div>
+              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: SANS, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65 }}>
+              Connexion directe via l'API REST d'IG, sans bot. Disponible après le lancement.
+            </div>
+          </IntCard>
+
         </div>
       </div>
 
