@@ -2065,6 +2065,31 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     setIbkrSaving(false)
   }
 
+  // ── TradeStation via OAuth (worker Node) ──────────────────────────────────────
+  const [tsStatus, setTsStatus] = useState<string | null>(null)   // null | pending | connected | auth_failed | error
+  const [tsHas, setTsHas] = useState(false)
+  const [tsSaving, setTsSaving] = useState(false)
+  useEffect(() => {
+    const supabase = createClient()
+    let alive = true
+    const poll = async () => {
+      const { data } = await supabase.from('tradestation_accounts').select('status').eq('user_id', userId)
+      if (!alive || !data) return
+      setTsHas(data.length > 0)
+      setTsStatus(data.length > 0 ? (data[0] as any).status ?? 'pending' : null)
+    }
+    poll()
+    const id = setInterval(poll, 5000)
+    return () => { alive = false; clearInterval(id) }
+  }, [userId])
+
+  async function disconnectTs() {
+    setTsSaving(true)
+    await fetch('/api/tradestation/disconnect', { method: 'POST' })
+    setTsHas(false); setTsStatus(null)
+    setTsSaving(false)
+  }
+
   async function genKey() {
     setKeyLoading(true); setNewKey(null); setKeyConfirm(false)
     const d = await fetch('/api/api-key', { method: 'POST' }).then(r => r.json())
@@ -2342,6 +2367,48 @@ namespace CaldraBot
             ) : (
               <a
                 href="/connect/ibkr"
+                style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
+              >
+                Se connecter →
+              </a>
+            )}
+          </IntCard>
+
+          {/* TradeStation — OAuth (worker Node) */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>TS</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>TradeStation</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Futures · actions · options (US)</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: tsStatus === 'connected' ? C.g : tsStatus === 'auth_failed' || tsStatus === 'error' ? C.red : tsHas ? C.o : C.b3, ...(tsHas && tsStatus !== 'connected' && tsStatus !== 'auth_failed' && tsStatus !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
+                <span style={{ fontSize: 10, color: tsStatus === 'connected' ? C.g : tsStatus === 'auth_failed' || tsStatus === 'error' ? C.red : tsHas ? C.o : C.td, letterSpacing: .5 }}>
+                  {tsStatus === 'connected' ? 'CONNECTÉ' : tsStatus === 'auth_failed' ? 'AUTORISATION EXPIRÉE' : tsStatus === 'error' ? 'ERREUR' : tsHas ? 'EN ATTENTE…' : 'NON CONNECTÉ'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
+              {tsHas
+                ? (tsStatus === 'auth_failed'
+                    ? 'Autorisation expirée. Reconnecte ton compte TradeStation.'
+                    : 'Tes trades TradeStation remontent automatiquement via OAuth.')
+                : 'Connecte ton compte en un clic (OAuth). Aucun logiciel, couvre le futures et les actions/options US.'}
+            </div>
+
+            {tsHas ? (
+              <button
+                onClick={disconnectTs}
+                disabled={tsSaving}
+                style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: tsSaving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: tsSaving ? .5 : 1 }}
+              >
+                {tsSaving ? '…' : 'Déconnecter →'}
+              </button>
+            ) : (
+              <a
+                href="/api/tradestation/connect"
                 style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
               >
                 Se connecter →
@@ -3784,6 +3851,13 @@ export default function DashboardClient({
       window.history.replaceState({}, '', '/dashboard')
     } else if (p.get('mt5') === 'connected' || p.get('ibkr') === 'connected') {
       setActiveTab('integrations')
+      window.history.replaceState({}, '', '/dashboard')
+    } else if (p.get('tradestation') === 'connected' || p.get('tradestation') === 'error') {
+      setActiveTab('integrations')
+      if (p.get('tradestation') === 'error') {
+        const reason = p.get('reason')
+        alert(`Connexion TradeStation échouée${reason ? ` : ${decodeURIComponent(reason)}` : ''}`)
+      }
       window.history.replaceState({}, '', '/dashboard')
     }
   }, [])
