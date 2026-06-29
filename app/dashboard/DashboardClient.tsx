@@ -2065,31 +2065,6 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     setIbkrSaving(false)
   }
 
-  // ── TradeStation via OAuth (worker Node) ──────────────────────────────────────
-  const [tsStatus, setTsStatus] = useState<string | null>(null)   // null | pending | connected | auth_failed | error
-  const [tsHas, setTsHas] = useState(false)
-  const [tsSaving, setTsSaving] = useState(false)
-  useEffect(() => {
-    const supabase = createClient()
-    let alive = true
-    const poll = async () => {
-      const { data } = await supabase.from('tradestation_accounts').select('status').eq('user_id', userId)
-      if (!alive || !data) return
-      setTsHas(data.length > 0)
-      setTsStatus(data.length > 0 ? (data[0] as any).status ?? 'pending' : null)
-    }
-    poll()
-    const id = setInterval(poll, 5000)
-    return () => { alive = false; clearInterval(id) }
-  }, [userId])
-
-  async function disconnectTs() {
-    setTsSaving(true)
-    await fetch('/api/tradestation/disconnect', { method: 'POST' })
-    setTsHas(false); setTsStatus(null)
-    setTsSaving(false)
-  }
-
   async function genKey() {
     setKeyLoading(true); setNewKey(null); setKeyConfirm(false)
     const d = await fetch('/api/api-key', { method: 'POST' }).then(r => r.json())
@@ -2422,18 +2397,33 @@ namespace CaldraBot
             )}
           </IntCard>
 
-          {/* TradeStation — prochainement (worker + OAuth codés, réactivés après le lancement) */}
+          {/* Binance — prochainement (crypto, clé API lecture seule, temps réel) */}
           <IntCard style={{ opacity: .5 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>TS</div>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>BNB</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>TradeStation</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Futures · actions · options (US)</div>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Binance</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Crypto · spot & futures</div>
               </div>
               <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: SANS, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
             </div>
             <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65 }}>
-              Connexion OAuth en un clic, sans bot. Disponible juste après le lancement.
+              Connexion par clé API en lecture seule, en temps réel, sans bot. Disponible après le lancement.
+            </div>
+          </IntCard>
+
+          {/* Coinbase — prochainement (crypto, clé API lecture seule, temps réel) */}
+          <IntCard style={{ opacity: .5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>CB</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Coinbase</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Crypto · spot</div>
+              </div>
+              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: SANS, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65 }}>
+              Connexion par clé API en lecture seule, en temps réel, sans bot. Disponible après le lancement.
             </div>
           </IntCard>
 
@@ -3792,13 +3782,6 @@ export default function DashboardClient({
       window.history.replaceState({}, '', '/dashboard')
     } else if (p.get('mt5') === 'connected' || p.get('ibkr') === 'connected') {
       setActiveTab('integrations')
-      window.history.replaceState({}, '', '/dashboard')
-    } else if (p.get('tradestation') === 'connected' || p.get('tradestation') === 'error') {
-      setActiveTab('integrations')
-      if (p.get('tradestation') === 'error') {
-        const reason = p.get('reason')
-        alert(`Connexion TradeStation échouée${reason ? ` : ${decodeURIComponent(reason)}` : ''}`)
-      }
       window.history.replaceState({}, '', '/dashboard')
     }
   }, [])
