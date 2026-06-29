@@ -302,3 +302,13 @@ update trading_rules set prop_firm_active = true where prop_firm is not null;
 -- Sert à choisir l'objectif de profit (Phase 1/2) et l'affichage du suivi de challenge.
 alter table trading_rules add column if not exists prop_firm_phase text not null default 'p1';
 
+-- v2.19 : DEUX dates de démarrage prop firm pour séparer 2 scopes.
+--  • prop_firm_started_at        = début de l'ÉVALUATION → Analytique + Calendrier.
+--      Reset à : changement de firme, recommencer, passage en Funded. PAS à P1→P2.
+--  • prop_firm_phase_started_at  = début de la PHASE en cours → suivi de challenge live
+--      (objectif, marges, P&L, courbe). Reset à CHAQUE changement de phase + les ci-dessus.
+-- Backfill : la phase démarre au même instant que l'évaluation pour l'existant.
+alter table trading_rules add column if not exists prop_firm_phase_started_at timestamptz;
+update trading_rules set prop_firm_phase_started_at = prop_firm_started_at
+  where prop_firm_phase_started_at is null and prop_firm_started_at is not null;
+

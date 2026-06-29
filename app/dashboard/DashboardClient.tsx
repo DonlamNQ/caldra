@@ -2460,8 +2460,11 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   // précisément à ce moment, et l'Analytique/Calendrier se scopent à partir de ce jour.
   const initialPropFirm = (initial as any)?.prop_firm || ''
   const initialPropStart = (initial as any)?.prop_firm_started_at || null
+  // Début de la PHASE en cours (suivi de challenge live). Repli sur l'évaluation si absent.
+  const initialPhaseStart = (initial as any)?.prop_firm_phase_started_at || initialPropStart
   const initialActive = (initial as any)?.prop_firm_active ?? !!(initial as any)?.prop_firm
   const [propFirmStart, setPropFirmStart] = useState<string | null>(initialPropStart)
+  const [propFirmPhaseStart, setPropFirmPhaseStart] = useState<string | null>(initialPhaseStart)
   // Mode prop firm = on/off MÉMORISÉ : couper le mode garde la firme + la date d'activation
   // (rien n'est perdu). Fallback legacy : si le flag n'existe pas encore, on déduit de la firme.
   const [propActive, setPropActive] = useState<boolean>((initial as any)?.prop_firm_active ?? !!(initial as any)?.prop_firm)
@@ -2493,8 +2496,12 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     setPropFirm(id)
     setPropActive(true)   // choisir une firme = activer la vue prop firm
     if (isChange) setPropPhase('p1')   // nouvelle firme = nouveau challenge → Phase 1
-    // Même firme qu'avant → on garde son horodatage de démarrage ; sinon, démarrage maintenant.
-    setPropFirmStart(id === initialPropFirm ? (initialPropStart || new Date().toISOString()) : new Date().toISOString())
+    // Changement de firme = nouvelle évaluation + nouvelle phase → les DEUX dates repartent.
+    // Même firme qu'avant → on garde les horodatages mémorisés.
+    const sameFirm = id === initialPropFirm
+    const now = new Date().toISOString()
+    setPropFirmStart(sameFirm ? (initialPropStart || now) : now)
+    setPropFirmPhaseStart(sameFirm ? (initialPhaseStart || initialPropStart || now) : now)
     setRules(p => ({ ...p, max_daily_drawdown_pct: preset.daily }))
     setSave('idle')
   }
@@ -2521,13 +2528,22 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
   function changePhase(ph: PropFirmPhase) {
     if (ph === propPhase) return
     const label = PROPFIRM_PHASES.find(p => p.id === ph)?.label ?? ph
+    // Funded = nouveau stade (argent réel) → reset suivi de challenge ET Analytique (les 2
+    // dates). P1→P2 = même évaluation qui continue → seul le suivi de challenge repart
+    // (phase), l'Analytique garde toute l'évaluation (date d'éval inchangée).
+    const isFunded = ph === 'funded'
+    const body = isFunded
+      ? 'Passage en compte financé = nouveau stade. Ton suivi de challenge ET ton Analytique repartent de zéro. Ton historique comportemental reste conservé.\n\nPense à enregistrer pour appliquer.'
+      : 'Nouvelle phase = ton objectif, tes marges et ton P&L de challenge repartent de zéro. Ton Analytique, elle, garde toute ton évaluation (Phase 1 + 2). Ton historique comportemental reste conservé.\n\nPense à enregistrer pour appliquer.'
     setConfirmBox({
       title: `Passer en ${label} ?`,
-      body: 'Nouvelle phase = nouvelle évaluation. Ton objectif, tes marges, ton P&L de challenge et tes jours repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nPense à enregistrer pour appliquer.',
+      body,
       confirmLabel: `Passer en ${label}`,
       onConfirm: () => {
+        const now = new Date().toISOString()
         setPropPhase(ph)
-        setPropFirmStart(new Date().toISOString())
+        setPropFirmPhaseStart(now)            // le suivi de challenge repart à chaque phase
+        if (isFunded) setPropFirmStart(now)   // Funded = reset aussi l'évaluation (Analytique)
         setSave('idle')
       },
     })
@@ -2543,7 +2559,9 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
       body: 'Ton objectif, tes marges, ton P&L de challenge, tes jours et ta phase repartent de zéro à partir de maintenant. Ton historique comportemental, lui, reste conservé.\n\nPense à enregistrer pour appliquer.',
       confirmLabel: 'Recommencer',
       onConfirm: () => {
-        setPropFirmStart(new Date().toISOString())
+        const now = new Date().toISOString()
+        setPropFirmStart(now)        // recommencer = nouvelle évaluation + nouvelle phase
+        setPropFirmPhaseStart(now)
         setPropPhase('p1')
         setSave('idle')
       },
@@ -2552,7 +2570,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSave('saving')
-    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || new Date().toISOString()) : null, prop_firm_active: !!(propActive && propFirm), prop_firm_phase: propPhase }
+    const payload = { ...rules, detector_config: detCfg, prop_firm: propFirm || null, prop_firm_started_at: propFirm ? (propFirmStart || new Date().toISOString()) : null, prop_firm_phase_started_at: propFirm ? (propFirmPhaseStart || propFirmStart || new Date().toISOString()) : null, prop_firm_active: !!(propActive && propFirm), prop_firm_phase: propPhase }
     const res = await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setSave(res.ok ? 'saved' : 'error')
     if (res.ok) {
@@ -3608,15 +3626,20 @@ export default function DashboardClient({
   const _lr: any = liveRules
   const _propActiveSaved = (_lr?.prop_firm_active ?? !!_lr?.prop_firm)
   const activePropFirm = (_propActiveSaved && _lr?.prop_firm) ? (_lr.prop_firm as string) : null
+  // Deux scopes : ÉVALUATION (Analytique/Calendrier) vs PHASE en cours (suivi de challenge
+  // live). La phase repart à chaque changement de phase ; l'évaluation seulement à
+  // firme/recommencer/funded. Repli sur l'évaluation si la phase n'est pas renseignée.
   const activePropStart = (activePropFirm && _lr?.prop_firm_started_at) ? (_lr.prop_firm_started_at as string) : null
+  const activePhaseStart = (activePropFirm && (_lr?.prop_firm_phase_started_at || _lr?.prop_firm_started_at))
+    ? ((_lr.prop_firm_phase_started_at || _lr.prop_firm_started_at) as string) : null
 
   // Trades du challenge (depuis son activation, à l'horodatage EXACT) pour la courbe
   // « Solde du compte » ET les chiffres du suivi de challenge. Fenêtre ~30 derniers jours
   // chargés (suffisant pour la durée d'un challenge). Indépendant de la session du jour :
   // un redémarrage en cours de journée scope ces chiffres sans toucher la session/tape.
-  const challengeTrades: TradeRow[] | null = (activePropFirm && activePropStart)
+  const challengeTrades: TradeRow[] | null = (activePropFirm && activePhaseStart)
     ? (() => {
-        const startMs = new Date(activePropStart).getTime()
+        const startMs = new Date(activePhaseStart).getTime()
         // Jours précédents depuis journalTrades (snapshot serveur) + trades du jour LIVE
         // (`trades`, mis à jour par poll/realtime) → la courbe « Solde du compte » et le
         // suivi de challenge se mettent à jour SANS recharger la page.
@@ -3632,7 +3655,7 @@ export default function DashboardClient({
   // l'activation), PAS des stats de session (= jour complet) — sinon un redémarrage en
   // cours de journée compterait les trades d'avant le redémarrage.
   const challengeData: ChallengeData | null = (() => {
-    if (!activePropFirm || !activePropStart || !challengeTrades) return null
+    if (!activePropFirm || !activePhaseStart || !challengeTrades) return null
     const preset = PROPFIRM_PRESETS.find(p => p.id === activePropFirm)
     if (!preset) return null
     const phase = ((_lr?.prop_firm_phase as PropFirmPhase) || 'p1')
@@ -3651,8 +3674,8 @@ export default function DashboardClient({
   // reste lui sur la journée.
   const financialPnl: number = (() => {
     const midnightMs = new Date(dayFloorUTC).getTime()
-    const floorMs = (activePropFirm && activePropStart && new Date(activePropStart).getTime() > midnightMs)
-      ? new Date(activePropStart).getTime() : midnightMs
+    const floorMs = (activePropFirm && activePhaseStart && new Date(activePhaseStart).getTime() > midnightMs)
+      ? new Date(activePhaseStart).getTime() : midnightMs
     if (floorMs <= midnightMs) return stats.total_pnl
     return trades.filter(t => t.entry_time && new Date(t.entry_time).getTime() >= floorMs).reduce((s, t) => s + (t.pnl ?? 0), 0)
   })()
