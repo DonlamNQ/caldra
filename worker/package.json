@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "ctrader-worker.js",
   "scripts": {
-    "start": "node ctrader-worker.js"
+    "start": "node ctrader-worker.js",
+    "start:ibkr": "node ibkr-worker.js",
+    "start:tradestation": "node tradestation-worker.js"
   },
   "dependencies": {
     "@reiryoku/ctrader-layer": "^1.0.0",
