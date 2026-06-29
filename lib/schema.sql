@@ -355,3 +355,33 @@ alter table tradestation_accounts enable row level security;
 drop policy if exists "users read own tradestation" on tradestation_accounts;
 create policy "users read own tradestation" on tradestation_accounts for select using (auth.uid() = user_id);
 
+-- v2.22 : DURCISSEMENT RLS (audit sécurité 2026-06-29). ⚠️ À EXÉCUTER EN PROD.
+-- Les policies « service role full access » … for all using (true) n'ont PAS de clause TO,
+-- donc elles s'appliquent à TOUS les rôles (anon + authenticated), pas seulement au service
+-- role (qui bypasse déjà la RLS). Conséquence : mt5_accounts (et toute table portant cette
+-- policy sans policy own-row) était lisible par la clé anon PUBLIQUE — fuite confirmée
+-- (login, serveur, mot de passe chiffré, ingest_key en clair). On retire ces policies
+-- permissives et on garantit une lecture limitée à SA PROPRE ligne.
+
+-- Tables broker + push : le client ne lit que SA ligne (statut) ; routes/workers écrivent
+-- via la service role (bypass RLS). Donc une seule policy : SELECT own-row.
+do $$
+declare t text;
+begin
+  foreach t in array array['mt5_accounts','ctrader_accounts','tradovate_accounts','push_subscriptions'] loop
+    execute format('drop policy if exists "service role full access" on %I;', t);
+    execute format('drop policy if exists "users read own %1$s" on %1$s;', t);
+    execute format('create policy "users read own %1$s" on %1$s for select using (auth.uid() = user_id);', t);
+  end loop;
+end $$;
+
+-- Tables cœur : la policy permissive using(true) est inutile (service role bypasse la RLS)
+-- et dangereuse. On la retire ; les policies own-row en lecture (déjà créées) suffisent.
+do $$
+declare t text;
+begin
+  foreach t in array array['user_profiles','trading_rules','api_keys','trades','alerts'] loop
+    execute format('drop policy if exists "service role full access" on %I;', t);
+  end loop;
+end $$;
+
