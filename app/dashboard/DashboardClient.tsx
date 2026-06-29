@@ -2201,56 +2201,8 @@ namespace CaldraBot
         <div style={{ fontSize: 12, color: health.color, lineHeight: 1.5 }}>{health.text}</div>
       </div>
 
-      {/* ── Clé API ── */}
-      <IntCard style={{ marginBottom: 16 }} tour="integrations">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 500, color: C.tx }}>Clé API</div>
-            <div style={{ fontSize: 11, color: C.td, marginTop: 2 }}>Requise pour envoyer des trades depuis ta plateforme.</div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)' }} />
-            <span style={{ fontSize: 10, color: hasKey ? C.g : C.td, letterSpacing: .5 }}>{hasKey ? 'ACTIVE' : 'INACTIVE'}</span>
-          </div>
-        </div>
-
-        {prefix ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 7, padding: '10px 14px', marginBottom: 12 }}>
-            <code style={{ color: C.tm, fontSize: 12, fontFamily: SANS }}>
-              {prefix}<span style={{ opacity: .3 }}>{'•'.repeat(18)}</span>
-            </code>
-            <div style={{ display: 'flex', gap: 7, flexShrink: 0 }}>
-              {keyConfirm ? (
-                <>
-                  <button onClick={() => setKeyConfirm(false)} style={{ fontSize: 9, padding: '5px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.td, cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Annuler</button>
-                  <button onClick={genKey} disabled={keyLoading} style={{ fontSize: 9, padding: '5px 10px', background: 'rgba(244,63,94,.07)', border: '.5px solid rgba(244,63,94,.22)', borderRadius: 5, color: 'rgba(244,63,94,.75)', cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Confirmer</button>
-                </>
-              ) : (
-                <button onClick={() => setKeyConfirm(true)} style={{ fontSize: 9, padding: '5px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.td, cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Regénérer</button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontSize: 12.5, color: C.te }}>Aucune clé active</span>
-            <button onClick={genKey} disabled={keyLoading} style={{ padding: '7px 16px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5 }}>{keyLoading ? 'Génération…' : 'Générer une clé'}</button>
-          </div>
-        )}
-
-        {newKey && (
-          <div style={{ background: 'rgba(16,185,129,.05)', border: '.5px solid rgba(16,185,129,.18)', borderRadius: 7, padding: '10px 14px', marginBottom: 4 }}>
-            <div style={{ color: 'rgba(16,185,129,.75)', fontSize: 11, marginBottom: 8, fontFamily: SANS }}>⚠ Copiez maintenant — ne sera plus visible.</div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <code style={{ flex: 1, color: 'rgba(134,239,172,.85)', fontSize: 11, fontFamily: SANS, wordBreak: 'break-all' as const, background: 'rgba(16,185,129,.04)', padding: '7px 10px', borderRadius: 5, border: '.5px solid rgba(16,185,129,.14)' }}>{newKey}</code>
-              <button onClick={copyKey} style={{ padding: '7px 12px', background: 'rgba(16,185,129,.09)', border: '.5px solid rgba(16,185,129,.22)', borderRadius: 5, color: 'rgba(16,185,129,.8)', fontSize: 9, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, flexShrink: 0 }}>{keyCopied ? '✓ Copié' : 'Copier'}</button>
-            </div>
-          </div>
-        )}
-
-      </IntCard>
-
       {/* ── Plateformes ── */}
-      <div style={{ marginBottom: 8 }}>
+      <div data-tour="integrations" style={{ marginBottom: 8 }}>
         <div style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, marginBottom: 12 }}>Plateformes</div>
         <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
 
@@ -2479,6 +2431,56 @@ namespace CaldraBot
 
         </div>
       </div>
+
+      {/* ── Avancé : clé API pour intégration sur-mesure (repliée par défaut) ── */}
+      <details style={{ marginTop: 24 }}>
+        <summary style={{ fontSize: 9, letterSpacing: 2, color: C.te, textTransform: 'uppercase' as const, cursor: 'pointer' }}>Avancé · clé API</summary>
+        <IntCard style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: C.tx }}>Clé API</div>
+              <div style={{ fontSize: 11, color: C.td, marginTop: 2, lineHeight: 1.5 }}>Optionnel. Sert uniquement à pousser tes trades depuis une plateforme non listée, via ton propre script (POST /api/ingest). Les connexions cTrader, MT5 et IBKR génèrent leur clé toutes seules — tu n&apos;as rien à faire ici.</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: hasKey ? C.g : 'rgba(255,255,255,.18)' }} />
+              <span style={{ fontSize: 10, color: hasKey ? C.g : C.td, letterSpacing: .5 }}>{hasKey ? 'ACTIVE' : 'INACTIVE'}</span>
+            </div>
+          </div>
+
+          {prefix ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,.02)', border: `.5px solid ${C.b}`, borderRadius: 7, padding: '10px 14px', marginBottom: 12 }}>
+              <code style={{ color: C.tm, fontSize: 12, fontFamily: SANS }}>
+                {prefix}<span style={{ opacity: .3 }}>{'•'.repeat(18)}</span>
+              </code>
+              <div style={{ display: 'flex', gap: 7, flexShrink: 0 }}>
+                {keyConfirm ? (
+                  <>
+                    <button onClick={() => setKeyConfirm(false)} style={{ fontSize: 9, padding: '5px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.td, cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Annuler</button>
+                    <button onClick={genKey} disabled={keyLoading} style={{ fontSize: 9, padding: '5px 10px', background: 'rgba(244,63,94,.07)', border: '.5px solid rgba(244,63,94,.22)', borderRadius: 5, color: 'rgba(244,63,94,.75)', cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Confirmer</button>
+                  </>
+                ) : (
+                  <button onClick={() => setKeyConfirm(true)} style={{ fontSize: 9, padding: '5px 10px', background: 'transparent', border: `.5px solid ${C.b2}`, borderRadius: 5, color: C.td, cursor: 'pointer', fontFamily: SANS, letterSpacing: 1 }}>Regénérer</button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontSize: 12.5, color: C.te }}>Aucune clé active</span>
+              <button onClick={genKey} disabled={keyLoading} style={{ padding: '7px 16px', background: C.red, border: 'none', borderRadius: 7, color: '#fff', fontSize: 11, fontFamily: SANS, cursor: 'pointer', letterSpacing: .5 }}>{keyLoading ? 'Génération…' : 'Générer une clé'}</button>
+            </div>
+          )}
+
+          {newKey && (
+            <div style={{ background: 'rgba(16,185,129,.05)', border: '.5px solid rgba(16,185,129,.18)', borderRadius: 7, padding: '10px 14px', marginBottom: 4 }}>
+              <div style={{ color: 'rgba(16,185,129,.75)', fontSize: 11, marginBottom: 8, fontFamily: SANS }}>⚠ Copiez maintenant — ne sera plus visible.</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <code style={{ flex: 1, color: 'rgba(134,239,172,.85)', fontSize: 11, fontFamily: SANS, wordBreak: 'break-all' as const, background: 'rgba(16,185,129,.04)', padding: '7px 10px', borderRadius: 5, border: '.5px solid rgba(16,185,129,.14)' }}>{newKey}</code>
+                <button onClick={copyKey} style={{ padding: '7px 12px', background: 'rgba(16,185,129,.09)', border: '.5px solid rgba(16,185,129,.22)', borderRadius: 5, color: 'rgba(16,185,129,.8)', fontSize: 9, fontFamily: SANS, cursor: 'pointer', letterSpacing: 1, flexShrink: 0 }}>{keyCopied ? '✓ Copié' : 'Copier'}</button>
+              </div>
+            </div>
+          )}
+        </IntCard>
+      </details>
 
       {/* ── Canaux d'alerte ── (section distincte des plateformes) */}
       <div style={{ marginTop: 24 }}>
@@ -3486,7 +3488,7 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
   )
 
   const faq: Array<{ q: string; a: string }> = [
-    { q: 'Comment connecter mon broker ?', a: "Onglet Intégrations : récupère ta clé API pour /api/ingest, branche un webhook Discord, ou connecte un compte cTrader. Le dashboard se met à jour en temps réel dès qu'un trade arrive." },
+    { q: 'Comment connecter mon broker ?', a: "Onglet Intégrations : connecte un compte cTrader, MetaTrader 5 ou Interactive Brokers (sans bot à installer). Pour une plateforme non listée, une clé API « avancé » permet d'envoyer tes trades via /api/ingest. Le dashboard se met à jour en temps réel dès qu'un trade arrive." },
     { q: 'Comment le score de session est-il calculé ?', a: 'Tu pars de 100 et chaque alerte retire des points selon sa gravité (niveau 3 : −18, niveau 2 : −8, niveau 1 : −3). Le score reflète la discipline comportementale de ta session, pas ton P&L.' },
     { q: 'À quoi servent les alertes ?', a: "Caldra surveille 18 schémas (revenge sizing, re-entrées impulsives, overtrading, drawdown…) et te prévient en direct. Ajuste les seuils dans l'onglet Règles." },
     { q: 'Mes données sont-elles privées ?', a: 'Oui. Chaque trade est rattaché à ton compte uniquement, isolé par les règles de sécurité Supabase. Tu peux supprimer ton compte et toutes tes données depuis le Profil.' },
@@ -3639,7 +3641,7 @@ const GUIDE_STEPS: { tab?: TabId; target?: string; highlight?: boolean; icon: st
   { tab: 'analytics', target: 'equity', icon: '📊', title: 'Analytique', body: "Tes vraies métriques : courbe d'évolution du capital, profit factor, performance par symbole, et tes patterns comportementaux récurrents." },
   { tab: 'rapports', target: 'reports', icon: '📄', title: 'Rapports', body: "Tes rapports hebdomadaire et mensuel en PDF : synthèse, métriques, comparaison avec la période précédente et recommandations." },
   { tab: 'regles', target: 'rules', icon: '⚙️', title: 'Règles', body: "Configure tes garde-fous (drawdown, horaires, taille de position) et active le mode prop firm si tu fais un challenge type FTMO ou FundedNext." },
-  { tab: 'integrations', target: 'integrations', icon: '🔌', title: 'Intégrations', body: "Connecte ta plateforme (cTrader, MT5) ou récupère ta clé API pour envoyer tes trades. C'est l'étape pour démarrer." },
+  { tab: 'integrations', target: 'integrations', icon: '🔌', title: 'Intégrations', body: "Connecte ta plateforme (cTrader, MetaTrader 5, Interactive Brokers) en quelques clics, sans bot. Le dashboard se met à jour en temps réel dès qu'un trade arrive." },
   { tab: 'session', icon: '🚀', title: 'À toi de jouer', body: "Connecte ta plateforme dans Intégrations et Caldra analysera chaque trade. Bon trading, et garde la discipline." },
 ]
 
