@@ -2040,6 +2040,31 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     setMt5Saving(false)
   }
 
+  // ── Interactive Brokers via Flex Web Service (worker Node) ────────────────────
+  const [ibkrStatus, setIbkrStatus] = useState<string | null>(null)   // null | pending | connected | auth_failed | error
+  const [ibkrHas, setIbkrHas] = useState(false)
+  const [ibkrSaving, setIbkrSaving] = useState(false)
+  useEffect(() => {
+    const supabase = createClient()
+    let alive = true
+    const poll = async () => {
+      const { data } = await supabase.from('ibkr_accounts').select('status').eq('user_id', userId)
+      if (!alive || !data) return
+      setIbkrHas(data.length > 0)
+      setIbkrStatus(data.length > 0 ? (data[0] as any).status ?? 'pending' : null)
+    }
+    poll()
+    const id = setInterval(poll, 5000)
+    return () => { alive = false; clearInterval(id) }
+  }, [userId])
+
+  async function disconnectIbkr() {
+    setIbkrSaving(true)
+    await fetch('/api/ibkr/disconnect', { method: 'POST' })
+    setIbkrHas(false); setIbkrStatus(null)
+    setIbkrSaving(false)
+  }
+
   async function genKey() {
     setKeyLoading(true); setNewKey(null); setKeyConfirm(false)
     const d = await fetch('/api/api-key', { method: 'POST' }).then(r => r.json())
@@ -2272,6 +2297,48 @@ namespace CaldraBot
             ) : (
               <a
                 href="/connect/mt5"
+                style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
+              >
+                Se connecter →
+              </a>
+            )}
+          </IntCard>
+
+          {/* Interactive Brokers — Flex Web Service (token, worker Node) */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>IBKR</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Interactive Brokers</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Futures · actions · options</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: ibkrStatus === 'connected' ? C.g : ibkrStatus === 'auth_failed' || ibkrStatus === 'error' ? C.red : ibkrHas ? C.o : C.b3, ...(ibkrHas && ibkrStatus !== 'connected' && ibkrStatus !== 'auth_failed' && ibkrStatus !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
+                <span style={{ fontSize: 10, color: ibkrStatus === 'connected' ? C.g : ibkrStatus === 'auth_failed' || ibkrStatus === 'error' ? C.red : ibkrHas ? C.o : C.td, letterSpacing: .5 }}>
+                  {ibkrStatus === 'connected' ? 'CONNECTÉ' : ibkrStatus === 'auth_failed' ? 'TOKEN REFUSÉ' : ibkrStatus === 'error' ? 'ERREUR' : ibkrHas ? 'EN ATTENTE…' : 'NON CONNECTÉ'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
+              {ibkrHas
+                ? (ibkrStatus === 'auth_failed'
+                    ? 'Token Flex refusé par IBKR. Reconnecte-toi avec un token valide.'
+                    : 'Tes trades IBKR remontent automatiquement via le Flex Web Service.')
+                : 'Via le Flex Web Service (token lecture seule). Gratuit, rien à installer, couvre le futures.'}
+            </div>
+
+            {ibkrHas ? (
+              <button
+                onClick={disconnectIbkr}
+                disabled={ibkrSaving}
+                style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: ibkrSaving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: ibkrSaving ? .5 : 1 }}
+              >
+                {ibkrSaving ? '…' : 'Déconnecter →'}
+              </button>
+            ) : (
+              <a
+                href="/connect/ibkr"
                 style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
               >
                 Se connecter →
@@ -3653,7 +3720,7 @@ export default function DashboardClient({
         alert(`Connexion Tradovate échouée${reason ? ` : ${decodeURIComponent(reason)}` : ''}`)
       }
       window.history.replaceState({}, '', '/dashboard')
-    } else if (p.get('mt5') === 'connected') {
+    } else if (p.get('mt5') === 'connected' || p.get('ibkr') === 'connected') {
       setActiveTab('integrations')
       window.history.replaceState({}, '', '/dashboard')
     }

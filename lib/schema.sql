@@ -312,3 +312,25 @@ alter table trading_rules add column if not exists prop_firm_phase_started_at ti
 update trading_rules set prop_firm_phase_started_at = prop_firm_started_at
   where prop_firm_phase_started_at is null and prop_firm_started_at is not null;
 
+-- v2.20 : connexion Interactive Brokers via Flex Web Service (modèle MT5 : token lecture
+-- seule + worker qui interroge, gratuit, sans bot chez l'utilisateur ni partenariat).
+-- `flex_token_enc` = token Flex chiffré (AES-256-GCM, MT5_ENC_KEY) ; `flex_query_id` =
+-- l'ID de la requête « Trade Confirms ». Le worker poste les exécutions vers /api/ingest.
+create table if not exists ibkr_accounts (
+  id             uuid        primary key default gen_random_uuid(),
+  user_id        uuid        not null references auth.users(id) on delete cascade,
+  flex_token_enc text        not null,
+  flex_query_id  text        not null,
+  ingest_key     text        not null,
+  status         text,                   -- connected | auth_failed | error
+  last_sync_at   timestamptz,
+  last_trade_at  timestamptz,            -- dernier trade ingéré (anti-doublon côté worker)
+  created_at     timestamptz default now(),
+  unique (user_id)
+);
+alter table ibkr_accounts enable row level security;
+-- L'utilisateur lit UNIQUEMENT sa propre ligne (carte d'état dans Intégrations). Le worker
+-- et les routes utilisent la service role key qui bypasse la RLS (insert/update/delete).
+drop policy if exists "users read own ibkr" on ibkr_accounts;
+create policy "users read own ibkr" on ibkr_accounts for select using (auth.uid() = user_id);
+
