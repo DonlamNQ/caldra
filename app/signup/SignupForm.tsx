@@ -136,7 +136,6 @@ export default function SignupPage() {
               <div style={{ width: 2, height: 28, background: `linear-gradient(180deg, ${RED}, ${RED}20)`, borderRadius: 2 }} />
               <div style={{ fontSize: 19, fontWeight: 500, letterSpacing: 7, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
             </div>
-            <div style={{ fontSize: 12, color: TE, fontFamily: MONO, letterSpacing: 1.2 }}>Intelligence comportementale</div>
           </div>
 
           {/* Card */}

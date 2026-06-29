@@ -2329,90 +2329,6 @@ namespace CaldraBot
             )}
           </IntCard>
 
-          {/* Interactive Brokers — Flex Web Service (token, worker Node) */}
-          <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>IBKR</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Interactive Brokers</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Futures · actions · options</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: ibkrStatus === 'connected' ? C.g : ibkrStatus === 'auth_failed' || ibkrStatus === 'error' ? C.red : ibkrHas ? C.o : C.b3, ...(ibkrHas && ibkrStatus !== 'connected' && ibkrStatus !== 'auth_failed' && ibkrStatus !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
-                <span style={{ fontSize: 10, color: ibkrStatus === 'connected' ? C.g : ibkrStatus === 'auth_failed' || ibkrStatus === 'error' ? C.red : ibkrHas ? C.o : C.td, letterSpacing: .5 }}>
-                  {ibkrStatus === 'connected' ? 'CONNECTÉ' : ibkrStatus === 'auth_failed' ? 'TOKEN REFUSÉ' : ibkrStatus === 'error' ? 'ERREUR' : ibkrHas ? 'EN ATTENTE…' : 'NON CONNECTÉ'}
-                </span>
-              </div>
-            </div>
-
-            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
-              {ibkrHas
-                ? (ibkrStatus === 'auth_failed'
-                    ? 'Token Flex refusé par IBKR. Reconnecte-toi avec un token valide.'
-                    : 'Tes trades IBKR remontent automatiquement via le Flex Web Service.')
-                : 'Via le Flex Web Service (token lecture seule). Gratuit, rien à installer, couvre le futures.'}
-            </div>
-
-            {ibkrHas ? (
-              <button
-                onClick={disconnectIbkr}
-                disabled={ibkrSaving}
-                style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: ibkrSaving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: ibkrSaving ? .5 : 1 }}
-              >
-                {ibkrSaving ? '…' : 'Déconnecter →'}
-              </button>
-            ) : (
-              <a
-                href="/connect/ibkr"
-                style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
-              >
-                Se connecter →
-              </a>
-            )}
-          </IntCard>
-
-          {/* TradeStation — OAuth (worker Node) */}
-          <IntCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>TS</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>TradeStation</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Futures · actions · options (US)</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: tsStatus === 'connected' ? C.g : tsStatus === 'auth_failed' || tsStatus === 'error' ? C.red : tsHas ? C.o : C.b3, ...(tsHas && tsStatus !== 'connected' && tsStatus !== 'auth_failed' && tsStatus !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
-                <span style={{ fontSize: 10, color: tsStatus === 'connected' ? C.g : tsStatus === 'auth_failed' || tsStatus === 'error' ? C.red : tsHas ? C.o : C.td, letterSpacing: .5 }}>
-                  {tsStatus === 'connected' ? 'CONNECTÉ' : tsStatus === 'auth_failed' ? 'AUTORISATION EXPIRÉE' : tsStatus === 'error' ? 'ERREUR' : tsHas ? 'EN ATTENTE…' : 'NON CONNECTÉ'}
-                </span>
-              </div>
-            </div>
-
-            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
-              {tsHas
-                ? (tsStatus === 'auth_failed'
-                    ? 'Autorisation expirée. Reconnecte ton compte TradeStation.'
-                    : 'Tes trades TradeStation remontent automatiquement via OAuth.')
-                : 'Connecte ton compte en un clic (OAuth). Aucun logiciel, couvre le futures et les actions/options US.'}
-            </div>
-
-            {tsHas ? (
-              <button
-                onClick={disconnectTs}
-                disabled={tsSaving}
-                style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: tsSaving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: tsSaving ? .5 : 1 }}
-              >
-                {tsSaving ? '…' : 'Déconnecter →'}
-              </button>
-            ) : (
-              <a
-                href="/api/tradestation/connect"
-                style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
-              >
-                Se connecter →
-              </a>
-            )}
-          </IntCard>
-
           {/* cTrader OAuth */}
           <IntCard>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
@@ -2462,6 +2378,63 @@ namespace CaldraBot
                 Se connecter →
               </a>
             )}
+          </IntCard>
+
+          {/* Interactive Brokers — Flex Web Service (token, worker Node) */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>IBKR</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Interactive Brokers</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Futures · actions · options</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: ibkrStatus === 'connected' ? C.g : ibkrStatus === 'auth_failed' || ibkrStatus === 'error' ? C.red : ibkrHas ? C.o : C.b3, ...(ibkrHas && ibkrStatus !== 'connected' && ibkrStatus !== 'auth_failed' && ibkrStatus !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
+                <span style={{ fontSize: 10, color: ibkrStatus === 'connected' ? C.g : ibkrStatus === 'auth_failed' || ibkrStatus === 'error' ? C.red : ibkrHas ? C.o : C.td, letterSpacing: .5 }}>
+                  {ibkrStatus === 'connected' ? 'CONNECTÉ' : ibkrStatus === 'auth_failed' ? 'TOKEN REFUSÉ' : ibkrStatus === 'error' ? 'ERREUR' : ibkrHas ? 'EN ATTENTE…' : 'NON CONNECTÉ'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
+              {ibkrHas
+                ? (ibkrStatus === 'auth_failed'
+                    ? 'Token Flex refusé par IBKR. Reconnecte-toi avec un token valide.'
+                    : 'Tes trades IBKR remontent automatiquement via le Flex Web Service.')
+                : 'Via le Flex Web Service (token lecture seule). Gratuit, rien à installer, couvre le futures.'}
+            </div>
+
+            {ibkrHas ? (
+              <button
+                onClick={disconnectIbkr}
+                disabled={ibkrSaving}
+                style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: ibkrSaving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: ibkrSaving ? .5 : 1 }}
+              >
+                {ibkrSaving ? '…' : 'Déconnecter →'}
+              </button>
+            ) : (
+              <a
+                href="/connect/ibkr"
+                style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
+              >
+                Se connecter →
+              </a>
+            )}
+          </IntCard>
+
+          {/* TradeStation — prochainement (worker + OAuth codés, réactivés après le lancement) */}
+          <IntCard style={{ opacity: .5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>TS</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>TradeStation</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Futures · actions · options (US)</div>
+              </div>
+              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: SANS, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65 }}>
+              Connexion OAuth en un clic, sans bot. Disponible juste après le lancement.
+            </div>
           </IntCard>
 
           {/* Tradovate */}

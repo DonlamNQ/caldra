@@ -9,7 +9,7 @@ const C = {
   v: '#8b5cf6', vd: '#6d28d9', va: 'rgba(139,92,246,.1)', vb: 'rgba(139,92,246,.3)',
   red: '#e0503c', sf: '#12121f',
 }
-const MONO = 'var(--font-geist-mono), ui-monospace, monospace'
+const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
 
 export default function ConnectMt5() {
   const router = useRouter()
@@ -39,21 +39,21 @@ export default function ConnectMt5() {
   }
 
   const input: React.CSSProperties = {
-    width: '100%', padding: '12px 14px', borderRadius: 8, fontSize: 14, fontFamily: MONO,
+    width: '100%', padding: '12px 14px', borderRadius: 8, fontSize: 14, fontFamily: SANS,
     background: C.sf, border: `.5px solid ${C.b}`, color: C.tx, boxSizing: 'border-box', outline: 'none',
   }
   const label: React.CSSProperties = {
-    fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', color: C.t3, fontFamily: MONO, marginBottom: 6, display: 'block',
+    fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', color: C.t3, fontFamily: SANS, marginBottom: 6, display: 'block',
   }
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, color: C.tx, fontFamily: 'system-ui, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 440 }}>
-        <a href="/dashboard" style={{ fontSize: 12, color: C.t3, textDecoration: 'none', fontFamily: MONO }}>← Retour au dashboard</a>
+        <a href="/dashboard" style={{ fontSize: 12, color: C.t3, textDecoration: 'none', fontFamily: SANS }}>← Retour au dashboard</a>
 
         <div style={{ background: C.card, border: `.5px solid ${C.b}`, borderRadius: 16, padding: '28px 26px', marginTop: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 9, background: C.va, border: `.5px solid ${C.vb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.v, fontFamily: MONO }}>MT5</div>
+            <div style={{ width: 40, height: 40, borderRadius: 9, background: C.va, border: `.5px solid ${C.vb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.v, fontFamily: SANS }}>MT5</div>
             <div>
               <div style={{ fontSize: 18, fontWeight: 600 }}>Connecter MetaTrader 5</div>
               <div style={{ fontSize: 12, color: C.t2 }}>Tes trades remontent automatiquement, sans EA.</div>
