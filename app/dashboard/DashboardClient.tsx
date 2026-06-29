@@ -3504,7 +3504,7 @@ type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations
 // Bascule sur l'onglet de l'étape ET met en surbrillance l'élément ciblé (data-tour) :
 // la carte se déplace près de lui. S'affiche 1× (localStorage), rejouable depuis Aide.
 const GUIDE_STEPS: { tab?: TabId; target?: string; icon: string; title: string; body: string }[] = [
-  { icon: '👋', title: 'Bienvenue sur Caldra', body: "Caldra surveille ton comportement de trading en temps réel et te prévient sur tes dérapages comme le revenge sizing, l'overtrading ou le drawdown. Voici un tour rapide." },
+  { tab: 'session', icon: '👋', title: 'Bienvenue sur Caldra', body: "Caldra surveille ton comportement de trading en temps réel et te prévient sur tes dérapages comme le revenge sizing, l'overtrading ou le drawdown. Voici un tour rapide." },
   { tab: 'session', target: 'score', icon: '🎯', title: 'Le score de session', body: "C'est le phare de Caldra. Ta discipline notée sur 100 : tu pars de 100 et chaque alerte retire des points selon sa gravité. Il ne mesure PAS ton P&L, mais ton comportement." },
   { tab: 'session', target: 'sessionline', icon: '📈', title: 'La ligne de session', body: "Ta séance en direct dans le temps. D'un coup d'œil tu vois si tu tiens ton cadre ou si ça commence à déraper." },
   { tab: 'session', target: 'alerts', icon: '🚨', title: 'Les alertes', body: "Dès qu'un comportement à risque se déclenche, l'alerte apparaît ici en temps réel, avec la conséquence à la clé pour t'aider à corriger." },
