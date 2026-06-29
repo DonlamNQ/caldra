@@ -1171,7 +1171,7 @@ function CalendrierPanel({ sessions, propFirmStart }: { sessions: DaySession[]; 
       </div>
 
       {/* Calendar grid */}
-      <div style={{ padding: '20px 26px' }}>
+      <div data-tour="calendar" style={{ padding: '20px 26px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div style={{ fontSize: 18, fontWeight: 300, letterSpacing: -.3, textTransform: 'capitalize' as const }}>{monthName}</div>
           <div style={{ display: 'flex', gap: 5 }}>
@@ -1653,7 +1653,7 @@ function AnalyticsPanel({ sessions: sessionsAll, todayAlerts, journalTrades: jou
       </div>
 
       {/* Grande courbe d'evolution du capital (trade par trade) */}
-      <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+      <div data-tour="equity" style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: '18px 20px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
         <div className="cflux" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: .5, background: `linear-gradient(90deg,transparent,${C.b3} 40%,transparent)` }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
           <div style={{ fontSize: 11, color: C.td, letterSpacing: .3 }}>Évolution du capital</div>
@@ -1882,7 +1882,7 @@ function RapportsPanel({ plan, onUpgrade }: { plan: string; onUpgrade: () => voi
     <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
 
       {/* Rapports mensuels — inclus dès le plan Pro */}
-      <div style={sectionTitle}>Mensuels</div>
+      <div data-tour="reports" style={sectionTitle}>Mensuels</div>
       {months.map((d, i) => (
         <ReportRow key={`m${i}`} icon="📅"
           title={frMonthLabel(d)}
@@ -2142,8 +2142,8 @@ namespace CaldraBot
     }
   }
 
-  const IntCard = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
-    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden', transition: 'border-color .2s', ...style }}>
+  const IntCard = ({ children, style, tour }: { children: React.ReactNode; style?: React.CSSProperties; tour?: string }) => (
+    <div data-tour={tour} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden', transition: 'border-color .2s', ...style }}>
       {children}
     </div>
   )
@@ -2177,7 +2177,7 @@ namespace CaldraBot
       </div>
 
       {/* ── Clé API ── */}
-      <IntCard style={{ marginBottom: 16 }}>
+      <IntCard style={{ marginBottom: 16 }} tour="integrations">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 500, color: C.tx }}>Clé API</div>
@@ -2417,10 +2417,10 @@ namespace CaldraBot
 // IMPORTANT : RuleGroup/RuleField sont au niveau MODULE (pas dans ReglesPanel). Définis
 // à l'intérieur, ils étaient recréés à chaque frappe → React remontait l'input → perte
 // du focus à chaque caractère.
-function RuleGroup({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
+function RuleGroup({ title, desc, children, tour }: { title: string; desc?: string; children: React.ReactNode; tour?: string }) {
   const C = useContext(ThemeCtx)
   return (
-    <div style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
+    <div data-tour={tour} style={{ background: C.sf, border: `.5px solid ${C.b}`, borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden' }}>
       <div style={{ fontSize: 14, fontWeight: 500, color: C.tx, marginBottom: desc ? 3 : 18 }}>{title}</div>
       {desc && <div style={{ fontSize: 11, color: C.td, marginBottom: 18 }}>{desc}</div>}
       {children}
@@ -2628,7 +2628,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     <div style={{ padding: '22px 28px', overflowY: 'auto', flex: 1 }}>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Mode prop firm — presets de garde-fous (plan Max) */}
-        <RuleGroup title="Mode prop firm" desc="Aligne tes garde-fous de risque sur les règles d’un challenge prop firm.">
+        <RuleGroup tour="rules" title="Mode prop firm" desc="Aligne tes garde-fous de risque sur les règles d’un challenge prop firm.">
           {!isMaxRules ? (
             <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.5 }}>Le mode prop firm (presets FTMO, FundedNext, The5ers…) est inclus dans le plan <span style={{ color: C.tx }}>Max</span>.</div>
           ) : (
@@ -3508,11 +3508,11 @@ const GUIDE_STEPS: { tab?: TabId; target?: string; icon: string; title: string; 
   { tab: 'session', target: 'score', icon: '🎯', title: 'Le score de session', body: "C'est le phare de Caldra. Ta discipline notée sur 100 : tu pars de 100 et chaque alerte retire des points selon sa gravité. Il ne mesure PAS ton P&L, mais ton comportement." },
   { tab: 'session', target: 'sessionline', icon: '📈', title: 'La ligne de session', body: "Ta séance en direct dans le temps. D'un coup d'œil tu vois si tu tiens ton cadre ou si ça commence à déraper." },
   { tab: 'session', target: 'alerts', icon: '🚨', title: 'Les alertes', body: "Dès qu'un comportement à risque se déclenche, l'alerte apparaît ici en temps réel, avec la conséquence à la clé pour t'aider à corriger." },
-  { tab: 'calendrier', icon: '🗓️', title: 'Calendrier', body: "Tes journées de trading en un coup d'œil. Le score et le résultat de chaque jour t'aident à repérer tes bonnes et mauvaises séries." },
-  { tab: 'analytics', icon: '📊', title: 'Analytique', body: "Tes vraies métriques : courbe d'évolution du capital, profit factor, performance par symbole, et tes patterns comportementaux récurrents." },
-  { tab: 'rapports', icon: '📄', title: 'Rapports', body: "Tes rapports hebdomadaire et mensuel en PDF : synthèse, métriques, comparaison avec la période précédente et recommandations." },
-  { tab: 'regles', icon: '⚙️', title: 'Règles', body: "Configure tes garde-fous (drawdown, horaires, taille de position) et active le mode prop firm si tu fais un challenge type FTMO ou FundedNext." },
-  { tab: 'integrations', icon: '🔌', title: 'Intégrations', body: "Connecte ta plateforme (cTrader, MT5) ou récupère ta clé API pour envoyer tes trades. C'est l'étape pour démarrer." },
+  { tab: 'calendrier', target: 'calendar', icon: '🗓️', title: 'Calendrier', body: "Tes journées de trading en un coup d'œil. Le score et le résultat de chaque jour t'aident à repérer tes bonnes et mauvaises séries." },
+  { tab: 'analytics', target: 'equity', icon: '📊', title: 'Analytique', body: "Tes vraies métriques : courbe d'évolution du capital, profit factor, performance par symbole, et tes patterns comportementaux récurrents." },
+  { tab: 'rapports', target: 'reports', icon: '📄', title: 'Rapports', body: "Tes rapports hebdomadaire et mensuel en PDF : synthèse, métriques, comparaison avec la période précédente et recommandations." },
+  { tab: 'regles', target: 'rules', icon: '⚙️', title: 'Règles', body: "Configure tes garde-fous (drawdown, horaires, taille de position) et active le mode prop firm si tu fais un challenge type FTMO ou FundedNext." },
+  { tab: 'integrations', target: 'integrations', icon: '🔌', title: 'Intégrations', body: "Connecte ta plateforme (cTrader, MT5) ou récupère ta clé API pour envoyer tes trades. C'est l'étape pour démarrer." },
   { icon: '🚀', title: 'À toi de jouer', body: "Connecte ta plateforme dans Intégrations et Caldra analysera chaque trade. Bon trading, et garde la discipline." },
 ]
 
@@ -3524,18 +3524,26 @@ function FirstConnectionGuide({ setActiveTab, onClose }: { setActiveTab: (t: Tab
   const last = step === GUIDE_STEPS.length - 1
 
   // À chaque étape : bascule sur l'onglet, puis (si élément ciblé) le centre à l'écran et
-  // mesure sa position pour placer le spotlight + la carte. Délai = laisser l'onglet rendre.
+  // mesure sa position. On retente vite (toutes les 40 ms) jusqu'à trouver l'élément → la
+  // carte apparaît DIRECTEMENT sur la cible (pas de passage par le bas). Tant que la cible
+  // n'est pas mesurée, on ne montre pas la carte (rect=null).
   useEffect(() => {
     if (cur.tab) setActiveTab(cur.tab)
     setRect(null)
     if (!cur.target) return
-    const t = setTimeout(() => {
+    let cancelled = false, tries = 0
+    const tick = () => {
+      if (cancelled) return
       const el = document.querySelector(`[data-tour="${cur.target}"]`) as HTMLElement | null
-      if (!el) return
-      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
-      setTimeout(() => setRect(el.getBoundingClientRect()), 240)
-    }, 240)
-    return () => clearTimeout(t)
+      if (el) {
+        el.scrollIntoView({ block: 'center', behavior: 'auto' })
+        requestAnimationFrame(() => { if (!cancelled) setRect(el.getBoundingClientRect()) })
+        return
+      }
+      if (tries++ < 25) setTimeout(tick, 40)
+    }
+    tick()
+    return () => { cancelled = true }
   }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -3551,23 +3559,28 @@ function FirstConnectionGuide({ setActiveTab, onClose }: { setActiveTab: (t: Tab
   const CARD_W = 360, CARD_H = 224
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1200
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+  const w = Math.min(CARD_W, vw - 24)
   const card: React.CSSProperties = rect
     ? (() => {
         const below = rect.bottom + 16 + CARD_H < vh
         const top = below ? rect.bottom + 16 : Math.max(12, rect.top - CARD_H - 16)
-        const left = Math.max(12, Math.min(vw - CARD_W - 12, rect.left + rect.width / 2 - CARD_W / 2))
-        return { position: 'fixed', top, left, width: CARD_W }
+        const left = Math.max(12, Math.min(vw - w - 12, rect.left + rect.width / 2 - w / 2))
+        return { position: 'fixed', top, left, width: w }
       })()
-    : { position: 'fixed', bottom: 26, left: '50%', transform: 'translateX(-50%)', width: `min(${CARD_W}px, calc(100vw - 32px))` }
+    : { position: 'fixed', top: Math.max(12, vh / 2 - CARD_H / 2), left: Math.max(12, vw / 2 - w / 2), width: w }   // bienvenue/outro = milieu
+
+  // On n'affiche la carte que quand elle est prête (étape sans cible, OU cible mesurée) →
+  // elle apparaît directement au bon endroit, jamais en transit depuis ailleurs.
+  const cardReady = !cur.target || !!rect
 
   return createPortal(
     <>
       {rect ? (
-        <div style={{ position: 'fixed', top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, borderRadius: 12, boxShadow: '0 0 0 9999px rgba(0,0,0,.55)', border: '1.5px solid #7c3aed', pointerEvents: 'none', zIndex: 100000, transition: 'all .25s ease' }} />
+        <div style={{ position: 'fixed', top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, borderRadius: 12, boxShadow: '0 0 0 9999px rgba(0,0,0,.55)', border: '1.5px solid #7c3aed', pointerEvents: 'none', zIndex: 100000, transition: 'all .2s ease' }} />
       ) : (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 100000, pointerEvents: 'none' }} />
       )}
-      <div style={{ ...card, background: C.sf, border: `.5px solid ${C.b2}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.6)', fontFamily: SANS, zIndex: 100001, animation: 'fadeUp .2s ease' }}>
+      {cardReady && <div style={{ ...card, background: C.sf, border: `.5px solid ${C.b2}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.6)', fontFamily: SANS, zIndex: 100001, animation: 'fadeUp .18s ease' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,.9) 40%, transparent)' }} />
         <div style={{ padding: '20px 22px 16px' }}>
           <div style={{ fontSize: 24, marginBottom: 9 }}>{cur.icon}</div>
@@ -3586,7 +3599,7 @@ function FirstConnectionGuide({ setActiveTab, onClose }: { setActiveTab: (t: Tab
             </div>
           </div>
         </div>
-      </div>
+      </div>}
     </>,
     document.body
   )
