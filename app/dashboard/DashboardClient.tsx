@@ -593,7 +593,7 @@ function Sidebar({ score, alerts, stats, financialPnl, rules }: {
     <div className="score-sidebar" style={{ borderRight: `.5px solid ${C.b}`, display: 'flex', flexDirection: 'column', background: C.sf, overflowY: 'auto', overflowX: 'hidden', textDecoration: 'none', borderRadius: 16, margin: '10px 0 10px 10px', overflow: 'hidden' }}>
 
       {/* Score */}
-      <div style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+      <div data-tour="score" style={{ padding: '20px 20px', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
         {/* Voile teinté par le score en haut du bloc. On lui donne SES propres arrondis en
             haut (16, = carte sidebar) : le clipping d'un enfant absolu par le border-radius
             du parent bugge sur mobile (iOS/Safari) → arrondis explicites = suit les coins partout. */}
@@ -638,7 +638,7 @@ function Sidebar({ score, alerts, stats, financialPnl, rules }: {
       <div style={{ height: '.5px', background: C.b, width: '72%', margin: '2px auto 0', flexShrink: 0 }} />
 
       {/* Alertes — heatmap + feed (flex:1 pour remplir l'espace) */}
-      <div style={{ padding: '14px 20px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div data-tour="alerts" style={{ padding: '14px 20px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ fontSize: 10, letterSpacing: 1.5, color: C.td, textTransform: 'uppercase' as const, fontFamily: SANS }}>Alertes</span>
           {alerts.length > 0 && (
@@ -920,9 +920,11 @@ function SessionPanel({ trades, alerts, stats, financialPnl, yesterdayStats, yes
         {/* Chart card */}
         <div style={{ background: C.sf, borderTop: `.5px solid ${ambBd}`, borderLeft: `.5px solid ${ambBd}`, borderRight: `.5px solid ${ambBd}`, borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${ambLn} 40%, transparent)` }} />
-          <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: SANS }}>Ligne de session</div>
-          <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
-            <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
+          <div data-tour="sessionline">
+            <div style={{ fontSize: 9, color: C.te, letterSpacing: 1.5, marginBottom: 5, textTransform: 'uppercase' as const, fontFamily: SANS }}>Ligne de session</div>
+            <div style={{ border: `.5px solid ${C.b}`, borderRadius: 2, height: 44, overflow: 'hidden', flexShrink: 0 }}>
+              <SessionLine alerts={alerts} score={score} pnl={stats.total_pnl} />
+            </div>
           </div>
           <div style={{ borderTop: `.5px solid ${C.b}`, margin: '10px 0' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 5, minHeight: 18 }}>
@@ -3498,41 +3500,85 @@ const SETTINGS_ITEMS = [
 
 type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations' | 'regles' | 'billing' | 'profil' | 'aide'
 
-// ── FirstConnectionGuide — tour guidé de première connexion ──────────────────────
-// Carte d'étapes (portal) qui bascule sur chaque onglet au fil du parcours pour le
-// présenter. S'affiche 1× (localStorage), rejouable depuis l'onglet Aide.
-const GUIDE_STEPS: { tab?: TabId; icon: string; title: string; body: string }[] = [
-  { icon: '👋', title: 'Bienvenue sur Caldra', body: "Caldra surveille ton comportement de trading en temps réel et te prévient sur tes dérapages comme le revenge sizing, l'overtrading ou le drawdown. Voici un tour rapide des onglets." },
-  { tab: 'session', icon: '📊', title: 'Session', body: "Ton cockpit en direct : score de discipline, P&L du jour, tes trades en temps réel, et une alerte dès qu'un comportement à risque se déclenche." },
+// ── FirstConnectionGuide — tour guidé « spotlight » de première connexion ────────
+// Bascule sur l'onglet de l'étape ET met en surbrillance l'élément ciblé (data-tour) :
+// la carte se déplace près de lui. S'affiche 1× (localStorage), rejouable depuis Aide.
+const GUIDE_STEPS: { tab?: TabId; target?: string; icon: string; title: string; body: string }[] = [
+  { icon: '👋', title: 'Bienvenue sur Caldra', body: "Caldra surveille ton comportement de trading en temps réel et te prévient sur tes dérapages comme le revenge sizing, l'overtrading ou le drawdown. Voici un tour rapide." },
+  { tab: 'session', target: 'score', icon: '🎯', title: 'Le score de session', body: "C'est le phare de Caldra. Ta discipline notée sur 100 : tu pars de 100 et chaque alerte retire des points selon sa gravité. Il ne mesure PAS ton P&L, mais ton comportement." },
+  { tab: 'session', target: 'sessionline', icon: '📈', title: 'La ligne de session', body: "Ta séance en direct dans le temps. D'un coup d'œil tu vois si tu tiens ton cadre ou si ça commence à déraper." },
+  { tab: 'session', target: 'alerts', icon: '🚨', title: 'Les alertes', body: "Dès qu'un comportement à risque se déclenche, l'alerte apparaît ici en temps réel, avec la conséquence à la clé pour t'aider à corriger." },
   { tab: 'calendrier', icon: '🗓️', title: 'Calendrier', body: "Tes journées de trading en un coup d'œil. Le score et le résultat de chaque jour t'aident à repérer tes bonnes et mauvaises séries." },
-  { tab: 'analytics', icon: '📈', title: 'Analytique', body: "Tes vraies métriques : courbe d'évolution du capital, profit factor, performance par symbole, et tes patterns comportementaux récurrents." },
+  { tab: 'analytics', icon: '📊', title: 'Analytique', body: "Tes vraies métriques : courbe d'évolution du capital, profit factor, performance par symbole, et tes patterns comportementaux récurrents." },
   { tab: 'rapports', icon: '📄', title: 'Rapports', body: "Tes rapports hebdomadaire et mensuel en PDF : synthèse, métriques, comparaison avec la période précédente et recommandations." },
   { tab: 'regles', icon: '⚙️', title: 'Règles', body: "Configure tes garde-fous (drawdown, horaires, taille de position) et active le mode prop firm si tu fais un challenge type FTMO ou FundedNext." },
   { tab: 'integrations', icon: '🔌', title: 'Intégrations', body: "Connecte ta plateforme (cTrader, MT5) ou récupère ta clé API pour envoyer tes trades. C'est l'étape pour démarrer." },
-  { tab: 'integrations', icon: '🚀', title: 'À toi de jouer', body: "Connecte ta plateforme dans Intégrations et Caldra analysera chaque trade. Bon trading, et garde la discipline." },
+  { icon: '🚀', title: 'À toi de jouer', body: "Connecte ta plateforme dans Intégrations et Caldra analysera chaque trade. Bon trading, et garde la discipline." },
 ]
 
 function FirstConnectionGuide({ setActiveTab, onClose }: { setActiveTab: (t: TabId) => void; onClose: () => void }) {
   const C = useContext(ThemeCtx)
   const [step, setStep] = useState(0)
+  const [rect, setRect] = useState<DOMRect | null>(null)
   const cur = GUIDE_STEPS[step]
   const last = step === GUIDE_STEPS.length - 1
-  useEffect(() => { if (cur.tab) setActiveTab(cur.tab) }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // À chaque étape : bascule sur l'onglet, puis (si élément ciblé) le centre à l'écran et
+  // mesure sa position pour placer le spotlight + la carte. Délai = laisser l'onglet rendre.
+  useEffect(() => {
+    if (cur.tab) setActiveTab(cur.tab)
+    setRect(null)
+    if (!cur.target) return
+    const t = setTimeout(() => {
+      const el = document.querySelector(`[data-tour="${cur.target}"]`) as HTMLElement | null
+      if (!el) return
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      setTimeout(() => setRect(el.getBoundingClientRect()), 240)
+    }, 240)
+    return () => clearTimeout(t)
+  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const onR = () => {
+      if (!cur.target) return
+      const el = document.querySelector(`[data-tour="${cur.target}"]`) as HTMLElement | null
+      if (el) setRect(el.getBoundingClientRect())
+    }
+    window.addEventListener('resize', onR)
+    return () => window.removeEventListener('resize', onR)
+  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const CARD_W = 360, CARD_H = 224
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+  const card: React.CSSProperties = rect
+    ? (() => {
+        const below = rect.bottom + 16 + CARD_H < vh
+        const top = below ? rect.bottom + 16 : Math.max(12, rect.top - CARD_H - 16)
+        const left = Math.max(12, Math.min(vw - CARD_W - 12, rect.left + rect.width / 2 - CARD_W / 2))
+        return { position: 'fixed', top, left, width: CARD_W }
+      })()
+    : { position: 'fixed', bottom: 26, left: '50%', transform: 'translateX(-50%)', width: `min(${CARD_W}px, calc(100vw - 32px))` }
 
   return createPortal(
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100001, padding: '0 16px 22px', pointerEvents: 'none' }}>
-      <div style={{ width: 'min(440px, 100%)', background: C.sf, border: `.5px solid ${C.b2}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.6)', fontFamily: SANS, position: 'relative', animation: 'fadeUp .2s ease', pointerEvents: 'auto' }}>
+    <>
+      {rect ? (
+        <div style={{ position: 'fixed', top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, borderRadius: 12, boxShadow: '0 0 0 9999px rgba(0,0,0,.55)', border: '1.5px solid #7c3aed', pointerEvents: 'none', zIndex: 100000, transition: 'all .25s ease' }} />
+      ) : (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 100000, pointerEvents: 'none' }} />
+      )}
+      <div style={{ ...card, background: C.sf, border: `.5px solid ${C.b2}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.6)', fontFamily: SANS, zIndex: 100001, animation: 'fadeUp .2s ease' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(124,58,237,.9) 40%, transparent)' }} />
-        <div style={{ padding: '22px 24px 18px' }}>
-          <div style={{ fontSize: 26, marginBottom: 10 }}>{cur.icon}</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: C.tx, marginBottom: 8 }}>{cur.title}</div>
-          <div style={{ fontSize: 13, color: C.td, lineHeight: 1.6 }}>{cur.body}</div>
-          <div style={{ display: 'flex', gap: 5, marginTop: 18 }}>
+        <div style={{ padding: '20px 22px 16px' }}>
+          <div style={{ fontSize: 24, marginBottom: 9 }}>{cur.icon}</div>
+          <div style={{ fontSize: 15.5, fontWeight: 600, color: C.tx, marginBottom: 7 }}>{cur.title}</div>
+          <div style={{ fontSize: 12.5, color: C.td, lineHeight: 1.6 }}>{cur.body}</div>
+          <div style={{ display: 'flex', gap: 5, marginTop: 16 }}>
             {GUIDE_STEPS.map((_, i) => (
               <div key={i} style={{ width: i === step ? 16 : 6, height: 6, borderRadius: 3, background: i === step ? '#7c3aed' : C.b3, transition: 'all .2s' }} />
             ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.te, fontSize: 12, fontFamily: SANS, cursor: 'pointer' }}>Passer</button>
             <div style={{ display: 'flex', gap: 8 }}>
               {step > 0 && <button onClick={() => setStep(s => Math.max(0, s - 1))} style={{ padding: '8px 14px', borderRadius: 8, background: 'transparent', color: C.td, border: `.5px solid ${C.b2}`, fontSize: 12.5, fontFamily: SANS, cursor: 'pointer' }}>Précédent</button>}
@@ -3541,7 +3587,7 @@ function FirstConnectionGuide({ setActiveTab, onClose }: { setActiveTab: (t: Tab
           </div>
         </div>
       </div>
-    </div>,
+    </>,
     document.body
   )
 }
