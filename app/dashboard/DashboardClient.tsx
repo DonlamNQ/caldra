@@ -3503,17 +3503,17 @@ type TabId = 'session' | 'calendrier' | 'analytics' | 'rapports' | 'integrations
 // ── FirstConnectionGuide — tour guidé « spotlight » de première connexion ────────
 // Bascule sur l'onglet de l'étape ET met en surbrillance l'élément ciblé (data-tour) :
 // la carte se déplace près de lui. S'affiche 1× (localStorage), rejouable depuis Aide.
-const GUIDE_STEPS: { tab?: TabId; target?: string; icon: string; title: string; body: string }[] = [
+const GUIDE_STEPS: { tab?: TabId; target?: string; highlight?: boolean; icon: string; title: string; body: string }[] = [
   { tab: 'session', icon: '👋', title: 'Bienvenue sur Caldra', body: "Caldra surveille ton comportement de trading en temps réel et te prévient sur tes dérapages comme le revenge sizing, l'overtrading ou le drawdown. Voici un tour rapide." },
-  { tab: 'session', target: 'score', icon: '🎯', title: 'Le score de session', body: "C'est le phare de Caldra. Ta discipline notée sur 100 : tu pars de 100 et chaque alerte retire des points selon sa gravité. Il ne mesure PAS ton P&L, mais ton comportement." },
-  { tab: 'session', target: 'sessionline', icon: '📈', title: 'La ligne de session', body: "Ta séance en direct dans le temps. D'un coup d'œil tu vois si tu tiens ton cadre ou si ça commence à déraper." },
-  { tab: 'session', target: 'alerts', icon: '🚨', title: 'Les alertes', body: "Dès qu'un comportement à risque se déclenche, l'alerte apparaît ici en temps réel, avec la conséquence à la clé pour t'aider à corriger." },
+  { tab: 'session', target: 'score', highlight: true, icon: '🎯', title: 'Le score de session', body: "C'est le phare de Caldra. Ta discipline notée sur 100 : tu pars de 100 et chaque alerte retire des points selon sa gravité. Il ne mesure PAS ton P&L, mais ton comportement." },
+  { tab: 'session', target: 'sessionline', highlight: true, icon: '📈', title: 'La ligne de session', body: "Ta séance en direct dans le temps. D'un coup d'œil tu vois si tu tiens ton cadre ou si ça commence à déraper." },
+  { tab: 'session', target: 'alerts', highlight: true, icon: '🚨', title: 'Les alertes', body: "Dès qu'un comportement à risque se déclenche, l'alerte apparaît ici en temps réel, avec la conséquence à la clé pour t'aider à corriger." },
   { tab: 'calendrier', target: 'calendar', icon: '🗓️', title: 'Calendrier', body: "Tes journées de trading en un coup d'œil. Le score et le résultat de chaque jour t'aident à repérer tes bonnes et mauvaises séries." },
   { tab: 'analytics', target: 'equity', icon: '📊', title: 'Analytique', body: "Tes vraies métriques : courbe d'évolution du capital, profit factor, performance par symbole, et tes patterns comportementaux récurrents." },
   { tab: 'rapports', target: 'reports', icon: '📄', title: 'Rapports', body: "Tes rapports hebdomadaire et mensuel en PDF : synthèse, métriques, comparaison avec la période précédente et recommandations." },
   { tab: 'regles', target: 'rules', icon: '⚙️', title: 'Règles', body: "Configure tes garde-fous (drawdown, horaires, taille de position) et active le mode prop firm si tu fais un challenge type FTMO ou FundedNext." },
   { tab: 'integrations', target: 'integrations', icon: '🔌', title: 'Intégrations', body: "Connecte ta plateforme (cTrader, MT5) ou récupère ta clé API pour envoyer tes trades. C'est l'étape pour démarrer." },
-  { icon: '🚀', title: 'À toi de jouer', body: "Connecte ta plateforme dans Intégrations et Caldra analysera chaque trade. Bon trading, et garde la discipline." },
+  { tab: 'session', icon: '🚀', title: 'À toi de jouer', body: "Connecte ta plateforme dans Intégrations et Caldra analysera chaque trade. Bon trading, et garde la discipline." },
 ]
 
 function FirstConnectionGuide({ setActiveTab, onClose }: { setActiveTab: (t: TabId) => void; onClose: () => void }) {
@@ -3575,9 +3575,12 @@ function FirstConnectionGuide({ setActiveTab, onClose }: { setActiveTab: (t: Tab
 
   return createPortal(
     <>
-      {rect ? (
+      {cur.highlight && rect ? (
+        // Surbrillance d'un élément précis (réservée aux 3 phares de Session).
         <div style={{ position: 'fixed', top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, borderRadius: 12, boxShadow: '0 0 0 9999px rgba(0,0,0,.55)', border: '1.5px solid #7c3aed', pointerEvents: 'none', zIndex: 100000, transition: 'all .2s ease' }} />
       ) : (
+        // Onglets / bienvenue : fond uniforme, pas de highlight. La carte se positionne
+        // juste à des endroits variés (via l'élément cible quand il y en a un).
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 100000, pointerEvents: 'none' }} />
       )}
       {cardReady && <div style={{ ...card, background: C.sf, border: `.5px solid ${C.b2}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.6)', fontFamily: SANS, zIndex: 100001, animation: 'fadeUp .18s ease' }}>
