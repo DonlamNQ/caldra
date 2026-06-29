@@ -369,9 +369,11 @@ do $$
 declare t text;
 begin
   foreach t in array array['mt5_accounts','ctrader_accounts','tradovate_accounts','push_subscriptions'] loop
-    execute format('drop policy if exists "service role full access" on %I;', t);
-    execute format('drop policy if exists "users read own %1$s" on %1$s;', t);
-    execute format('create policy "users read own %1$s" on %1$s for select using (auth.uid() = user_id);', t);
+    if to_regclass('public.'||t) is not null then
+      execute format('drop policy if exists "service role full access" on %I;', t);
+      execute format('drop policy if exists "users read own %1$s" on %1$s;', t);
+      execute format('create policy "users read own %1$s" on %1$s for select using (auth.uid() = user_id);', t);
+    end if;
   end loop;
 end $$;
 
@@ -381,7 +383,9 @@ do $$
 declare t text;
 begin
   foreach t in array array['user_profiles','trading_rules','api_keys','trades','alerts'] loop
-    execute format('drop policy if exists "service role full access" on %I;', t);
+    if to_regclass('public.'||t) is not null then
+      execute format('drop policy if exists "service role full access" on %I;', t);
+    end if;
   end loop;
 end $$;
 
