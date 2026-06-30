@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import DashboardClient from './DashboardClient'
 import { isVip } from '@/lib/plans'
+import { rulesTz, tzOffsetMin } from '@/lib/tz'
 import type { AlertRow } from '@/components/dashboard/AlertFeed'
 import type { TradeRow } from '@/components/dashboard/TradeLog'
 
@@ -54,9 +55,9 @@ export default async function DashboardPage() {
   // Règles) : la session bascule à SON minuit, pas à minuit UTC → aligne le reset journalier
   // sur l'heure serveur de sa prop firm. tz=0 → comportement UTC inchangé. On scope par
   // timestamp précis (created_at / entry_time), pas par session_date (qui reste en UTC).
-  const tz = Number((rules as any)?.tz_offset_hours ?? 0)
-  const userToday = new Date(Date.now() + tz * 3600000).toISOString().slice(0, 10)
-  const dayFloor = new Date(new Date(userToday + 'T00:00:00.000Z').getTime() - tz * 3600000).toISOString()
+  const tzOffMin = tzOffsetMin(Date.now(), rulesTz(rules))
+  const userToday = new Date(Date.now() + tzOffMin * 60000).toISOString().slice(0, 10)
+  const dayFloor = new Date(new Date(userToday + 'T00:00:00.000Z').getTime() - tzOffMin * 60000).toISOString()
 
   const todayAlertsQuery = service.from('alerts').select('*').eq('user_id', user.id).gte('created_at', dayFloor)
     .order('level', { ascending: false }).order('created_at', { ascending: false })

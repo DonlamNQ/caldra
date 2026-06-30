@@ -4,6 +4,7 @@ import { newsConflict } from './economic-calendar'
 import { isMaxPlan, MAX_ONLY_DETECTORS, isVip } from './plans'
 import { detectorEnabled, detectorThreshold } from './detectors'
 import { PROPFIRM_PRESETS, PROPFIRM_PHASES, targetForPhase, type PropFirmPhase } from './propfirms'
+import { rulesTz, tzOffsetMin } from './tz'
 
 const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,9 +15,9 @@ const getSupabase = () => createClient(
 // (drawdown du jour, pertes consécutives, overtrading…) et le `session_date` des alertes
 // s'alignent sur SON minuit, pas minuit UTC. tz=0 → comportement UTC inchangé.
 function userDay(rules: Record<string, any>): { today: string; floorMs: number } {
-  const tz = Number(rules?.tz_offset_hours ?? 0)
-  const today = new Date(Date.now() + tz * 3600000).toISOString().slice(0, 10)
-  const floorMs = new Date(today + 'T00:00:00.000Z').getTime() - tz * 3600000
+  const off = tzOffsetMin(Date.now(), rulesTz(rules))   // minutes, DST inclus
+  const today = new Date(Date.now() + off * 60000).toISOString().slice(0, 10)
+  const floorMs = new Date(today + 'T00:00:00.000Z').getTime() - off * 60000
   return { today, floorMs }
 }
 // Plancher de requête large (UTC J-1) : couvre le minuit de l'utilisateur quel que soit son
@@ -395,8 +396,8 @@ function entryBehaviorAlerts(trade: Trade, rules: Record<string, any>, sessionTr
 
   // ── 1. HORS HORAIRES ──────────────────────────────────────────────────────
   const utcMins = new Date(trade.entry_time).getUTCHours() * 60 + new Date(trade.entry_time).getUTCMinutes()
-  const tzOffset = Number(rules.tz_offset_hours ?? 0)
-  const localMins = ((utcMins + tzOffset * 60) % 1440 + 1440) % 1440
+  const offMin = tzOffsetMin(new Date(trade.entry_time).getTime(), rulesTz(rules))   // au moment du trade (DST)
+  const localMins = ((utcMins + offMin) % 1440 + 1440) % 1440
   const entryHour = `${String(Math.floor(localMins / 60)).padStart(2, '0')}:${String(localMins % 60).padStart(2, '0')}`
   if (entryHour < rules.session_start || entryHour > rules.session_end) {
     alerts.push({

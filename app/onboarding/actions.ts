@@ -24,11 +24,18 @@ export async function saveRulesAction(rules: Record<string, unknown>): Promise<{
     max_risk_per_trade_pct:       Number(rules.max_risk_per_trade_pct),
     account_size:                 Number(rules.account_size) || 10000,
     slack_webhook_url:            rules.slack_webhook_url ? String(rules.slack_webhook_url) : null,
+    timezone:                     (typeof rules.timezone === 'string' && (rules.timezone as string).includes('/')) ? rules.timezone : 'Europe/Paris',
   }
 
-  const { error } = await service
+  let { error } = await service
     .from('trading_rules')
     .upsert(row, { onConflict: 'user_id' })
+
+  if (error) {
+    // Repli si la colonne `timezone` n'existe pas encore (migration v2.23 non appliquée).
+    const { timezone, ...base } = row
+    ;({ error } = await service.from('trading_rules').upsert(base, { onConflict: 'user_id' }))
+  }
 
   if (error) return { error: error.message }
   return { ok: true }

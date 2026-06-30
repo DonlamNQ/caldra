@@ -389,3 +389,9 @@ begin
   end loop;
 end $$;
 
+-- v2.23 : fuseau horaire IANA (ex. 'Europe/Paris') à la place de l'offset fixe
+-- `tz_offset_hours`. Gère automatiquement l'heure d'été/hiver (DST) : le code lit
+-- `timezone` en priorité (lib/tz.ts → rulesTz). Détecté côté navigateur à l'onboarding.
+-- `tz_offset_hours` conservé (déprécié) pour compat ; n'est plus utilisé par le moteur.
+alter table trading_rules add column if not exists timezone text not null default 'Europe/Paris';
+

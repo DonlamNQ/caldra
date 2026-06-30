@@ -15,6 +15,7 @@ const DEFAULTS = {
   account_size: 10000,
   slack_webhook_url: null as string | null,
   tz_offset_hours: 0,
+  timezone: 'Europe/Paris',
   max_leverage: 30,
   require_stop_loss: false,
   telegram_bot_token: null as string | null,
@@ -71,6 +72,7 @@ export async function PUT(req: NextRequest) {
     account_size: Number(body.account_size) || 10000,
     slack_webhook_url: body.slack_webhook_url ? String(body.slack_webhook_url) : null,
     tz_offset_hours: Math.round(Number(body.tz_offset_hours ?? 0)),
+    timezone: (typeof body.timezone === 'string' && body.timezone.includes('/')) ? body.timezone : 'Europe/Paris',
     max_leverage: Number(body.max_leverage) || 30,
     require_stop_loss: body.require_stop_loss === true || body.require_stop_loss === 'true',
     telegram_bot_token: body.telegram_bot_token ? String(body.telegram_bot_token).trim() : null,
@@ -95,7 +97,7 @@ export async function PUT(req: NextRequest) {
 
   if (error) {
     // Retry without optional columns that may not exist yet in older DB schemas
-    const { account_size, slack_webhook_url, tz_offset_hours, max_leverage, require_stop_loss, telegram_bot_token, telegram_chat_id, detector_config, prop_firm, prop_firm_started_at, prop_firm_phase_started_at, prop_firm_active, prop_firm_phase, ...baseRules } = rules
+    const { account_size, slack_webhook_url, tz_offset_hours, timezone, max_leverage, require_stop_loss, telegram_bot_token, telegram_chat_id, detector_config, prop_firm, prop_firm_started_at, prop_firm_phase_started_at, prop_firm_active, prop_firm_phase, ...baseRules } = rules
     const { data: data2, error: error2 } = await service()
       .from('trading_rules')
       .upsert(baseRules, { onConflict: 'user_id' })

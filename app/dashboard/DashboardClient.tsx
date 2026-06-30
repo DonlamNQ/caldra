@@ -12,6 +12,7 @@ import { randomNote } from '@/lib/coachNotes'
 import { isMaxPlan, isPaidPlan } from '@/lib/plans'
 import { DETECTOR_DEFS } from '@/lib/detectors'
 import { PROPFIRM_PRESETS, PROPFIRM_PHASES, targetForPhase, type PropFirmPhase } from '@/lib/propfirms'
+import { rulesTz, tzOffsetMin, detectTz, COMMON_TZ } from '@/lib/tz'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -46,6 +47,7 @@ interface TradingRules {
   account_size: number
   slack_webhook_url: string | null
   tz_offset_hours: number
+  timezone?: string
   telegram_bot_token?: string | null
   telegram_chat_id?: string | null
   max_leverage?: number
@@ -2649,7 +2651,7 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
     max_daily_drawdown_pct: 3, max_consecutive_losses: 3,
     min_time_between_entries_sec: 120, session_start: '09:30',
     session_end: '16:00', max_trades_per_session: 10, max_risk_per_trade_pct: 1,
-    account_size: 10000, slack_webhook_url: null, tz_offset_hours: 0,
+    account_size: 10000, slack_webhook_url: null, tz_offset_hours: 0, timezone: 'Europe/Paris',
     max_leverage: 30, require_stop_loss: false,
   }
   const [rules, setRules] = useState<TradingRules>(initial ?? defaults)
@@ -2948,14 +2950,14 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
             <RuleField label="Fin de session">
               <input style={{ ...inputStyle, width: 100, textAlign: 'center' }} type="time" value={(rules.session_end || '').slice(0, 5)} onChange={e => set('session_end', e.target.value)} />
             </RuleField>
-            <RuleField label="Fuseau horaire (UTC+)">
+            <RuleField label="Fuseau horaire">
               <select
-                style={{ ...inputStyle, width: 100, textAlign: 'center', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundColor: 'rgba(255,255,255,.05)', color: C.tx }}
-                value={rules.tz_offset_hours ?? 0}
-                onChange={e => set('tz_offset_hours', e.target.value)}
+                style={{ ...inputStyle, width: 180, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', backgroundColor: 'rgba(255,255,255,.05)', color: C.tx }}
+                value={(rules as any).timezone || detectTz()}
+                onChange={e => set('timezone' as any, e.target.value)}
               >
-                {[-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
-                  <option key={h} value={h} style={{ background: '#12121c', color: '#eae8f5' }}>{h >= 0 ? `+${h}` : h}</option>
+                {Array.from(new Set([detectTz(), ...COMMON_TZ])).map(tz => (
+                  <option key={tz} value={tz} style={{ background: '#12121c', color: '#eae8f5' }}>{tz}</option>
                 ))}
               </select>
             </RuleField>
@@ -3924,9 +3926,9 @@ export default function DashboardClient({
 
   // Journée de session dans le FUSEAU de l'utilisateur (champ « Fuseau horaire ») : reset à
   // SON minuit, pas minuit UTC. `dayFloorUTC` = instant UTC de son minuit local. tz=0 = UTC.
-  const tzOffset = Number((liveRules as any)?.tz_offset_hours ?? 0)
-  const today = new Date(Date.now() + tzOffset * 3600000).toISOString().split('T')[0]
-  const dayFloorUTC = new Date(new Date(today + 'T00:00:00.000Z').getTime() - tzOffset * 3600000).toISOString()
+  const tzOffMin = tzOffsetMin(Date.now(), rulesTz(liveRules))
+  const today = new Date(Date.now() + tzOffMin * 60000).toISOString().split('T')[0]
+  const dayFloorUTC = new Date(new Date(today + 'T00:00:00.000Z').getTime() - tzOffMin * 60000).toISOString()
 
   const dismissToast = useCallback((id: string) => {
     setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t))

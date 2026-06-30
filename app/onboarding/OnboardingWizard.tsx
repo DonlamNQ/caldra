@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { saveRulesAction } from './actions'
+import { detectTz } from '@/lib/tz'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const RED  = '#7c3aed'
@@ -167,7 +168,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
   async function saveRules() {
     setSaving(true); setError('')
     try {
-      const result = await saveRulesAction(rules as unknown as Record<string, unknown>)
+      const result = await saveRulesAction({ ...rules, timezone: detectTz() } as unknown as Record<string, unknown>)
       setSaving(false)
       if ('error' in result) { setError(result.error); return false }
       return true
