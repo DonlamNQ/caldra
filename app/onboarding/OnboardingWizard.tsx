@@ -22,7 +22,7 @@ const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
 const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type Platform = 'ctrader' | 'mt5'
+type Platform = 'ctrader' | 'mt5' | 'ibkr'
 type Level    = 'beginner' | 'confirmed' | 'expert'
 
 interface Rules {
@@ -71,11 +71,11 @@ function StepBar({ step }: { step: number }) {
                 border: `.5px solid ${dotBorder}`,
                 boxShadow: isActive ? `0 0 0 3px ${RED}22` : isDone ? `0 0 0 3px ${G}14` : 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, fontFamily: MONO,
+                fontSize: 12, fontFamily: SANS,
                 color: dotColor,
                 transition: 'all .35s',
               }}>{isDone ? '✓' : n}</div>
-              <span style={{ fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase' as const, color: isActive ? TD : TE, whiteSpace: 'nowrap' as const, fontFamily: MONO, fontWeight: isActive ? 500 : 400 }}>{label}</span>
+              <span style={{ fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase' as const, color: isActive ? TD : TE, whiteSpace: 'nowrap' as const, fontFamily: SANS, fontWeight: isActive ? 500 : 400 }}>{label}</span>
             </div>
             {i < labels.length - 1 && (
               <div style={{ flex: 1, position: 'relative', marginTop: 17, marginLeft: 10, marginRight: 10 }}>
@@ -97,16 +97,16 @@ function Field({ label, hint, suffix, children }: { label: string; hint?: string
       <label style={{ fontSize: 11, letterSpacing: .8, textTransform: 'uppercase' as const, color: TD, fontFamily: SANS }}>{label}</label>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {children}
-        {suffix && <span style={{ fontSize: 12, color: TE, fontFamily: MONO, flexShrink: 0 }}>{suffix}</span>}
+        {suffix && <span style={{ fontSize: 12, color: TE, fontFamily: SANS, flexShrink: 0 }}>{suffix}</span>}
       </div>
-      {hint && <span style={{ fontSize: 11, color: TE, lineHeight: 1.5 }}>{hint}</span>}
+      {hint && <span style={{ fontSize: 12.5, color: TE, lineHeight: 1.5 }}>{hint}</span>}
     </div>
   )
 }
 
 const numInput: React.CSSProperties = {
   background: 'rgba(255,255,255,.035)', border: `.5px solid ${B2}`, borderRadius: 8,
-  padding: '10px 13px', color: TX, fontSize: 13.5, fontFamily: MONO,
+  padding: '10px 13px', color: TX, fontSize: 13.5, fontFamily: SANS,
   outline: 'none', width: '100%', boxSizing: 'border-box' as const,
   transition: 'border-color .2s, background .2s',
 }
@@ -227,7 +227,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
           <div style={{ width: 2.5, height: 38, background: `linear-gradient(180deg, ${RED}, ${RED}20)`, borderRadius: 2 }} />
           <div>
             <div style={{ fontSize: 21, fontWeight: 500, letterSpacing: 8, textTransform: 'uppercase' as const, color: TX }}>Cald<span style={{ color: RED }}>ra</span></div>
-            <div style={{ fontSize: 8.5, letterSpacing: 3.5, textTransform: 'uppercase' as const, color: TE, marginTop: 4, fontFamily: MONO }}>Session Monitor</div>
+            <div style={{ fontSize: 8.5, letterSpacing: 3.5, textTransform: 'uppercase' as const, color: TE, marginTop: 4, fontFamily: SANS }}>Session Monitor</div>
           </div>
         </div>
 
@@ -240,7 +240,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
               <div style={{ marginBottom: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: G, display: 'inline-block', flexShrink: 0, boxShadow: `0 0 8px ${G}` }} />
-                  <span style={{ fontSize: 10, letterSpacing: 2, color: TE, textTransform: 'uppercase' as const, fontFamily: MONO }}>
+                  <span style={{ fontSize: 10, letterSpacing: 2, color: TE, textTransform: 'uppercase' as const, fontFamily: SANS }}>
                     {userName ? `Bienvenue, ${userName} — compte activé` : 'Compte activé'}
                   </span>
                 </div>
@@ -253,7 +253,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
               {/* Fake live alert */}
               <div style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 12, padding: '16px 18px', marginBottom: 24, position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${RED}80, ${RED}20, transparent)` }} />
-                <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 10 }}>Exemple — Alerte en temps réel</div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 10 }}>Exemple — Alerte en temps réel</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
                     { lvl: 3, type: 'revenge_sizing',    msg: 'Sizing ×2.8 après une perte. Pattern de revenge trading détecté.', col: RED },
@@ -262,9 +262,9 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                   ].map((a, i) => (
                     <div key={i} style={{ padding: '9px 10px 9px 12px', borderLeft: `2px solid ${a.col}`, background: `${a.col}08`, borderRadius: '0 6px 6px 0' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontSize: 8.5, fontFamily: MONO, padding: '2px 6px', borderRadius: 3, background: `${a.col}15`, border: `.5px solid ${a.col}40`, color: a.col }}>L{a.lvl}</span>
-                        <span style={{ fontSize: 10, color: TE, fontFamily: MONO, letterSpacing: .3 }}>{a.type.replace(/_/g, ' ')}</span>
-                        {i === 0 && <span style={{ marginLeft: 'auto', fontSize: 8, color: a.col, fontFamily: MONO, animation: 'pulse 1.8s infinite' }}>● LIVE</span>}
+                        <span style={{ fontSize: 8.5, fontFamily: SANS, padding: '2px 6px', borderRadius: 3, background: `${a.col}15`, border: `.5px solid ${a.col}40`, color: a.col }}>L{a.lvl}</span>
+                        <span style={{ fontSize: 10, color: TE, fontFamily: SANS, letterSpacing: .3 }}>{a.type.replace(/_/g, ' ')}</span>
+                        {i === 0 && <span style={{ marginLeft: 'auto', fontSize: 8, color: a.col, fontFamily: SANS, animation: 'pulse 1.8s infinite' }}>● LIVE</span>}
                       </div>
                       <div style={{ fontSize: 12, color: TX, fontWeight: 300, lineHeight: 1.4 }}>{a.msg}</div>
                     </div>
@@ -323,21 +323,20 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                   <label style={{ fontSize: 11, letterSpacing: .8, textTransform: 'uppercase' as const, color: TD, fontFamily: SANS }}>Plateforme de trading</label>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
                     {([
-                      { value: 'ctrader' as Platform, label: 'cTrader', sub: 'Via cBot' },
-                      { value: 'mt5'     as Platform, label: 'MetaTrader 5', sub: 'Via identifiants' },
-                    ] as { value: Platform; label: string; sub: string }[]).map(o => {
+                      { value: 'ctrader' as Platform, label: 'cTrader' },
+                      { value: 'mt5'     as Platform, label: 'MetaTrader 5' },
+                      { value: 'ibkr'    as Platform, label: 'Interactive Brokers' },
+                    ] as { value: Platform; label: string }[]).map(o => {
                       const active = platform === o.value
                       return (
-                        <button key={o.value} onClick={() => setPlatform(o.value)} style={{ padding: '9px 18px', borderRadius: 8, cursor: 'pointer', background: active ? RD : 'transparent', border: `.5px solid ${active ? RB : B}`, color: active ? RED : TD, fontFamily: SANS, fontSize: 13, transition: 'all .18s', textAlign: 'left' as const, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <span style={{ fontWeight: active ? 500 : 400 }}>{o.label}</span>
-                          <span style={{ fontSize: 10, color: active ? `${RED}aa` : TE }}>{o.sub}</span>
+                        <button key={o.value} onClick={() => setPlatform(o.value)} style={{ padding: '11px 18px', borderRadius: 8, cursor: 'pointer', background: active ? RD : 'transparent', border: `.5px solid ${active ? RB : B}`, color: active ? RED : TD, fontFamily: SANS, fontSize: 13, fontWeight: active ? 500 : 400, transition: 'all .18s' }}>
+                          {o.label}
                         </button>
                       )
                     })}
                     {/* Tradovate — prochainement */}
-                    <div style={{ padding: '9px 18px', borderRadius: 8, background: 'transparent', border: `.5px solid ${B}`, color: TE, fontFamily: SANS, fontSize: 13, display: 'flex', flexDirection: 'column', gap: 2, opacity: .5, cursor: 'not-allowed' }}>
-                      <span>Tradovate</span>
-                      <span style={{ fontSize: 10, color: TE }}>Prochainement</span>
+                    <div style={{ padding: '11px 18px', borderRadius: 8, background: 'transparent', border: `.5px solid ${B}`, color: TE, fontFamily: SANS, fontSize: 13, opacity: .5, cursor: 'not-allowed' }}>
+                      Tradovate · prochainement
                     </div>
                   </div>
                 </div>
@@ -359,7 +358,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                 <Field label="Fenêtre de session" hint="Alerte si tu trades en dehors de ces horaires">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <input type="time" value={rules.session_start} onChange={e => setRule('session_start', e.target.value)} style={{ ...numInput, width: 110 }} />
-                    <span style={{ color: TE, fontFamily: MONO }}>–</span>
+                    <span style={{ color: TE, fontFamily: SANS }}>–</span>
                     <input type="time" value={rules.session_end} onChange={e => setRule('session_end', e.target.value)} style={{ ...numInput, width: 110 }} />
                   </div>
                 </Field>
@@ -417,13 +416,13 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                 </div>
 
                 <div style={{ padding: '14px 24px', background: `${RED}05` }}>
-                  <div style={{ fontSize: 11, color: TD, fontFamily: MONO }}>
-                    Drawdown max = <span style={{ color: TX }}>{rules.max_daily_drawdown_pct}%</span> de <span style={{ color: TX }}>{Number(rules.account_size).toLocaleString('fr-FR')}€</span> = <span style={{ color: RED, fontWeight: 500 }}>−{((Number(rules.max_daily_drawdown_pct) / 100) * Number(rules.account_size)).toFixed(0)}€</span> / jour
+                  <div style={{ fontSize: 11, color: TD, fontFamily: SANS }}>
+                    Drawdown max = <span style={{ color: TX }}>{rules.max_daily_drawdown_pct}%</span> de <span style={{ color: TX }}>{Number(rules.account_size).toLocaleString('fr-FR')}€</span> = <span style={{ color: TX, fontWeight: 500 }}>−{((Number(rules.max_daily_drawdown_pct) / 100) * Number(rules.account_size)).toFixed(0)}€</span> / jour
                   </div>
                 </div>
               </div>
 
-              {error && <p style={{ color: RED, fontSize: 12, marginTop: 10, fontFamily: MONO }}>{error}</p>}
+              {error && <p style={{ color: RED, fontSize: 12, marginTop: 10, fontFamily: SANS }}>{error}</p>}
 
               <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
                 <button onClick={() => setStep(2)} style={{ padding: '11px 20px', background: 'transparent', border: `.5px solid ${B}`, borderRadius: 7, color: TD, cursor: 'pointer', fontFamily: SANS, fontSize: 13 }}>← Retour</button>
@@ -442,7 +441,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
           {step === 4 && (
             <div className="ob-step">
               <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: `${G}10`, border: `.5px solid ${G}40`, borderRadius: 99, fontSize: 10, color: G, fontFamily: MONO, marginBottom: 14 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: `${G}10`, border: `.5px solid ${G}40`, borderRadius: 99, fontSize: 10, color: G, fontFamily: SANS, marginBottom: 14 }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: G, display: 'inline-block' }} />
                   Règles enregistrées
                 </div>
@@ -453,71 +452,48 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
               {/* API Key */}
               <div style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 12, padding: '18px 20px', marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, ${RED}80, ${RED}20, transparent)` }} />
-                <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 10 }}>Ta clé API</div>
+                <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 10 }}>Ta clé API</div>
 
                 {apiKey ? (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                       <div
                         onClick={() => setKeyRevealed(true)}
-                        style={{ flex: 1, fontFamily: MONO, fontSize: 13, color: TX, background: SF2, border: `.5px solid ${B2}`, borderRadius: 7, padding: '10px 14px', filter: keyRevealed ? 'none' : 'blur(7px)', cursor: keyRevealed ? 'default' : 'pointer', userSelect: keyRevealed ? 'all' : 'none', transition: 'filter .25s', letterSpacing: .5 }}
+                        style={{ flex: 1, fontFamily: SANS, fontSize: 13, color: TX, background: SF2, border: `.5px solid ${B2}`, borderRadius: 7, padding: '10px 14px', filter: keyRevealed ? 'none' : 'blur(7px)', cursor: keyRevealed ? 'default' : 'pointer', userSelect: keyRevealed ? 'all' : 'none', transition: 'filter .25s', letterSpacing: .5 }}
                       >{apiKey}</div>
                       <button
                         onClick={copyKey}
-                        style={{ padding: '10px 14px', background: copied ? `${G}12` : RD, border: `.5px solid ${copied ? `${G}40` : RB}`, borderRadius: 7, color: copied ? G : RED, cursor: 'pointer', fontSize: 11, fontFamily: MONO, flexShrink: 0, transition: 'all .2s', whiteSpace: 'nowrap' as const }}
+                        style={{ padding: '10px 14px', background: copied ? `${G}12` : RD, border: `.5px solid ${copied ? `${G}40` : RB}`, borderRadius: 7, color: copied ? G : RED, cursor: 'pointer', fontSize: 11, fontFamily: SANS, flexShrink: 0, transition: 'all .2s', whiteSpace: 'nowrap' as const }}
                       >{copied ? '✓ Copié' : 'Copier'}</button>
                     </div>
-                    {!keyRevealed && <div style={{ fontSize: 11, color: TE, fontFamily: MONO }}>Clique pour révéler · affichée une seule fois</div>}
+                    {!keyRevealed && <div style={{ fontSize: 11, color: TE, fontFamily: SANS }}>Clique pour révéler · affichée une seule fois</div>}
                     <div style={{ fontSize: 11, color: TE, marginTop: 6 }}>Cette clé ne sera plus affichée. Copie-la maintenant.</div>
                   </>
                 ) : genError ? (
-                  <div style={{ color: RED, fontSize: 13, fontFamily: MONO }}>{genError}</div>
+                  <div style={{ color: RED, fontSize: 13, fontFamily: SANS }}>{genError}</div>
                 ) : (
-                  <div style={{ color: TE, fontSize: 12, fontFamily: MONO, animation: 'shimmer 1.5s infinite' }}>Génération en cours…</div>
+                  <div style={{ color: TE, fontSize: 12, fontFamily: SANS, animation: 'shimmer 1.5s infinite' }}>Génération en cours…</div>
                 )}
               </div>
 
               {/* Platform instructions */}
               <div style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 12, padding: '18px 20px', marginBottom: 20 }}>
-                <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: MONO, textTransform: 'uppercase' as const, marginBottom: 14 }}>
-                  {platform === 'ctrader' ? 'Connexion cTrader cBot' : 'Connexion MetaTrader 5'}
+                <div style={{ fontSize: 9, letterSpacing: 1.5, color: TE, fontFamily: SANS, textTransform: 'uppercase' as const, marginBottom: 14 }}>
+                  {`Connexion ${platform === 'ctrader' ? 'cTrader' : platform === 'mt5' ? 'MetaTrader 5' : 'Interactive Brokers'}`}
                 </div>
 
-                {platform === 'ctrader' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {[
-                      ['1', 'Dans le dashboard, onglet Intégrations, télécharge le fichier .algo.'],
-                      ['2', 'Dans cTrader, va dans Automate → Manage cBots → Import, et importe le fichier.'],
-                      ['3', 'Ouvre les paramètres du cBot, colle ta clé API, et active-le sur ton compte.'],
-                    ].map(([n, t]) => (
-                      <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: RD, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: RED, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                        <div style={{ fontSize: 12.5, color: TD, lineHeight: 1.55 }}>{t}</div>
-                      </div>
-                    ))}
-                    <div style={{ marginTop: 4, padding: '9px 12px', background: `${RED}08`, border: `.5px solid ${RED}30`, borderRadius: 7, fontSize: 11, color: TD }}>
-                      Compatible avec tous les brokers cTrader : Pepperstone, IC Markets, Vantage, FP Markets…
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {([
+                    ['1', "Dans le dashboard, ouvre l'onglet Intégrations."],
+                    ['2', `Ouvre la carte ${platform === 'ctrader' ? 'cTrader' : platform === 'mt5' ? 'MetaTrader 5' : 'Interactive Brokers'} et connecte ton compte, sans bot à installer.`],
+                    ['3', 'Tes trades remontent automatiquement, en temps réel, dans le dashboard.'],
+                  ] as [string, string][]).map(([n, t]) => (
+                    <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <div style={{ width: 22, height: 22, borderRadius: '50%', background: RD, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: RED, fontFamily: SANS, flexShrink: 0, marginTop: 1 }}>{n}</div>
+                      <div style={{ fontSize: 12.5, color: TD, lineHeight: 1.55 }}>{t}</div>
                     </div>
-                  </div>
-                )}
-
-                {platform === 'mt5' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {[
-                      ['1', 'Dans le dashboard, onglet Intégrations, ouvre la carte "MetaTrader 5".'],
-                      ['2', 'Entre ton numéro de compte, ton serveur, et ton mot de passe MT5.'],
-                      ['3', 'Clique Connecter — tes trades remontent automatiquement, sans rien à installer.'],
-                    ].map(([n, t]) => (
-                      <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: RD, border: `.5px solid ${RB}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: RED, fontFamily: MONO, flexShrink: 0, marginTop: 1 }}>{n}</div>
-                        <div style={{ fontSize: 12.5, color: TD, lineHeight: 1.55 }}>{t}</div>
-                      </div>
-                    ))}
-                    <div style={{ marginTop: 4, padding: '9px 12px', background: `${RED}08`, border: `.5px solid ${RED}30`, borderRadius: 7, fontSize: 11, color: TD }}>
-                      Compatible avec tous les brokers MT5 : Vantage, IC Markets, Pepperstone, XM…
-                    </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
 
               <button
