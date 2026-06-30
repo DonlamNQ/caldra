@@ -25,7 +25,7 @@ export default function MentionsLegales() {
         <h1>Mentions légales &amp;<br />Conditions d&rsquo;utilisation</h1>
 
         <h2>1. Éditeur du site</h2>
-        <p>Caldra est édité par Alhamdou KONE, auto-entrepreneur.<br />
+        <p>Caldra est édité par Alhamdou KONE.<br />
         Email de contact : <a href="mailto:contact@getcaldra.com">contact@getcaldra.com</a><br />
         Site web : <a href="https://getcaldra.com">getcaldra.com</a></p>
 
