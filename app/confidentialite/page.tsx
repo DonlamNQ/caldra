@@ -28,8 +28,10 @@ export default function Confidentialite() {
         <p>Caldra collecte uniquement les données nécessaires au fonctionnement du service :</p>
         <ul style={{ marginTop: '.75rem' }}>
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Email</strong> — pour l'authentification et les notifications</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Coordonnées</strong> — nom, adresse, ville, pays, téléphone (inscription et facturation)</li>
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Données de trading</strong> — symbole, direction, taille, prix, PnL, horodatage (envoyées via l'API)</li>
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Règles de session</strong> — drawdown max, horaires, seuils de risque configurés par l'utilisateur</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Identifiants de connexion broker</strong> — token en lecture seule (IBKR, cTrader, TradeStation) ou identifiants MetaTrader 5 (mot de passe investisseur). Toujours chiffrés (AES-256-GCM), jamais en clair, révocables à tout moment</li>
         </ul>
 
         <h2>2. Finalités du traitement</h2>
@@ -49,20 +51,28 @@ export default function Confidentialite() {
 
         <h2>5. Sous-traitants</h2>
         <ul style={{ marginTop: '.75rem' }}>
-          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Supabase</strong> — base de données (hébergement UE disponible)</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Supabase</strong> — base de données (hébergement Union européenne)</li>
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Vercel</strong> — hébergement de l'application</li>
-          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Stripe</strong> — traitement des paiements (données de carte jamais stockées)</li>
-          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Anthropic</strong> — analyse IA (plan Max uniquement, données anonymisées)</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Railway</strong> — exécution des connecteurs broker (cTrader, Interactive Brokers)</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Serveur dédié (VPS)</strong> — connecteur MetaTrader 5 (traite le mot de passe investisseur chiffré)</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Stripe</strong> — paiements (données de carte jamais stockées par Caldra)</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Amazon SES</strong> — emails d'authentification</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Brevo</strong> — emails produit et liste d'attente</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Anthropic</strong> — analyse IA (plan Max uniquement, données minimisées)</li>
         </ul>
+        <p style={{ marginTop: '.75rem' }}>L'hébergement des données est situé dans l'Union européenne. Certains sous-traitants (Stripe, Anthropic) sont établis hors UE ; ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne.</p>
 
         <h2>6. Vos droits</h2>
-        <p>Conformément au RGPD, vous disposez des droits d'accès, de rectification, d'effacement, de portabilité et d'opposition. Pour exercer ces droits : <a href="mailto:contact@getcaldra.com">contact@getcaldra.com</a></p>
+        <p>Conformément au RGPD, vous disposez des droits d'accès, de rectification, d'effacement, de portabilité et d'opposition. La suppression de votre compte et de l'ensemble de vos données est possible directement depuis l'application (Réglages → Supprimer le compte). Pour exercer ces droits : <a href="mailto:contact@getcaldra.com">contact@getcaldra.com</a>. Vous pouvez également introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">cnil.fr</a>).</p>
 
         <h2>7. Cookies</h2>
-        <p>Caldra utilise uniquement des cookies de session strictement nécessaires à l'authentification (Supabase Auth). Aucun cookie publicitaire ou de tracking tiers.</p>
+        <p>Caldra utilise uniquement des cookies de session strictement nécessaires à l'authentification (Supabase Auth). Aucun cookie publicitaire ni de tracking tiers n'est utilisé : aucun bandeau de consentement n'est donc requis.</p>
+
+        <h2>8. Sécurité</h2>
+        <p>Les données sensibles (mots de passe broker, tokens de connexion) sont chiffrées au repos en AES-256-GCM ; elles ne sont jamais stockées en clair. L'accès aux données est cloisonné par utilisateur (Row Level Security) et toutes les communications sont chiffrées en transit (HTTPS).</p>
 
         <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '.5px solid rgba(255,255,255,.07)', fontSize: 13, color: 'rgba(226,232,240,.25)' }}>
-          Dernière mise à jour : mai 2026
+          Dernière mise à jour : juin 2026
         </div>
       </main>
 
