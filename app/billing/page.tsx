@@ -35,9 +35,6 @@ export default async function BillingPage({
             <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 8, textTransform: 'uppercase', color: TX }}>
               Cald<span style={{ color: VIO }}>ra</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, textTransform: 'uppercase', color: 'rgba(234,232,245,.55)', marginTop: 5 }}>
-              {'SESSION'.split('').map((c, i) => <span key={i}>{c}</span>)}
-            </div>
           </div>
         </div>
 
