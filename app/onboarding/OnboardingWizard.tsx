@@ -280,9 +280,9 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                   { n: '100', label: 'score de session',    sub: 'ton état comportemental en live' },
                 ].map(f => (
                   <div key={f.label} style={{ background: SF, border: `.5px solid ${B}`, borderRadius: 9, padding: '13px 14px' }}>
-                    <div style={{ fontSize: 22, fontWeight: 200, letterSpacing: -1, color: TX, fontFamily: MONO, marginBottom: 3 }}>{f.n}</div>
-                    <div style={{ fontSize: 11, color: TD, marginBottom: 2, fontWeight: 500 }}>{f.label}</div>
-                    <div style={{ fontSize: 10, color: TE, lineHeight: 1.4 }}>{f.sub}</div>
+                    <div style={{ fontSize: 22, fontWeight: 200, letterSpacing: -1, color: TX, fontFamily: SANS, marginBottom: 3 }}>{f.n}</div>
+                    <div style={{ fontSize: 11.5, color: TD, marginBottom: 3, fontWeight: 500 }}>{f.label}</div>
+                    <div style={{ fontSize: 11.5, color: TE, lineHeight: 1.45 }}>{f.sub}</div>
                   </div>
                 ))}
               </div>
