@@ -32,7 +32,7 @@ const C_LIGHT = {
 type Palette = typeof C_DARK
 const ThemeCtx = createContext<Palette>(C_DARK)
 const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
-const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
+const MONO = "var(--font-geist-sans), 'Geist', sans-serif"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface TradingRules {

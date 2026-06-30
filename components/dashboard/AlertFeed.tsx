@@ -66,14 +66,14 @@ function AlertCard({ alert, isNew }: { alert: AlertRow; isNew?: boolean }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
           <span style={{
             color: cfg.color, fontSize: 8, fontWeight: 600, letterSpacing: '.18em',
-            textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace",
+            textTransform: 'uppercase', fontFamily: "var(--font-geist-sans), 'Geist', sans-serif",
             background: cfg.bg, border: `1px solid ${cfg.border}`,
             padding: '1px 5px',
           }}>{cfg.label}</span>
-          <span style={{ color: 'rgba(232,223,192,.25)', fontSize: 8.5, letterSpacing: '.05em', textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{type}</span>
+          <span style={{ color: 'rgba(232,223,192,.25)', fontSize: 8.5, letterSpacing: '.05em', textTransform: 'uppercase', fontFamily: "var(--font-geist-sans), 'Geist', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{type}</span>
         </div>
-        <p style={{ margin: 0, color: 'rgba(232,223,192,.72)', fontSize: 11.5, lineHeight: 1.55, fontWeight: 400, fontFamily: "'IBM Plex Mono', monospace" }}>{alert.message}</p>
-        <p style={{ margin: '3px 0 0', color: 'rgba(232,223,192,.22)', fontSize: 9.5, fontVariantNumeric: 'tabular-nums', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '.04em' }}>
+        <p style={{ margin: 0, color: 'rgba(232,223,192,.72)', fontSize: 11.5, lineHeight: 1.55, fontWeight: 400, fontFamily: "var(--font-geist-sans), 'Geist', sans-serif" }}>{alert.message}</p>
+        <p style={{ margin: '3px 0 0', color: 'rgba(232,223,192,.22)', fontSize: 9.5, fontVariantNumeric: 'tabular-nums', fontFamily: "var(--font-geist-sans), 'Geist', sans-serif", letterSpacing: '.04em' }}>
           {formatTime(alert.created_at)}
         </p>
       </div>
@@ -100,7 +100,7 @@ export default function AlertFeed({ alerts }: AlertFeedProps) {
           flexShrink: 0,
         }}>
           <div className="dot-pulse" style={{ width: 4, height: 4, background: '#dc3218', flexShrink: 0 }} />
-          <p style={{ margin: 0, color: 'rgba(220,50,24,.9)', fontSize: 10.5, fontWeight: 500, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '.03em' }}>
+          <p style={{ margin: 0, color: 'rgba(220,50,24,.9)', fontSize: 10.5, fontWeight: 500, fontFamily: "var(--font-geist-sans), 'Geist', sans-serif", letterSpacing: '.03em' }}>
             CRITIQUE — intervenir maintenant
           </p>
         </div>

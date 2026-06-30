@@ -18,7 +18,7 @@ const RD   = 'rgba(124,58,237,.09)'
 const RB   = 'rgba(124,58,237,.25)'
 const G    = '#00d17a'
 const O    = '#ffab00'
-const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
+const MONO = "var(--font-geist-sans), 'Geist', sans-serif"
 const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -485,7 +485,7 @@ export default function OnboardingWizard({ userName }: { userName: string }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {([
                     ['1', "Dans le dashboard, ouvre l'onglet Intégrations."],
-                    ['2', `Ouvre la carte ${platform === 'ctrader' ? 'cTrader' : platform === 'mt5' ? 'MetaTrader 5' : 'Interactive Brokers'} et connecte ton compte, sans bot à installer.`],
+                    ['2', `Ouvre la carte ${platform === 'ctrader' ? 'cTrader' : platform === 'mt5' ? 'MetaTrader 5' : 'Interactive Brokers'} et connecte ton compte.`],
                     ['3', 'Tes trades remontent automatiquement, en temps réel, dans le dashboard.'],
                   ] as [string, string][]).map(([n, t]) => (
                     <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>

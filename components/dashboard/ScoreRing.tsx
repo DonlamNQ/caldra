@@ -52,14 +52,14 @@ export default function ScoreRing({ score, size = 148 }: ScoreRingProps) {
         </svg>
         {/* Center */}
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: size * 0.22, fontWeight: 600, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: -2 }}>
+          <span style={{ fontSize: size * 0.22, fontWeight: 600, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', fontFamily: "var(--font-geist-sans), 'Geist', sans-serif", letterSpacing: -2 }}>
             {score}
           </span>
-          <span style={{ fontSize: size * 0.07, color: 'rgba(232,223,192,.3)', letterSpacing: '.1em', fontFamily: "'IBM Plex Mono', monospace", marginTop: 2 }}>/ 100</span>
+          <span style={{ fontSize: size * 0.07, color: 'rgba(232,223,192,.3)', letterSpacing: '.1em', fontFamily: "var(--font-geist-sans), 'Geist', sans-serif", marginTop: 2 }}>/ 100</span>
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: '.2em', textTransform: 'uppercase', color, fontFamily: "'IBM Plex Mono', monospace" }}>
+        <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: '.2em', textTransform: 'uppercase', color, fontFamily: "var(--font-geist-sans), 'Geist', sans-serif" }}>
           {label}
         </span>
         <div style={{ width: 24, height: 1, background: color, opacity: .5 }} />

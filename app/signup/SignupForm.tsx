@@ -15,7 +15,7 @@ const RED  = '#7c3aed'
 const RD   = 'rgba(124,58,237,.09)'
 const RB   = 'rgba(124,58,237,.25)'
 const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
-const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
+const MONO = "var(--font-geist-sans), 'Geist', sans-serif"
 
 const CSS = `
   *{box-sizing:border-box;margin:0;padding:0}

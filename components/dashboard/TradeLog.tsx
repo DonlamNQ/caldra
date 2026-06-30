@@ -27,7 +27,7 @@ function fmtTime(iso: string) {
 const HEADS = ['HEURE', 'SYM', 'DIR', 'QTÉ', 'ENTRÉE', 'SORTIE', 'P&L']
 
 export default function TradeLog({ trades }: TradeLogProps) {
-  const MONO = "'IBM Plex Mono', monospace"
+  const MONO = "var(--font-geist-sans), 'Geist', sans-serif"
   const borderRow = '1px solid #2a2200'
   const textMuted = 'rgba(232,223,192,.35)'
 

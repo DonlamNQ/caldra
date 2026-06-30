@@ -15,7 +15,7 @@ const RD   = 'rgba(124,58,237,.09)'
 const RB   = 'rgba(124,58,237,.25)'
 const G    = '#00d17a'
 const SANS = "var(--font-geist-sans), 'Geist', sans-serif"
-const MONO = "var(--font-geist-mono), 'Geist Mono', monospace"
+const MONO = "var(--font-geist-sans), 'Geist', sans-serif"
 
 const FEATURES = [
   { icon: '◈', title: '6 patterns comportementaux', desc: 'Revenge sizing, drawdown, re-entrées, overtrading…' },
