@@ -1,10 +1,13 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+
 const CSS = `
 *{margin:0;padding:0;box-sizing:border-box;scroll-behavior:smooth}
 :root{--red:#7c3aed;--rd:rgba(124,58,237,.1);--rb:rgba(124,58,237,.25);--bg:#08080d;--sf:#0f0f16;--sf2:#141420;--b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);--tx:#e8e6e0;--tm:rgba(232,230,224,.45);--td:rgba(232,230,224,.2)}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.25rem 3rem;border-bottom:.5px solid var(--b);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(8,8,13,.88)}
+nav{position:fixed;top:40px;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.25rem 3rem;border-bottom:.5px solid var(--b);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(8,8,13,.88)}
 .logo-block{display:flex;flex-direction:column;gap:5px}
 .logo{font-family:'DM Sans',sans-serif;font-weight:300;font-size:14px;letter-spacing:5px;text-transform:uppercase;color:#fff;line-height:1}
 .logo span{color:var(--red)}
@@ -13,6 +16,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .nc:hover{background:#fff;color:#08080d}
 .bp{padding:9px 20px;background:var(--red);border:none;border-radius:4px;color:#fff;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif;cursor:pointer;text-decoration:none;transition:opacity .2s}
 .bp:hover{opacity:.88}
+.promo-bar2{position:fixed;top:0;left:0;right:0;z-index:101;min-height:40px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 12px;background:linear-gradient(90deg,#4c1d95,#7c3aed,#a78bfa,#7c3aed,#4c1d95);background-size:220% 100%;animation:promoshine 8s linear infinite;color:#fff;font-size:12.5px;padding:7px 18px;text-align:center;border-bottom:.5px solid rgba(255,255,255,.16)}
+.promo-bar2 b{font-weight:700}
+.promo-bar2 .pcode{font-weight:700;font-size:12px;background:rgba(255,255,255,.14);border:1px dashed rgba(255,255,255,.6);border-radius:6px;padding:2px 9px;letter-spacing:1.5px}
+@keyframes promoshine{0%{background-position:0% 0}100%{background-position:220% 0}}
 .stag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(124,58,237,.6);margin-bottom:1rem}
 .stit{font-family:'DM Sans',sans-serif;font-size:clamp(1.9rem,4vw,2.9rem);font-weight:200;letter-spacing:-1px;color:#fff;margin-bottom:1rem;line-height:1.1}
 .sdesc{font-size:15px;color:var(--tm);line-height:1.75;max-width:520px;margin-bottom:3rem;font-weight:300}
@@ -63,9 +70,25 @@ footer{border-top:.5px solid var(--b);padding:2rem 3rem;display:flex;justify-con
 `
 
 export default function PricingPage() {
+  const [authed, setAuthed] = useState<boolean | null>(null)
+  useEffect(() => {
+    createClient().auth.getUser()
+      .then(({ data }) => setAuthed(!!data.user))
+      .catch(() => setAuthed(false))
+  }, [])
+  const proHref = authed ? '/api/billing/checkout?plan=pro' : '/signup?plan=pro'
+  const maxHref = authed ? '/api/billing/checkout?plan=max' : '/signup?plan=max'
+  const cta = authed ? 'Activer ce plan →' : 'Essayer 7 jours gratuitement →'
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
+
+      <div className="promo-bar2">
+        <span>&#10022;</span>
+        <span><b>&minus;25&nbsp;% à vie</b> pour les 25 premiers inscrits</span>
+        <span className="pcode">START25</span>
+      </div>
 
       <nav>
         <a href="/" style={{ textDecoration: 'none' }} className="logo-block">
@@ -73,8 +96,12 @@ export default function PricingPage() {
           <div className="logo-sub">Session</div>
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <a href="/login" className="nc">Connexion</a>
-          <a href="/signup" className="bp">Commencer &rarr;</a>
+          {authed
+            ? <a href="/dashboard" className="bp">Tableau de bord &rarr;</a>
+            : <>
+                <a href="/login" className="nc">Connexion</a>
+                <a href="/signup" className="bp">Commencer &rarr;</a>
+              </>}
         </div>
       </nav>
 
@@ -103,7 +130,7 @@ export default function PricingPage() {
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Rapport mensuel</li>
               <li><div className="pfc pfc-dim"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>Historique illimité</li>
             </ul>
-            <a href="/signup?plan=pro" className="plan-btn plan-btn-secondary">Essayer 7 jours gratuitement &rarr;</a>
+            <a href={proHref} className="plan-btn plan-btn-secondary">{cta}</a>
           </div>
 
           <div className="plan-card plan-max">
@@ -121,7 +148,7 @@ export default function PricingPage() {
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Alertes Telegram</strong></li>
               <li className="plan-highlight"><div className="pfc pfc-red"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div><strong>Rapport hebdomadaire</strong></li>
             </ul>
-            <a href="/signup?plan=max" className="plan-btn plan-btn-primary">Essayer 7 jours gratuitement &rarr;</a>
+            <a href={maxHref} className="plan-btn plan-btn-primary">{cta}</a>
           </div>
         </div>
 
