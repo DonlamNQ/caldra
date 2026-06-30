@@ -26,10 +26,9 @@ Connexions plateforme critiques **jour 1** : **cTrader (OAuth)** + **MT5 (identi
 - [x] **Nouveau prix Max 29€** — prix `price_1TmxBKBJjaZ0wLhV4oaUw5vk` (2900) créé en LIVE le 2026-06-27, ancien 34€ archivé, `.env.local` + `STRIPE_MAX_PRICE_ID` Vercel (Production) à jour.
 - [x] **Outil de test push retiré** — bloc `?test=`/`&samples=` du cron `daily-nudges` supprimé (2026-06-27).
 - [x] **Migrations SQL exécutées en prod** (Supabase SQL Editor, 2026-06-27) : v2.14 `prop_firm_started_at` + v2.15 table `notif_state`.
-- [ ] **Stripe en mode LIVE** — coupon START25 plafonné à 25 (`caldra-early-25-cap`). **RESTE : un vrai test de paiement end-to-end** (webhook → `user_profiles.plan` + `subscription_status`).
 - [x] **cTrader day 1** — OK, validé (worker Railway → `caldra-sable.vercel.app`, ingest fonctionnel).
 - [x] **MT5 day 1** — worker VPS à jour + relancé (2026-06-27). Connexion réelle validée : 3 comptes connectés (ICMarkets/Pepperstone/Vantage), trade test remonté dans le dashboard Caldra. ✅
-- [ ] **Test end-to-end complet** : signup → checkout (essai) → onboarding → connexion plateforme → ingest trade → alerte temps réel → dashboard.
+- [ ] **Test end-to-end complet (inclut le paiement Stripe LIVE)** : signup → checkout (essai, CB réelle) → **webhook met à jour `user_profiles.plan` + `subscription_status`** → onboarding → connexion plateforme → ingest trade → alerte temps réel → dashboard. (Stripe LIVE déjà prêt : coupon START25 plafonné à 25 `caldra-early-25-cap`.) Le paiement et l'e2e sont le MÊME test, plus deux items séparés.
 - [x] **Purge des données de test** en prod (trades/alertes — fait 2026-06-26).
 - [ ] **🔒 AUDIT SÉCURITÉ + DROITS + CONFORMITÉ (demandé par le user, à faire AVANT le lancement public)** :
   - **RLS Supabase** : toutes les tables ont RLS activée + policies own-row (vérifier avec la clé anon qu'un user ne voit/écrit QUE ses lignes — cf. `mt5_accounts`, `notif_state`, `ctrader_accounts`, `tradovate_accounts`, `push_subscriptions`, `trading_rules`, `trades`, `alerts`, `user_profiles`).
