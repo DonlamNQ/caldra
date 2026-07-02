@@ -3584,11 +3584,9 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
     { label: 'Trade pendant news', desc: 'Entrée à ±10 min d’une news à fort impact.', max: true },
   ]
 
-  const connectivity: Array<{ method: string; how: string; examples: string }> = [
-    { method: 'cTrader', how: 'Connexion directe en 1 clic (OAuth), rien à installer.', examples: 'Pepperstone, IC Markets, FxPro, Spotware et tous les brokers cTrader.' },
-    { method: 'MetaTrader 5', how: 'Login + mot de passe investisseur + serveur.', examples: 'Vantage, XM (XMGlobal), Pepperstone, IC Markets et la plupart des brokers MT5.' },
-    { method: 'Interactive Brokers', how: 'Connexion via ton rapport Flex.', examples: 'Comptes IBKR : actions, futures, options, forex.' },
-  ]
+  // ⚠️ Liste à vérifier/mettre à jour selon les terminaux MT5 réellement installés
+  // sur le VPS (un broker n'apparaît ici que si son terminal y est présent).
+  const mt5Brokers = ['Vantage', 'Pepperstone', 'XM (XMGlobal)', 'IC Markets', 'Exness', 'FxPro', 'Admirals', 'Tickmill', 'FBS', 'RoboForex']
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
@@ -3656,19 +3654,36 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
 
         {/* Brokers & plateformes compatibles — pleine largeur */}
         <Card title="Brokers & plateformes compatibles">
-          <div style={{ fontSize: 12, color: C.te, lineHeight: 1.5, marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: C.te, lineHeight: 1.5, marginBottom: 18 }}>
             Connecte ta plateforme depuis l&apos;onglet Intégrations, sans bot à installer. Tes trades remontent en temps réel.
           </div>
-          <div className="detectors-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-            {connectivity.map((c, i) => (
-              <div key={i}>
-                <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 3 }}>{c.method}</div>
-                <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.45, marginBottom: 4 }}>{c.how}</div>
-                <div style={{ fontSize: 11, color: C.tm, lineHeight: 1.45 }}>{c.examples}</div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* cTrader */}
+            <div>
+              <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>cTrader <span style={{ fontSize: 10, color: C.te, fontWeight: 400 }}>· connexion directe (OAuth)</span></div>
+              <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.5 }}>Compatible avec <span style={{ color: C.tm, fontWeight: 500 }}>tous les brokers cTrader</span>. Un clic, ça se relie à ton compte — rien à saisir, rien à installer.</div>
+            </div>
+
+            {/* MetaTrader 5 */}
+            <div>
+              <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>MetaTrader 5 <span style={{ fontSize: 10, color: C.te, fontWeight: 400 }}>· login + mot de passe investisseur + serveur</span></div>
+              <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.5, marginBottom: 8 }}>Brokers MT5 pris en charge :</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 7 }}>
+                {mt5Brokers.map((b, i) => (
+                  <span key={i} style={{ fontSize: 11.5, color: C.tm, background: C.bg, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '4px 10px', fontFamily: SANS }}>{b}</span>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Interactive Brokers */}
+            <div>
+              <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>Interactive Brokers <span style={{ fontSize: 10, color: C.te, fontWeight: 400 }}>· rapport Flex</span></div>
+              <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.5 }}>Comptes IBKR : actions, futures, options, forex.</div>
+            </div>
           </div>
-          <div style={{ marginTop: 16, padding: '11px 14px', background: 'rgba(220,80,60,.06)', border: `.5px solid ${C.red}33`, borderRadius: 8, fontSize: 12, color: C.tm, lineHeight: 1.55 }}>
+
+          <div style={{ marginTop: 18, padding: '11px 14px', background: 'rgba(220,80,60,.06)', border: `.5px solid ${C.red}33`, borderRadius: 8, fontSize: 12, color: C.tm, lineHeight: 1.55 }}>
             Ton broker n&apos;apparaît pas, ou tu vois le statut « broker bientôt disponible » ?{' '}
             <a href="mailto:contact@getcaldra.com?subject=Broker%20non%20disponible" style={{ color: C.red, textDecoration: 'none', fontFamily: SANS }}>Écris-nous</a>{' '}
             avec le nom de ton broker : on l&apos;active en général sous 24 à 48 h.
