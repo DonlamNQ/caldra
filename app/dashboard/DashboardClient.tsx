@@ -3669,18 +3669,22 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
             {/* MetaTrader 5 */}
             <div>
               <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>MetaTrader 5 <span style={{ fontSize: 10, color: C.te, fontWeight: 400 }}>· login + mot de passe investisseur + serveur</span></div>
-              <div style={{ fontSize: 10, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, margin: '10px 0 7px' }}>Brokers</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 7 }}>
-                {mt5Brokers.map((b, i) => (
-                  <span key={i} style={{ fontSize: 11.5, color: C.tm, background: C.bg, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '4px 10px', fontFamily: SANS }}>{b}</span>
-                ))}
-              </div>
-              <div style={{ fontSize: 10, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, margin: '14px 0 7px' }}>Prop firms</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 7 }}>
-                {propFirms.map((b, i) => (
-                  <span key={i} style={{ fontSize: 11.5, color: C.tm, background: C.bg, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '4px 10px', fontFamily: SANS }}>{b}</span>
-                ))}
-              </div>
+              <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.5 }}>La plupart des brokers et prop firms MT5.</div>
+              <details style={{ marginTop: 7 }}>
+                <summary style={{ cursor: 'pointer', fontSize: 11.5, color: C.red, fontFamily: SANS, userSelect: 'none' as const, width: 'fit-content' }}>Voir la liste</summary>
+                <div style={{ fontSize: 10, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, margin: '10px 0 7px' }}>Brokers</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 7 }}>
+                  {mt5Brokers.map((b, i) => (
+                    <span key={i} style={{ fontSize: 11.5, color: C.tm, background: C.bg, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '4px 10px', fontFamily: SANS }}>{b}</span>
+                  ))}
+                </div>
+                <div style={{ fontSize: 10, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, margin: '14px 0 7px' }}>Prop firms</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 7 }}>
+                  {propFirms.map((b, i) => (
+                    <span key={i} style={{ fontSize: 11.5, color: C.tm, background: C.bg, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '4px 10px', fontFamily: SANS }}>{b}</span>
+                  ))}
+                </div>
+              </details>
             </div>
 
             {/* Interactive Brokers */}
