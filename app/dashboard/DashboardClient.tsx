@@ -3584,9 +3584,10 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
     { label: 'Trade pendant news', desc: 'Entrée à ±10 min d’une news à fort impact.', max: true },
   ]
 
-  // ⚠️ Liste à vérifier/mettre à jour selon les terminaux MT5 réellement installés
-  // sur le VPS (un broker n'apparaît ici que si son terminal y est présent).
-  const mt5Brokers = ['Vantage', 'Pepperstone', 'XM (XMGlobal)', 'IC Markets', 'Exness', 'FxPro', 'Admirals', 'Tickmill', 'FBS', 'RoboForex']
+  // ⚠️ Listes dérivées des serveurs connus des terminaux MT5 installés sur le VPS.
+  // À ajuster si on ajoute/retire un terminal broker.
+  const mt5Brokers = ['Vantage', 'Pepperstone', 'IC Markets', 'OANDA', 'FxPro', 'Fusion Markets', 'Admirals', 'ThinkMarkets', 'PU Prime', 'XM (XMGlobal)']
+  const propFirms  = ['FundedNext', 'FundingPips', 'Goat Funded', 'Funded Trading Plus', 'IC Funded', 'Vega Funded', 'WeGetFunded', 'Shark Funded', 'Kudo Funded', 'Moneta Funded', 'FundedVerse', 'OANDA Prop Trader']
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', overflow: 'hidden' }}>
@@ -3668,9 +3669,15 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
             {/* MetaTrader 5 */}
             <div>
               <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>MetaTrader 5 <span style={{ fontSize: 10, color: C.te, fontWeight: 400 }}>· login + mot de passe investisseur + serveur</span></div>
-              <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.5, marginBottom: 8 }}>Brokers MT5 pris en charge :</div>
+              <div style={{ fontSize: 10, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, margin: '10px 0 7px' }}>Brokers</div>
               <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 7 }}>
                 {mt5Brokers.map((b, i) => (
+                  <span key={i} style={{ fontSize: 11.5, color: C.tm, background: C.bg, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '4px 10px', fontFamily: SANS }}>{b}</span>
+                ))}
+              </div>
+              <div style={{ fontSize: 10, letterSpacing: 1, color: C.te, textTransform: 'uppercase' as const, margin: '14px 0 7px' }}>Prop firms</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 7 }}>
+                {propFirms.map((b, i) => (
                   <span key={i} style={{ fontSize: 11.5, color: C.tm, background: C.bg, border: `.5px solid ${C.b2}`, borderRadius: 6, padding: '4px 10px', fontFamily: SANS }}>{b}</span>
                 ))}
               </div>
