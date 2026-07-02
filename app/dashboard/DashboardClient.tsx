@@ -3660,15 +3660,9 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {/* cTrader */}
-            <div>
-              <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>cTrader <span style={{ fontSize: 10, color: C.te, fontWeight: 400 }}>· connexion directe (OAuth)</span></div>
-              <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.5 }}>Compatible avec <span style={{ color: C.tm, fontWeight: 500 }}>tous les brokers cTrader</span>. Un clic, ça se relie à ton compte — rien à saisir, rien à installer.</div>
-            </div>
-
             {/* MetaTrader 5 */}
             <div>
-              <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>MetaTrader 5 <span style={{ fontSize: 10, color: C.te, fontWeight: 400 }}>· login + mot de passe investisseur + serveur</span></div>
+              <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>MetaTrader 5</div>
               <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.5 }}>La plupart des brokers et prop firms MT5.</div>
               <details style={{ marginTop: 7 }}>
                 <summary style={{ cursor: 'pointer', fontSize: 11.5, color: C.red, fontFamily: SANS, userSelect: 'none' as const, width: 'fit-content' }}>Voir la liste</summary>
@@ -3685,12 +3679,6 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
                   ))}
                 </div>
               </details>
-            </div>
-
-            {/* Interactive Brokers */}
-            <div>
-              <div style={{ fontSize: 12.5, color: C.tx, fontWeight: 500, marginBottom: 4 }}>Interactive Brokers <span style={{ fontSize: 10, color: C.te, fontWeight: 400 }}>· rapport Flex</span></div>
-              <div style={{ fontSize: 11.5, color: C.te, lineHeight: 1.5 }}>Comptes IBKR : actions, futures, options, forex.</div>
             </div>
           </div>
 
