@@ -3655,10 +3655,6 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
 
         {/* Brokers & plateformes compatibles — pleine largeur */}
         <Card title="Brokers & plateformes compatibles">
-          <div style={{ fontSize: 12, color: C.te, lineHeight: 1.5, marginBottom: 18 }}>
-            Connecte ta plateforme depuis l&apos;onglet Intégrations, sans bot à installer. Tes trades remontent en temps réel.
-          </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* MetaTrader 5 */}
             <div>
