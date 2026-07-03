@@ -24,7 +24,7 @@ export default function ConnectMt5() {
     setErr(null)
     const l = login.trim(), s = server.trim(), p = password.trim()
     if (!l || !s || !p) { setErr('Remplis les trois champs.'); return }
-    if (!/^[0-9]{3,20}$/.test(l)) { setErr('Le numéro de compte ne contient que des chiffres (ex. 25584260) — pas ton email.'); return }
+    if (!/^[0-9]{3,20}$/.test(l)) { setErr('Le numéro de compte ne contient que des chiffres (ex. 25584260).'); return }
     if (s.includes('@')) { setErr('Le champ « Serveur » attend le nom du serveur MT5 (ex. XMGlobal-MT5 15), pas ton adresse email.'); return }
     setSaving(true)
     try {
