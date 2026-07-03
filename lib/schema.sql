@@ -334,6 +334,28 @@ alter table ibkr_accounts enable row level security;
 drop policy if exists "users read own ibkr" on ibkr_accounts;
 create policy "users read own ibkr" on ibkr_accounts for select using (auth.uid() = user_id);
 
+-- v2.24 : connexion Binance via clé API en LECTURE SEULE (crypto spot). Clé + secret chiffrés
+-- (AES-256-GCM, MT5_ENC_KEY). Le worker signe les requêtes REST (HMAC-SHA256), lit les trades
+-- récents (myTrades par symbole) et les poste vers /api/ingest. Aucun bot chez l'utilisateur.
+create table if not exists binance_accounts (
+  id             uuid        primary key default gen_random_uuid(),
+  user_id        uuid        not null references auth.users(id) on delete cascade,
+  api_key_enc    text        not null,
+  api_secret_enc text        not null,
+  symbols        text,                   -- paires suivies (CSV, ex. "BTCUSDT,ETHUSDT"). Vide = auto (soldes).
+  ingest_key     text        not null,
+  status         text,                   -- connected | auth_failed | error
+  last_sync_at   timestamptz,
+  last_trade_at  timestamptz,            -- curseur anti-doublon (dernier trade ingéré)
+  created_at     timestamptz default now(),
+  unique (user_id)
+);
+alter table binance_accounts enable row level security;
+-- L'utilisateur lit UNIQUEMENT sa propre ligne (carte d'état). Le worker et les routes
+-- utilisent la service role key qui bypasse la RLS (insert/update/delete).
+drop policy if exists "users read own binance" on binance_accounts;
+create policy "users read own binance" on binance_accounts for select using (auth.uid() = user_id);
+
 -- v2.22 : DURCISSEMENT RLS (audit sécurité 2026-06-29). ⚠️ À EXÉCUTER EN PROD.
 -- Les policies « service role full access » … for all using (true) n'ont PAS de clause TO,
 -- donc elles s'appliquent à TOUS les rôles (anon + authenticated), pas seulement au service

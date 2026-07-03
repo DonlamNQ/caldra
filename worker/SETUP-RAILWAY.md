@@ -1,20 +1,21 @@
 # Workers Node sur Railway — installation
 
-Deux workers de Caldra sont du **Node pur** (pas de MetaTrader, pas de Python) et
+Trois workers de Caldra sont du **Node pur** (pas de MetaTrader, pas de Python) et
 tournent donc très bien sur **Railway**, 24/7, sans VPS Windows :
 
 | Worker | Fichier | Script npm | Plateforme |
 |---|---|---|---|
 | cTrader | `ctrader-worker.js` | `npm start` | forex / CFD (OAuth) |
 | Interactive Brokers | `ibkr-worker.js` | `npm run start:ibkr` | futures / actions / options (Flex) |
+| Binance | `binance-worker.js` | `npm run start:binance` | crypto spot (clé API lecture seule) |
 
 > Le worker **MT5** reste à part : lui a besoin du terminal MetaTrader (appli GUI) et
 > d'une vraie session de bureau → il vit sur le **VPS Windows** (voir `SETUP-VPS.md`).
 > Ne pas tenter de le mettre sur Railway.
 
 Chaque worker = **un service Railway séparé** (même repo, même dossier `worker/`,
-mais une commande de démarrage différente). Deux services = deux processus
-indépendants : si l'un crashe, l'autre continue.
+mais une commande de démarrage différente). Trois services = trois processus
+indépendants : si l'un crashe, les autres continuent.
 
 ---
 
@@ -41,11 +42,13 @@ Pour **chaque** worker, dans Railway :
    - **Start Command** : selon le worker —
      - cTrader → `npm start`
      - IBKR → `npm run start:ibkr`
-   - **(Optionnel) Service Name** : `caldra-ibkr`, `caldra-ctrader`
+     - Binance → `npm run start:binance`
+   - **(Optionnel) Service Name** : `caldra-ibkr`, `caldra-binance`, `caldra-ctrader`
      pour s'y retrouver.
 3. Onglet **Variables** → ajouter les variables d'env (section suivante).
 4. **Deploy**. Dans **Deployments → View Logs**, tu dois voir la ligne de démarrage :
    - IBKR : `[ibkr] worker démarré, poll 30 s`
+   - Binance : `[binance] worker démarré, poll 30 s`
    - cTrader : log de connexion cTrader.
 
 > Ces workers n'écoutent **aucun port HTTP** (ce sont des boucles `setInterval`).
@@ -70,6 +73,14 @@ CALDRA_INGEST_URL=https://caldra-sable.vercel.app/api/ingest
 MT5_ENC_KEY=<exactement la même valeur que sur Vercel>
 ```
 
+### Binance — en plus
+```
+MT5_ENC_KEY=<exactement la même valeur que sur Vercel>
+```
+> La clé + le secret de l'utilisateur sont chiffrés en base avec `MT5_ENC_KEY` ; le worker
+> les déchiffre pour signer ses requêtes. Aucun identifiant d'app global n'est requis
+> (chaque user fournit sa propre clé API en lecture seule).
+
 ### cTrader — en plus
 ```
 CTRADER_CLIENT_ID=<openapi.ctrader.com → My Apps>
@@ -77,8 +88,8 @@ CTRADER_CLIENT_SECRET=<idem>
 # CTRADER_ENV laissé VIDE en prod (gère démo + live dans le même processus)
 ```
 
-> `MT5_ENC_KEY` sert de clé de déchiffrement (AES-256-GCM) commune à Vercel et au
-> worker IBKR. La moindre différence d'un caractère = déchiffrement KO.
+> `MT5_ENC_KEY` sert de clé de déchiffrement (AES-256-GCM) commune à Vercel et aux
+> workers IBKR/Binance. La moindre différence d'un caractère = déchiffrement KO.
 
 ---
 

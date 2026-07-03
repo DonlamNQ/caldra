@@ -2067,6 +2067,31 @@ function IntegrationsPanel({ apiKeyPrefix, initialWebhook, ctraderConn, setCtrad
     setIbkrSaving(false)
   }
 
+  // ── Binance via clé API lecture seule (worker Node) ──────────────────────────
+  const [bnStatus, setBnStatus] = useState<string | null>(null)   // null | pending | connected | auth_failed | error
+  const [bnHas, setBnHas] = useState(false)
+  const [bnSaving, setBnSaving] = useState(false)
+  useEffect(() => {
+    const supabase = createClient()
+    let alive = true
+    const poll = async () => {
+      const { data } = await supabase.from('binance_accounts').select('status').eq('user_id', userId)
+      if (!alive || !data) return
+      setBnHas(data.length > 0)
+      setBnStatus(data.length > 0 ? (data[0] as any).status ?? 'pending' : null)
+    }
+    poll()
+    const id = setInterval(poll, 5000)
+    return () => { alive = false; clearInterval(id) }
+  }, [userId])
+
+  async function disconnectBn() {
+    setBnSaving(true)
+    await fetch('/api/binance/disconnect', { method: 'POST' })
+    setBnHas(false); setBnStatus(null)
+    setBnSaving(false)
+  }
+
   async function genKey() {
     setKeyLoading(true); setNewKey(null); setKeyConfirm(false)
     const d = await fetch('/api/api-key', { method: 'POST' }).then(r => r.json())
@@ -2361,19 +2386,56 @@ namespace CaldraBot
             )}
           </IntCard>
 
-          {/* Binance — prochainement (crypto, clé API lecture seule, temps réel) */}
-          <IntCard style={{ opacity: .5 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          {/* Binance — clé API lecture seule (worker Node) */}
+          <IntCard>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <div style={{ width: 38, height: 38, borderRadius: 8, background: C.sf2, border: `.5px solid ${C.b}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: C.tm, fontFamily: SANS, flexShrink: 0 }}>BNB</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500, color: C.tx }}>Binance</div>
-                <div style={{ fontSize: 10.5, color: C.td }}>Crypto · spot & futures</div>
+                <div style={{ fontSize: 10.5, color: C.td }}>Crypto · spot</div>
               </div>
-              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, fontFamily: SANS, whiteSpace: 'nowrap' as const, background: 'rgba(255,255,255,.04)', border: `.5px solid ${C.b}`, color: C.td }}>Prochainement</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: bnStatus === 'connected' ? C.g : bnStatus === 'auth_failed' || bnStatus === 'error' ? C.red : bnHas ? C.o : C.b3, ...(bnHas && bnStatus !== 'connected' && bnStatus !== 'auth_failed' && bnStatus !== 'error' ? { animation: 'pulse 1.5s infinite' } : {}) }} />
+                <span style={{ fontSize: 10, color: bnStatus === 'connected' ? C.g : bnStatus === 'auth_failed' || bnStatus === 'error' ? C.red : bnHas ? C.o : C.td, letterSpacing: .5 }}>
+                  {bnStatus === 'connected' ? 'CONNECTÉ' : bnStatus === 'auth_failed' ? 'CLÉ REFUSÉE' : bnStatus === 'error' ? 'ERREUR' : bnHas ? 'EN ATTENTE…' : 'NON CONNECTÉ'}
+                </span>
+              </div>
             </div>
-            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65 }}>
-              Connexion par clé API en lecture seule, en temps réel, sans bot. Disponible après le lancement.
+
+            <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
+              {bnHas
+                ? (bnStatus === 'auth_failed'
+                    ? 'Clé API refusée. Vérifie ta clé et ton secret (droits lecture seule), puis reconnecte-toi.'
+                    : 'Tes trades Binance remontent automatiquement.')
+                : 'Connecte ton compte avec une clé API en lecture seule — tes trades remontent automatiquement, sans bot.'}
             </div>
+
+            {bnHas ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {(bnStatus === 'auth_failed' || bnStatus === 'error') && (
+                  <a
+                    href="/connect/binance"
+                    style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, boxSizing: 'border-box' as const }}
+                  >
+                    Corriger ma clé →
+                  </a>
+                )}
+                <button
+                  onClick={disconnectBn}
+                  disabled={bnSaving}
+                  style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: bnSaving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: bnSaving ? .5 : 1 }}
+                >
+                  {bnSaving ? '…' : 'Déconnecter →'}
+                </button>
+              </div>
+            ) : (
+              <a
+                href="/connect/binance"
+                style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, transition: 'all .2s', boxSizing: 'border-box' as const }}
+              >
+                Se connecter →
+              </a>
+            )}
           </IntCard>
 
           {/* Coinbase — prochainement (crypto, clé API lecture seule, temps réel) */}
@@ -3831,7 +3893,7 @@ export default function DashboardClient({
         alert(`Connexion Tradovate échouée${reason ? ` : ${decodeURIComponent(reason)}` : ''}`)
       }
       window.history.replaceState({}, '', '/dashboard')
-    } else if (p.get('mt5') === 'connected' || p.get('ibkr') === 'connected') {
+    } else if (p.get('mt5') === 'connected' || p.get('ibkr') === 'connected' || p.get('binance') === 'connected') {
       setActiveTab('integrations')
       window.history.replaceState({}, '', '/dashboard')
     }

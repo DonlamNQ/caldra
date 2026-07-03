@@ -4,7 +4,8 @@
   "main": "ctrader-worker.js",
   "scripts": {
     "start": "node ctrader-worker.js",
-    "start:ibkr": "node ibkr-worker.js"
+    "start:ibkr": "node ibkr-worker.js",
+    "start:binance": "node binance-worker.js"
   },
   "dependencies": {
     "@reiryoku/ctrader-layer": "^1.0.0",
