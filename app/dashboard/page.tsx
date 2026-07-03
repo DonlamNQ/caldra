@@ -77,7 +77,6 @@ export default async function DashboardPage() {
     { data: tradovateAccounts },
     { data: allAlertTypes },
     { data: ibkrAccounts },
-    { data: tradestationAccounts },
   ] = await Promise.all([
     todayAlertsQuery,
     service.from('trades').select('*').eq('user_id', user.id).gte('entry_time', dayFloor)
@@ -98,7 +97,6 @@ export default async function DashboardPage() {
     service.from('tradovate_accounts').select('tradovate_account_id').eq('user_id', user.id),
     service.from('alerts').select('type').eq('user_id', user.id),
     service.from('ibkr_accounts').select('status').eq('user_id', user.id),
-    service.from('tradestation_accounts').select('status').eq('user_id', user.id),
   ])
 
   // Compteurs de patterns sur TOUTE la durée (pour Analytics → Comportement)
@@ -187,8 +185,7 @@ export default async function DashboardPage() {
   const mt5Connected = (mt5Accounts ?? []).some((r: { status?: string }) => r.status === 'connected')
   const tvConnected = (tradovateAccounts ?? []).some((r: { tradovate_account_id?: number | null }) => r.tradovate_account_id != null)
   const ibkrConnected = (ibkrAccounts ?? []).some((r: { status?: string }) => r.status === 'connected')
-  const tsConnected = (tradestationAccounts ?? []).some((r: { status?: string }) => r.status === 'connected')
-  const platformConnected = ctraderConnected || mt5Connected || tvConnected || ibkrConnected || tsConnected || !!lastTrade
+  const platformConnected = ctraderConnected || mt5Connected || tvConnected || ibkrConnected || !!lastTrade
 
   return (
     <DashboardClient

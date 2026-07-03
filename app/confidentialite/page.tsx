@@ -31,7 +31,7 @@ export default function Confidentialite() {
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Coordonnées</strong> — nom, adresse, ville, pays, téléphone (inscription et facturation)</li>
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Données de trading</strong> — symbole, direction, taille, prix, PnL, horodatage (envoyées via l'API)</li>
           <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Règles de session</strong> — drawdown max, horaires, seuils de risque configurés par l'utilisateur</li>
-          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Identifiants de connexion broker</strong> — token en lecture seule (IBKR, cTrader, TradeStation) ou identifiants MetaTrader 5 (mot de passe investisseur). Toujours chiffrés (AES-256-GCM), jamais en clair, révocables à tout moment</li>
+          <li><strong style={{ color: 'rgba(226,232,240,.65)' }}>Identifiants de connexion broker</strong> — token en lecture seule (IBKR, cTrader) ou identifiants MetaTrader 5 (mot de passe investisseur). Toujours chiffrés (AES-256-GCM), jamais en clair, révocables à tout moment</li>
         </ul>
 
         <h2>2. Finalités du traitement</h2>

@@ -334,27 +334,6 @@ alter table ibkr_accounts enable row level security;
 drop policy if exists "users read own ibkr" on ibkr_accounts;
 create policy "users read own ibkr" on ibkr_accounts for select using (auth.uid() = user_id);
 
--- v2.21 : connexion TradeStation via OAuth (futures + actions/options US, gratuit, sans bot,
--- modèle cTrader). Tokens chiffrés (AES-256-GCM, MT5_ENC_KEY). Le worker rafraîchit le token
--- et poste les ordres exécutés vers /api/ingest.
-create table if not exists tradestation_accounts (
-  id                 uuid        primary key default gen_random_uuid(),
-  user_id            uuid        not null references auth.users(id) on delete cascade,
-  access_token_enc   text        not null,
-  refresh_token_enc  text,
-  account_ids        text,                   -- IDs de comptes TradeStation (CSV), résolus par le worker
-  token_expires_at   timestamptz,
-  ingest_key         text        not null,
-  status             text,                   -- connected | auth_failed | error
-  last_sync_at       timestamptz,
-  last_order_at      timestamptz,            -- dernier ordre ingéré (anti-doublon)
-  created_at         timestamptz default now(),
-  unique (user_id)
-);
-alter table tradestation_accounts enable row level security;
-drop policy if exists "users read own tradestation" on tradestation_accounts;
-create policy "users read own tradestation" on tradestation_accounts for select using (auth.uid() = user_id);
-
 -- v2.22 : DURCISSEMENT RLS (audit sécurité 2026-06-29). ⚠️ À EXÉCUTER EN PROD.
 -- Les policies « service role full access » … for all using (true) n'ont PAS de clause TO,
 -- donc elles s'appliquent à TOUS les rôles (anon + authenticated), pas seulement au service
