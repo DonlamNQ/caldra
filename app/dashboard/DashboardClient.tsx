@@ -2252,7 +2252,7 @@ namespace CaldraBot
             <div style={{ fontSize: 11.5, color: C.td, lineHeight: 1.65, marginBottom: 16 }}>
               {mt5Has
                 ? (mt5Status === 'auth_failed'
-                    ? 'Identifiants refusés par le broker. Reconnecte-toi avec les bons identifiants.'
+                    ? 'Identifiants refusés par le broker. Vérifie surtout ton mot de passe (celui de CE compte, idéalement l’investisseur) — numéro et serveur doivent être exacts, au chiffre près. Puis reconnecte-toi.'
                     : mt5Status === 'broker_unavailable'
                     ? 'Identifiants enregistrés. Ton broker n’est pas encore pris en charge — on l’active, tes trades remonteront automatiquement dès que c’est prêt.'
                     : 'Tes trades MT5 remontent automatiquement.')
@@ -2266,13 +2266,23 @@ namespace CaldraBot
             )}
 
             {mt5Has ? (
-              <button
-                onClick={disconnectMt5}
-                disabled={mt5Saving}
-                style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: mt5Saving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: mt5Saving ? .5 : 1 }}
-              >
-                {mt5Saving ? '…' : 'Déconnecter →'}
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {(mt5Status === 'auth_failed' || mt5Status === 'error') && (
+                  <a
+                    href="/connect/mt5"
+                    style={{ display: 'block', width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, textAlign: 'center' as const, textDecoration: 'none', background: C.rd, border: `.5px solid ${C.rb}`, color: C.red, boxSizing: 'border-box' as const }}
+                  >
+                    Corriger mes identifiants →
+                  </a>
+                )}
+                <button
+                  onClick={disconnectMt5}
+                  disabled={mt5Saving}
+                  style={{ width: '100%', padding: '9px 10px', borderRadius: 7, fontSize: 11, fontFamily: SANS, cursor: mt5Saving ? 'not-allowed' : 'pointer', background: 'transparent', border: `.5px solid ${C.b}`, color: C.td, transition: 'all .2s', opacity: mt5Saving ? .5 : 1 }}
+                >
+                  {mt5Saving ? '…' : 'Déconnecter →'}
+                </button>
+              </div>
             ) : (
               <a
                 href="/connect/mt5"

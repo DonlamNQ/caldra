@@ -16,18 +16,22 @@ export default function ConnectMt5() {
   const [login, setLogin] = useState('')
   const [server, setServer] = useState('')
   const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
   async function submit() {
     setErr(null)
-    if (!login || !server || !password) { setErr('Remplis les trois champs.'); return }
+    const l = login.trim(), s = server.trim(), p = password.trim()
+    if (!l || !s || !p) { setErr('Remplis les trois champs.'); return }
+    if (!/^[0-9]{3,20}$/.test(l)) { setErr('Le numéro de compte ne contient que des chiffres (ex. 25584260) — pas ton email.'); return }
+    if (s.includes('@')) { setErr('Le champ « Serveur » attend le nom du serveur MT5 (ex. XMGlobal-MT5 15), pas ton adresse email.'); return }
     setSaving(true)
     try {
       const r = await fetch('/api/mt5/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login: login.trim(), server: server.trim(), password }),
+        body: JSON.stringify({ login: l, server: s, password: p }),
       })
       const j = await r.json().catch(() => ({}))
       if (!r.ok) { setErr(j.error || 'Échec de la connexion'); setSaving(false); return }
@@ -68,12 +72,16 @@ export default function ConnectMt5() {
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={label}>Serveur</label>
-            <input value={server} onChange={e => setServer(e.target.value)} placeholder="ex. VantageMarkets-Demo" style={input} />
-            <div style={{ fontSize: 11, color: C.t3, marginTop: 6, lineHeight: 1.5 }}>Le nom exact est affiché dans MT5 sous ton compte (Navigateur), ou dans la fenêtre de connexion.</div>
+            <input value={server} onChange={e => setServer(e.target.value)} placeholder="ex. XMGlobal-MT5 15" style={input} />
+            <div style={{ fontSize: 11, color: C.t3, marginTop: 6, lineHeight: 1.5 }}>Le nom exact affiché dans ton MT5 (en bas à droite, ou Fichier → Se connecter à un compte). Au chiffre près. Ce n&apos;est pas ton email.</div>
           </div>
           <div style={{ marginBottom: 18 }}>
             <label style={label}>Mot de passe</label>
-            <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" style={input} />
+            <div style={{ position: 'relative' }}>
+              <input value={password} onChange={e => setPassword(e.target.value)} type={showPw ? 'text' : 'password'} placeholder="••••••••" style={{ ...input, paddingRight: 66 }} />
+              <button type="button" onClick={() => setShowPw(v => !v)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: C.t2, fontSize: 11, fontFamily: SANS, cursor: 'pointer', padding: '4px 6px' }}>{showPw ? 'Masquer' : 'Afficher'}</button>
+            </div>
+            <div style={{ fontSize: 11, color: C.t3, marginTop: 6, lineHeight: 1.5 }}>De préférence ton mot de passe <span style={{ color: C.t2, fontWeight: 500 }}>investisseur</span> (lecture seule) — celui de <span style={{ color: C.t2, fontWeight: 500 }}>ce</span> compte précis. Clique « Afficher » pour vérifier ta saisie.</div>
           </div>
 
           {err && <div style={{ fontSize: 12.5, color: C.red, marginBottom: 14, lineHeight: 1.5 }}>{err}</div>}
