@@ -12,7 +12,7 @@ import { randomNote } from '@/lib/coachNotes'
 import { isMaxPlan, isPaidPlan } from '@/lib/plans'
 import { DETECTOR_DEFS } from '@/lib/detectors'
 import { PROPFIRM_PRESETS, PROPFIRM_PHASES, targetForPhase, type PropFirmPhase } from '@/lib/propfirms'
-import { rulesTz, tzOffsetMin, detectTz, COMMON_TZ } from '@/lib/tz'
+import { rulesTz, tzOffsetMin, detectTz, TZ_GROUPS, tzLabel } from '@/lib/tz'
 // ── Palette ────────────────────────────────────────────────────────────────────
 const C_DARK = {
   red: '#7c3aed', rd: 'rgba(124,58,237,.14)', rb: 'rgba(124,58,237,.32)', rg: 'rgba(124,58,237,.07)',
@@ -2961,9 +2961,24 @@ function ReglesPanel({ initial, plan, onSaved }: { initial: TradingRules | null;
                 value={(rules as any).timezone || detectTz()}
                 onChange={e => set('timezone' as any, e.target.value)}
               >
-                {Array.from(new Set([detectTz(), ...COMMON_TZ])).map(tz => (
-                  <option key={tz} value={tz} style={{ background: '#12121c', color: '#eae8f5' }}>{tz}</option>
-                ))}
+                {(() => {
+                  const detected = detectTz()
+                  const optStyle = { background: '#12121c', color: '#eae8f5' }
+                  return (
+                    <>
+                      <optgroup label="Détecté" style={optStyle}>
+                        <option value={detected} style={optStyle}>{tzLabel(detected)} — {detected}</option>
+                      </optgroup>
+                      {TZ_GROUPS.map(g => (
+                        <optgroup key={g.label} label={g.label} style={optStyle}>
+                          {g.zones.map(tz => (
+                            <option key={tz} value={tz} style={optStyle}>{tzLabel(tz)} — {tz}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </>
+                  )
+                })()}
               </select>
             </RuleField>
           </RuleGroup>
