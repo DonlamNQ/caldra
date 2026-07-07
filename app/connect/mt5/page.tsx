@@ -60,7 +60,6 @@ export default function ConnectMt5() {
             <div style={{ width: 40, height: 40, borderRadius: 9, background: C.va, border: `.5px solid ${C.vb}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: C.v, fontFamily: SANS }}>MT5</div>
             <div>
               <div style={{ fontSize: 18, fontWeight: 600 }}>Connecter MetaTrader 5</div>
-              <div style={{ fontSize: 12, color: C.t2 }}>Tes trades remontent automatiquement, sans EA.</div>
             </div>
           </div>
 
@@ -73,7 +72,6 @@ export default function ConnectMt5() {
           <div style={{ marginBottom: 16 }}>
             <label style={label}>Serveur</label>
             <input value={server} onChange={e => setServer(e.target.value)} placeholder="ex. XMGlobal-MT5 15" style={input} />
-            <div style={{ fontSize: 11, color: C.t3, marginTop: 6, lineHeight: 1.5 }}>Le nom exact affiché dans ton MT5 (en bas à droite, ou Fichier → Se connecter à un compte). Au chiffre près. Ce n&apos;est pas ton email.</div>
           </div>
           <div style={{ marginBottom: 18 }}>
             <label style={label}>Mot de passe</label>
@@ -81,7 +79,6 @@ export default function ConnectMt5() {
               <input value={password} onChange={e => setPassword(e.target.value)} type={showPw ? 'text' : 'password'} placeholder="••••••••" style={{ ...input, paddingRight: 66 }} />
               <button type="button" onClick={() => setShowPw(v => !v)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: C.t2, fontSize: 11, fontFamily: SANS, cursor: 'pointer', padding: '4px 6px' }}>{showPw ? 'Masquer' : 'Afficher'}</button>
             </div>
-            <div style={{ fontSize: 11, color: C.t3, marginTop: 6, lineHeight: 1.5 }}>De préférence ton mot de passe <span style={{ color: C.t2, fontWeight: 500 }}>investisseur</span> (lecture seule) — celui de <span style={{ color: C.t2, fontWeight: 500 }}>ce</span> compte précis. Clique « Afficher » pour vérifier ta saisie.</div>
           </div>
 
           {err && <div style={{ fontSize: 12.5, color: C.red, marginBottom: 14, lineHeight: 1.5 }}>{err}</div>}
