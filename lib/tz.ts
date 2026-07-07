@@ -38,6 +38,8 @@ export const COMMON_TZ = [
   'Europe/Lisbon', 'Europe/Athens', 'Europe/Moscow', 'UTC',
   'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
   'America/Sao_Paulo', 'America/Toronto',
+  'Africa/Abidjan', 'Africa/Dakar', 'Africa/Casablanca', 'Africa/Algiers', 'Africa/Tunis',
+  'Africa/Lagos', 'Africa/Cairo', 'Africa/Nairobi', 'Africa/Johannesburg',
   'Asia/Dubai', 'Asia/Kolkata', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Shanghai',
   'Australia/Sydney',
 ]
