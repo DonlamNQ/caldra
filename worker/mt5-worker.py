@@ -322,23 +322,51 @@ def process_account(row: dict):
     # Deals de SORTIE (OUT=1, INOUT=2, OUT_BY=3) qui forment un trade fermé.
     out_deals = [d for d in deals if d.entry != 0 and d.symbol]
 
-    # Premier passage : on pose un REPÈRE (tous les deals existants = déjà vus) pour
-    # NE PAS réimporter l'historique. Deux cas déclenchent le repère :
-    #   1. user_id absent de SEEN → le worker vient de démarrer.
-    #   2. last_sync_at NULL → le compte vient d'être (re)connecté via Caldra (la route
-    #      /connect remet last_sync_at à NULL). Indispensable au CHANGEMENT DE COMPTE :
-    #      sans ça, le repère en mémoire = tickets de l'ancien compte → tous les trades
-    #      du nouveau compte passent pour "nouveaux" → bombardement d'alertes.
+    # Premier passage : on pose un REPÈRE pour NE PAS réimporter l'historique. Deux
+    # régimes TRÈS différents partagent ce branchement (user_id absent de SEEN, qui est
+    # en mémoire donc perdu à chaque redémarrage) :
+    #   1. last_sync_at NULL → compte tout juste (re)connecté via Caldra (/connect remet
+    #      last_sync_at à NULL). CHANGEMENT DE COMPTE : on ignore TOUT l'historique, sinon
+    #      tous les trades du nouveau compte passent pour "nouveaux" → bombardement.
+    #   2. last_sync_at présent + user_id absent de SEEN → le WORKER a juste REDÉMARRÉ sur
+    #      un compte déjà suivi (reboot VPS, crash, run.bat). Le set SEEN est perdu, mais la
+    #      base a déjà tout jusqu'à last_sync_at. Marquer d'office tous les deals des 3
+    #      derniers jours comme "vus" faisait DISPARAÎTRE en silence les trades clôturés
+    #      pendant que le worker était down. On ne marque donc "vus" que les deals ANTÉRIEURS
+    #      à last_sync_at, et on laisse les plus récents retomber dans la boucle d'ingest →
+    #      RATTRAPAGE. /api/ingest déduplique par signature, donc zéro doublon.
     if user_id not in SEEN or row.get("last_sync_at") is None:
-        SEEN[user_id] = set(d.ticket for d in out_deals)
-        # Repère aussi les positions DÉJÀ ouvertes → on n'alerte pas dessus à la (re)connexion.
+        off0 = broker_utc_offset(out_deals[0].symbol) if out_deals else 0
+        last_sync_ts = None
+        if row.get("last_sync_at") is not None:
+            try:
+                last_sync_ts = datetime.fromisoformat(
+                    str(row["last_sync_at"]).replace("Z", "+00:00")).timestamp()
+            except Exception:
+                last_sync_ts = None
+        if last_sync_ts is None:
+            # (re)connexion / changement de compte : on ignore tout l'historique existant.
+            SEEN[user_id] = set(d.ticket for d in out_deals)
+        else:
+            # Redémarrage worker : "vus" = deals clôturés avant last_sync_at (marge de 120 s
+            # pour absorber l'imprécision de l'offset broker → on préfère re-poster, la dédup
+            # gère). Les deals plus récents restent hors de SEEN → ingérés par la boucle.
+            cutoff = last_sync_ts - 120
+            SEEN[user_id] = set(d.ticket for d in out_deals if (d.time - off0) <= cutoff)
+        # Repère aussi les positions DÉJÀ ouvertes → on n'alerte pas dessus à la (re)connexion
+        # ni au redémarrage (elles étaient déjà ouvertes, ce ne sont pas de nouvelles entrées).
         try:
             SEEN_OPEN[user_id] = set(p.ticket for p in (mt5.positions_get() or []))
         except Exception:
             SEEN_OPEN[user_id] = set()
         heartbeat(user_id, force=True)   # 1er passage : doit flipper last_sync_at NULL→non-null
-        print(f"[mt5] compte {login} connecté — {len(SEEN[user_id])} deals existants ignorés (repère)")
-        return
+        n_recover = len(out_deals) - len(SEEN[user_id])
+        print(f"[mt5] compte {login} — repère posé ({len(SEEN[user_id])} deals ignorés"
+              + (f", {n_recover} récents à rattraper" if n_recover else "") + ")")
+        # Rien à rattraper (ou vraie reconnexion) → on s'arrête là. Sinon on POURSUIT vers la
+        # boucle d'ingest pour récupérer les trades manqués pendant que le worker était down.
+        if n_recover == 0:
+            return
 
     seen = SEEN[user_id]
     posted = False
