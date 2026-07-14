@@ -44,6 +44,7 @@ export const MAX_ONLY_DETECTORS = new Set<string>([
 // Bypass du gate d'abonnement + déblocage des fonctionnalités Max.
 export const VIP_EMAILS = new Set<string>([
   'alhamkone@gmail.com',
+  'moudouroudavid91@icloud.com',
 ])
 
 /** true si l'email est un compte VIP (accès illimité, plan Max forcé). */
