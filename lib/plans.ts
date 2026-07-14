@@ -40,14 +40,26 @@ export const MAX_ONLY_DETECTORS = new Set<string>([
   'near_target_oversizing',
 ])
 
-// Comptes VIP : accès complet et traités comme plan Max, SANS abonnement Stripe.
-// Bypass du gate d'abonnement + déblocage des fonctionnalités Max.
+// Comptes VIP permanents : accès complet et traités comme plan Max, SANS abonnement
+// Stripe. Bypass du gate d'abonnement + déblocage des fonctionnalités Max. Pas d'expiration.
 export const VIP_EMAILS = new Set<string>([
   'alhamkone@gmail.com',
-  'moudouroudavid91@icloud.com',
 ])
 
-/** true si l'email est un compte VIP (accès illimité, plan Max forcé). */
+// Comptes VIP temporaires : email → date d'expiration (ISO). L'accès Max se coupe
+// tout seul passé cette date (comparaison en UTC, la journée entière est incluse).
+// Format 'YYYY-MM-DD' → expire à la fin de ce jour (soit à minuit UTC le lendemain).
+export const VIP_EXPIRING: Record<string, string> = {
+  'moudouroudavid91@icloud.com': '2026-07-21',
+}
+
+/** true si l'email est un compte VIP actif (permanent, ou temporaire non expiré). */
 export function isVip(email: string | null | undefined): boolean {
-  return !!email && VIP_EMAILS.has(email.trim().toLowerCase())
+  if (!email) return false
+  const normalized = email.trim().toLowerCase()
+  if (VIP_EMAILS.has(normalized)) return true
+  const expiry = VIP_EXPIRING[normalized]
+  if (!expiry) return false
+  // Actif jusqu'à la fin du jour d'expiration inclus.
+  return Date.now() < Date.parse(`${expiry}T23:59:59.999Z`)
 }
