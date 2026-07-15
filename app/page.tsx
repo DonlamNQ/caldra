@@ -55,7 +55,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 
 /* shared */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.6rem,5vw,4.75rem)}
-.sec{position:relative;z-index:1;padding:clamp(2.8rem,5.2vw,5rem) 0}
+.sec{position:relative;z-index:1;padding-top:clamp(2.8rem,5.2vw,5rem);padding-bottom:clamp(2.8rem,5.2vw,5rem)}
 .divider{height:.5px;background:linear-gradient(90deg,transparent,var(--b1) 18%,var(--b1) 82%,transparent);position:relative;z-index:1}
 .tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:1.75rem}
 .tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--v);box-shadow:0 0 10px var(--v)}
@@ -122,6 +122,24 @@ nav.nav-hidden{transform:translateY(-130px)}
 .toast-app{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-weight:600}
 .toast-t{font-size:12px;font-weight:600;color:#fff;line-height:1.3;margin-bottom:2px}
 .toast-m{font-size:10.5px;color:var(--t3);line-height:1.4}
+
+/* SCAN CHART (hero) */
+.scan-panel .panel-bar{gap:.85rem}
+.scan-sym{font-size:11px;letter-spacing:.4px;color:var(--t3);padding:3px 10px;border:.5px solid var(--b1);border-radius:6px}
+.scan-chart{position:relative;height:clamp(230px,30vw,330px);overflow:hidden;background:radial-gradient(ellipse 120% 92% at 50% 0%,rgba(139,92,246,.07),transparent 68%)}
+.scan-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scan-beam{position:absolute;top:0;bottom:0;left:0;width:15%;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(139,92,246,.13) 55%,rgba(196,181,253,.26));border-right:1.5px solid rgba(196,181,253,.85);box-shadow:0 0 34px rgba(139,92,246,.55);animation:scanx 4s cubic-bezier(.45,0,.55,1) infinite}
+@keyframes scanx{0%{left:-16%;opacity:0}9%{opacity:1}90%{opacity:1}100%{left:101%;opacity:0}}
+.scan-mark{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:none}
+.scan-ring{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--v2);position:relative}
+.scan-ring::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1.5px solid var(--vb);animation:scanpulse 2.2s ease-out infinite}
+@keyframes scanpulse{0%{transform:scale(.65);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+.scan-tag{font-size:10px;letter-spacing:.3px;color:var(--v2);background:rgba(20,17,36,.92);border:.5px solid var(--vb);border-radius:100px;padding:3px 10px;white-space:nowrap;backdrop-filter:blur(6px)}
+.scan-mark-2 .scan-tag{color:var(--orange);border-color:rgba(220,126,46,.4)}
+.scan-mark-2 .scan-ring{border-color:var(--orange)}
+.scan-mark-2 .scan-ring::after{border-color:rgba(220,126,46,.4)}
+.scan-foot{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:.7rem 1.1rem;font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);background:linear-gradient(0deg,rgba(7,5,16,.82),transparent)}
+.scan-foot-r{color:var(--v2)}
 
 /* LOGOS / INTEGRATIONS STRIP */
 .logos{display:flex;align-items:center;justify-content:center;gap:clamp(1.6rem,5vw,4.75rem);flex-wrap:wrap;padding:2.6rem 0}
@@ -263,7 +281,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 .story-end em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* FINAL CTA */
-.fcta{text-align:center;position:relative;z-index:1;padding:clamp(6rem,12vw,10rem) 0}
+.fcta{text-align:center;position:relative;z-index:1;padding-top:clamp(6rem,12vw,10rem);padding-bottom:clamp(6rem,12vw,10rem)}
 .fcta-h{font-size:clamp(1.9rem,4vw,3.5rem);font-weight:200;letter-spacing:-2px;line-height:1.05;margin-bottom:1.4rem;background:linear-gradient(180deg,#fff,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
 .fcta-h em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(139,92,246,.5))}
 .fcta-sub{font-size:16px;color:var(--t2);margin-bottom:2.5rem;font-weight:300;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7}
@@ -336,6 +354,35 @@ const DETECTORS = [
   {n:'09',name:'Risk dépassé',icon:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',desc:"Sizing dépassant ton risk par trade défini. Tes règles existent pour une raison.",lv:2,s:false},
 ]
 
+const SCAN_CANDLES = (function () {
+  var n = 34, W = 900, H = 320, xPad = 14, yPad = 26, seed = 42
+  function rnd(){ seed = (seed * 9301 + 49297) % 233280; return seed / 233280 }
+  var c = [], price = 100, i
+  for (i = 0; i < n; i++) {
+    var open = price
+    var drift = i < n * 0.55 ? 1.15 : -0.5
+    var close = open + (rnd() - 0.5) * 13 + drift
+    var high = Math.max(open, close) + rnd() * 6 + 1
+    var low = Math.min(open, close) - rnd() * 6 - 1
+    c.push({ o: open, cl: close, h: high, l: low })
+    price = close
+  }
+  var lo = Math.min.apply(null, c.map(function (k) { return k.l }))
+  var hi = Math.max.apply(null, c.map(function (k) { return k.h }))
+  var span = (hi - lo) || 1
+  function yOf(p){ return (yPad + (hi - p) / span * (H - yPad * 2)).toFixed(1) }
+  var step = (W - xPad * 2) / n, bw = step * 0.56
+  return c.map(function (k, idx) {
+    var cx = xPad + idx * step + step / 2
+    var col = k.cl >= k.o ? '#3ecf8e' : '#e2503c'
+    var yTop = yPad + (hi - Math.max(k.o, k.cl)) / span * (H - yPad * 2)
+    var yBot = yPad + (hi - Math.min(k.o, k.cl)) / span * (H - yPad * 2)
+    var bh = Math.max(yBot - yTop, 1.5)
+    return '<line x1="' + cx.toFixed(1) + '" y1="' + yOf(k.h) + '" x2="' + cx.toFixed(1) + '" y2="' + yOf(k.l) + '" stroke="' + col + '" stroke-width="1.4" opacity=".5" vector-effect="non-scaling-stroke"/>' +
+           '<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + yTop.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="1" fill="' + col + '" opacity=".9"/>'
+  }).join('')
+})()
+
 const HTML = `
 <div class="bg-grid"></div>
 <div class="bg-aura aura-1"></div>
@@ -369,7 +416,6 @@ const HTML = `
 
 <!-- HERO -->
 <header class="hero wrap">
-  <div class="hero-eyebrow"><span class="dot"></span>Journal de trading · Alerte comportementale en temps réel</div>
   <h1>Bien plus qu'un <em>journal de trading.</em></h1>
   <p class="hero-sub">Caldra fait tout ce qu'un journal de trading fait, stats, win rate, profit factor, débriefs IA, puis va plus loin : il t'alerte en temps réel quand ton comportement déraille. Pendant la session, pas le soir une fois le mal fait.</p>
   <div class="hero-ctas">
@@ -397,33 +443,24 @@ const HTML = `
       <div class="toast-t">Re-entrée rapide</div>
       <div class="toast-m">87s après la clôture. Min : 120s.</div>
     </div>
-    <div class="panel">
+    <div class="panel scan-panel">
       <div class="panel-bar">
-        <span class="pb-name">Cald<span>ra</span> Session</span>
-        <span class="pb-live"><span class="lvdot"></span>Live</span>
+        <span class="pb-name">Cald<span>ra</span> Scan</span>
+        <span class="scan-sym">EUR/USD · M5</span>
+        <span class="pb-live"><span class="lvdot"></span>Scan en direct</span>
       </div>
-      <div class="panel-body">
-        <div class="pv-grid">
-          <div class="pv-kpis">
-            <div class="pv-score">
-              <svg width="64" height="64" viewBox="0 0 64 64">
-                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6"/>
-                <circle cx="32" cy="32" r="26" fill="none" stroke="#dc7e2e" stroke-width="6" stroke-dasharray="163" stroke-dashoffset="62" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:32px 32px"/>
-              </svg>
-              <div><div class="pv-score-num">62</div><div class="pv-score-lbl">Score / 100</div></div>
-            </div>
-            <div class="pv-row">
-              <div class="pv-kpi"><div class="pv-kpi-l">P&amp;L session</div><div class="pv-kpi-v">&minus;€180</div><div class="pv-kpi-s">en cours</div></div>
-              <div class="pv-kpi"><div class="pv-kpi-l">Win rate</div><div class="pv-kpi-v">43%</div><div class="pv-kpi-s">3W · 4L</div></div>
-            </div>
-          </div>
-          <div class="pv-alerts">
-            <div class="pv-alerts-l">Alertes en direct</div>
-            <div class="pv-al pv-al-3"><div class="pv-al-dot d-3"></div><div><div class="pv-al-t">STOP · Drawdown max</div><div class="pv-al-s">Ferme la plateforme maintenant.</div></div></div>
-            <div class="pv-al pv-al-2"><div class="pv-al-dot d-2"></div><div><div class="pv-al-t">Revenge sizing ×2.1</div><div class="pv-al-s">1.4 lots vs 0.67 lots.</div></div></div>
-            <div class="pv-al pv-al-1"><div class="pv-al-dot d-1"></div><div><div class="pv-al-t">Re-entrée rapide (87s)</div><div class="pv-al-s">Délai minimum : 120s.</div></div></div>
-          </div>
-        </div>
+      <div class="scan-chart">
+        <svg class="scan-svg" viewBox="0 0 900 320" preserveAspectRatio="none">
+          <line x1="0" y1="64" x2="900" y2="64" stroke="rgba(255,255,255,.045)" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="128" x2="900" y2="128" stroke="rgba(255,255,255,.045)" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="192" x2="900" y2="192" stroke="rgba(255,255,255,.045)" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="256" x2="900" y2="256" stroke="rgba(255,255,255,.045)" vector-effect="non-scaling-stroke"/>
+          ${SCAN_CANDLES}
+        </svg>
+        <div class="scan-beam"></div>
+        <div class="scan-mark" style="left:62%;top:24%"><span class="scan-ring"></span><span class="scan-tag">Revenge sizing</span></div>
+        <div class="scan-mark scan-mark-2" style="left:85%;top:60%"><span class="scan-ring"></span><span class="scan-tag">Sur-exposition</span></div>
+        <div class="scan-foot"><span>Analyse comportementale</span><span class="scan-foot-r">18 patterns surveillés</span></div>
       </div>
     </div>
   </div>
