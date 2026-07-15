@@ -508,7 +508,7 @@ const HTML = `
     <div>
       <div class="tag">Journal complet</div>
       <div class="h2">Toutes les stats d'un journal pro.<br><em>Sans rien saisir.</em></div>
-      <p class="lead">Win rate, profit factor, expectancy, courbe de capital, performance par symbole, par jour, par heure. Tes trades remontent tout seuls de ta plateforme, les statistiques se construisent en direct. Avec, en plus, les débriefs IA qui analysent tes sessions.</p>
+      <p class="lead">Zéro saisie manuelle : tes trades remontent tout seuls de ta plateforme et se transforment en statistiques, en direct. Tu retrouves tous les indicateurs qu'un bon journal t'apporte, sans jamais tenir de tableur.</p>
       <div class="chan-list">
         <div class="chan"><div class="chan-ic">📊</div><div class="chan-t">Win rate, profit factor, expectancy, R moyen</div></div>
         <div class="chan"><div class="chan-ic">📈</div><div class="chan-t">Courbe de capital, perf par symbole, jour et heure</div></div>
@@ -545,17 +545,17 @@ const HTML = `
   <div class="cmp">
     <div class="cmp-col cmp-old">
       <div class="cmp-lbl">Journal classique</div>
-      <div class="cmp-li">Tu saisis tes trades à la main</div>
       <div class="cmp-li">Tu relis ta session le soir</div>
-      <div class="cmp-li">Tu comprends l'erreur après coup</div>
+      <div class="cmp-li">Tu repères l'erreur une fois le mal fait</div>
       <div class="cmp-li">Aucun garde-fou pendant le trade</div>
+      <div class="cmp-li">Le constat tombe trop tard</div>
     </div>
     <div class="cmp-col cmp-new">
       <div class="cmp-lbl">Caldra</div>
-      <div class="cmp-li">Tes trades remontent automatiquement</div>
-      <div class="cmp-li">Les stats se construisent en direct</div>
-      <div class="cmp-li">L'alerte arrive pendant la session</div>
+      <div class="cmp-li">L'analyse tourne pendant la session</div>
+      <div class="cmp-li">Tu es prévenu au moment où ça dérape</div>
       <div class="cmp-li">Un signal t'arrête avant les dégâts</div>
+      <div class="cmp-li">Tu corriges à chaud, pas le lendemain</div>
     </div>
   </div>
 </section>
