@@ -328,10 +328,10 @@ footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-inde
   .pv-grid{grid-template-columns:1fr}
   .jrn-grid{grid-template-columns:1fr 1fr}
   .cmp{grid-template-columns:1fr}
-  .preview{flex-direction:column;align-items:stretch}
   .scan-mark{display:none}
-  .toast{position:static;display:block;width:auto;animation:none;opacity:1;box-shadow:0 12px 30px rgba(0,0,0,.4)}
-  .panel{order:0}.toast-1{order:1;margin-top:.8rem}.toast-2{order:2;margin-top:.6rem}
+  .toast{width:min(66%,240px)}
+  .toast-1{left:10px;top:18%}
+  .toast-2{right:10px;left:auto;bottom:12%}
   .split{grid-template-columns:1fr}
   .det-grid{grid-template-columns:1fr}.det-detail{display:none}.det-inline.open{display:block}
   .steps{grid-template-columns:1fr}
