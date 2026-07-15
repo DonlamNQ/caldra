@@ -328,10 +328,11 @@ footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-inde
   .pv-grid{grid-template-columns:1fr}
   .jrn-grid{grid-template-columns:1fr 1fr}
   .cmp{grid-template-columns:1fr}
-  .scan-mark{display:none}
-  .toast{width:min(66%,240px)}
-  .toast-1{left:10px;top:18%}
-  .toast-2{right:10px;left:auto;bottom:12%}
+  .toast{width:min(56%,196px);padding:.58rem .7rem}
+  .toast-t{font-size:11px}.toast-m{font-size:9.5px}.toast-hd{margin-bottom:4px}.toast-ic{width:18px;height:18px;font-size:10px}
+  .toast-1{left:8px;top:15%}
+  .toast-2{right:8px;left:auto;bottom:9%}
+  .scan-tag{font-size:9px;padding:2px 8px}
   .split{grid-template-columns:1fr}
   .det-grid{grid-template-columns:1fr}.det-detail{display:none}.det-inline.open{display:block}
   .steps{grid-template-columns:1fr}
