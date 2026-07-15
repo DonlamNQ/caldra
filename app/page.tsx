@@ -11,7 +11,7 @@ html{scroll-behavior:smooth}
   --bg:#070510;--s1:#0f0d1c;--s2:#161327;--b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.11);
   --tx:#f6f4fc;--t2:rgba(246,244,252,.6);--t3:rgba(246,244,252,.34);--t4:rgba(246,244,252,.18);
   --green:#3ecf8e;--amber:#e0a02e;--orange:#dc7e2e;--red:#e2503c;
-  --maxw:1200px;
+  --maxw:1280px;
 }
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden;line-height:1.5;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
@@ -55,23 +55,23 @@ nav.nav-hidden{transform:translateY(-130px)}
 
 /* shared */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.5rem,4vw,3.5rem)}
-.sec{position:relative;z-index:1;padding:clamp(3.4rem,7vw,6.2rem) 0}
+.sec{position:relative;z-index:1;padding:clamp(2.8rem,5.2vw,5rem) 0}
 .divider{height:.5px;background:linear-gradient(90deg,transparent,var(--b1) 18%,var(--b1) 82%,transparent);position:relative;z-index:1}
 .tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:1.75rem}
 .tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--v);box-shadow:0 0 10px var(--v)}
-.h2{font-size:clamp(1.75rem,3.2vw,2.65rem);font-weight:200;letter-spacing:-1.5px;line-height:1.09;background:linear-gradient(180deg,#fff 40%,rgba(246,244,252,.66));-webkit-background-clip:text;background-clip:text;color:transparent}
+.h2{font-size:clamp(1.55rem,2.7vw,2.3rem);font-weight:200;letter-spacing:-1.5px;line-height:1.09;background:linear-gradient(180deg,#fff 40%,rgba(246,244,252,.66));-webkit-background-clip:text;background-clip:text;color:transparent}
 .h2 em{font-style:normal;background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{font-size:clamp(15px,1.5vw,17px);color:var(--t2);line-height:1.8;font-weight:300;max-width:560px;margin-top:1.4rem}
 .center{text-align:center}.center .tag{margin-left:auto;margin-right:auto}.center .lead{margin-left:auto;margin-right:auto}
 
 /* HERO */
-.hero{position:relative;z-index:1;padding-top:clamp(6.5rem,12vw,9.8rem);padding-bottom:clamp(2.6rem,5vw,5rem);text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero{position:relative;z-index:1;padding-top:clamp(5.3rem,9vw,7.8rem);padding-bottom:clamp(2.2rem,4vw,4.2rem);text-align:center;display:flex;flex-direction:column;align-items:center}
 .hero-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:8px 18px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:2.2rem}
 .hero-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--v);animation:pulse 2s ease-in-out infinite;box-shadow:0 0 10px var(--v)}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
-.hero h1{font-size:clamp(2.4rem,5vw,4.6rem);font-weight:200;line-height:1.05;letter-spacing:-2.5px;max-width:15ch;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1{font-size:clamp(2.05rem,4.2vw,3.9rem);font-weight:200;line-height:1.05;letter-spacing:-2.5px;max-width:15ch;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero h1 em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 32px rgba(139,92,246,.5))}
-.hero-sub{font-size:clamp(15px,1.7vw,19px);color:var(--t2);line-height:1.7;max-width:600px;margin-bottom:2.6rem;font-weight:300}
+.hero-sub{font-size:clamp(14px,1.5vw,17px);color:var(--t2);line-height:1.7;max-width:580px;margin-bottom:2.4rem;font-weight:300}
 .hero-ctas{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
 .btn-pri{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 30px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:11px;color:#fff;font-size:14px;font-weight:600;transition:all .22s;box-shadow:0 8px 30px rgba(139,92,246,.36),inset 0 1px 0 rgba(255,255,255,.2)}
 .btn-pri:hover{transform:translateY(-2px);box-shadow:0 14px 42px rgba(139,92,246,.54),inset 0 1px 0 rgba(255,255,255,.28)}
@@ -133,7 +133,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 /* STATS */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(1.5rem,4vw,4rem)}
 .stat{text-align:center}
-.stat-n{font-size:clamp(2.6rem,5vw,3.8rem);font-weight:200;letter-spacing:-2px;line-height:1;background:linear-gradient(180deg,#fff,rgba(246,244,252,.6));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat-n{font-size:clamp(2.2rem,4vw,3.2rem);font-weight:200;letter-spacing:-2px;line-height:1;background:linear-gradient(180deg,#fff,rgba(246,244,252,.6));-webkit-background-clip:text;background-clip:text;color:transparent}
 .stat-n span{background:linear-gradient(120deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
 .stat-l{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-top:.9rem}
 
@@ -264,7 +264,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 
 /* FINAL CTA */
 .fcta{text-align:center;position:relative;z-index:1;padding:clamp(6rem,12vw,10rem) 0}
-.fcta-h{font-size:clamp(2.1rem,5vw,4.1rem);font-weight:200;letter-spacing:-2px;line-height:1.05;margin-bottom:1.4rem;background:linear-gradient(180deg,#fff,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.fcta-h{font-size:clamp(1.9rem,4vw,3.5rem);font-weight:200;letter-spacing:-2px;line-height:1.05;margin-bottom:1.4rem;background:linear-gradient(180deg,#fff,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
 .fcta-h em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(139,92,246,.5))}
 .fcta-sub{font-size:16px;color:var(--t2);margin-bottom:2.5rem;font-weight:300;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.7}
 .fcta-login{margin-top:1.4rem;font-size:13px;color:var(--t3)}.fcta-login a span{color:var(--v2)}
