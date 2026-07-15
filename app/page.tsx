@@ -11,7 +11,7 @@ html{scroll-behavior:smooth}
   --bg:#070510;--s1:#0f0d1c;--s2:#161327;--b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.11);
   --tx:#f6f4fc;--t2:rgba(246,244,252,.6);--t3:rgba(246,244,252,.34);--t4:rgba(246,244,252,.18);
   --green:#3ecf8e;--amber:#e0a02e;--orange:#dc7e2e;--red:#e2503c;
-  --maxw:1280px;
+  --maxw:1180px;
 }
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden;line-height:1.5;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
@@ -44,7 +44,7 @@ a{color:inherit;text-decoration:none}
 .promo-cta:hover{transform:translateY(-1px)}
 
 /* NAV */
-nav{position:fixed;top:40px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem clamp(1.5rem,4vw,3.5rem);border-bottom:.5px solid var(--b1);backdrop-filter:blur(26px) saturate(150%);background:linear-gradient(180deg,rgba(7,5,16,.84),rgba(7,5,16,.5));transition:transform .42s cubic-bezier(.16,1,.3,1)}
+nav{position:fixed;top:40px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem clamp(1.6rem,5vw,4.75rem);border-bottom:.5px solid var(--b1);backdrop-filter:blur(26px) saturate(150%);background:linear-gradient(180deg,rgba(7,5,16,.84),rgba(7,5,16,.5));transition:transform .42s cubic-bezier(.16,1,.3,1)}
 nav.nav-hidden{transform:translateY(-130px)}
 .n-logo{font-size:14px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:#fff}.n-logo span{color:var(--v)}
 .n-links{display:flex;gap:2.5rem}
@@ -54,7 +54,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 .n-signup{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;padding:8px 16px;border-radius:6px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 4px 18px rgba(139,92,246,.34);transition:all .18s}.n-signup:hover{box-shadow:0 6px 28px rgba(139,92,246,.52);transform:translateY(-1px)}
 
 /* shared */
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.5rem,4vw,3.5rem)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.6rem,5vw,4.75rem)}
 .sec{position:relative;z-index:1;padding:clamp(2.8rem,5.2vw,5rem) 0}
 .divider{height:.5px;background:linear-gradient(90deg,transparent,var(--b1) 18%,var(--b1) 82%,transparent);position:relative;z-index:1}
 .tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:1.75rem}
@@ -124,7 +124,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 .toast-m{font-size:10.5px;color:var(--t3);line-height:1.4}
 
 /* LOGOS / INTEGRATIONS STRIP */
-.logos{display:flex;align-items:center;justify-content:center;gap:clamp(1.5rem,4vw,3.5rem);flex-wrap:wrap;padding:2.6rem 0}
+.logos{display:flex;align-items:center;justify-content:center;gap:clamp(1.6rem,5vw,4.75rem);flex-wrap:wrap;padding:2.6rem 0}
 .logos-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t4)}
 .logo-item{display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:500;color:var(--t2);letter-spacing:.3px}
 .logo-item .lg-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
@@ -271,7 +271,7 @@ nav.nav-hidden{transform:translateY(-130px)}
 
 /* FOOTER */
 footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-index:1}
-.foot-in{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.5rem,4vw,3.5rem);display:flex;justify-content:space-between;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.foot-in{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.6rem,5vw,4.75rem);display:flex;justify-content:space-between;align-items:center;gap:1.2rem;flex-wrap:wrap}
 .foot-logo{font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--t4);font-weight:600}.foot-logo span{color:rgba(124,58,237,.4)}
 .foot-links{display:flex;gap:2rem}
 .foot-lk{font-size:11.5px;color:var(--t3);letter-spacing:.5px;transition:color .15s}.foot-lk:hover{color:var(--t2)}
