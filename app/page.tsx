@@ -541,7 +541,6 @@ const HTML = `
 <section class="sec wrap center" id="compare" data-reveal>
   <div class="tag" style="margin-left:auto;margin-right:auto">Journal classique vs Caldra</div>
   <div class="h2">Le journal regarde en arrière.<br>Caldra veille <em>pendant.</em></div>
-  <p class="lead" style="margin-left:auto;margin-right:auto">Les journaux classiques t'expliquent tes erreurs le soir, une fois la session finie et le mal fait. Caldra fait le même travail d'analyse, en direct, et t'alerte avant que le trade de trop parte.</p>
   <div class="cmp">
     <div class="cmp-col cmp-old">
       <div class="cmp-lbl">Journal classique</div>
