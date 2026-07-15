@@ -65,11 +65,11 @@ nav.nav-hidden{transform:translateY(-130px)}
 .center{text-align:center}.center .tag{margin-left:auto;margin-right:auto}.center .lead{margin-left:auto;margin-right:auto}
 
 /* HERO */
-.hero{position:relative;z-index:1;padding-top:clamp(5.3rem,9vw,7.8rem);padding-bottom:clamp(2.2rem,4vw,4.2rem);text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero{position:relative;z-index:1;padding-top:clamp(7.6rem,9vw,8rem);padding-bottom:clamp(2.2rem,4vw,4.2rem);text-align:center;display:flex;flex-direction:column;align-items:center}
 .hero-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--v2);display:inline-flex;align-items:center;gap:9px;padding:8px 18px;border:.5px solid var(--vb);border-radius:100px;background:var(--va);backdrop-filter:blur(8px);margin-bottom:2.2rem}
 .hero-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--v);animation:pulse 2s ease-in-out infinite;box-shadow:0 0 10px var(--v)}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
-.hero h1{font-size:clamp(2.05rem,4.2vw,3.9rem);font-weight:200;line-height:1.05;letter-spacing:-2.5px;max-width:15ch;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1{font-size:clamp(2.05rem,4.2vw,3.9rem);font-weight:200;line-height:1.06;letter-spacing:-1px;text-transform:uppercase;max-width:16ch;margin-bottom:1.5rem;background:linear-gradient(180deg,#fff 32%,rgba(246,244,252,.62));-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero h1 em{font-style:normal;background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 32px rgba(139,92,246,.5))}
 .hero-sub{font-size:clamp(14px,1.5vw,17px);color:var(--t2);line-height:1.7;max-width:580px;margin-bottom:2.4rem;font-weight:300}
 .hero-ctas{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
@@ -130,7 +130,8 @@ nav.nav-hidden{transform:translateY(-130px)}
 .scan-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .scan-beam{position:absolute;top:0;bottom:0;left:0;width:15%;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(139,92,246,.13) 55%,rgba(196,181,253,.26));border-right:1.5px solid rgba(196,181,253,.85);box-shadow:0 0 34px rgba(139,92,246,.55);animation:scanx 4s cubic-bezier(.45,0,.55,1) infinite}
 @keyframes scanx{0%{left:-16%;opacity:0}9%{opacity:1}90%{opacity:1}100%{left:101%;opacity:0}}
-.scan-mark{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:none}
+.scan-mark{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:none;opacity:0;animation:markpop 4s ease-out infinite}
+@keyframes markpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}5%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}10%{transform:translate(-50%,-50%) scale(1)}72%{opacity:1;transform:translate(-50%,-50%) scale(1)}86%{opacity:0;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
 .scan-ring{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--v2);position:relative}
 .scan-ring::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1.5px solid var(--vb);animation:scanpulse 2.2s ease-out infinite}
 @keyframes scanpulse{0%{transform:scale(.65);opacity:.9}100%{transform:scale(1.9);opacity:0}}
@@ -323,9 +324,11 @@ footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-inde
   .pv-grid{grid-template-columns:1fr}
   .jrn-grid{grid-template-columns:1fr 1fr}
   .cmp{grid-template-columns:1fr}
-  .toast{display:none}
+  .preview{flex-direction:column;align-items:stretch}
+  .toast{position:static;display:block;width:auto;animation:none;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+  .panel{order:0}.toast-1{order:1;margin-top:.8rem}.toast-2{order:2;margin-top:.6rem}
   .split{grid-template-columns:1fr}
-  .det-grid{grid-template-columns:1fr}.det-detail{display:none}
+  .det-grid{grid-template-columns:1fr}.det-detail{display:block;position:static;top:auto;margin-top:1.2rem}
   .steps{grid-template-columns:1fr}
   .testi{grid-template-columns:1fr}
   .pricing{grid-template-columns:1fr}
@@ -354,7 +357,7 @@ const DETECTORS = [
   {n:'09',name:'Risk dépassé',icon:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',desc:"Sizing dépassant ton risk par trade défini. Tes règles existent pour une raison.",lv:2,s:false},
 ]
 
-const SCAN_CANDLES = (function () {
+const SCAN = (function () {
   var n = 34, W = 900, H = 320, xPad = 14, yPad = 26, seed = 42
   function rnd(){ seed = (seed * 9301 + 49297) % 233280; return seed / 233280 }
   var c = [], price = 100, i
@@ -369,18 +372,22 @@ const SCAN_CANDLES = (function () {
   }
   var lo = Math.min.apply(null, c.map(function (k) { return k.l }))
   var hi = Math.max.apply(null, c.map(function (k) { return k.h }))
-  var span = (hi - lo) || 1
-  function yOf(p){ return (yPad + (hi - p) / span * (H - yPad * 2)).toFixed(1) }
-  var step = (W - xPad * 2) / n, bw = step * 0.56
-  return c.map(function (k, idx) {
-    var cx = xPad + idx * step + step / 2
+  var span = (hi - lo) || 1, step = (W - xPad * 2) / n, bw = step * 0.56
+  function yv(p){ return yPad + (hi - p) / span * (H - yPad * 2) }
+  function xc(idx){ return xPad + idx * step + step / 2 }
+  var candles = c.map(function (k, idx) {
+    var cx = xc(idx)
     var col = k.cl >= k.o ? '#3ecf8e' : '#e2503c'
-    var yTop = yPad + (hi - Math.max(k.o, k.cl)) / span * (H - yPad * 2)
-    var yBot = yPad + (hi - Math.min(k.o, k.cl)) / span * (H - yPad * 2)
+    var yTop = yv(Math.max(k.o, k.cl)), yBot = yv(Math.min(k.o, k.cl))
     var bh = Math.max(yBot - yTop, 1.5)
-    return '<line x1="' + cx.toFixed(1) + '" y1="' + yOf(k.h) + '" x2="' + cx.toFixed(1) + '" y2="' + yOf(k.l) + '" stroke="' + col + '" stroke-width="1.4" opacity=".5" vector-effect="non-scaling-stroke"/>' +
+    return '<line x1="' + cx.toFixed(1) + '" y1="' + yv(k.h).toFixed(1) + '" x2="' + cx.toFixed(1) + '" y2="' + yv(k.l).toFixed(1) + '" stroke="' + col + '" stroke-width="1.4" opacity=".5" vector-effect="non-scaling-stroke"/>' +
            '<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + yTop.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="1" fill="' + col + '" opacity=".9"/>'
   }).join('')
+  function mark(idx){
+    var x = xc(idx) / W * 100, y = yv(c[idx].h) / H * 100
+    return { x: x.toFixed(1), y: y.toFixed(1), d: (((x + 1) / 117) * 4 + 0.08).toFixed(2) }
+  }
+  return { candles: candles, m1: mark(Math.round(n * 0.5)), m2: mark(Math.round(n * 0.7)) }
 })()
 
 const HTML = `
@@ -455,11 +462,11 @@ const HTML = `
           <line x1="0" y1="128" x2="900" y2="128" stroke="rgba(255,255,255,.045)" vector-effect="non-scaling-stroke"/>
           <line x1="0" y1="192" x2="900" y2="192" stroke="rgba(255,255,255,.045)" vector-effect="non-scaling-stroke"/>
           <line x1="0" y1="256" x2="900" y2="256" stroke="rgba(255,255,255,.045)" vector-effect="non-scaling-stroke"/>
-          ${SCAN_CANDLES}
+          ${SCAN.candles}
         </svg>
         <div class="scan-beam"></div>
-        <div class="scan-mark" style="left:62%;top:24%"><span class="scan-ring"></span><span class="scan-tag">Revenge sizing</span></div>
-        <div class="scan-mark scan-mark-2" style="left:85%;top:60%"><span class="scan-ring"></span><span class="scan-tag">Sur-exposition</span></div>
+        <div class="scan-mark" style="left:${SCAN.m1.x}%;top:${SCAN.m1.y}%;animation-delay:${SCAN.m1.d}s"><span class="scan-ring"></span><span class="scan-tag">Revenge sizing</span></div>
+        <div class="scan-mark scan-mark-2" style="left:${SCAN.m2.x}%;top:${SCAN.m2.y}%;animation-delay:${SCAN.m2.d}s"><span class="scan-ring"></span><span class="scan-tag">Sur-exposition</span></div>
         <div class="scan-foot"><span>Analyse comportementale</span><span class="scan-foot-r">18 patterns surveillés</span></div>
       </div>
     </div>
