@@ -277,10 +277,34 @@ footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-inde
 .foot-lk{font-size:11.5px;color:var(--t3);letter-spacing:.5px;transition:color .15s}.foot-lk:hover{color:var(--t2)}
 .foot-email{font-size:11.5px;color:var(--t3)}
 
+/* JOURNAL */
+.jrn-card{background:linear-gradient(180deg,rgba(22,19,39,.92),rgba(12,10,24,.95));border:.5px solid var(--b2);border-radius:18px;padding:1.3rem;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.jrn-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem;margin-bottom:1rem}
+.jrn-kpi{padding:.95rem;background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:12px}
+.jrn-kl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+.jrn-kv{font-size:22px;font-weight:200;letter-spacing:-1px;color:#eceaf6;line-height:1}
+.jrn-eq{background:rgba(255,255,255,.02);border:.5px solid var(--b1);border-radius:12px;padding:1rem 1.1rem 1.1rem}
+.jrn-eq-l{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center}
+
+/* COMPARE */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:3.2rem;text-align:left}
+.cmp-col{padding:clamp(1.6rem,3vw,2.3rem);border-radius:18px;border:.5px solid var(--b1)}
+.cmp-old{background:rgba(255,255,255,.014)}
+.cmp-new{background:linear-gradient(160deg,rgba(139,92,246,.13),var(--s1) 60%);border-color:rgba(139,92,246,.4);box-shadow:0 0 60px rgba(139,92,246,.1)}
+.cmp-lbl{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--t3);margin-bottom:1.1rem}
+.cmp-new .cmp-lbl{color:var(--v2)}
+.cmp-li{font-size:13.5px;color:var(--t2);padding:.7rem 0;border-bottom:.5px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:11px}
+.cmp-li:last-child{border-bottom:none}
+.cmp-li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--t4);flex-shrink:0}
+.cmp-new .cmp-li{color:#e9e6f5}
+.cmp-new .cmp-li::before{background:var(--v);box-shadow:0 0 8px var(--v)}
+
 /* RESPONSIVE */
 @media(max-width:980px){
   .n-links{display:none}
   .pv-grid{grid-template-columns:1fr}
+  .jrn-grid{grid-template-columns:1fr 1fr}
+  .cmp{grid-template-columns:1fr}
   .toast{display:none}
   .split{grid-template-columns:1fr}
   .det-grid{grid-template-columns:1fr}.det-detail{display:none}
@@ -331,11 +355,11 @@ const HTML = `
 <nav>
   <a href="#" class="n-logo">Cald<span>ra</span></a>
   <div class="n-links">
+    <a class="n-lk" href="#journal">Journal</a>
     <a class="n-lk" href="#alertes">Alertes</a>
     <a class="n-lk" href="#detecteurs">Détecteurs</a>
     <a class="n-lk" href="#demo">Démo</a>
     <a class="n-lk" href="#tarifs">Tarifs</a>
-    <a class="n-lk" href="#histoire">Histoire</a>
   </div>
   <div class="n-r">
     <a href="/login" class="n-login">Connexion</a>
@@ -345,9 +369,9 @@ const HTML = `
 
 <!-- HERO -->
 <header class="hero wrap">
-  <div class="hero-eyebrow"><span class="dot"></span>Intelligence comportementale · Temps réel</div>
-  <h1>Tu ne vois pas quand tu dérailles. <em>Lui si.</em></h1>
-  <p class="hero-sub">Caldra analyse chaque trade et détecte les comportements qui détruisent les sessions, avant que le tilt, le revenge trading ou l'impulsion ne fassent les dégâts.</p>
+  <div class="hero-eyebrow"><span class="dot"></span>Journal de trading · Alerte comportementale en temps réel</div>
+  <h1>Bien plus qu'un <em>journal de trading.</em></h1>
+  <p class="hero-sub">Caldra fait tout ce qu'un journal de trading fait, stats, win rate, profit factor, débriefs IA, puis va plus loin : il t'alerte en temps réel quand ton comportement déraille. Pendant la session, pas le soir une fois le mal fait.</p>
   <div class="hero-ctas">
     <a href="/signup" class="btn-pri">Essayer 7 jours gratuitement →</a>
     <a href="/login" class="btn-sec">J'ai déjà un compte</a>
@@ -421,9 +445,68 @@ const HTML = `
 <section class="sec wrap" data-reveal>
   <div class="stats">
     <div class="stat"><div class="stat-n">18</div><div class="stat-l">Comportements détectés</div></div>
-    <div class="stat"><div class="stat-n">3</div><div class="stat-l">Niveaux d'alerte</div></div>
     <div class="stat"><div class="stat-n"><span>&lt;</span>1s</div><div class="stat-l">Temps de détection</div></div>
+    <div class="stat"><div class="stat-n"><span>∞</span></div><div class="stat-l">Historique illimité</div></div>
     <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Automatique</div></div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- JOURNAL -->
+<section class="sec wrap" id="journal" data-reveal>
+  <div class="split">
+    <div>
+      <div class="tag">Journal complet</div>
+      <div class="h2">Toutes les stats d'un journal pro.<br><em>Sans rien saisir.</em></div>
+      <p class="lead">Win rate, profit factor, expectancy, courbe de capital, performance par symbole, par jour, par heure. Tes trades remontent tout seuls de ta plateforme, les statistiques se construisent en direct. Avec, en plus, les débriefs IA qui analysent tes sessions.</p>
+      <div class="chan-list">
+        <div class="chan"><div class="chan-ic">📊</div><div class="chan-t">Win rate, profit factor, expectancy, R moyen</div></div>
+        <div class="chan"><div class="chan-ic">📈</div><div class="chan-t">Courbe de capital, perf par symbole, jour et heure</div></div>
+        <div class="chan"><div class="chan-ic">🧠</div><div class="chan-t">Débriefs IA : jour, semaine, mois</div></div>
+      </div>
+    </div>
+    <div class="jrn-card">
+      <div class="jrn-grid">
+        <div class="jrn-kpi"><div class="jrn-kl">Win rate</div><div class="jrn-kv">58%</div></div>
+        <div class="jrn-kpi"><div class="jrn-kl">Profit factor</div><div class="jrn-kv">1.84</div></div>
+        <div class="jrn-kpi"><div class="jrn-kl">Expectancy</div><div class="jrn-kv">€27</div></div>
+        <div class="jrn-kpi"><div class="jrn-kl">Trades</div><div class="jrn-kv">142</div></div>
+        <div class="jrn-kpi"><div class="jrn-kl">R moyen</div><div class="jrn-kv">1.6R</div></div>
+        <div class="jrn-kpi"><div class="jrn-kl">Meilleur jour</div><div class="jrn-kv">€640</div></div>
+      </div>
+      <div class="jrn-eq">
+        <div class="jrn-eq-l"><span>Courbe de capital</span><span style="color:var(--green)">+€3 820</span></div>
+        <svg viewBox="0 0 320 90" preserveAspectRatio="none" style="width:100%;height:90px;display:block">
+          <defs><linearGradient id="eqg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(62,207,142,.22)"/><stop offset="1" stop-color="rgba(62,207,142,0)"/></linearGradient></defs>
+          <path d="M0,74 L40,68 L80,72 L120,54 L160,58 L200,40 L240,30 L280,20 L320,10 L320,90 L0,90 Z" fill="url(#eqg)"/>
+          <path d="M0,74 L40,68 L80,72 L120,54 L160,58 L200,40 L240,30 L280,20 L320,10" fill="none" stroke="#3ecf8e" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- COMPARE -->
+<section class="sec wrap center" id="compare" data-reveal>
+  <div class="tag" style="margin-left:auto;margin-right:auto">Journal classique vs Caldra</div>
+  <div class="h2">Le journal regarde en arrière.<br>Caldra veille <em>pendant.</em></div>
+  <p class="lead" style="margin-left:auto;margin-right:auto">Les journaux classiques t'expliquent tes erreurs le soir, une fois la session finie et le mal fait. Caldra fait le même travail d'analyse, en direct, et t'alerte avant que le trade de trop parte.</p>
+  <div class="cmp">
+    <div class="cmp-col cmp-old">
+      <div class="cmp-lbl">Journal classique</div>
+      <div class="cmp-li">Tu saisis tes trades à la main</div>
+      <div class="cmp-li">Tu relis ta session le soir</div>
+      <div class="cmp-li">Tu comprends l'erreur après coup</div>
+      <div class="cmp-li">Aucun garde-fou pendant le trade</div>
+    </div>
+    <div class="cmp-col cmp-new">
+      <div class="cmp-lbl">Caldra</div>
+      <div class="cmp-li">Tes trades remontent automatiquement</div>
+      <div class="cmp-li">Les stats se construisent en direct</div>
+      <div class="cmp-li">L'alerte arrive pendant la session</div>
+      <div class="cmp-li">Un signal t'arrête avant les dégâts</div>
+    </div>
   </div>
 </section>
 <div class="divider"></div>
@@ -432,9 +515,9 @@ const HTML = `
 <section class="sec wrap" id="alertes" data-reveal>
   <div class="split">
     <div>
-      <div class="tag">Alertes en temps réel</div>
-      <div class="h2">Push. Desktop.<br>En moins d'une seconde.</div>
-      <p class="lead">Dès qu'un pattern dangereux est détecté, tu reçois une notification push sur ton téléphone ET une alerte desktop. Sur iOS, Android et navigateur.</p>
+      <div class="tag">Le vrai différenciateur</div>
+      <div class="h2">L'alerte que personne d'autre n'a.<br>En moins d'une seconde.</div>
+      <p class="lead">C'est ce qu'aucun autre journal ne fait : dès qu'un pattern dangereux est détecté, tu reçois une notification push sur ton téléphone ET une alerte desktop. Sur iOS, Android et navigateur.</p>
       <div class="chan-list">
         <div class="chan"><div class="chan-ic">📱</div><div class="chan-t">Push iOS &amp; Android via Web Push (VAPID)</div></div>
         <div class="chan"><div class="chan-ic">💻</div><div class="chan-t">Notification desktop (Chrome, Safari, Firefox)</div></div>
