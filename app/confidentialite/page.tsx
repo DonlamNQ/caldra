@@ -24,6 +24,8 @@ export default function Confidentialite() {
         <div className="tag">RGPD</div>
         <h1>Politique de<br />confidentialité</h1>
 
+        <p>Le responsable du traitement des données est Alhamdou KONE, entrepreneur individuel (micro-entreprise), SIREN 107 165 649, domicilié 47 rue Vivienne, 75002 Paris. Pour toute question relative à vos données : <a href="mailto:contact@getcaldra.com">contact@getcaldra.com</a>.</p>
+
         <h2>1. Données collectées</h2>
         <p>Caldra collecte uniquement les données nécessaires au fonctionnement du service :</p>
         <ul style={{ marginTop: '.75rem' }}>

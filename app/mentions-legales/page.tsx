@@ -25,9 +25,13 @@ export default function MentionsLegales() {
         <h1>Mentions légales &amp;<br />Conditions d&rsquo;utilisation</h1>
 
         <h2>1. Éditeur du site</h2>
-        <p>Caldra est édité par Alhamdou KONE.<br />
+        <p>Caldra est édité par Alhamdou KONE, entrepreneur individuel (micro-entreprise).<br />
+        SIREN : 107 165 649<br />
+        Siège / domiciliation : 47 rue Vivienne, 75002 Paris<br />
+        Directeur de la publication : Alhamdou KONE<br />
         Email de contact : <a href="mailto:contact@getcaldra.com">contact@getcaldra.com</a><br />
-        Site web : <a href="https://getcaldra.com">getcaldra.com</a></p>
+        Site web : <a href="https://getcaldra.com">getcaldra.com</a><br />
+        TVA non applicable, article 293 B du CGI.</p>
 
         <h2>2. Hébergement</h2>
         <p>Le site est hébergé par Vercel Inc., 340 Pine Street, Suite 700, San Francisco, CA 94104, États-Unis.</p>
