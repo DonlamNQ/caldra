@@ -113,10 +113,10 @@ nav.nav-hidden{transform:translateY(-130px)}
 .pv-al-t{font-size:12.5px;color:#eceaf6;font-weight:500;line-height:1.4}
 .pv-al-s{font-size:11px;color:var(--t3);margin-top:2px;line-height:1.4}
 /* floating toasts */
-.toast{position:absolute;z-index:3;width:230px;background:rgba(20,17,36,.97);border:.5px solid var(--b2);border-radius:13px;padding:.85rem .95rem;box-shadow:0 20px 50px rgba(0,0,0,.55);backdrop-filter:blur(12px)}
-.toast-1{top:14%;left:-30px;animation:floaty 5s ease-in-out infinite}
-.toast-2{bottom:16%;right:-26px;animation:floaty 5.5s ease-in-out .6s infinite}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.toast{position:absolute;z-index:3;width:230px;background:rgba(20,17,36,.97);border:.5px solid var(--b2);border-radius:13px;padding:.85rem .95rem;box-shadow:0 20px 50px rgba(0,0,0,.55);backdrop-filter:blur(12px);opacity:0}
+.toast-1{top:14%;left:-30px;animation:toastpop 4s ease-out infinite}
+.toast-2{bottom:16%;right:-26px;animation:toastpop 4s ease-out infinite}
+@keyframes toastpop{0%{opacity:0;transform:translateY(9px) scale(.96)}5%{opacity:1;transform:translateY(0) scale(1)}72%{opacity:1;transform:translateY(0) scale(1)}87%{opacity:0;transform:translateY(-7px) scale(.98)}100%{opacity:0}}
 .toast-hd{display:flex;align-items:center;gap:7px;margin-bottom:6px}
 .toast-ic{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px}
 .toast-app{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-weight:600}
@@ -194,6 +194,10 @@ nav.nav-hidden{transform:translateY(-130px)}
 .dd-l2{background:rgba(220,126,46,.08);border:.5px solid rgba(220,126,46,.2);color:var(--orange)}
 .dd-l3{background:rgba(226,80,60,.08);border:.5px solid rgba(226,80,60,.2);color:var(--red)}
 .det-more{margin-top:1.4rem;font-size:12.5px;color:var(--t3);line-height:1.7}
+.det-inline{display:none;padding:0 1.35rem;border-bottom:.5px solid var(--b1);background:var(--s1)}
+.det-inline:last-child{border-bottom:none}
+.det-inline-d{font-size:13px;color:var(--t2);line-height:1.7;padding:.1rem 0 1rem}
+.det-inline .dd-lv{margin:0 0 1.1rem}
 
 /* DEMO */
 .demo-wrap{background:linear-gradient(180deg,var(--s1),rgba(12,10,24,.7));border:.5px solid var(--b2);border-radius:18px;overflow:hidden;margin-top:3.5rem;box-shadow:0 30px 80px rgba(0,0,0,.4)}
@@ -325,10 +329,11 @@ footer{padding:2.2rem 0;border-top:.5px solid var(--b1);position:relative;z-inde
   .jrn-grid{grid-template-columns:1fr 1fr}
   .cmp{grid-template-columns:1fr}
   .preview{flex-direction:column;align-items:stretch}
-  .toast{position:static;display:block;width:auto;animation:none;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+  .scan-mark{display:none}
+  .toast{position:static;display:block;width:auto;animation:none;opacity:1;box-shadow:0 12px 30px rgba(0,0,0,.4)}
   .panel{order:0}.toast-1{order:1;margin-top:.8rem}.toast-2{order:2;margin-top:.6rem}
   .split{grid-template-columns:1fr}
-  .det-grid{grid-template-columns:1fr}.det-detail{display:block;position:static;top:auto;margin-top:1.2rem}
+  .det-grid{grid-template-columns:1fr}.det-detail{display:none}.det-inline.open{display:block}
   .steps{grid-template-columns:1fr}
   .testi{grid-template-columns:1fr}
   .pricing{grid-template-columns:1fr}
@@ -440,12 +445,12 @@ const HTML = `
   <!-- PRODUCT PREVIEW (no device frame) -->
   <div class="preview">
     <div class="preview-glow"></div>
-    <div class="toast toast-1">
+    <div class="toast toast-1" style="animation-delay:${SCAN.m1.d}s">
       <div class="toast-hd"><div class="toast-ic" style="background:rgba(220,126,46,.14)">⚠️</div><div class="toast-app">Caldra Session</div></div>
       <div class="toast-t">Revenge sizing détecté</div>
       <div class="toast-m">Sizing ×2.1 après &minus;€140</div>
     </div>
-    <div class="toast toast-2">
+    <div class="toast toast-2" style="animation-delay:${SCAN.m2.d}s">
       <div class="toast-hd"><div class="toast-ic" style="background:rgba(62,207,142,.14)">⚡</div><div class="toast-app">Push · Mobile</div></div>
       <div class="toast-t">Re-entrée rapide</div>
       <div class="toast-m">87s après la clôture. Min : 120s.</div>
@@ -466,7 +471,7 @@ const HTML = `
         </svg>
         <div class="scan-beam"></div>
         <div class="scan-mark" style="left:${SCAN.m1.x}%;top:${SCAN.m1.y}%;animation-delay:${SCAN.m1.d}s"><span class="scan-ring"></span><span class="scan-tag">Revenge sizing</span></div>
-        <div class="scan-mark scan-mark-2" style="left:${SCAN.m2.x}%;top:${SCAN.m2.y}%;animation-delay:${SCAN.m2.d}s"><span class="scan-ring"></span><span class="scan-tag">Sur-exposition</span></div>
+        <div class="scan-mark scan-mark-2" style="left:${SCAN.m2.x}%;top:${SCAN.m2.y}%;animation-delay:${SCAN.m2.d}s"><span class="scan-ring"></span><span class="scan-tag">Re-entrée rapide</span></div>
         <div class="scan-foot"><span>Analyse comportementale</span><span class="scan-foot-r">18 patterns surveillés</span></div>
       </div>
     </div>
@@ -740,14 +745,23 @@ function renderDets(){
   DETS.forEach(function(d,i){
     var el=document.createElement('div');el.className='det-item'+(i===0?' act':'');
     el.innerHTML='<div class="di-n">'+d.n+'</div><span class="di-t">'+d.name+'</span>'+(d.s?'<span class="di-badge">Max</span>':'');
+    var inline=document.createElement('div');inline.className='det-inline';
+    inline.innerHTML='<div class="det-inline-d">'+d.desc+'</div><div class="dd-lv '+lvClass(d.lv)+'">'+lvLabel(d.lv)+'</div>';
     el.addEventListener('click',function(){
+      if(window.matchMedia('(max-width:980px)').matches){
+        var wasOpen=inline.classList.contains('open');
+        document.querySelectorAll('.det-inline').forEach(function(x){x.classList.remove('open')});
+        document.querySelectorAll('.det-item').forEach(function(x){x.classList.remove('act')});
+        if(!wasOpen){inline.classList.add('open');el.classList.add('act');}
+        return;
+      }
       document.querySelectorAll('.det-item').forEach(function(x){x.classList.remove('act')});el.classList.add('act');
       var g=document.getElementById('dd-ghost');if(g)g.textContent=d.n;
       var sv=document.getElementById('dd-svg');if(sv)sv.innerHTML=d.icon;
       var h=document.getElementById('dd-h');if(h)h.textContent=d.name;
       var dd=document.getElementById('dd-d');if(dd)dd.textContent=d.desc;
       var lv=document.getElementById('dd-lv');if(lv){lv.textContent=lvLabel(d.lv);lv.className='dd-lv '+lvClass(d.lv);}
-    });list.appendChild(el);
+    });list.appendChild(el);list.appendChild(inline);
   });
 }
 renderDets();
