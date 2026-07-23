@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { loginAction } from './actions'
+import { loginAction, resendConfirmationAction } from './actions'
 
 const BG   = '#0c0c15'
 const SF   = '#12121c'
@@ -26,17 +26,30 @@ const FEATURES = [
 export default function LoginPage() {
   const [error,   setError]   = useState('')
   const [loading, setLoading] = useState(false)
+  const [email,   setEmail]   = useState('')
+  const [needsConfirm, setNeedsConfirm] = useState(false)
+  const [resendState, setResendState]   = useState<'idle' | 'sending' | 'sent'>('idle')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
+    setNeedsConfirm(false)
+    setResendState('idle')
     setLoading(true)
     const fd = new FormData(e.currentTarget)
     const result = await loginAction(fd)
     if (result && 'error' in result) {
       setError(result.error)
+      setNeedsConfirm(!!result.needsConfirmation)
       setLoading(false)
     }
+  }
+
+  async function handleResend() {
+    if (!email) return
+    setResendState('sending')
+    await resendConfirmationAction(email)
+    setResendState('sent')
   }
 
   return (
@@ -134,7 +147,7 @@ export default function LoginPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: TE, fontFamily: MONO }}>Email</label>
-                <input className="lg-inp" type="email" name="email" placeholder="trader@exemple.com" required autoComplete="email" />
+                <input className="lg-inp" type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="trader@exemple.com" required autoComplete="email" />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -143,9 +156,26 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div style={{ padding: '10px 14px', background: 'rgba(220,50,24,.07)', border: '.5px solid rgba(220,50,24,.25)', borderRadius: 7, color: '#f87171', fontSize: 12.5 }}>
+                <div style={{ padding: '10px 14px', background: 'rgba(220,50,24,.07)', border: '.5px solid rgba(220,50,24,.25)', borderRadius: 7, color: '#f87171', fontSize: 12.5, lineHeight: 1.5 }}>
                   {error}
                 </div>
+              )}
+
+              {needsConfirm && (
+                resendState === 'sent' ? (
+                  <div style={{ padding: '10px 14px', background: 'rgba(0,209,122,.06)', border: '.5px solid rgba(0,209,122,.25)', borderRadius: 7, color: G, fontSize: 12.5, lineHeight: 1.5 }}>
+                    Email de confirmation renvoyé à {email}. Pense à vérifier tes spams.
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendState === 'sending' || !email}
+                    style={{ background: 'transparent', border: `.5px solid ${RB}`, borderRadius: 8, padding: '11px', color: RED, fontSize: 13, fontWeight: 500, cursor: 'pointer', width: '100%', fontFamily: SANS }}
+                  >
+                    {resendState === 'sending' ? 'Envoi…' : "Renvoyer l'email de confirmation"}
+                  </button>
+                )
               )}
 
               <button className="lg-btn" type="submit" disabled={loading} style={{ marginTop: 6 }}>

@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 
 export async function loginAction(
   formData: FormData
-): Promise<{ error: string } | void> {
+): Promise<{ error: string; needsConfirmation?: boolean } | void> {
   const email    = formData.get('email')    as string
   const password = formData.get('password') as string
   const next     = (formData.get('next')    as string) || ''
@@ -19,6 +19,14 @@ export async function loginAction(
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
+    // Email jamais confirmé : cas le plus fréquent de « je n'arrive pas à me
+    // connecter ». On le signale explicitement pour que l'UI propose le renvoi.
+    if (error.code === 'email_not_confirmed' || error.message === 'Email not confirmed') {
+      return {
+        error: "Ton adresse email n'a pas encore été confirmée. Vérifie ta boîte de réception (et tes spams), ou renvoie le lien de confirmation ci-dessous.",
+        needsConfirmation: true,
+      }
+    }
     return {
       error: error.message === 'Invalid login credentials'
         ? 'Email ou mot de passe incorrect'
@@ -53,4 +61,32 @@ export async function loginAction(
   }
 
   redirect('/dashboard')
+}
+
+// Renvoie un email de confirmation à un compte non encore vérifié.
+// Réponse volontairement neutre (pas de fuite sur l'existence du compte).
+export async function resendConfirmationAction(
+  email: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!email || !email.includes('@')) {
+    return { ok: false, error: 'Email invalide' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/callback`,
+    },
+  })
+
+  // « already confirmed » ou email inexistant : on ne le divulgue pas.
+  if (error && error.code !== 'over_email_send_rate_limit') {
+    return { ok: true }
+  }
+  if (error) {
+    return { ok: false, error: 'Trop de tentatives. Réessaie dans quelques minutes.' }
+  }
+  return { ok: true }
 }
