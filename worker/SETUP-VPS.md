@@ -133,4 +133,10 @@ python -c "import MetaTrader5 as mt5; print(mt5.initialize(), mt5.last_error())"
 ne peut rien faire : régler ça avant tout autre diagnostic.
 
 Brokers cœur de cible à installer au fur et à mesure : IC Markets, Exness,
-Pepperstone, XM + prop firms FTMO, FundedNext, The5ers, E8, FundingPips.
+Pepperstone, XM, Deriv + prop firms FTMO, FundedNext, The5ers, E8, FundingPips.
+
+> **Deriv** : télécharge le terminal Deriv MT5 (site Deriv), installe-le dans son
+> propre dossier, puis worker dédié avec `MT5_BROKER=Deriv` (couvre tous les serveurs
+> Deriv : `Deriv-Server`, `Deriv-Demo`, `DerivSVG-Server`, `DerivBVI-Server`, etc.).
+> Tant que ce terminal n'est pas installé, les comptes Deriv tombent en
+> `broker_unavailable`. Déjà listé côté client dans `mt5Brokers` (DashboardClient.tsx).

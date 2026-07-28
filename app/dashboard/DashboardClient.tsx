@@ -3606,7 +3606,7 @@ function SupportPanel({ userEmail, onReplayGuide }: { userEmail: string; onRepla
 
   // ⚠️ Listes dérivées des serveurs connus des terminaux MT5 installés sur le VPS.
   // À ajuster si on ajoute/retire un terminal broker.
-  const mt5Brokers = ['Vantage', 'Pepperstone', 'IC Markets', 'OANDA', 'FxPro', 'Fusion Markets', 'Admirals', 'ThinkMarkets', 'PU Prime', 'XM (XMGlobal)']
+  const mt5Brokers = ['Vantage', 'Pepperstone', 'IC Markets', 'OANDA', 'FxPro', 'Fusion Markets', 'Admirals', 'ThinkMarkets', 'PU Prime', 'XM (XMGlobal)', 'Deriv']
   const propFirms  = ['FundedNext', 'FundingPips', 'Goat Funded', 'Funded Trading Plus', 'IC Funded', 'Vega Funded', 'WeGetFunded', 'Shark Funded', 'Kudo Funded', 'Moneta Funded', 'FundedVerse', 'OANDA Prop Trader']
 
   return (
